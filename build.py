@@ -115,6 +115,29 @@ def short_name(name):
     return f"{inits} {fam}".strip()
 
 
+def scholar_count(p, scholar):
+    """Google Scholar citations for paper p, from data/scholar_citations.json
+    (written monthly by the Scholar snapshot task), matched by title."""
+    rows = scholar.get("papers") or []
+    if not rows:
+        return None
+    if "_index" not in scholar:
+        scholar["_index"] = [("".join(c for c in r["title"].lower() if c.isalnum()), r) for r in rows]
+    t = "".join(c for c in p["title"].lower() if c.isalnum())
+    from difflib import SequenceMatcher
+    best, br = None, 0.0
+    for key, r in scholar["_index"]:
+        if key[:12] != t[:12] and abs(len(key) - len(t)) > 40:
+            continue
+        ratio = SequenceMatcher(None, t, key).ratio()
+        if ratio > br:
+            best, br = r, ratio
+    if best and br >= 0.9 and (not p.get("year") or not best.get("year")
+                               or abs(int(best["year"]) - int(p["year"])) <= 1):
+        return int(best["citations"])
+    return None
+
+
 def merge_preprints(pubs, preprints):
     """Add unpublished preprints found by sync_preprints.py to the list, and
     drop preprint entries from ORCID that duplicate them."""
@@ -150,6 +173,7 @@ def main(check=False, preview=False):
 
     preprints = load_json("preprints.json", {"links": {}, "standalone": []})
     metrics = load_json("metrics.json", {"papers": {}})
+    scholar = load_json("scholar_citations.json", {})
     pubs = merge_preprints(pubs, preprints)
 
     by_doi = {p["doi"]: p for p in pubs if p.get("doi")}
@@ -166,7 +190,10 @@ def main(check=False, preview=False):
         p["venue"] = venue_text(p)
         p["badges"] = [TAG_LABELS[t] for t in p.get("tags", []) if t in TAG_LABELS]
         p["preprints"] = preprints["links"].get(p.get("doi"), []) if p.get("doi") else []
-        m = metrics["papers"].get(p.get("doi") or p["title"], {})
+        m = dict(metrics["papers"].get(p.get("doi") or p["title"], {}))
+        sc = scholar_count(p, scholar)
+        if sc is not None:
+            m["citations"], m["citation_source"] = sc, "Google Scholar"
         p["m"] = m
         if m.get("top1"):
             p["badges"].append("Top 1% cited")
@@ -202,6 +229,7 @@ def main(check=False, preview=False):
                      if is_current(it, g)]
     stats = {
         "metrics_updated": fmt_date(metrics["updated"]) if metrics.get("updated") else None,
+        "scholar_as_of": fmt_date(scholar["updated"]) if scholar.get("updated") else None,
         "cited": sum(1 for p in pubs if p["m"].get("citations")),
         "with_preprint": sum(1 for p in pubs if p["preprints"]),
         "total": len(pubs),

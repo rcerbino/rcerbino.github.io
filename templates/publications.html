@@ -7,7 +7,7 @@
      The list updates itself from my <a href="https://orcid.org/{{ profile.ids[0].value }}">ORCID record</a>.
      Profiles:
      {% for i in profile.ids %}<a href="{{ i.url }}">{{ i.label }}</a>{% if not loop.last %}, {% endif %}{% endfor %}.</p>
-  <p class="quiet">Under each paper: citations (the higher count of Crossref and Semantic Scholar, refreshed weekly{% if stats.metrics_updated %}, last on {{ stats.metrics_updated }}{% endif %}; Google Scholar counts are usually higher),
+  <p class="quiet">Under each paper: citations ({% if stats.scholar_as_of %}from Google Scholar, as of {{ stats.scholar_as_of }}, refreshed monthly; where Google Scholar has no matching record, the higher count of Crossref and Semantic Scholar{% else %}the higher count of Crossref and Semantic Scholar, refreshed weekly{% if stats.metrics_updated %}, last on {{ stats.metrics_updated }}{% endif %}; Google Scholar counts are usually higher{% endif %}),
      links to preprint versions ({{ stats.with_preprint }} papers have one) and to a free full text where one exists,
      and the Altmetric score of attention in news, policy documents and social media, which updates live.</p>
 </header>

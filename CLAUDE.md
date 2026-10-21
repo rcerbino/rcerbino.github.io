@@ -38,8 +38,8 @@ python3 build.py --check
     journal version has appeared (search Crossref by title and by first author);
     if so, add it to `preprint_of:`.
   Then rerun `python3 scripts/sync_preprints.py`. Report every pairing you added.
-- Update `profile.yaml > metrics` only if you can read current figures from the
-  Google Scholar profile; otherwise leave them.
+- Do not edit `profile.yaml > metrics` or `data/scholar_citations.json`: the
+  Google Scholar snapshot task (11th of each month) keeps both current.
 
 Commit these to `main` with a message like "Monthly refresh: publications, news".
 
@@ -106,6 +106,7 @@ because you were unsure.
 | Publication tags (selected, review, cover), hidden items, fixes, preprint pairings | `data/publications_overrides.yaml` |
 | Preprint links (generated) | `data/preprints.json` |
 | Per-paper citations, free full text (generated) | `data/metrics.json` |
+| Google Scholar counts per paper (written monthly by the separate Google Scholar snapshot task; preferred over `metrics.json` when present) | `data/scholar_citations.json` |
 | Publication list (generated, do not edit by hand) | `data/publications.json` |
 | Group news (generated) | `data/group_news.json` |
 

@@ -2,9 +2,8 @@
 """Per-paper metrics for the publication list -> data/metrics.json
 
 - citations: the higher of Crossref (already in publications.json) and
-  Semantic Scholar. If data/scholar_citations.json exists (Google Scholar
-  counts per paper, written by another task), those win, because Google
-  Scholar is the figure quoted elsewhere on the site.
+  Semantic Scholar. (Google Scholar counts, when available in
+  data/scholar_citations.json, replace these at build time: see build.py.)
 - free full text: open-access PDF found by Semantic Scholar
 - field-normalised impact (optional): OpenAlex FWCI and top-1% / top-10%
   flags, only when the environment variable OPENALEX_API_KEY is set
@@ -18,12 +17,10 @@ import sys
 import time
 import urllib.parse
 import urllib.request
-from difflib import SequenceMatcher
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PUBS = ROOT / "data" / "publications.json"
-SCHOLAR = ROOT / "data" / "scholar_citations.json"
 OUT = ROOT / "data" / "metrics.json"
 CONTACT = "roberto.cerbino@univie.ac.at"
 UA = {"User-Agent": f"cerbino-website/1.0 (mailto:{CONTACT})"}
@@ -110,20 +107,6 @@ def main():
     key = os.environ.get("OPENALEX_API_KEY")
     oa = openalex(dois, key) if key else {}
 
-    scholar = {}
-    if SCHOLAR.exists():
-        sc = json.loads(SCHOLAR.read_text())
-        # [{"title":..., "year":..., "citations":...}] matched to papers by title
-        for p in pubs:
-            t = norm(p["title"])
-            best, br = None, 0
-            for row in sc.get("papers", []):
-                r = SequenceMatcher(None, t, norm(row["title"])).ratio()
-                if r > br:
-                    best, br = row, r
-            if best and br >= 0.9:
-                scholar[p.get("doi") or p["title"]] = best["citations"]
-
     papers = {}
     for p in pubs:
         key_ = p.get("doi") or p["title"]
@@ -132,13 +115,10 @@ def main():
         rec = {}
         cr = p.get("citations")
         s2c = x.get("citationCount") if x else prev.get("semantic_scholar")
-        if key_ in scholar:
-            rec["citations"], rec["citation_source"] = scholar[key_], "Google Scholar"
-        else:
-            best = max([c for c in (cr, s2c) if c is not None], default=None)
-            if best is not None:
-                rec["citations"] = best
-                rec["citation_source"] = "Semantic Scholar" if (s2c or 0) > (cr or 0) else "Crossref"
+        best = max([c for c in (cr, s2c) if c is not None], default=None)
+        if best is not None:
+            rec["citations"] = best
+            rec["citation_source"] = "Semantic Scholar" if (s2c or 0) > (cr or 0) else "Crossref"
         if s2c is not None:
             rec["semantic_scholar"] = s2c
         if x:
