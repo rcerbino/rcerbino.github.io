@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if page == "Home" %}{{ profile.name }}{% else %}{{ page }} | {{ profile.name }}{% endif %}</title>
+<meta name="description" content="{{ about.short_bio | trim }}">
+<meta name="author" content="{{ profile.name }}">
+<link rel="canonical" href="{{ site_url }}/{{ path }}">
+<meta property="og:title" content="{{ profile.name }}{% if page != 'Home' %} | {{ page }}{% endif %}">
+<meta property="og:description" content="{{ profile.title }}, {{ profile.affiliation }}">
+<meta property="og:type" content="profile">
+<meta property="og:image" content="{{ site_url }}/{{ profile.portrait }}">
+<link rel="icon" href="{{ root }}img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ root }}css/site.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Person","name":"{{ profile.name }}","jobTitle":"{{ profile.title }}","affiliation":{"@type":"Organization","name":"University of Vienna"},"url":"{{ site_url }}/","image":"{{ site_url }}/{{ profile.portrait }}","sameAs":[{% for i in profile.ids %}"{{ i.url }}"{% if not loop.last %},{% endif %}{% endfor %}]}
+</script>
+</head>
+<body class="page-{{ page | lower | replace(' ', '-') }}">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="site-name" href="{{ root }}{{ link('') }}">{{ profile.name }}</a>
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+      {% for href, label in nav if label != "Home" %}
+        <li><a href="{{ root }}{{ href }}"{% if label == page %} aria-current="page"{% endif %}>{{ label }}</a></li>
+      {% endfor %}
+      </ul>
+    </nav>
+  </div>
+</header>
+{% block hero %}{% endblock %}
+<main id="main" class="wrap">
+{% block content %}{% endblock %}
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>{{ profile.name }}, {{ profile.affiliation }}.
+       Group website: <a href="{{ profile.lab.url }}">{{ profile.lab.name }}</a>.</p>
+    <p class="quiet">Updated {{ built_human }}. Publications refresh automatically from
+       <a href="https://orcid.org/{{ profile.ids[0].value }}">ORCID</a>.</p>
+  </div>
+</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,146 @@
+# Manual information merged into the publication list by scripts/sync_publications.py
+#
+# tags:   DOI -> list of labels. Labels used by the site:
+#           review              shown under "Reviews, perspectives, tutorials"
+#           selected            shown in "Selected publications" on top
+#           cover               shows a "Cover" badge
+#           editors-suggestion  shows an "Editors' Suggestion" badge
+#           preprint            forces the entry into "Preprints"
+# hide:   DOIs (or titles) that ORCID lists but the site should not show
+# patch:  corrections for entries without full metadata, keyed by DOI or by the
+#         start of the title in lower case
+# extra:  entries that are not in ORCID at all (title, authors, journal, year, type, url)
+tags:
+  10.48550/arxiv.2402.00221:
+  - preprint
+  10.1103/physrevlett.100.188102:
+  - editors-suggestion
+  - selected
+  10.1039/c1sm05813d:
+  - cover
+  10.1364/ao.45.002155:
+  - cover
+  10.1039/d5sm00284b:
+  - review
+  10.1063/5.0289471:
+  - review
+  - selected
+  10.1088/2515-7639/ad06cc:
+  - review
+  10.1038/s41526-022-00246-z:
+  - review
+  10.1016/j.physa.2023.128653:
+  - review
+  10.3389/fphy.2023.1173632:
+  - review
+  10.1002/pol.20210217:
+  - review
+  10.3934/mine.2020011:
+  - review
+  10.1016/j.cocis.2018.03.003:
+  - review
+  10.1063/1.5001027:
+  - review
+  - selected
+  10.1063/1.5004554:
+  - review
+  - review
+  10.1088/2040-8978/16/8/083001:
+  - review
+  10.1007/128_2011_230:
+  - review
+  10.1088/0953-8984/22/32/323102:
+  - review
+  10.1016/j.cocis.2009.07.003:
+  - review
+  10.1016/j.cocis.2007.03.005:
+  - review
+  10.1103/physreve.80.031403:
+  - selected
+  10.1038/nphys837:
+  - selected
+  10.1038/ncomms1290:
+  - selected
+  10.1073/pnas.1304632110:
+  - selected
+  10.1038/nmat4848:
+  - selected
+  10.1038/s41563-019-0425-1:
+  - selected
+  10.1038/s41467-026-77357-8:
+  - selected
+hide:
+- 10.1016/j.toxlet.2024.07.548
+- tutorial for the growth and development of myxococcus
+- 'gradflex: a microgravity experiment for gradient driven fluctuations'
+patch:
+  10.15011/jasma.25.3.617:
+    authors: A. Vailati, R. Cerbino, S. Mazzoni, C. J. Takacs, M. Giglio, D. S. Cannell
+  10.48550/arxiv.cond-mat/0309093:
+    authors: C. Tsallis, F. Baldovin, R. Cerbino, P. Pierobon
+    type: chapter
+    journal: The Physics of Complex Systems - New Advances and Perspectives, ed. F. Mallamace and H. E. Stanley (IOS Press)
+  'fisica: semestre filtro medicina':
+    authors: G. Bellini, C. Altucci, R. Cerbino, A. Duggento, G. Manuzio, F. Marzari, V. Monaco, M. Quarto, L. Repetto, M. Tamisari, G. Zanchetta, L. Zennaro
+    journal: Piccin (textbook)
+    url: https://www.piccin.it/it/chimica-fisica-matematica-statistica/3083-fisica-semestre-filtro-medicina.html
+    note: ISBN 978-88-299-3603-8
+  'from real to reciprocal space: scattering inf':
+    authors: R. Cerbino
+    journal: 'Neutrons, X-rays, and Light: Scattering Methods Applied to Soft Condensed Matter, ed. by Peter Lindner, Julian Oberdisse (2024)'
+    url: https://shop.elsevier.com/books/neutrons-x-rays-and-light/lindner/978-0-443-29116-6
+  yielding under the microscope:
+    authors: P. Edera, M. Brizioli, M. Madani, E. Ngouamba, P. Coussot, V. Trappe, G. Petekidis, F. Giavazzi, R. Cerbino
+    journal: arXiv:2402.00221
+    url: https://doi.org/10.48550/arXiv.2402.00221
+  'fisica per medicina: con applicazioni fisiolo':
+    authors: G. Bellini, R. Cerbino, G. Manuzio, F. Marzari, L. Repetto, L. Zennaro
+    journal: Piccin (textbook)
+    url: https://www.piccin.it/it/fisica/2411-fisica-per-medicina-con-applicazioni-fisiologiche-diagnostiche-e-terapeutiche-9788829929580.html
+    note: ISBN 978-88-299-2958-0
+  problemi di fisica biomedica:
+    authors: R. Cerbino
+    journal: EdiSES (textbook)
+    url: https://www.edises.it/universitario/cerbino-problemi-di-fisica-biomedica.html
+    note: ISBN 978-88-331-9039-6
+  'le sfide di una didattica moderna: nuovi appr':
+    authors: M.Milani, I.Pinelli, G. De Luca, R. Cerbino
+    journal: 'La formazione nell''era delle Smart City, Ed. Cisalpino, ISBN: 8820511045'
+  'x-ray speckle tracking: a new phase-sensitive':
+    authors: S. Berujon, E. Ziegler, R. Cerbino, L. PeveriniESRF Spotlight on Science (June 2012)
+    journal: 'Non-equilibrium fluctuations in Microgravity: initial results of GRADFLEX aboard FOTON-M3'
+    url: http://www.esrf.eu/news/spotlight/spotlight160/index_html/
+  static and dynamic scattering with near field:
+    authors: R. Cerbino, L. Peverini, M.A.C. Potenza, A. Robert, P. Bösecke, M. Giglio
+    journal: ESRF Spotlight on Science (April 2008)
+    url: http://www.esrf.eu/news/spotlight/spotlight57/near-field-speckles/
+  non-equilibrium fluctuations in diffusion exp:
+    authors: F. Croccolo, R. Cerbino, A. Vailati and M. Giglio
+    journal: 'Anomalous Fluctuation Phenomena in Complex Systems: Plasmas, Fluids, and Financial Markets, ed. by C. Riccardi and H. E. Roman, ISBN: 978-81-308-0255-8, pages 185-210 (2008).'
+  'x-ray near-field speckles: a new approach to ':
+    authors: R. Cerbino, L. Peverini, M.A.C. Potenza, A. Robert, P. Bösecke, M. Giglio
+    journal: ESRF Highlights 2007
+    url: http://www.esrf.eu/UsersAndScience/Publications/Highlights/2007/XIM/XIM9
+  'gradflex: a microgravity experiment for gradi':
+    authors: B. Hirtz, F. Molster, A. Verga, R. Cerbino, S. Mazzoni, A. Vailati, M. Giglio, C.J. Takacs, D.S. Cannell, R. Greger, C. Pereira
+    journal: Proceedings of the International Astronautical Congress 2005, Fukuoka, Japan, IAC-05-A2.6.01
+    url: ''
+  gradflex, fluctuations in microgravity:
+    authors: A. Vailati, R. Cerbino, S. Mazzoni, M. Giglio, G. Nikolaenko, D. S. Cannell, W. V. Meyer, and A. E Smart
+    journal: Proceedings of the 2004 Photon Correlation and Scattering Conference, NASA Center for Aerospace Information, Hanover (USA), NASA/CP-2004-213207, 50
+  'shadowgraphic study of convection onset in a ':
+    authors: R. Cerbino, S. Mazzoni, A. Vailati and M. Giglio
+    journal: Proceedings of the 2004 Photon Correlation and Scattering Conference, NASA Center for Aerospace Information, Hanover (USA), NASA/CP-2004-213207, 9
+  'x-ray speckle tracking: a new phase-sensitive ':
+    authors: S. Berujon, E. Ziegler, R. Cerbino, L. Peverini
+    journal: ESRF Spotlight on Science (June 2012)
+    url: http://www.esrf.eu/news/spotlight/spotlight160/index_html/
+  capillarity and wetting phenomena:
+    authors: R. Cerbino
+    journal: Book review
+    type: other
+extra:
+- 10.1038/s41467-026-77357-8
+- 10.1016/j.jcis.2026.140842
+- 10.1039/c4sm02144d
+- 10.1063/1.5004554

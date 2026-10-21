@@ -1,0 +1,62 @@
+# Builds and publishes the site with GitHub Pages.
+# - on every push to main (your edits, or edits by Claude's scheduled task)
+# - every Monday morning: refreshes publications (ORCID + Crossref) and group news
+#   (SoMeX feed), commits any change, then rebuilds
+# - by hand from the Actions tab ("Run workflow")
+name: Build and publish
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml jinja2
+
+      - name: Refresh publications and group news
+        if: github.event_name != 'push'
+        run: |
+          python scripts/sync_publications.py
+          python scripts/sync_group_news.py
+          if ! git diff --quiet -- data/; then
+            git config user.name "site-bot"
+            git config user.email "site-bot@users.noreply.github.com"
+            git add data/
+            git commit -m "Automatic refresh of publications and group news"
+            git push
+          fi
+
+      - name: Build
+        run: python build.py --check
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

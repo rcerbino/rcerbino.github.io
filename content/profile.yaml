@@ -1,0 +1,50 @@
+# Basic identity and contact details, used on every page.
+name: Roberto Cerbino
+title: Professor of Experimental Soft Matter Physics
+affiliation: Faculty of Physics, University of Vienna
+lab:
+  name: SoMeX (Soft Matter Experiments)
+  url: https://somexlab.github.io/
+portrait: img/portrait.jpg
+
+# One paragraph shown on the home page
+intro: >-
+  I am a physicist. With my group at the University of Vienna I use light and
+  microscopy to measure how soft and living materials move, flow, age and break:
+  colloids, gels, foams, and sheets of migrating cells. I co-invented Differential
+  Dynamic Microscopy, a method that turns an ordinary microscope into a
+  light-scattering instrument, and I take part in European experiments run in
+  microgravity.
+
+contact:
+  email_user: roberto.cerbino
+  email_domain: univie.ac.at
+  phone: "+43 1 4277 73250"
+  address:
+    - Faculty of Physics, University of Vienna
+    - Boltzmanngasse 5
+    - 1090 Vienna, Austria
+  office_note: Administrative support for the group is on the SoMeX contact page.
+
+ids:
+  - label: ORCID
+    value: 0000-0003-0434-7741
+    url: https://orcid.org/0000-0003-0434-7741
+  - label: Google Scholar
+    value: 2Iq2JPIAAAAJ
+    url: https://scholar.google.com/citations?user=2Iq2JPIAAAAJ
+  - label: Scopus
+    value: "6508220772"
+    url: https://www.scopus.com/authid/detail.uri?authorId=6508220772
+  - label: Web of Science
+    value: A-2286-2008
+    url: https://www.webofscience.com/wos/author/record/A-2286-2008
+
+# Bibliometrics as reported by the source named below. Updated by the
+# scheduled task when a newer figure is available.
+metrics:
+  source: Google Scholar
+  as_of: May 2026
+  citations: 6238
+  h_index: 45
+  i10_index: 76

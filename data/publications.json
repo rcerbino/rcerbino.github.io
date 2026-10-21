@@ -1,0 +1,5499 @@
+[
+ {
+  "doi": "10.1038/s41467-026-77357-8",
+  "title": "Contact percolation governs collective motility via mechano-chemical feedback in heterogeneous breast cancer",
+  "authors": [
+   {
+    "name": "L. Barzaghi",
+    "me": false
+   },
+   {
+    "name": "C. Mazzella",
+    "me": false
+   },
+   {
+    "name": "C. Guidolin",
+    "me": false
+   },
+   {
+    "name": "J. Ackermann",
+    "me": false
+   },
+   {
+    "name": "E. Bellini",
+    "me": false
+   },
+   {
+    "name": "A. E. Massey",
+    "me": false
+   },
+   {
+    "name": "S. Villa",
+    "me": false
+   },
+   {
+    "name": "E. Frittoli",
+    "me": false
+   },
+   {
+    "name": "B. J. Green",
+    "me": false
+   },
+   {
+    "name": "A. Palamidessi",
+    "me": false
+   },
+   {
+    "name": "A. Cattaneo",
+    "me": false
+   },
+   {
+    "name": "A. Bachi",
+    "me": false
+   },
+   {
+    "name": "V. Cancila",
+    "me": false
+   },
+   {
+    "name": "C. Tripodo",
+    "me": false
+   },
+   {
+    "name": "S. Polo",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "A. X. Cartagena-Rivera",
+    "me": false
+   },
+   {
+    "name": "R. Voituriez",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "G. Scita",
+    "me": false
+   }
+  ],
+  "journal": "Nature Communications",
+  "volume": "17",
+  "pages": "10622",
+  "year": 2026,
+  "type": "article",
+  "citations": 0,
+  "url": "https://doi.org/10.1038/s41467-026-77357-8",
+  "tags": [
+   "selected"
+  ],
+  "source": "manual"
+ },
+ {
+  "doi": "10.1002/advs.202508648",
+  "title": "De Novo Gene Transcription of Connexin Mediates Cytoplasmic Fluid Exchange and Flocking Transitions in Physiological and Cancerous Epithelial Systems",
+  "authors": [
+   {
+    "name": "H. Abdo",
+    "me": false
+   },
+   {
+    "name": "L. Barzaghi",
+    "me": false
+   },
+   {
+    "name": "Y. Shen",
+    "me": false
+   },
+   {
+    "name": "E. Bellini",
+    "me": false
+   },
+   {
+    "name": "E. Martini",
+    "me": false
+   },
+   {
+    "name": "S. Magni",
+    "me": false
+   },
+   {
+    "name": "S. Barozzi",
+    "me": false
+   },
+   {
+    "name": "F. Orsenigo",
+    "me": false
+   },
+   {
+    "name": "D. Parazzoli",
+    "me": false
+   },
+   {
+    "name": "G. V. Beznoussenko",
+    "me": false
+   },
+   {
+    "name": "J. D. Franco",
+    "me": false
+   },
+   {
+    "name": "F. Krautgasser",
+    "me": false
+   },
+   {
+    "name": "J. Kaivola",
+    "me": false
+   },
+   {
+    "name": "M. Cinquanta",
+    "me": false
+   },
+   {
+    "name": "A. Lazzarin",
+    "me": false
+   },
+   {
+    "name": "S. Sigismund",
+    "me": false
+   },
+   {
+    "name": "J. Ivaska",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "G. Scita",
+    "me": false
+   }
+  ],
+  "journal": "Advanced Science",
+  "volume": "13",
+  "pages": "e08648",
+  "year": 2026,
+  "type": "article",
+  "citations": 1,
+  "url": "https://doi.org/10.1002/advs.202508648",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1016/j.jcis.2026.140842",
+  "title": "Probing early-stage casein micelle aggregation during milk acidification with differential dynamic microscopy",
+  "authors": [
+   {
+    "name": "M. Brizioli",
+    "me": false
+   },
+   {
+    "name": "S. N. Beldring",
+    "me": false
+   },
+   {
+    "name": "V. Rondelli",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "V. Vojinovic",
+    "me": false
+   },
+   {
+    "name": "M. Corredig",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   }
+  ],
+  "journal": "Journal of Colloid and Interface Science",
+  "volume": "722",
+  "pages": "140842",
+  "year": 2026,
+  "type": "article",
+  "citations": 1,
+  "url": "https://doi.org/10.1016/j.jcis.2026.140842",
+  "tags": [],
+  "source": "manual"
+ },
+ {
+  "doi": "10.1038/s41563-025-02473-7",
+  "title": "Restoring the tumour mechanophenotype of vocal fold cancer reverts its malignant properties",
+  "authors": [
+   {
+    "name": "J. Kaivola",
+    "me": false
+   },
+   {
+    "name": "K. Punovuori",
+    "me": false
+   },
+   {
+    "name": "M. R. Chastney",
+    "me": false
+   },
+   {
+    "name": "H. Abdo",
+    "me": false
+   },
+   {
+    "name": "G. Follain",
+    "me": false
+   },
+   {
+    "name": "M. Mathieu",
+    "me": false
+   },
+   {
+    "name": "O. Joshi",
+    "me": false
+   },
+   {
+    "name": "Y. A. Miroshnikova",
+    "me": false
+   },
+   {
+    "name": "F. Krautgasser",
+    "me": false
+   },
+   {
+    "name": "J. Di Franco",
+    "me": false
+   },
+   {
+    "name": "J. R. W. Conway",
+    "me": false
+   },
+   {
+    "name": "S. Held",
+    "me": false
+   },
+   {
+    "name": "F. Bertillot",
+    "me": false
+   },
+   {
+    "name": "J. Hagström",
+    "me": false
+   },
+   {
+    "name": "A. Mäkitie",
+    "me": false
+   },
+   {
+    "name": "H. Irjala",
+    "me": false
+   },
+   {
+    "name": "S. Ventelä",
+    "me": false
+   },
+   {
+    "name": "H. Hamidi",
+    "me": false
+   },
+   {
+    "name": "G. Scita",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "S. A. Wickström",
+    "me": false
+   },
+   {
+    "name": "J. Ivaska",
+    "me": false
+   }
+  ],
+  "journal": "Nature Materials",
+  "volume": "25",
+  "pages": "868-882",
+  "year": 2026,
+  "type": "article",
+  "citations": 2,
+  "url": "https://doi.org/10.1038/s41563-025-02473-7",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1122/8.0001101",
+  "title": "ShearView: A compact stress- and strain-controlled linear rheometer for integrated rheomicroscopy",
+  "authors": [
+   {
+    "name": "N. Kalafatakis",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Journal of Rheology",
+  "volume": "70",
+  "pages": "165-181",
+  "year": 2026,
+  "type": "article",
+  "citations": 2,
+  "url": "https://doi.org/10.1122/8.0001101",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.20935/acadmatsci8016",
+  "title": "Enhanced ethanol retention and thermal stability in calcium chloride-stabilized ethyl cellulose gel fuels",
+  "authors": [
+   {
+    "name": "A. De Cataldo",
+    "me": false
+   },
+   {
+    "name": "M. Das",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "L. Gentile",
+    "me": false
+   }
+  ],
+  "journal": "Academia Materials Science",
+  "volume": "2",
+  "pages": "",
+  "year": 2025,
+  "type": "article",
+  "citations": 0,
+  "url": "https://doi.org/10.20935/acadmatsci8016",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": null,
+  "title": "Fisica: Semestre Filtro Medicina",
+  "authors": [
+   {
+    "name": "G. Bellini",
+    "me": false
+   },
+   {
+    "name": "C. Altucci",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "A. Duggento",
+    "me": false
+   },
+   {
+    "name": "G. Manuzio",
+    "me": false
+   },
+   {
+    "name": "F. Marzari",
+    "me": false
+   },
+   {
+    "name": "V. Monaco",
+    "me": false
+   },
+   {
+    "name": "M. Quarto",
+    "me": false
+   },
+   {
+    "name": "L. Repetto",
+    "me": false
+   },
+   {
+    "name": "M. Tamisari",
+    "me": false
+   },
+   {
+    "name": "G. Zanchetta",
+    "me": false
+   },
+   {
+    "name": "L. Zennaro",
+    "me": false
+   }
+  ],
+  "journal": "Piccin (textbook)",
+  "volume": "",
+  "pages": "",
+  "year": 2025,
+  "type": "book",
+  "citations": null,
+  "url": "https://www.piccin.it/it/chimica-fisica-matematica-statistica/3083-fisica-semestre-filtro-medicina.html",
+  "tags": [],
+  "source": "orcid",
+  "note": "ISBN 978-88-299-3603-8"
+ },
+ {
+  "doi": "10.1016/b978-0-443-29116-6.00019-9",
+  "title": "From Real to Reciprocal Space: Scattering Information From Real Space Images",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Neutrons, X-rays, and Light: Scattering Methods Applied to Soft Condensed Matter, ed. by Peter Lindner, Julian Oberdisse (2024)",
+  "volume": "",
+  "pages": "615-647",
+  "year": 2025,
+  "type": "chapter",
+  "citations": 1,
+  "url": "https://shop.elsevier.com/books/neutrons-x-rays-and-light/lindner/978-0-443-29116-6",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1039/d5sm00284b",
+  "title": "Myxococcus xanthus for active matter studies: a tutorial for its growth and potential applications",
+  "authors": [
+   {
+    "name": "J. M. Antúnez Domínguez",
+    "me": false
+   },
+   {
+    "name": "L. Pérez García",
+    "me": false
+   },
+   {
+    "name": "N. Rivera-Yoshida",
+    "me": false
+   },
+   {
+    "name": "J. Di Franco",
+    "me": false
+   },
+   {
+    "name": "D. Steiner",
+    "me": false
+   },
+   {
+    "name": "A. V. Arzola",
+    "me": false
+   },
+   {
+    "name": "M. Benítez",
+    "me": false
+   },
+   {
+    "name": "C. H. Blomqvist",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "C. B. Adiels",
+    "me": false
+   },
+   {
+    "name": "G. Volpe",
+    "me": false
+   }
+  ],
+  "journal": "Soft Matter",
+  "volume": "21",
+  "pages": "8602-8623",
+  "year": 2025,
+  "type": "review",
+  "citations": 1,
+  "url": "https://doi.org/10.1039/d5sm00284b",
+  "tags": [
+   "review"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1039/d4sm01390e",
+  "title": "One- and two-particle microrheology of soft materials based on optical-flow image analysis",
+  "authors": [
+   {
+    "name": "M. Brizioli",
+    "me": false
+   },
+   {
+    "name": "M. A. Escobedo-Sánchez",
+    "me": false
+   },
+   {
+    "name": "P. M. McCall",
+    "me": false
+   },
+   {
+    "name": "Y. Roichman",
+    "me": false
+   },
+   {
+    "name": "V. Trappe",
+    "me": false
+   },
+   {
+    "name": "M. L. Gardel",
+    "me": false
+   },
+   {
+    "name": "S. U. Egelhaaf",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Soft Matter",
+  "volume": "21",
+  "pages": "1373-1381",
+  "year": 2025,
+  "type": "article",
+  "citations": 4,
+  "url": "https://doi.org/10.1039/d4sm01390e",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1063/5.0289471",
+  "title": "The Hitchhiker’s guide to differential dynamic microscopy",
+  "authors": [
+   {
+    "name": "E. Lattuada",
+    "me": false
+   },
+   {
+    "name": "F. Krautgasser",
+    "me": false
+   },
+   {
+    "name": "M. Lavaud",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "The Journal of Chemical Physics",
+  "volume": "163",
+  "pages": "161501",
+  "year": 2025,
+  "type": "review",
+  "citations": 10,
+  "url": "https://doi.org/10.1063/5.0289471",
+  "tags": [
+   "review",
+   "selected"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1039/d4sm00588k",
+  "title": "Anomalous relaxation of coarsening foams with viscoelastic continuous phases",
+  "authors": [
+   {
+    "name": "C. Guidolin",
+    "me": false
+   },
+   {
+    "name": "E. Rio",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "A. Salonen",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   }
+  ],
+  "journal": "Soft Matter",
+  "volume": "20",
+  "pages": "7021-7029",
+  "year": 2024,
+  "type": "article",
+  "citations": 3,
+  "url": "https://doi.org/10.1039/d4sm00588k",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1016/j.jcis.2023.12.163",
+  "title": "Dynamics of anisotropic colloidal systems: What to choose, DLS, DDM or XPCS?",
+  "authors": [
+   {
+    "name": "M. A. Kamal",
+    "me": false
+   },
+   {
+    "name": "M. Brizioli",
+    "me": false
+   },
+   {
+    "name": "T. Zinn",
+    "me": false
+   },
+   {
+    "name": "T. Narayanan",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "A. Pal",
+    "me": false
+   }
+  ],
+  "journal": "Journal of Colloid and Interface Science",
+  "volume": "660",
+  "pages": "314-320",
+  "year": 2024,
+  "type": "article",
+  "citations": 14,
+  "url": "https://doi.org/10.1016/j.jcis.2023.12.163",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1103/physrevlett.133.088202",
+  "title": "Matrix Viscoelasticity Decouples Bubble Growth and Mobility in Coarsening Foams",
+  "authors": [
+   {
+    "name": "C. Guidolin",
+    "me": false
+   },
+   {
+    "name": "E. Rio",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "A. Salonen",
+    "me": false
+   }
+  ],
+  "journal": "Physical Review Letters",
+  "volume": "133",
+  "pages": "088202",
+  "year": 2024,
+  "type": "article",
+  "citations": 7,
+  "url": "https://doi.org/10.1103/physrevlett.133.088202",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1039/9781837674589-00032",
+  "title": "Quantitative Microscopy of Active Colloids",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   }
+  ],
+  "journal": "Active Colloids",
+  "volume": "",
+  "pages": "32-63",
+  "year": 2024,
+  "type": "chapter",
+  "citations": 1,
+  "url": "https://doi.org/10.1039/9781837674589-00032",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1088/2515-7639/ad06cc",
+  "title": "Soft matter roadmap *",
+  "authors": [
+   {
+    "name": "J.-L. Barrat",
+    "me": false
+   },
+   {
+    "name": "E. Del Gado",
+    "me": false
+   },
+   {
+    "name": "S. U. Egelhaaf",
+    "me": false
+   },
+   {
+    "name": "X. Mao",
+    "me": false
+   },
+   {
+    "name": "M. Dijkstra",
+    "me": false
+   },
+   {
+    "name": "D. J. Pine",
+    "me": false
+   },
+   {
+    "name": "S. K. Kumar",
+    "me": false
+   },
+   {
+    "name": "K. Bishop",
+    "me": false
+   },
+   {
+    "name": "O. Gang",
+    "me": false
+   },
+   {
+    "name": "A. Obermeyer",
+    "me": false
+   },
+   {
+    "name": "C. M. Papadakis",
+    "me": false
+   },
+   {
+    "name": "C. Tsitsilianis",
+    "me": false
+   },
+   {
+    "name": "I. I. Smalyukh",
+    "me": false
+   },
+   {
+    "name": "A. Hourlier-Fargette",
+    "me": false
+   },
+   {
+    "name": "S. Andrieux",
+    "me": false
+   },
+   {
+    "name": "W. Drenckhan",
+    "me": false
+   },
+   {
+    "name": "N. Wagner",
+    "me": false
+   },
+   {
+    "name": "R. P. Murphy",
+    "me": false
+   },
+   {
+    "name": "E. R. Weeks",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "Y. Han",
+    "me": false
+   },
+   {
+    "name": "L. Cipelletti",
+    "me": false
+   },
+   {
+    "name": "L. Ramos",
+    "me": false
+   },
+   {
+    "name": "W. C. K. Poon",
+    "me": false
+   },
+   {
+    "name": "J. A. Richards",
+    "me": false
+   },
+   {
+    "name": "I. Cohen",
+    "me": false
+   },
+   {
+    "name": "E. M. Furst",
+    "me": false
+   },
+   {
+    "name": "A. Nelson",
+    "me": false
+   },
+   {
+    "name": "S. L. Craig",
+    "me": false
+   },
+   {
+    "name": "R. Ganapathy",
+    "me": false
+   },
+   {
+    "name": "A. K. Sood",
+    "me": false
+   },
+   {
+    "name": "F. Sciortino",
+    "me": false
+   },
+   {
+    "name": "M. Mungan",
+    "me": false
+   },
+   {
+    "name": "S. Sastry",
+    "me": false
+   },
+   {
+    "name": "C. Scheibner",
+    "me": false
+   },
+   {
+    "name": "M. Fruchart",
+    "me": false
+   },
+   {
+    "name": "V. Vitelli",
+    "me": false
+   },
+   {
+    "name": "S. A. Ridout",
+    "me": false
+   },
+   {
+    "name": "M. Stern",
+    "me": false
+   },
+   {
+    "name": "I. Tah",
+    "me": false
+   },
+   {
+    "name": "G. Zhang",
+    "me": false
+   },
+   {
+    "name": "A. J. Liu",
+    "me": false
+   },
+   {
+    "name": "C. O. Osuji",
+    "me": false
+   },
+   {
+    "name": "Y. Xu",
+    "me": false
+   },
+   {
+    "name": "H. M. Shewan",
+    "me": false
+   },
+   {
+    "name": "J. R. Stokes",
+    "me": false
+   },
+   {
+    "name": "M. Merkel",
+    "me": false
+   },
+   {
+    "name": "P. Ronceray",
+    "me": false
+   },
+   {
+    "name": "J.-F. Rupprecht",
+    "me": false
+   },
+   {
+    "name": "O. Matsarskaia",
+    "me": false
+   },
+   {
+    "name": "F. Schreiber",
+    "me": false
+   },
+   {
+    "name": "F. Roosen-Runge",
+    "me": false
+   },
+   {
+    "name": "M.-E. Aubin-Tam",
+    "me": false
+   },
+   {
+    "name": "G. H. Koenderink",
+    "me": false
+   },
+   {
+    "name": "R. M. Espinosa-Marzal",
+    "me": false
+   },
+   {
+    "name": "J. Yus",
+    "me": false
+   },
+   {
+    "name": "J. Kwon",
+    "me": false
+   }
+  ],
+  "journal": "Journal of Physics: Materials",
+  "volume": "7",
+  "pages": "012501",
+  "year": 2024,
+  "type": "review",
+  "citations": 45,
+  "url": "https://doi.org/10.1088/2515-7639/ad06cc",
+  "tags": [
+   "review"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": null,
+  "title": "Yielding under the microscope",
+  "authors": [
+   {
+    "name": "P. Edera",
+    "me": false
+   },
+   {
+    "name": "M. Brizioli",
+    "me": false
+   },
+   {
+    "name": "M. Madani",
+    "me": false
+   },
+   {
+    "name": "E. Ngouamba",
+    "me": false
+   },
+   {
+    "name": "P. Coussot",
+    "me": false
+   },
+   {
+    "name": "V. Trappe",
+    "me": false
+   },
+   {
+    "name": "G. Petekidis",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "arXiv:2402.00221",
+  "volume": "",
+  "pages": "",
+  "year": 2024,
+  "type": "preprint",
+  "citations": null,
+  "url": "https://doi.org/10.48550/arXiv.2402.00221",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1038/s41526-022-00246-z",
+  "title": "Diffusion in liquid mixtures",
+  "authors": [
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "H. Bataller",
+    "me": false
+   },
+   {
+    "name": "M. M. Bou-Ali",
+    "me": false
+   },
+   {
+    "name": "M. Carpineti",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "F. Croccolo",
+    "me": false
+   },
+   {
+    "name": "S. U. Egelhaaf",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "C. Giraudet",
+    "me": false
+   },
+   {
+    "name": "G. Guevara-Carrion",
+    "me": false
+   },
+   {
+    "name": "D. Horváth",
+    "me": false
+   },
+   {
+    "name": "W. Köhler",
+    "me": false
+   },
+   {
+    "name": "A. Mialdun",
+    "me": false
+   },
+   {
+    "name": "J. Porter",
+    "me": false
+   },
+   {
+    "name": "K. Schwarzenberger",
+    "me": false
+   },
+   {
+    "name": "V. Shevtsova",
+    "me": false
+   },
+   {
+    "name": "A. De Wit",
+    "me": false
+   }
+  ],
+  "journal": "npj Microgravity",
+  "volume": "9",
+  "pages": "1",
+  "year": 2023,
+  "type": "review",
+  "citations": 39,
+  "url": "https://doi.org/10.1038/s41526-022-00246-z",
+  "tags": [
+   "review"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.3389/fphy.2023.1173632",
+  "title": "Editorial: Probing out-of-equilibrium soft matter",
+  "authors": [
+   {
+    "name": "I. Bischofberger",
+    "me": false
+   },
+   {
+    "name": "R. Castañeda-Priego",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "L. Cipelletti",
+    "me": false
+   },
+   {
+    "name": "E. D. Gado",
+    "me": false
+   },
+   {
+    "name": "A. Fernandez-Nieves",
+    "me": false
+   }
+  ],
+  "journal": "Frontiers in Physics",
+  "volume": "11",
+  "pages": "1173632",
+  "year": 2023,
+  "type": "review",
+  "citations": 3,
+  "url": "https://doi.org/10.3389/fphy.2023.1173632",
+  "tags": [
+   "review"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1016/j.physa.2023.128653",
+  "title": "Introduction to viscoelasticity and plasticity, and their relation to the underlying microscopic dynamics in soft matter systems",
+  "authors": [
+   {
+    "name": "C. Roberto",
+    "me": false
+   },
+   {
+    "name": "T. Véronique",
+    "me": false
+   }
+  ],
+  "journal": "Physica A: Statistical Mechanics and its Applications",
+  "volume": "631",
+  "pages": "128653",
+  "year": 2023,
+  "type": "review",
+  "citations": 13,
+  "url": "https://doi.org/10.1016/j.physa.2023.128653",
+  "tags": [
+   "review"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.3389/978-2-83252-035-2",
+  "title": "Probing Out-of-Equilibrium Soft Matter",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "A. Fernandez-Nieves",
+    "me": false
+   },
+   {
+    "name": "E. Del Gado",
+    "me": false
+   },
+   {
+    "name": "I. Bischofberger",
+    "me": false
+   },
+   {
+    "name": "R. Castañeda-Priego",
+    "me": false
+   },
+   {
+    "name": "L. Cipelletti",
+    "me": false
+   }
+  ],
+  "journal": "Frontiers Research Topics",
+  "volume": "",
+  "pages": "",
+  "year": 2023,
+  "type": "book",
+  "citations": 0,
+  "url": "https://doi.org/10.3389/978-2-83252-035-2",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1021/acs.macromol.3c00782",
+  "title": "Protein Sizing with Differential Dynamic Microscopy",
+  "authors": [
+   {
+    "name": "C. Guidolin",
+    "me": false
+   },
+   {
+    "name": "C. Heim",
+    "me": false
+   },
+   {
+    "name": "N. B. P. Adams",
+    "me": false
+   },
+   {
+    "name": "P. Baaske",
+    "me": false
+   },
+   {
+    "name": "V. Rondelli",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   }
+  ],
+  "journal": "Macromolecules",
+  "volume": "56",
+  "pages": "8290-8297",
+  "year": 2023,
+  "type": "article",
+  "citations": 15,
+  "url": "https://doi.org/10.1021/acs.macromol.3c00782",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1038/s41563-022-01431-x",
+  "title": "Tissue fluidification promotes a cGAS–STING cytosolic DNA response in invasive breast cancer",
+  "authors": [
+   {
+    "name": "E. Frittoli",
+    "me": false
+   },
+   {
+    "name": "A. Palamidessi",
+    "me": false
+   },
+   {
+    "name": "F. Iannelli",
+    "me": false
+   },
+   {
+    "name": "F. Zanardi",
+    "me": false
+   },
+   {
+    "name": "S. Villa",
+    "me": false
+   },
+   {
+    "name": "L. Barzaghi",
+    "me": false
+   },
+   {
+    "name": "H. Abdo",
+    "me": false
+   },
+   {
+    "name": "V. Cancila",
+    "me": false
+   },
+   {
+    "name": "G. V. Beznoussenko",
+    "me": false
+   },
+   {
+    "name": "G. Della Chiara",
+    "me": false
+   },
+   {
+    "name": "M. Pagani",
+    "me": false
+   },
+   {
+    "name": "C. Malinverno",
+    "me": false
+   },
+   {
+    "name": "D. Bhattacharya",
+    "me": false
+   },
+   {
+    "name": "F. Pisati",
+    "me": false
+   },
+   {
+    "name": "W. Yu",
+    "me": false
+   },
+   {
+    "name": "V. Galimberti",
+    "me": false
+   },
+   {
+    "name": "G. Bonizzi",
+    "me": false
+   },
+   {
+    "name": "E. Martini",
+    "me": false
+   },
+   {
+    "name": "A. A. Mironov",
+    "me": false
+   },
+   {
+    "name": "U. Gioia",
+    "me": false
+   },
+   {
+    "name": "F. Ascione",
+    "me": false
+   },
+   {
+    "name": "Q. Li",
+    "me": false
+   },
+   {
+    "name": "K. Havas",
+    "me": false
+   },
+   {
+    "name": "S. Magni",
+    "me": false
+   },
+   {
+    "name": "Z. Lavagnino",
+    "me": false
+   },
+   {
+    "name": "F. A. Pennacchio",
+    "me": false
+   },
+   {
+    "name": "P. Maiuri",
+    "me": false
+   },
+   {
+    "name": "S. Caponi",
+    "me": false
+   },
+   {
+    "name": "M. Mattarelli",
+    "me": false
+   },
+   {
+    "name": "S. Martino",
+    "me": false
+   },
+   {
+    "name": "F. d’Adda di Fagagna",
+    "me": false
+   },
+   {
+    "name": "C. Rossi",
+    "me": false
+   },
+   {
+    "name": "M. Lucioni",
+    "me": false
+   },
+   {
+    "name": "R. Tancredi",
+    "me": false
+   },
+   {
+    "name": "P. Pedrazzoli",
+    "me": false
+   },
+   {
+    "name": "A. Vecchione",
+    "me": false
+   },
+   {
+    "name": "C. Petrini",
+    "me": false
+   },
+   {
+    "name": "F. Ferrari",
+    "me": false
+   },
+   {
+    "name": "C. Lanzuolo",
+    "me": false
+   },
+   {
+    "name": "G. Bertalot",
+    "me": false
+   },
+   {
+    "name": "G. Nader",
+    "me": false
+   },
+   {
+    "name": "M. Foiani",
+    "me": false
+   },
+   {
+    "name": "M. Piel",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "C. Tripodo",
+    "me": false
+   },
+   {
+    "name": "G. Scita",
+    "me": false
+   }
+  ],
+  "journal": "Nature Materials",
+  "volume": "22",
+  "pages": "644-655",
+  "year": 2023,
+  "type": "article",
+  "citations": 84,
+  "url": "https://doi.org/10.1038/s41563-022-01431-x",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1002/advs.202102148",
+  "title": "Bistability of Dielectrically Anisotropic Nematic Crystals and the Adaptation of Endothelial Collectives to Stress Fields",
+  "authors": [
+   {
+    "name": "G. Stefopoulos",
+    "me": false
+   },
+   {
+    "name": "T. Lendenmann",
+    "me": false
+   },
+   {
+    "name": "T. M. Schutzius",
+    "me": false
+   },
+   {
+    "name": "C. Giampietro",
+    "me": false
+   },
+   {
+    "name": "T. Roy",
+    "me": false
+   },
+   {
+    "name": "N. Chala",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "D. Poulikakos",
+    "me": false
+   },
+   {
+    "name": "A. Ferrari",
+    "me": false
+   }
+  ],
+  "journal": "Advanced Science",
+  "volume": "9",
+  "pages": "2102148",
+  "year": 2022,
+  "type": "article",
+  "citations": 3,
+  "url": "https://doi.org/10.1002/advs.202102148",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1002/pol.20210217",
+  "title": "Differential dynamic microscopy for the characterization of polymer systems",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "M. E. Helgeson",
+    "me": false
+   }
+  ],
+  "journal": "Journal of Polymer Science",
+  "volume": "60",
+  "pages": "1079-1089",
+  "year": 2022,
+  "type": "review",
+  "citations": 52,
+  "url": "https://doi.org/10.1002/pol.20210217",
+  "tags": [
+   "review"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1364/oe.459708",
+  "title": "Echo speckle imaging of dynamic processes in soft materials",
+  "authors": [
+   {
+    "name": "S. Zhang",
+    "me": false
+   },
+   {
+    "name": "J. Peuser",
+    "me": false
+   },
+   {
+    "name": "C. Zhang",
+    "me": false
+   },
+   {
+    "name": "F. Cardinaux",
+    "me": false
+   },
+   {
+    "name": "P. Zakharov",
+    "me": false
+   },
+   {
+    "name": "S. E. Skipetrov",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "F. Scheffold",
+    "me": false
+   }
+  ],
+  "journal": "Optics Express",
+  "volume": "30",
+  "pages": "30991",
+  "year": 2022,
+  "type": "article",
+  "citations": 1,
+  "url": "https://doi.org/10.1364/oe.459708",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1063/5.0087590",
+  "title": "Multiscale heterogeneous dynamics in two-dimensional glassy colloids",
+  "authors": [
+   {
+    "name": "R. Pastore",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "F. Greco",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "The Journal of Chemical Physics",
+  "volume": "156",
+  "pages": "164906",
+  "year": 2022,
+  "type": "article",
+  "citations": 9,
+  "url": "https://doi.org/10.1063/5.0087590",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1140/epje/s10189-022-00189-z",
+  "title": "Non-invasive measurement of nuclear relative stiffness from quantitative analysis of microscopy data",
+  "authors": [
+   {
+    "name": "S. Villa",
+    "me": false
+   },
+   {
+    "name": "A. Palamidessi",
+    "me": false
+   },
+   {
+    "name": "E. Frittoli",
+    "me": false
+   },
+   {
+    "name": "G. Scita",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   }
+  ],
+  "journal": "The European Physical Journal E",
+  "volume": "45",
+  "pages": "50",
+  "year": 2022,
+  "type": "article",
+  "citations": 4,
+  "url": "https://doi.org/10.1140/epje/s10189-022-00189-z",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1080/13538322.2021.1951456",
+  "title": "Performance indicators in higher education quality management of learning and teaching: lessons from a benchlearning exercise of six European universities",
+  "authors": [
+   {
+    "name": "G. Barbato",
+    "me": false
+   },
+   {
+    "name": "J. Bugaj",
+    "me": false
+   },
+   {
+    "name": "D. F. Campbell",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "P. Ciesielski",
+    "me": false
+   },
+   {
+    "name": "A. Feliks-Długosz",
+    "me": false
+   },
+   {
+    "name": "M. Milani",
+    "me": false
+   },
+   {
+    "name": "A. Pausits",
+    "me": false
+   }
+  ],
+  "journal": "Quality in Higher Education",
+  "volume": "28",
+  "pages": "82-105",
+  "year": 2022,
+  "type": "article",
+  "citations": 10,
+  "url": "https://doi.org/10.1080/13538322.2021.1951456",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.3389/fphy.2022.1013805",
+  "title": "Quantitative rheo-microscopy of soft matter",
+  "authors": [
+   {
+    "name": "S. Villa",
+    "me": false
+   },
+   {
+    "name": "P. Edera",
+    "me": false
+   },
+   {
+    "name": "M. Brizioli",
+    "me": false
+   },
+   {
+    "name": "V. Trappe",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Frontiers in Physics",
+  "volume": "10",
+  "pages": "1013805",
+  "year": 2022,
+  "type": "article",
+  "citations": 12,
+  "url": "https://doi.org/10.3389/fphy.2022.1013805",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.3389/fphy.2022.893777",
+  "title": "Reciprocal Space Study of Brownian Yet Non-Gaussian Diffusion of Small Tracers in a Hard-Sphere Glass",
+  "authors": [
+   {
+    "name": "M. Brizioli",
+    "me": false
+   },
+   {
+    "name": "T. Sentjabrskaja",
+    "me": false
+   },
+   {
+    "name": "S. U. Egelhaaf",
+    "me": false
+   },
+   {
+    "name": "M. Laurati",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   }
+  ],
+  "journal": "Frontiers in Physics",
+  "volume": "10",
+  "pages": "893777",
+  "year": 2022,
+  "type": "article",
+  "citations": 17,
+  "url": "https://doi.org/10.3389/fphy.2022.893777",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1039/d1sm01068a",
+  "title": "Deformation profiles and microscopic dynamics of complex fluids during oscillatory shear experiments",
+  "authors": [
+   {
+    "name": "P. Edera",
+    "me": false
+   },
+   {
+    "name": "M. Brizioli",
+    "me": false
+   },
+   {
+    "name": "G. Zanchetta",
+    "me": false
+   },
+   {
+    "name": "G. Petekidis",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Soft Matter",
+  "volume": "17",
+  "pages": "8553-8566",
+  "year": 2021,
+  "type": "article",
+  "citations": 25,
+  "url": "https://doi.org/10.1039/d1sm01068a",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1039/d0sm01837f",
+  "title": "Disentangling collective motion and local rearrangements in 2D and 3D cell assemblies",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "S. Villa",
+    "me": false
+   },
+   {
+    "name": "A. Palamidessi",
+    "me": false
+   },
+   {
+    "name": "E. Frittoli",
+    "me": false
+   },
+   {
+    "name": "G. Scita",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   }
+  ],
+  "journal": "Soft Matter",
+  "volume": "17",
+  "pages": "3550-3559",
+  "year": 2021,
+  "type": "article",
+  "citations": 23,
+  "url": "https://doi.org/10.1039/d0sm01837f",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1038/s41467-021-25809-8",
+  "title": "Hecw controls oogenesis and neuronal homeostasis by promoting the liquid state of ribonucleoprotein particles",
+  "authors": [
+   {
+    "name": "V. Fajner",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "S. Sala",
+    "me": false
+   },
+   {
+    "name": "A. Oldani",
+    "me": false
+   },
+   {
+    "name": "E. Martini",
+    "me": false
+   },
+   {
+    "name": "F. Napoletano",
+    "me": false
+   },
+   {
+    "name": "D. Parazzoli",
+    "me": false
+   },
+   {
+    "name": "G. Cesare",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "E. Maspero",
+    "me": false
+   },
+   {
+    "name": "T. Vaccari",
+    "me": false
+   },
+   {
+    "name": "S. Polo",
+    "me": false
+   }
+  ],
+  "journal": "Nature Communications",
+  "volume": "12",
+  "pages": "5488",
+  "year": 2021,
+  "type": "article",
+  "citations": 17,
+  "url": "https://doi.org/10.1038/s41467-021-25809-8",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1088/1361-648x/abb684",
+  "title": "Multiple dynamic regimes in a coarsening foam",
+  "authors": [
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "V. Trappe",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Journal of Physics: Condensed Matter",
+  "volume": "33",
+  "pages": "024002",
+  "year": 2021,
+  "type": "article",
+  "citations": 14,
+  "url": "https://doi.org/10.1088/1361-648x/abb684",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1140/epje/s10189-021-00063-4",
+  "title": "Probing roto-translational diffusion of small anisotropic colloidal particles with a bright-field microscope",
+  "authors": [
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "A. Pal",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "The European Physical Journal E",
+  "volume": "44",
+  "pages": "61",
+  "year": 2021,
+  "type": "article",
+  "citations": 9,
+  "url": "https://doi.org/10.1140/epje/s10189-021-00063-4",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1103/physrevlett.124.088005",
+  "title": "Emergence of Multiscale Dynamics in Colloidal Gels",
+  "authors": [
+   {
+    "name": "J. H. Cho",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "I. Bischofberger",
+    "me": false
+   }
+  ],
+  "journal": "Physical Review Letters",
+  "volume": "124",
+  "pages": "088005",
+  "year": 2020,
+  "type": "article",
+  "citations": 49,
+  "url": "https://doi.org/10.1103/physrevlett.124.088005",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1007/s12217-020-09815-x",
+  "title": "Giant Fluctuations Induced by Thermal Diffusion in Complex Liquids",
+  "authors": [
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "P. Baaske",
+    "me": false
+   },
+   {
+    "name": "H. Bataller",
+    "me": false
+   },
+   {
+    "name": "S. Bolis",
+    "me": false
+   },
+   {
+    "name": "M. Braibanti",
+    "me": false
+   },
+   {
+    "name": "M. Carpineti",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "F. Croccolo",
+    "me": false
+   },
+   {
+    "name": "J.-L. Dewandel",
+    "me": false
+   },
+   {
+    "name": "A. Donev",
+    "me": false
+   },
+   {
+    "name": "L. García-Fernández",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "R. Haslinger",
+    "me": false
+   },
+   {
+    "name": "S. Hens",
+    "me": false
+   },
+   {
+    "name": "M. Knauer",
+    "me": false
+   },
+   {
+    "name": "W. Köhler",
+    "me": false
+   },
+   {
+    "name": "E. Kufner",
+    "me": false
+   },
+   {
+    "name": "J. M. Ortiz de Zárate",
+    "me": false
+   },
+   {
+    "name": "J. Peeters",
+    "me": false
+   },
+   {
+    "name": "C. J. Schwarz",
+    "me": false
+   },
+   {
+    "name": "I. Silkina",
+    "me": false
+   },
+   {
+    "name": "S. Xu",
+    "me": false
+   },
+   {
+    "name": "D. Zapf",
+    "me": false
+   }
+  ],
+  "journal": "Microgravity Science and Technology",
+  "volume": "32",
+  "pages": "873-887",
+  "year": 2020,
+  "type": "article",
+  "citations": 26,
+  "url": "https://doi.org/10.1007/s12217-020-09815-x",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.3934/mine.2020011",
+  "title": "MicroMotility: State of the art, recent accomplishments and perspectives on the mathematical modeling of bio-motility at microscopic scales",
+  "authors": [
+   {
+    "name": "D. Agostinelli",
+    "me": false
+   },
+   {
+    "name": "1 SISSA–International School for Advanced Studies, 34136 Trieste, Italy",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "J. C. Del Alamo",
+    "me": false
+   },
+   {
+    "name": "A. DeSimone",
+    "me": false
+   },
+   {
+    "name": "S. Höhn",
+    "me": false
+   },
+   {
+    "name": "C. Micheletti",
+    "me": false
+   },
+   {
+    "name": "G. Noselli",
+    "me": false
+   },
+   {
+    "name": "E. Sharon",
+    "me": false
+   },
+   {
+    "name": "J. Yeomans",
+    "me": false
+   },
+   {
+    "name": "2 Dip. Biotecnologie Mediche e Medicina Traslazionale, Università degli Studi di Milano, 20090 Segrate (MI), Italy",
+    "me": false
+   },
+   {
+    "name": "3 Mechanical and Aerospace Engineering Dept., University of California San Diego, 9500 Gilman Drive, La Jolla CA, USA",
+    "me": false
+   },
+   {
+    "name": "4 The BioRobotics Institute, Scuola Superiore Sant’Anna, 56127 Pisa, Italy",
+    "me": false
+   },
+   {
+    "name": "5 DAMTP, University of Cambridge, UK",
+    "me": false
+   },
+   {
+    "name": "6 The Racah Institute of Physics, The Hebrew University of Jerusalem, Israel",
+    "me": false
+   },
+   {
+    "name": "7 The Rudolf Peierls Centre for Theoretical Physics, University of Oxford, UK",
+    "me": false
+   }
+  ],
+  "journal": "Mathematics in Engineering",
+  "volume": "2",
+  "pages": "230-252",
+  "year": 2020,
+  "type": "review",
+  "citations": 4,
+  "url": "https://doi.org/10.3934/mine.2020011",
+  "tags": [
+   "review"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1140/epje/i2019-11849-0",
+  "title": "European Space Agency experiments on thermodiffusion of fluid mixtures in space",
+  "authors": [
+   {
+    "name": "M. Braibanti",
+    "me": false
+   },
+   {
+    "name": "P. A. Artola",
+    "me": false
+   },
+   {
+    "name": "P. Baaske",
+    "me": false
+   },
+   {
+    "name": "H. Bataller",
+    "me": false
+   },
+   {
+    "name": "J. P. Bazile",
+    "me": false
+   },
+   {
+    "name": "M. M. Bou-Ali",
+    "me": false
+   },
+   {
+    "name": "D. S. Cannell",
+    "me": false
+   },
+   {
+    "name": "M. Carpineti",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "F. Croccolo",
+    "me": false
+   },
+   {
+    "name": "J. Diaz",
+    "me": false
+   },
+   {
+    "name": "A. Donev",
+    "me": false
+   },
+   {
+    "name": "A. Errarte",
+    "me": false
+   },
+   {
+    "name": "J. M. Ezquerro",
+    "me": false
+   },
+   {
+    "name": "A. Frutos-Pastor",
+    "me": false
+   },
+   {
+    "name": "Q. Galand",
+    "me": false
+   },
+   {
+    "name": "G. Galliero",
+    "me": false
+   },
+   {
+    "name": "Y. Gaponenko",
+    "me": false
+   },
+   {
+    "name": "L. García-Fernández",
+    "me": false
+   },
+   {
+    "name": "J. Gavaldá",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   },
+   {
+    "name": "C. Giraudet",
+    "me": false
+   },
+   {
+    "name": "H. Hoang",
+    "me": false
+   },
+   {
+    "name": "E. Kufner",
+    "me": false
+   },
+   {
+    "name": "W. Köhler",
+    "me": false
+   },
+   {
+    "name": "E. Lapeira",
+    "me": false
+   },
+   {
+    "name": "A. Laverón-Simavilla",
+    "me": false
+   },
+   {
+    "name": "J. C. Legros",
+    "me": false
+   },
+   {
+    "name": "I. Lizarraga",
+    "me": false
+   },
+   {
+    "name": "T. Lyubimova",
+    "me": false
+   },
+   {
+    "name": "S. Mazzoni",
+    "me": false
+   },
+   {
+    "name": "N. Melville",
+    "me": false
+   },
+   {
+    "name": "A. Mialdun",
+    "me": false
+   },
+   {
+    "name": "O. Minster",
+    "me": false
+   },
+   {
+    "name": "F. Montel",
+    "me": false
+   },
+   {
+    "name": "F. J. Molster",
+    "me": false
+   },
+   {
+    "name": "J. M. Ortiz de Zárate",
+    "me": false
+   },
+   {
+    "name": "J. Rodríguez",
+    "me": false
+   },
+   {
+    "name": "B. Rousseau",
+    "me": false
+   },
+   {
+    "name": "X. Ruiz",
+    "me": false
+   },
+   {
+    "name": "I. I. Ryzhkov",
+    "me": false
+   },
+   {
+    "name": "M. Schraml",
+    "me": false
+   },
+   {
+    "name": "V. Shevtsova",
+    "me": false
+   },
+   {
+    "name": "C. J. Takacs",
+    "me": false
+   },
+   {
+    "name": "T. Triller",
+    "me": false
+   },
+   {
+    "name": "S. Van Vaerenbergh",
+    "me": false
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "A. Verga",
+    "me": false
+   },
+   {
+    "name": "R. Vermorel",
+    "me": false
+   },
+   {
+    "name": "V. Vesovic",
+    "me": false
+   },
+   {
+    "name": "V. Yasnou",
+    "me": false
+   },
+   {
+    "name": "S. Xu",
+    "me": false
+   },
+   {
+    "name": "D. Zapf",
+    "me": false
+   },
+   {
+    "name": "K. Zhang",
+    "me": false
+   }
+  ],
+  "journal": "The European Physical Journal E",
+  "volume": "42",
+  "pages": "86",
+  "year": 2019,
+  "type": "article",
+  "citations": 40,
+  "url": "https://doi.org/10.1140/epje/i2019-11849-0",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": null,
+  "title": "Fisica per medicina: con applicazioni fisiologiche, diagnostiche e terapeutiche",
+  "authors": [
+   {
+    "name": "G. Bellini",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "G. Manuzio",
+    "me": false
+   },
+   {
+    "name": "F. Marzari",
+    "me": false
+   },
+   {
+    "name": "L. Repetto",
+    "me": false
+   },
+   {
+    "name": "L. Zennaro",
+    "me": false
+   }
+  ],
+  "journal": "Piccin (textbook)",
+  "volume": "",
+  "pages": "",
+  "year": 2019,
+  "type": "book",
+  "citations": null,
+  "url": "https://www.piccin.it/it/fisica/2411-fisica-per-medicina-con-applicazioni-fisiologiche-diagnostiche-e-terapeutiche-9788829929580.html",
+  "tags": [],
+  "source": "orcid",
+  "note": "ISBN 978-88-299-2958-0"
+ },
+ {
+  "doi": "10.1038/s41556-019-0392-4",
+  "title": "Functional transcription promoters at DNA double-strand breaks mediate RNA-driven phase separation of damage-response factors",
+  "authors": [
+   {
+    "name": "F. Pessina",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "Y. Yin",
+    "me": false
+   },
+   {
+    "name": "U. Gioia",
+    "me": false
+   },
+   {
+    "name": "V. Vitelli",
+    "me": false
+   },
+   {
+    "name": "A. Galbiati",
+    "me": false
+   },
+   {
+    "name": "S. Barozzi",
+    "me": false
+   },
+   {
+    "name": "M. Garre",
+    "me": false
+   },
+   {
+    "name": "A. Oldani",
+    "me": false
+   },
+   {
+    "name": "A. Flaus",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "D. Parazzoli",
+    "me": false
+   },
+   {
+    "name": "E. Rothenberg",
+    "me": false
+   },
+   {
+    "name": "F. d’Adda di Fagagna",
+    "me": false
+   }
+  ],
+  "journal": "Nature Cell Biology",
+  "volume": "21",
+  "pages": "1286-1299",
+  "year": 2019,
+  "type": "article",
+  "citations": 368,
+  "url": "https://doi.org/10.1038/s41556-019-0392-4",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": null,
+  "title": "Problemi di Fisica Biomedica",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "EdiSES (textbook)",
+  "volume": "",
+  "pages": "",
+  "year": 2019,
+  "type": "book",
+  "citations": null,
+  "url": "https://www.edises.it/universitario/cerbino-problemi-di-fisica-biomedica.html",
+  "tags": [],
+  "source": "orcid",
+  "note": "ISBN 978-88-331-9039-6"
+ },
+ {
+  "doi": "10.1038/s41563-019-0425-1",
+  "title": "Unjamming overcomes kinetic and proliferation arrest in terminally differentiated cells and promotes collective motility of carcinoma",
+  "authors": [
+   {
+    "name": "A. Palamidessi",
+    "me": false
+   },
+   {
+    "name": "C. Malinverno",
+    "me": false
+   },
+   {
+    "name": "E. Frittoli",
+    "me": false
+   },
+   {
+    "name": "S. Corallino",
+    "me": false
+   },
+   {
+    "name": "E. Barbieri",
+    "me": false
+   },
+   {
+    "name": "S. Sigismund",
+    "me": false
+   },
+   {
+    "name": "G. V. Beznoussenko",
+    "me": false
+   },
+   {
+    "name": "E. Martini",
+    "me": false
+   },
+   {
+    "name": "M. Garre",
+    "me": false
+   },
+   {
+    "name": "I. Ferrara",
+    "me": false
+   },
+   {
+    "name": "C. Tripodo",
+    "me": false
+   },
+   {
+    "name": "F. Ascione",
+    "me": false
+   },
+   {
+    "name": "E. A. Cavalcanti-Adam",
+    "me": false
+   },
+   {
+    "name": "Q. Li",
+    "me": false
+   },
+   {
+    "name": "P. P. Di Fiore",
+    "me": false
+   },
+   {
+    "name": "D. Parazzoli",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "G. Scita",
+    "me": false
+   }
+  ],
+  "journal": "Nature Materials",
+  "volume": "18",
+  "pages": "1252-1263",
+  "year": 2019,
+  "type": "article",
+  "citations": 187,
+  "url": "https://doi.org/10.1038/s41563-019-0425-1",
+  "tags": [
+   "selected"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1088/1361-648x/aa9bc5",
+  "title": "Dark field differential dynamic microscopy enables accurate characterization of the roto-translational dynamics of bacteria and colloidal clusters",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "D. Piotti",
+    "me": false
+   },
+   {
+    "name": "M. Buscaglia",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   }
+  ],
+  "journal": "Journal of Physics: Condensed Matter",
+  "volume": "30",
+  "pages": "025901",
+  "year": 2018,
+  "type": "article",
+  "citations": 24,
+  "url": "https://doi.org/10.1088/1361-648x/aa9bc5",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1039/c8sm00126j",
+  "title": "Flocking transitions in confluent tissues",
+  "authors": [
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "M. Paoluzzi",
+    "me": false
+   },
+   {
+    "name": "M. Macchi",
+    "me": false
+   },
+   {
+    "name": "D. Bi",
+    "me": false
+   },
+   {
+    "name": "G. Scita",
+    "me": false
+   },
+   {
+    "name": "M. L. Manning",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "M. C. Marchetti",
+    "me": false
+   }
+  ],
+  "journal": "Soft Matter",
+  "volume": "14",
+  "pages": "3471-3477",
+  "year": 2018,
+  "type": "article",
+  "citations": 170,
+  "url": "https://doi.org/10.1039/c8sm00126j",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": null,
+  "title": "Le sfide di una didattica moderna: nuovi approcci e motodologie presso la Statale di Milano",
+  "authors": [
+   {
+    "name": "M.Milani",
+    "me": false
+   },
+   {
+    "name": "I.Pinelli",
+    "me": false
+   },
+   {
+    "name": "G. De Luca",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "La formazione nell'era delle Smart City, Ed. Cisalpino, ISBN: 8820511045",
+  "volume": "",
+  "pages": "",
+  "year": 2018,
+  "type": "chapter",
+  "citations": null,
+  "url": "https://ucrisportal.univie.ac.at/en/publications/d7d159a8-8d5a-4a8e-9dc3-7971a6f8586f",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1016/j.cocis.2018.03.003",
+  "title": "Quantitative optical microscopy of colloids: The legacy of Jean Perrin",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Current Opinion in Colloid & Interface Science",
+  "volume": "34",
+  "pages": "47-58",
+  "year": 2018,
+  "type": "review",
+  "citations": 16,
+  "url": "https://doi.org/10.1016/j.cocis.2018.03.003",
+  "tags": [
+   "review"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.3389/fphy.2018.00120",
+  "title": "Tracking-Free Determination of Single-Cell Displacements and Division Rates in Confluent Monolayers",
+  "authors": [
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "C. Malinverno",
+    "me": false
+   },
+   {
+    "name": "G. Scita",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Frontiers in Physics",
+  "volume": "6",
+  "pages": "120",
+  "year": 2018,
+  "type": "article",
+  "citations": 41,
+  "url": "https://doi.org/10.3389/fphy.2018.00120",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1038/s41467-017-01414-6",
+  "title": "Active diffusion and advection in Drosophila oocytes result from the interplay of actin and microtubules",
+  "authors": [
+   {
+    "name": "M. Drechsler",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "I. M. Palacios",
+    "me": false
+   }
+  ],
+  "journal": "Nature Communications",
+  "volume": "8",
+  "pages": "1520",
+  "year": 2017,
+  "type": "article",
+  "citations": 60,
+  "url": "https://doi.org/10.1038/s41467-017-01414-6",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1103/physrevmaterials.1.073804",
+  "title": "Differential dynamic microscopy microrheology of soft materials: A tracking-free determination of the frequency-dependent loss and storage moduli",
+  "authors": [
+   {
+    "name": "P. Edera",
+    "me": false
+   },
+   {
+    "name": "D. Bergamini",
+    "me": false
+   },
+   {
+    "name": "V. Trappe",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Physical Review Materials",
+  "volume": "1",
+  "pages": "073804",
+  "year": 2017,
+  "type": "article",
+  "citations": 58,
+  "url": "https://doi.org/10.1103/physrevmaterials.1.073804",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1038/nmat4848",
+  "title": "Endocytic reawakening of motility in jammed epithelia",
+  "authors": [
+   {
+    "name": "C. Malinverno",
+    "me": false
+   },
+   {
+    "name": "S. Corallino",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "M. Bergert",
+    "me": false
+   },
+   {
+    "name": "Q. Li",
+    "me": false
+   },
+   {
+    "name": "M. Leoni",
+    "me": false
+   },
+   {
+    "name": "A. Disanza",
+    "me": false
+   },
+   {
+    "name": "E. Frittoli",
+    "me": false
+   },
+   {
+    "name": "A. Oldani",
+    "me": false
+   },
+   {
+    "name": "E. Martini",
+    "me": false
+   },
+   {
+    "name": "T. Lendenmann",
+    "me": false
+   },
+   {
+    "name": "G. Deflorian",
+    "me": false
+   },
+   {
+    "name": "G. V. Beznoussenko",
+    "me": false
+   },
+   {
+    "name": "D. Poulikakos",
+    "me": false
+   },
+   {
+    "name": "K. H. Ong",
+    "me": false
+   },
+   {
+    "name": "M. Uroz",
+    "me": false
+   },
+   {
+    "name": "X. Trepat",
+    "me": false
+   },
+   {
+    "name": "D. Parazzoli",
+    "me": false
+   },
+   {
+    "name": "P. Maiuri",
+    "me": false
+   },
+   {
+    "name": "W. Yu",
+    "me": false
+   },
+   {
+    "name": "A. Ferrari",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "G. Scita",
+    "me": false
+   }
+  ],
+  "journal": "Nature Materials",
+  "volume": "16",
+  "pages": "587-596",
+  "year": 2017,
+  "type": "article",
+  "citations": 322,
+  "url": "https://doi.org/10.1038/nmat4848",
+  "tags": [
+   "selected"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1088/1361-6463/aa7f8e",
+  "title": "Giant fluctuations and structural effects in a flocking epithelium",
+  "authors": [
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "C. Malinverno",
+    "me": false
+   },
+   {
+    "name": "S. Corallino",
+    "me": false
+   },
+   {
+    "name": "F. Ginelli",
+    "me": false
+   },
+   {
+    "name": "G. Scita",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Journal of Physics D: Applied Physics",
+  "volume": "50",
+  "pages": "384003",
+  "year": 2017,
+  "type": "article",
+  "citations": 51,
+  "url": "https://doi.org/10.1088/1361-6463/aa7f8e",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1140/epje/i2017-11587-3",
+  "title": "Image windowing mitigates edge effects in Differential Dynamic Microscopy",
+  "authors": [
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "P. Edera",
+    "me": false
+   },
+   {
+    "name": "P. J. Lu",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "The European Physical Journal E",
+  "volume": "40",
+  "pages": "97",
+  "year": 2017,
+  "type": "article",
+  "citations": 30,
+  "url": "https://doi.org/10.1140/epje/i2017-11587-3",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1063/1.5001027",
+  "title": "Perspective: Differential dynamic microscopy extracts multi-scale activity in complex fluids and biological systems",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "P. Cicuta",
+    "me": false
+   }
+  ],
+  "journal": "The Journal of Chemical Physics",
+  "volume": "147",
+  "pages": "110901",
+  "year": 2017,
+  "type": "review",
+  "citations": 80,
+  "url": "https://doi.org/10.1063/1.5001027",
+  "tags": [
+   "review",
+   "selected"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1063/1.5004554",
+  "title": "The expanding applications and untapped potential of differential dynamic microscopy",
+  "authors": [
+   {
+    "name": "L. Cockbill",
+    "me": false
+   }
+  ],
+  "journal": "Scilight",
+  "volume": "2017",
+  "pages": "130001",
+  "year": 2017,
+  "type": "review",
+  "citations": 0,
+  "url": "https://doi.org/10.1063/1.5004554",
+  "tags": [
+   "review"
+  ],
+  "source": "manual"
+ },
+ {
+  "doi": "10.1140/epje/i2016-16103-9",
+  "title": "Equilibrium and non-equilibrium concentration fluctuations in a critical binary mixture",
+  "authors": [
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "A. Fornasieri",
+    "me": false
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "The European Physical Journal E",
+  "volume": "39",
+  "pages": "103",
+  "year": 2016,
+  "type": "article",
+  "citations": 23,
+  "url": "https://doi.org/10.1140/epje/i2016-16103-9",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1038/ncomms13191",
+  "title": "Re-entrant DNA gels",
+  "authors": [
+   {
+    "name": "F. Bomboi",
+    "me": false
+   },
+   {
+    "name": "F. Romano",
+    "me": false
+   },
+   {
+    "name": "M. Leo",
+    "me": false
+   },
+   {
+    "name": "J. Fernandez-Castanon",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "T. Bellini",
+    "me": false
+   },
+   {
+    "name": "F. Bordi",
+    "me": false
+   },
+   {
+    "name": "P. Filetici",
+    "me": false
+   },
+   {
+    "name": "F. Sciortino",
+    "me": false
+   }
+  ],
+  "journal": "Nature Communications",
+  "volume": "7",
+  "pages": "13191",
+  "year": 2016,
+  "type": "article",
+  "citations": 83,
+  "url": "https://doi.org/10.1038/ncomms13191",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1007/s12217-016-9501-1",
+  "title": "Shadowgraph Analysis of Non-equilibrium Fluctuations for Measuring Transport Properties in Microgravity in the GRADFLEX Experiment",
+  "authors": [
+   {
+    "name": "F. Croccolo",
+    "me": false
+   },
+   {
+    "name": "C. Giraudet",
+    "me": false
+   },
+   {
+    "name": "H. Bataller",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   }
+  ],
+  "journal": "Microgravity Science and Technology",
+  "volume": "28",
+  "pages": "467-475",
+  "year": 2016,
+  "type": "article",
+  "citations": 42,
+  "url": "https://doi.org/10.1007/s12217-016-9501-1",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1088/0953-8984/28/19/195201",
+  "title": "Simultaneous characterization of rotational and translational diffusion of optically anisotropic particles by optical microscopy",
+  "authors": [
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "C. Haro-Pérez",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Journal of Physics: Condensed Matter",
+  "volume": "28",
+  "pages": "195201",
+  "year": 2016,
+  "type": "article",
+  "citations": 24,
+  "url": "https://doi.org/10.1088/0953-8984/28/19/195201",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1039/c6sm00935b",
+  "title": "Structure and dynamics of concentration fluctuations in a non-equilibrium dense colloidal suspension",
+  "authors": [
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "G. Savorana",
+    "me": false
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Soft Matter",
+  "volume": "12",
+  "pages": "6588-6600",
+  "year": 2016,
+  "type": "article",
+  "citations": 33,
+  "url": "https://doi.org/10.1039/c6sm00935b",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1140/epje/i2016-16119-1",
+  "title": "The NEUF-DIX space project - Non-EquilibriUm Fluctuations during DIffusion in compleX liquids",
+  "authors": [
+   {
+    "name": "P. Baaske",
+    "me": false
+   },
+   {
+    "name": "H. Bataller",
+    "me": false
+   },
+   {
+    "name": "M. Braibanti",
+    "me": false
+   },
+   {
+    "name": "M. Carpineti",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "F. Croccolo",
+    "me": false
+   },
+   {
+    "name": "A. Donev",
+    "me": false
+   },
+   {
+    "name": "W. Köhler",
+    "me": false
+   },
+   {
+    "name": "J. M. Ortiz de Zárate",
+    "me": false
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   }
+  ],
+  "journal": "The European Physical Journal E",
+  "volume": "39",
+  "pages": "119",
+  "year": 2016,
+  "type": "article",
+  "citations": 35,
+  "url": "https://doi.org/10.1140/epje/i2016-16119-1",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1039/c5sm90069g",
+  "title": "Correction: Equilibrium gels of low-valence DNA nanostars: a colloidal model for strong glass formers",
+  "authors": [
+   {
+    "name": "S. Biffi",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "G. Nava",
+    "me": false
+   },
+   {
+    "name": "F. Bomboi",
+    "me": false
+   },
+   {
+    "name": "F. Sciortino",
+    "me": false
+   },
+   {
+    "name": "T. Bellini",
+    "me": false
+   }
+  ],
+  "journal": "Soft Matter",
+  "volume": "11",
+  "pages": "3734-3734",
+  "year": 2015,
+  "type": "article",
+  "citations": 1,
+  "url": "https://doi.org/10.1039/c5sm90069g",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1038/srep14486",
+  "title": "Dynamic scaling for the growth of non-equilibrium fluctuations during thermophoretic diffusion in microgravity",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "Y. Sun",
+    "me": false
+   },
+   {
+    "name": "A. Donev",
+    "me": false
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   }
+  ],
+  "journal": "Scientific Reports",
+  "volume": "5",
+  "pages": "14486",
+  "year": 2015,
+  "type": "article",
+  "citations": 39,
+  "url": "https://doi.org/10.1038/srep14486",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1039/c4sm02144d",
+  "title": "Equilibrium gels of low-valence DNA nanostars: a colloidal model for strong glass formers",
+  "authors": [
+   {
+    "name": "S. Biffi",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "G. Nava",
+    "me": false
+   },
+   {
+    "name": "F. Bomboi",
+    "me": false
+   },
+   {
+    "name": "F. Sciortino",
+    "me": false
+   },
+   {
+    "name": "T. Bellini",
+    "me": false
+   }
+  ],
+  "journal": "Soft Matter",
+  "volume": "11",
+  "pages": "3132-3138",
+  "year": 2015,
+  "type": "article",
+  "citations": 65,
+  "url": "https://doi.org/10.1039/c4sm02144d",
+  "tags": [],
+  "source": "manual"
+ },
+ {
+  "doi": "10.1140/epje/i2015-15064-9",
+  "title": "Equilibrium gels of trivalent DNA-nanostars: Effect of the ionic strength on the dynamics",
+  "authors": [
+   {
+    "name": "F. Bomboi",
+    "me": false
+   },
+   {
+    "name": "S. Biffi",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "T. Bellini",
+    "me": false
+   },
+   {
+    "name": "F. Bordi",
+    "me": false
+   },
+   {
+    "name": "F. Sciortino",
+    "me": false
+   }
+  ],
+  "journal": "The European Physical Journal E",
+  "volume": "38",
+  "pages": "64",
+  "year": 2015,
+  "type": "article",
+  "citations": 36,
+  "url": "https://doi.org/10.1140/epje/i2015-15064-9",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1016/j.bios.2015.06.064",
+  "title": "Multi-spot, label-free immunoassay on reflectionless glass",
+  "authors": [
+   {
+    "name": "M. Salina",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "R. Lanfranco",
+    "me": false
+   },
+   {
+    "name": "E. Ceccarello",
+    "me": false
+   },
+   {
+    "name": "L. Sola",
+    "me": false
+   },
+   {
+    "name": "M. Chiari",
+    "me": false
+   },
+   {
+    "name": "B. Chini",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "T. Bellini",
+    "me": false
+   },
+   {
+    "name": "M. Buscaglia",
+    "me": false
+   }
+  ],
+  "journal": "Biosensors and Bioelectronics",
+  "volume": "74",
+  "pages": "539-545",
+  "year": 2015,
+  "type": "article",
+  "citations": 29,
+  "url": "https://doi.org/10.1016/j.bios.2015.06.064",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1007/978-3-319-09617-9_3",
+  "title": "Portable, Multispot, Label-Free Immunoassay on a Phantom Perfluorinated Plastic",
+  "authors": [
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "M. Salina",
+    "me": false
+   },
+   {
+    "name": "E. Ceccarello",
+    "me": false
+   },
+   {
+    "name": "M. Bassi",
+    "me": false
+   },
+   {
+    "name": "F. Damin",
+    "me": false
+   },
+   {
+    "name": "L. Sola",
+    "me": false
+   },
+   {
+    "name": "M. Chiari",
+    "me": false
+   },
+   {
+    "name": "B. Chini",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "T. Bellini",
+    "me": false
+   },
+   {
+    "name": "M. Buscaglia",
+    "me": false
+   }
+  ],
+  "journal": "Lecture Notes in Electrical Engineering",
+  "volume": "",
+  "pages": "13-17",
+  "year": 2015,
+  "type": "chapter",
+  "citations": 0,
+  "url": "https://doi.org/10.1007/978-3-319-09617-9_3",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1016/j.bios.2014.02.077",
+  "title": "A fast and simple label-free immunoassay based on a smartphone",
+  "authors": [
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "M. Salina",
+    "me": false
+   },
+   {
+    "name": "E. Ceccarello",
+    "me": false
+   },
+   {
+    "name": "A. Ilacqua",
+    "me": false
+   },
+   {
+    "name": "F. Damin",
+    "me": false
+   },
+   {
+    "name": "L. Sola",
+    "me": false
+   },
+   {
+    "name": "M. Chiari",
+    "me": false
+   },
+   {
+    "name": "B. Chini",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "T. Bellini",
+    "me": false
+   },
+   {
+    "name": "M. Buscaglia",
+    "me": false
+   }
+  ],
+  "journal": "Biosensors and Bioelectronics",
+  "volume": "58",
+  "pages": "395-402",
+  "year": 2014,
+  "type": "article",
+  "citations": 94,
+  "url": "https://doi.org/10.1016/j.bios.2014.02.077",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1088/2040-8978/16/8/083001",
+  "title": "Digital Fourier microscopy for soft matter dynamics",
+  "authors": [
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Journal of Optics",
+  "volume": "16",
+  "pages": "083001",
+  "year": 2014,
+  "type": "review",
+  "citations": 108,
+  "url": "https://doi.org/10.1088/2040-8978/16/8/083001",
+  "tags": [
+   "review"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1039/c4sm00145a",
+  "title": "Viscoelasticity of nematic liquid crystals at a glance",
+  "authors": [
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "S. Crotti",
+    "me": false
+   },
+   {
+    "name": "A. Speciale",
+    "me": false
+   },
+   {
+    "name": "F. Serra",
+    "me": false
+   },
+   {
+    "name": "G. Zanchetta",
+    "me": false
+   },
+   {
+    "name": "V. Trappe",
+    "me": false
+   },
+   {
+    "name": "M. Buscaglia",
+    "me": false
+   },
+   {
+    "name": "T. Bellini",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Soft Matter",
+  "volume": "10",
+  "pages": "3938-3949",
+  "year": 2014,
+  "type": "article",
+  "citations": 51,
+  "url": "https://doi.org/10.1039/c4sm00145a",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1073/pnas.1214589110",
+  "title": "Multispot, label-free biodetection at a phantom plastic–water interface",
+  "authors": [
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "M. Salina",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "M. Bassi",
+    "me": false
+   },
+   {
+    "name": "D. Prosperi",
+    "me": false
+   },
+   {
+    "name": "E. Ceccarello",
+    "me": false
+   },
+   {
+    "name": "F. Damin",
+    "me": false
+   },
+   {
+    "name": "L. Sola",
+    "me": false
+   },
+   {
+    "name": "M. Rusnati",
+    "me": false
+   },
+   {
+    "name": "M. Chiari",
+    "me": false
+   },
+   {
+    "name": "B. Chini",
+    "me": false
+   },
+   {
+    "name": "T. Bellini",
+    "me": false
+   },
+   {
+    "name": "M. Buscaglia",
+    "me": false
+   }
+  ],
+  "journal": "Proceedings of the National Academy of Sciences",
+  "volume": "110",
+  "pages": "9350-9355",
+  "year": 2013,
+  "type": "article",
+  "citations": 37,
+  "url": "https://doi.org/10.1073/pnas.1214589110",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1002/adfm.201203792",
+  "title": "Nematic Liquid Crystals Embedded in Cubic Microlattices: Memory Effects and Bistable Pixels",
+  "authors": [
+   {
+    "name": "F. Serra",
+    "me": false
+   },
+   {
+    "name": "S. M. Eaton",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "M. Buscaglia",
+    "me": false
+   },
+   {
+    "name": "G. Cerullo",
+    "me": false
+   },
+   {
+    "name": "R. Osellame",
+    "me": false
+   },
+   {
+    "name": "T. Bellini",
+    "me": false
+   }
+  ],
+  "journal": "Advanced Functional Materials",
+  "volume": "23",
+  "pages": "3990-3994",
+  "year": 2013,
+  "type": "article",
+  "citations": 25,
+  "url": "https://doi.org/10.1002/adfm.201203792",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1073/pnas.1304632110",
+  "title": "Phase behavior and critical activated dynamics of limited-valence DNA nanostars",
+  "authors": [
+   {
+    "name": "S. Biffi",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "F. Bomboi",
+    "me": false
+   },
+   {
+    "name": "E. M. Paraboschi",
+    "me": false
+   },
+   {
+    "name": "R. Asselta",
+    "me": false
+   },
+   {
+    "name": "F. Sciortino",
+    "me": false
+   },
+   {
+    "name": "T. Bellini",
+    "me": false
+   }
+  ],
+  "journal": "Proceedings of the National Academy of Sciences",
+  "volume": "110",
+  "pages": "15633-15637",
+  "year": 2013,
+  "type": "article",
+  "citations": 238,
+  "url": "https://doi.org/10.1073/pnas.1304632110",
+  "tags": [
+   "selected"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1364/cleo_si.2012.ctu1j.4",
+  "title": "Bistability of nematic liquid crystals confined in 3D scaffold produced by two-photon polymerization",
+  "authors": [
+   {
+    "name": "F. Serra",
+    "me": false
+   },
+   {
+    "name": "S. M. Eaton",
+    "me": false
+   },
+   {
+    "name": "E. Borlini",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "M. Buscaglia",
+    "me": false
+   },
+   {
+    "name": "G. Cerullo",
+    "me": false
+   },
+   {
+    "name": "R. Osellame",
+    "me": false
+   },
+   {
+    "name": "T. Bellini",
+    "me": false
+   }
+  ],
+  "journal": "Conference on Lasers and Electro-Optics 2012",
+  "volume": "",
+  "pages": "CTU1J.4",
+  "year": 2012,
+  "type": "proceedings",
+  "citations": 0,
+  "url": "https://doi.org/10.1364/cleo_si.2012.ctu1j.4",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1103/physrevlett.108.218103",
+  "title": "Characterizing Concentrated, Multiply Scattering, and Actively Driven Fluorescent Systems with Confocal Differential Dynamic Microscopy",
+  "authors": [
+   {
+    "name": "P. J. Lu",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "T. E. Angelini",
+    "me": false
+   },
+   {
+    "name": "E. Zaccarelli",
+    "me": false
+   },
+   {
+    "name": "F. Jargstorff",
+    "me": false
+   },
+   {
+    "name": "A. B. Schofield",
+    "me": false
+   },
+   {
+    "name": "J. N. Wilking",
+    "me": false
+   },
+   {
+    "name": "M. B. Romanowsky",
+    "me": false
+   },
+   {
+    "name": "D. A. Weitz",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Physical Review Letters",
+  "volume": "108",
+  "pages": "218103",
+  "year": 2012,
+  "type": "article",
+  "citations": 101,
+  "url": "https://doi.org/10.1103/physrevlett.108.218103",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1117/12.908462",
+  "title": "Effect of configuration of the microchannels fabricated by femtosecond laser micromachining on topological defects in confined liquid crystals",
+  "authors": [
+   {
+    "name": "K. C. Vishnubhatla",
+    "me": false
+   },
+   {
+    "name": "R. Osellame",
+    "me": false
+   },
+   {
+    "name": "G. Cerullo",
+    "me": false
+   },
+   {
+    "name": "F. Serra",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "M. Buscaglia",
+    "me": false
+   },
+   {
+    "name": "T. Bellini",
+    "me": false
+   }
+  ],
+  "journal": "SPIE Proceedings",
+  "volume": "8249",
+  "pages": "82490B",
+  "year": 2012,
+  "type": "proceedings",
+  "citations": 2,
+  "url": "https://doi.org/10.1117/12.908462",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1039/c2sm25061f",
+  "title": "Giant thermophoresis of poly(N-isopropylacrylamide) microgel particles",
+  "authors": [
+   {
+    "name": "S. Wongsuwarn",
+    "me": false
+   },
+   {
+    "name": "D. Vigolo",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "A. M. Howe",
+    "me": false
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "R. Piazza",
+    "me": false
+   },
+   {
+    "name": "P. Cicuta",
+    "me": false
+   }
+  ],
+  "journal": "Soft Matter",
+  "volume": "8",
+  "pages": "5857",
+  "year": 2012,
+  "type": "article",
+  "citations": 42,
+  "url": "https://doi.org/10.1039/c2sm25061f",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1088/0953-8984/24/28/284134",
+  "title": "Gradient-driven fluctuations in microgravity",
+  "authors": [
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "S. Mazzoni",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   },
+   {
+    "name": "C. J. Takacs",
+    "me": false
+   },
+   {
+    "name": "D. S. Cannell",
+    "me": false
+   }
+  ],
+  "journal": "Journal of Physics: Condensed Matter",
+  "volume": "24",
+  "pages": "284134",
+  "year": 2012,
+  "type": "article",
+  "citations": 9,
+  "url": "https://doi.org/10.1088/0953-8984/24/28/284134",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1371/journal.pone.0047867",
+  "title": "How Archer Fish Achieve a Powerful Impact: Hydrodynamic Instability of a Pulsed Jet in Toxotes jaculatrix",
+  "authors": [
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "L. Zinnato",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "PLoS ONE",
+  "volume": "7",
+  "pages": "e47867",
+  "year": 2012,
+  "type": "article",
+  "citations": 31,
+  "url": "https://doi.org/10.1371/journal.pone.0047867",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1073/pnas.1117463109",
+  "title": "Liquid crystal self-assembly of random-sequence DNA oligomers",
+  "authors": [
+   {
+    "name": "T. Bellini",
+    "me": false
+   },
+   {
+    "name": "G. Zanchetta",
+    "me": false
+   },
+   {
+    "name": "T. P. Fraccia",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "E. Tsai",
+    "me": false
+   },
+   {
+    "name": "G. P. Smith",
+    "me": false
+   },
+   {
+    "name": "M. J. Moran",
+    "me": false
+   },
+   {
+    "name": "D. M. Walba",
+    "me": false
+   },
+   {
+    "name": "N. A. Clark",
+    "me": false
+   }
+  ],
+  "journal": "Proceedings of the National Academy of Sciences",
+  "volume": "109",
+  "pages": "1110-1115",
+  "year": 2012,
+  "type": "article",
+  "citations": 87,
+  "url": "https://doi.org/10.1073/pnas.1117463109",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1103/physrevlett.108.158102",
+  "title": "Two-Dimensional X-Ray Beam Phase Sensing",
+  "authors": [
+   {
+    "name": "S. Bérujon",
+    "me": false
+   },
+   {
+    "name": "E. Ziegler",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "L. Peverini",
+    "me": false
+   }
+  ],
+  "journal": "Physical Review Letters",
+  "volume": "108",
+  "pages": "158102",
+  "year": 2012,
+  "type": "article",
+  "citations": 194,
+  "url": "https://doi.org/10.1103/physrevlett.108.158102",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": null,
+  "title": "X-ray speckle tracking: a new phase-sensitive imaging technique",
+  "authors": [
+   {
+    "name": "S. Berujon",
+    "me": false
+   },
+   {
+    "name": "E. Ziegler",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "L. Peverini",
+    "me": false
+   }
+  ],
+  "journal": "ESRF Spotlight on Science (June 2012)",
+  "volume": "",
+  "pages": "",
+  "year": 2012,
+  "type": "other",
+  "citations": null,
+  "url": "http://www.esrf.eu/news/spotlight/spotlight160/index_html/",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1007/128_2011_230",
+  "title": "DNA-Based Soft Phases",
+  "authors": [
+   {
+    "name": "T. Bellini",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "G. Zanchetta",
+    "me": false
+   }
+  ],
+  "journal": "Topics in Current Chemistry",
+  "volume": "",
+  "pages": "225-279",
+  "year": 2011,
+  "type": "chapter",
+  "citations": 30,
+  "url": "https://doi.org/10.1007/128_2011_230",
+  "tags": [
+   "review"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1038/ncomms1290",
+  "title": "Fractal fronts of diffusion in microgravity",
+  "authors": [
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "S. Mazzoni",
+    "me": false
+   },
+   {
+    "name": "C. J. Takacs",
+    "me": false
+   },
+   {
+    "name": "D. S. Cannell",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   }
+  ],
+  "journal": "Nature Communications",
+  "volume": "2",
+  "pages": "290",
+  "year": 2011,
+  "type": "article",
+  "citations": 102,
+  "url": "https://doi.org/10.1038/ncomms1290",
+  "tags": [
+   "selected"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1140/epjst/e2011-01509-9",
+  "title": "Kinetics of colloidal fractal aggregation by differential dynamic microscopy",
+  "authors": [
+   {
+    "name": "F. Ferri",
+    "me": false
+   },
+   {
+    "name": "A. D’Angelo",
+    "me": false
+   },
+   {
+    "name": "M. Lee",
+    "me": false
+   },
+   {
+    "name": "A. Lotti",
+    "me": false
+   },
+   {
+    "name": "M. C. Pigazzini",
+    "me": false
+   },
+   {
+    "name": "K. Singh",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "The European Physical Journal Special Topics",
+  "volume": "199",
+  "pages": "139-148",
+  "year": 2011,
+  "type": "article",
+  "citations": 32,
+  "url": "https://doi.org/10.1140/epjst/e2011-01509-9",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1088/1742-6596/327/1/012023",
+  "title": "Non-equilibrium fluctuations on earth and in micro-gravity. The GRADFLEX experiment",
+  "authors": [
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "S. Mazzoni",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   },
+   {
+    "name": "C. J. Takacs",
+    "me": false
+   },
+   {
+    "name": "D. S. Cannell",
+    "me": false
+   }
+  ],
+  "journal": "Journal of Physics: Conference Series",
+  "volume": "327",
+  "pages": "012023",
+  "year": 2011,
+  "type": "article",
+  "citations": 0,
+  "url": "https://doi.org/10.1088/1742-6596/327/1/012023",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1103/physrevlett.106.244502",
+  "title": "Thermal Fluctuations in a Layer of LiquidCS2Subjected to Temperature Gradients with and without the Influence of Gravity",
+  "authors": [
+   {
+    "name": "C. J. Takacs",
+    "me": false
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "S. Mazzoni",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   },
+   {
+    "name": "D. S. Cannell",
+    "me": false
+   }
+  ],
+  "journal": "Physical Review Letters",
+  "volume": "106",
+  "pages": "244502",
+  "year": 2011,
+  "type": "article",
+  "citations": 44,
+  "url": "https://doi.org/10.1103/physrevlett.106.244502",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1039/c1sm05813d",
+  "title": "Topological defects of nematic liquid crystals confined in porous networks",
+  "authors": [
+   {
+    "name": "F. Serra",
+    "me": false
+   },
+   {
+    "name": "K. C. Vishnubhatla",
+    "me": false
+   },
+   {
+    "name": "M. Buscaglia",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "R. Osellame",
+    "me": false
+   },
+   {
+    "name": "G. Cerullo",
+    "me": false
+   },
+   {
+    "name": "T. Bellini",
+    "me": false
+   }
+  ],
+  "journal": "Soft Matter",
+  "volume": "7",
+  "pages": "10945",
+  "year": 2011,
+  "type": "article",
+  "citations": 34,
+  "url": "https://doi.org/10.1039/c1sm05813d",
+  "tags": [
+   "cover"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1088/0953-8984/22/32/323102",
+  "title": "Exploring soft matter with x-rays: from the discovery of the DNA structure to the challenges of free electron lasers",
+  "authors": [
+   {
+    "name": "G. Zanchetta",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Journal of Physics: Condensed Matter",
+  "volume": "22",
+  "pages": "323102",
+  "year": 2010,
+  "type": "review",
+  "citations": 5,
+  "url": "https://doi.org/10.1088/0953-8984/22/32/323102",
+  "tags": [
+   "review"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1364/oe.18.014519",
+  "title": "Noise in laser speckle correlation and imaging techniques",
+  "authors": [
+   {
+    "name": "S. E. Skipetrov",
+    "me": false
+   },
+   {
+    "name": "J. Peuser",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "P. Zakharov",
+    "me": false
+   },
+   {
+    "name": "B. Weber",
+    "me": false
+   },
+   {
+    "name": "F. Scheffold",
+    "me": false
+   }
+  ],
+  "journal": "Optics Express",
+  "volume": "18",
+  "pages": "14519",
+  "year": 2010,
+  "type": "article",
+  "citations": 58,
+  "url": "https://doi.org/10.1364/oe.18.014519",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1073/pnas.1011199107",
+  "title": "Right-handed double-helix ultrashort DNA yields chiral nematic phases with both right- and left-handed director twist",
+  "authors": [
+   {
+    "name": "G. Zanchetta",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "M. Nakata",
+    "me": false
+   },
+   {
+    "name": "M. Buscaglia",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "N. A. Clark",
+    "me": false
+   },
+   {
+    "name": "T. Bellini",
+    "me": false
+   }
+  ],
+  "journal": "Proceedings of the National Academy of Sciences",
+  "volume": "107",
+  "pages": "17497-17502",
+  "year": 2010,
+  "type": "article",
+  "citations": 107,
+  "url": "https://doi.org/10.1073/pnas.1011199107",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1103/physrevlett.102.104503",
+  "title": "Bistable Heat Transfer in a Nanofluid",
+  "authors": [
+   {
+    "name": "G. Donzelli",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   }
+  ],
+  "journal": "Physical Review Letters",
+  "volume": "102",
+  "pages": "104503",
+  "year": 2009,
+  "type": "article",
+  "citations": 82,
+  "url": "https://doi.org/10.1103/physrevlett.102.104503",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1016/j.cocis.2009.07.003",
+  "title": "Near-field scattering techniques: Novel instrumentation and results from time and spatially resolved investigations of soft matter systems",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   }
+  ],
+  "journal": "Current Opinion in Colloid & Interface Science",
+  "volume": "14",
+  "pages": "416-425",
+  "year": 2009,
+  "type": "review",
+  "citations": 57,
+  "url": "https://doi.org/10.1016/j.cocis.2009.07.003",
+  "tags": [
+   "review"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1103/physreve.80.031403",
+  "title": "Scattering information obtained by optical microscopy: Differential dynamic microscopy and beyond",
+  "authors": [
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "D. Brogioli",
+    "me": false
+   },
+   {
+    "name": "V. Trappe",
+    "me": false
+   },
+   {
+    "name": "T. Bellini",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Physical Review E",
+  "volume": "80",
+  "pages": "031403",
+  "year": 2009,
+  "type": "article",
+  "citations": 159,
+  "url": "https://doi.org/10.1103/physreve.80.031403",
+  "tags": [
+   "selected"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1103/physrevlett.100.188102",
+  "title": "Differential Dynamic Microscopy: Probing Wave Vector Dependent Dynamics with a Microscope",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "V. Trappe",
+    "me": false
+   }
+  ],
+  "journal": "Physical Review Letters",
+  "volume": "100",
+  "pages": "188102",
+  "year": 2008,
+  "type": "article",
+  "citations": 352,
+  "url": "https://doi.org/10.1103/physrevlett.100.188102",
+  "tags": [
+   "editors-suggestion",
+   "selected"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1103/physrevlett.100.188104",
+  "title": "Mutual Voronoi Tessellation in Spoke Pattern Convection",
+  "authors": [
+   {
+    "name": "S. Mazzoni",
+    "me": false
+   },
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   }
+  ],
+  "journal": "Physical Review Letters",
+  "volume": "100",
+  "pages": "188104",
+  "year": 2008,
+  "type": "article",
+  "citations": 13,
+  "url": "https://doi.org/10.1103/physrevlett.100.188104",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": null,
+  "title": "Non-equilibrium fluctuations in diffusion experiments",
+  "authors": [
+   {
+    "name": "F. Croccolo",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "A. Vailati and M. Giglio",
+    "me": false
+   }
+  ],
+  "journal": "Anomalous Fluctuation Phenomena in Complex Systems: Plasmas, Fluids, and Financial Markets, ed. by C. Riccardi and H. E. Roman, ISBN: 978-81-308-0255-8, pages 185-210 (2008).",
+  "volume": "",
+  "pages": "",
+  "year": 2008,
+  "type": "chapter",
+  "citations": null,
+  "url": "https://ucrisportal.univie.ac.at/en/publications/8c6907a5-ac41-4bcb-9c0f-d2f3d467ade6",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.15011/jasma.25.3.617",
+  "title": "Non-Equilibrium Fluctuations in Microgravity: Initial Results of GRADFLEX Aboard FOTON-M3",
+  "authors": [
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "S. Mazzoni",
+    "me": false
+   },
+   {
+    "name": "C. J. Takacs",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   },
+   {
+    "name": "D. S. Cannell",
+    "me": false
+   }
+  ],
+  "journal": "Journal of The Japan Society of Microgravity Application",
+  "volume": "",
+  "pages": "",
+  "year": 2008,
+  "type": "article",
+  "citations": null,
+  "url": "https://doi.org/10.15011/jasma.25.3.617",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1364/oe.16.004819",
+  "title": "Optical generation of Voronoi diagram",
+  "authors": [
+   {
+    "name": "F. Giavazzi",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "S. Mazzoni",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   }
+  ],
+  "journal": "Optics Express",
+  "volume": "16",
+  "pages": "4819",
+  "year": 2008,
+  "type": "article",
+  "citations": 3,
+  "url": "https://doi.org/10.1364/oe.16.004819",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": null,
+  "title": "Static and dynamic scattering with near field speckle",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "L. Peverini",
+    "me": false
+   },
+   {
+    "name": "M.A.C. Potenza",
+    "me": false
+   },
+   {
+    "name": "A. Robert",
+    "me": false
+   },
+   {
+    "name": "P. Bösecke",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   }
+  ],
+  "journal": "ESRF Spotlight on Science (April 2008)",
+  "volume": "",
+  "pages": "",
+  "year": 2008,
+  "type": "other",
+  "citations": null,
+  "url": "http://www.esrf.eu/news/spotlight/spotlight57/near-field-speckles/",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1038/nphys837",
+  "title": "X-ray-scattering information obtained from near-field speckle",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "L. Peverini",
+    "me": false
+   },
+   {
+    "name": "M. A. C. Potenza",
+    "me": false
+   },
+   {
+    "name": "A. Robert",
+    "me": false
+   },
+   {
+    "name": "P. Bösecke",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   }
+  ],
+  "journal": "Nature Physics",
+  "volume": "4",
+  "pages": "238-243",
+  "year": 2008,
+  "type": "article",
+  "citations": 113,
+  "url": "https://doi.org/10.1038/nphys837",
+  "tags": [
+   "selected"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1103/physreva.75.053815",
+  "title": "Correlations of light in the deep Fresnel region: An extended Van Cittert and Zernike theorem",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Physical Review A",
+  "volume": "75",
+  "pages": "053815",
+  "year": 2007,
+  "type": "article",
+  "citations": 59,
+  "url": "https://doi.org/10.1103/physreva.75.053815",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1016/j.cocis.2007.03.005",
+  "title": "New trends in light scattering",
+  "authors": [
+   {
+    "name": "F. SCHEFFOLD",
+    "me": false
+   },
+   {
+    "name": "R. CERBINO",
+    "me": true
+   }
+  ],
+  "journal": "Current Opinion in Colloid & Interface Science",
+  "volume": "12",
+  "pages": "50-57",
+  "year": 2007,
+  "type": "review",
+  "citations": 87,
+  "url": "https://doi.org/10.1016/j.cocis.2007.03.005",
+  "tags": [
+   "review"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1109/cleoe-iqec.2007.4386343",
+  "title": "Soft X-ray Fresnel-like diffraction from thin films edges by an ultrafast laser plasma source",
+  "authors": [
+   {
+    "name": "S. Stagira",
+    "me": false
+   },
+   {
+    "name": "F. Calegari",
+    "me": false
+   },
+   {
+    "name": "J. Cabanillas-Gonzalez",
+    "me": false
+   },
+   {
+    "name": "S. Gasilov",
+    "me": false
+   },
+   {
+    "name": "G. Valentini",
+    "me": false
+   },
+   {
+    "name": "C. Vozzi",
+    "me": false
+   },
+   {
+    "name": "M. Nisoli",
+    "me": false
+   },
+   {
+    "name": "S. De Silvestri",
+    "me": false
+   },
+   {
+    "name": "A. Faenov",
+    "me": false
+   },
+   {
+    "name": "T. Pikuz",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "L. Poletto",
+    "me": false
+   },
+   {
+    "name": "P. Villoresi",
+    "me": false
+   }
+  ],
+  "journal": "2007 European Conference on Lasers and Electro-Optics and the International Quantum Electronics Conference",
+  "volume": "",
+  "pages": "1-1",
+  "year": 2007,
+  "type": "proceedings",
+  "citations": 0,
+  "url": "https://doi.org/10.1109/cleoe-iqec.2007.4386343",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": null,
+  "title": "X-ray near-field speckles: a new approach to small-angle scattering",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "L. Peverini",
+    "me": false
+   },
+   {
+    "name": "M.A.C. Potenza",
+    "me": false
+   },
+   {
+    "name": "A. Robert",
+    "me": false
+   },
+   {
+    "name": "P. Bösecke",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   }
+  ],
+  "journal": "ESRF Highlights 2007",
+  "volume": "",
+  "pages": "",
+  "year": 2007,
+  "type": "article",
+  "citations": null,
+  "url": "http://www.esrf.eu/UsersAndScience/Publications/Highlights/2007/XIM/XIM9",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": null,
+  "title": "Capillarity and Wetting Phenomena: Drops, Bubbles, Pearls, Waves",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   }
+  ],
+  "journal": "Book review",
+  "volume": "",
+  "pages": "",
+  "year": 2006,
+  "type": "other",
+  "citations": null,
+  "url": "https://ucrisportal.univie.ac.at/en/publications/28e351ce-bf08-4303-9550-b4a0401f12a6",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1196/annals.1362.029",
+  "title": "Fluctuations in Diffusion Processes in Microgravity",
+  "authors": [
+   {
+    "name": "S. MAZZONI",
+    "me": false
+   },
+   {
+    "name": "R. CERBINO",
+    "me": true
+   },
+   {
+    "name": "A. VAILATI",
+    "me": false
+   },
+   {
+    "name": "M. GIGLIO",
+    "me": false
+   }
+  ],
+  "journal": "Annals of the New York Academy of Sciences",
+  "volume": "1077",
+  "pages": "351-364",
+  "year": 2006,
+  "type": "article",
+  "citations": 10,
+  "url": "https://doi.org/10.1196/annals.1362.029",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1364/ao.45.002155",
+  "title": "Gradient-driven fluctuations experiment: fluid fluctuations in microgravity",
+  "authors": [
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "S. Mazzoni",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   },
+   {
+    "name": "G. Nikolaenko",
+    "me": false
+   },
+   {
+    "name": "C. J. Takacs",
+    "me": false
+   },
+   {
+    "name": "D. S. Cannell",
+    "me": false
+   },
+   {
+    "name": "W. V. Meyer",
+    "me": false
+   },
+   {
+    "name": "A. E. Smart",
+    "me": false
+   }
+  ],
+  "journal": "Applied Optics",
+  "volume": "45",
+  "pages": "2155",
+  "year": 2006,
+  "type": "article",
+  "citations": 36,
+  "url": "https://doi.org/10.1364/ao.45.002155",
+  "tags": [
+   "cover"
+  ],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.2514/6.iac-05-a2.6.01",
+  "title": "GRADFLEX: The Microgravity Experiment for Gradient...",
+  "authors": [
+   {
+    "name": "B. Hirtz",
+    "me": false
+   },
+   {
+    "name": "F. Molster",
+    "me": false
+   },
+   {
+    "name": "A. Verga",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "S. Mazzoni",
+    "me": false
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   },
+   {
+    "name": "C. J. Takacs",
+    "me": false
+   },
+   {
+    "name": "D. S. Cannell",
+    "me": false
+   },
+   {
+    "name": "R. Greger",
+    "me": false
+   },
+   {
+    "name": "C. Pereira",
+    "me": false
+   }
+  ],
+  "journal": "56th International Astronautical Congress of the International Astronautical Federation, the International Academy of Astronautics, and the International Institute of Space Law",
+  "volume": "",
+  "pages": "",
+  "year": 2005,
+  "type": "chapter",
+  "citations": 0,
+  "url": "https://doi.org/10.2514/6.iac-05-a2.6.01",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1103/physrevlett.94.064501",
+  "title": "Scaling Behavior for the Onset of Convection in a Colloidal Suspension",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "S. Mazzoni",
+    "me": false
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   }
+  ],
+  "journal": "Physical Review Letters",
+  "volume": "94",
+  "pages": "064501",
+  "year": 2005,
+  "type": "article",
+  "citations": 47,
+  "url": "https://doi.org/10.1103/physrevlett.94.064501",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": null,
+  "title": "GRADFLEX, Fluctuations in Microgravity",
+  "authors": [
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "S. Mazzoni",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   },
+   {
+    "name": "G. Nikolaenko",
+    "me": false
+   },
+   {
+    "name": "D. S. Cannell",
+    "me": false
+   },
+   {
+    "name": "W. V. Meyer",
+    "me": false
+   },
+   {
+    "name": "and A. E Smart",
+    "me": false
+   }
+  ],
+  "journal": "Proceedings of the 2004 Photon Correlation and Scattering Conference, NASA Center for Aerospace Information, Hanover (USA), NASA/CP-2004-213207, 50",
+  "volume": "",
+  "pages": "",
+  "year": 2004,
+  "type": "other",
+  "citations": null,
+  "url": "https://ucrisportal.univie.ac.at/en/publications/ccfa5804-b1f0-4cfd-a899-339aa8dd6b47",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.48550/arxiv.cond-mat/0309093",
+  "title": "Introduction to nonextensive statistical mechanics and thermodynamics",
+  "authors": [
+   {
+    "name": "C. Tsallis",
+    "me": false
+   },
+   {
+    "name": "F. Baldovin",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "P. Pierobon",
+    "me": false
+   }
+  ],
+  "journal": "The Physics of Complex Systems - New Advances and Perspectives, ed. F. Mallamace and H. E. Stanley (IOS Press)",
+  "volume": "",
+  "pages": "",
+  "year": 2004,
+  "type": "chapter",
+  "citations": null,
+  "url": "https://doi.org/10.48550/arxiv.cond-mat/0309093",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": null,
+  "title": "Shadowgraphic Study of Convection Onset in a Colloidal Suspension",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "S. Mazzoni",
+    "me": false
+   },
+   {
+    "name": "A. Vailati and M. Giglio",
+    "me": false
+   }
+  ],
+  "journal": "Proceedings of the 2004 Photon Correlation and Scattering Conference, NASA Center for Aerospace Information, Hanover (USA), NASA/CP-2004-213207, 9",
+  "volume": "",
+  "pages": "",
+  "year": 2004,
+  "type": "other",
+  "citations": null,
+  "url": "https://ucrisportal.univie.ac.at/en/publications/7e8e4863-1275-4a0b-9148-e5401c688a1a",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1140/epje/i2004-10070-8",
+  "title": "Transient oscillations in Soret-driven convection in a colloidal suspension",
+  "authors": [
+   {
+    "name": "S. Mazzoni",
+    "me": false
+   },
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "D. Brogioli",
+    "me": false
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   }
+  ],
+  "journal": "The European Physical Journal E",
+  "volume": "15",
+  "pages": "305-309",
+  "year": 2004,
+  "type": "article",
+  "citations": 23,
+  "url": "https://doi.org/10.1140/epje/i2004-10070-8",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1080/0141861031000108178",
+  "title": "Fast-onset Soret-driven convection in a colloidal suspension heated from above",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   }
+  ],
+  "journal": "Philosophical Magazine",
+  "volume": "83",
+  "pages": "2023-2031",
+  "year": 2003,
+  "type": "article",
+  "citations": 23,
+  "url": "https://doi.org/10.1080/0141861031000108178",
+  "tags": [],
+  "source": "orcid"
+ },
+ {
+  "doi": "10.1103/physreve.66.055301",
+  "title": "Soret driven convection in a colloidal solution heated from above at very large solutal Rayleigh number",
+  "authors": [
+   {
+    "name": "R. Cerbino",
+    "me": true
+   },
+   {
+    "name": "A. Vailati",
+    "me": false
+   },
+   {
+    "name": "M. Giglio",
+    "me": false
+   }
+  ],
+  "journal": "Physical Review E",
+  "volume": "66",
+  "pages": "055301",
+  "year": 2002,
+  "type": "article",
+  "citations": 53,
+  "url": "https://doi.org/10.1103/physreve.66.055301",
+  "tags": [],
+  "source": "orcid"
+ }
+]

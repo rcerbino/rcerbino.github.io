@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Contact</h1>
+<div class="contact-grid">
+  <section>
+    <h2>Email</h2>
+    <p class="email" data-u="{{ profile.contact.email_user }}" data-d="{{ profile.contact.email_domain }}">{{ profile.contact.email_user }} (at) {{ profile.contact.email_domain }}</p>
+    <h2>Phone</h2>
+    <p><a href="tel:{{ profile.contact.phone | replace(' ', '') }}">{{ profile.contact.phone }}</a></p>
+    <h2>Address</h2>
+    <address>{% for l in profile.contact.address %}{{ l }}{% if not loop.last %}<br>{% endif %}{% endfor %}</address>
+    <p class="quiet">{{ profile.contact.office_note }} <a href="{{ profile.lab.url }}contact/">SoMeX contact</a>.</p>
+  </section>
+  <section>
+    <h2>Research profiles</h2>
+    <dl class="ids">
+    {% for i in profile.ids %}
+      <dt>{{ i.label }}</dt><dd><a href="{{ i.url }}">{{ i.value }}</a></dd>
+    {% endfor %}
+    </dl>
+    <h2>Joining the group</h2>
+    <p>Open positions are announced on the <a href="{{ profile.lab.url }}">SoMeX website</a>.
+       If you are interested in a master's thesis, a PhD or a postdoc, write to me with a short CV and a few lines on what you would like to work on.</p>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('.email').forEach(function (el) {
+  var a = el.dataset.u + '@' + el.dataset.d;
+  el.innerHTML = '<a href="mailto:' + a + '">' + a + '</a>';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "macros.html" import pub_item %}
+{% block hero %}
+<div class="speckle-band" aria-hidden="true">
+  <canvas id="speckle"></canvas>
+</div>
+{% endblock %}
+{% block content %}
+<section class="intro">
+  <div class="intro-text">
+    <h1>{{ profile.name }}</h1>
+    <p class="role">{{ profile.title }}<br>{{ profile.affiliation }}</p>
+    <p class="lede">{{ profile.intro }}</p>
+    <p class="intro-links">
+      <a href="{{ root }}{{ link('about/') }}">Biography and CV</a>
+      <a href="{{ root }}{{ link('research/') }}">Research</a>
+      <a href="{{ profile.lab.url }}">The SoMeX lab</a>
+    </p>
+  </div>
+  <figure class="portrait">
+    <img src="{{ root }}{{ profile.portrait }}" alt="Portrait of {{ profile.name }}" width="280" height="280">
+  </figure>
+</section>
+<p class="speckle-caption">The pattern at the top is a simulated speckle field changing as the
+particles that scatter the light move. Measuring how fast such patterns change,
+length scale by length scale, is what Differential Dynamic Microscopy does.</p>
+
+<div class="home-grid">
+  <section class="home-roles">
+    <h2>Currently</h2>
+    <ul class="plain">
+      <li>Professor of Experimental Soft Matter Physics and head of the SoMeX lab, University of Vienna</li>
+      {% for r in current_roles %}
+      <li>{{ r }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section class="home-news">
+    <h2>News</h2>
+    <ul class="news-list">
+    {% for n in news.news[:4] %}
+      <li><span class="when">{{ n.date | date }}</span>
+        <span class="what">{% if n.url %}<a href="{{ n.url }}">{{ n.text }}</a>{% else %}{{ n.text }}{% endif %}</span></li>
+    {% endfor %}
+    </ul>
+    {% if group_news %}
+    <h3>From the group</h3>
+    <ul class="news-list">
+    {% for g in group_news[:3] %}
+      <li><span class="when">{{ g.date | date }}</span>
+        <span class="what"><a href="{{ g.url }}">{{ g.title }}</a></span></li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+    <p class="more"><a href="{{ root }}{{ link('news/') }}">All news and talks</a></p>
+  </section>
+</div>
+
+<section class="selected">
+  <h2>Selected publications</h2>
+  <ol class="pub-list">
+  {% for p in selected %}{{ pub_item(p) }}{% endfor %}
+  </ol>
+  <p class="more"><a href="{{ root }}{{ link('publications/') }}">All {{ stats.total }} publications</a></p>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ root }}js/speckle.js" defer></script>
+{% endblock %}

@@ -1,0 +1,118 @@
+# Biography and CV. Years are plain text so ranges like "2024-2026" work.
+
+short_bio: >-
+  Roberto Cerbino is Professor of Experimental Soft Matter Physics at the
+  University of Vienna, where he leads the SoMeX laboratory. He co-invented
+  Differential Dynamic Microscopy and works on the dynamics of soft and living
+  matter, from colloids and gels to migrating cells, including experiments in
+  microgravity. He is an Associate Editor of Soft Matter, a Fellow of the Royal
+  Society of Chemistry and Vice-Dean of the Faculty of Physics.
+
+bio:
+  - >-
+    Roberto Cerbino (born 1975, Italy) is Professor of Experimental Soft Matter
+    Physics at the University of Vienna, where he leads the SoMeX (Soft Matter
+    Experiments) laboratory. He studied physics at the University of Milan and
+    obtained his PhD there in 2004, with work on convective instabilities and
+    non-equilibrium fluctuations in complex fluids. He then held a Marie
+    Sklodowska-Curie Intra-European Fellowship at the University of Fribourg
+    (2006-2007), developing new optical approaches to non-equilibrium soft matter.
+  - >-
+    He returned to the University of Milan in 2007 as a faculty member in the
+    Faculty of Medicine, working in applied and medical physics, and moved to
+    Vienna in 2021. Along the way he spent research periods at the University of
+    Ottawa (2010), ENS Lyon (2018) and ESPCI Paris (2025).
+  - >-
+    His research combines new optical instruments with quantitative analysis to
+    understand soft and biological materials. He is best known for Differential
+    Dynamic Microscopy (DDM), introduced with Veronique Trappe in 2008, which
+    extracts scattering-type information about motion at many length scales from
+    ordinary microscope movies and is now used in laboratories worldwide. His
+    work spans colloids, gels and foams under deformation, active and living
+    matter such as migrating epithelial and cancer cells, and non-equilibrium
+    fluctuations studied on the ground and in space.
+  - >-
+    He is an Associate Editor of Soft Matter, Series Editor of the Springer
+    series on Soft Matter and Biophysics, and a Fellow of the Royal Society of
+    Chemistry. He chairs the Board of the Liquid Matter Division of the European
+    Physical Society, reviews for the European Research Council, and serves on
+    the European Space Agency's Human Exploration Science Advisory Committee and
+    on the European Space Sciences Committee. At the University of Vienna he is
+    Vice-Dean of the Faculty of Physics, for Teaching and International Affairs.
+
+education:
+  - years: "2004"
+    what: PhD in Physics
+    where: University of Milan, Italy
+  - years: "2001"
+    what: MSc (Laurea) in Physics
+    where: University of Milan, Italy
+  - years: "1997"
+    what: BSc in Physics
+    where: University of Milan, Italy
+
+positions:
+  - years: 2021-
+    what: Professor of Experimental Soft Matter Physics
+    where: Faculty of Physics, University of Vienna, Austria
+  - years: 2007-2021
+    what: Faculty member, applied and medical physics
+    where: Faculty of Medicine, University of Milan, Italy
+  - years: 2006-2007
+    what: Marie Sklodowska-Curie Intra-European Fellow (host F. Scheffold)
+    where: University of Fribourg, Switzerland
+
+visiting:
+  - years: "2025"
+    where: ESPCI Paris, France
+  - years: "2018"
+    where: ENS Lyon, France
+  - years: "2010"
+    where: University of Ottawa, Canada
+
+honors:
+  - years: "2023"
+    what: Fellow of the Royal Society of Chemistry (FRSC)
+  - years: 2006-2007
+    what: Marie Sklodowska-Curie Intra-European Fellowship (EU, FP6)
+
+# Service and roles, grouped. Shown on the About page.
+service:
+  - group: Editorial work
+    items:
+      - what: Associate Editor, Soft Matter (Royal Society of Chemistry)
+      - what: Series Editor, Soft Matter and Biophysics (Springer)
+  - group: European science and space
+    items:
+      - what: Chair of the Board, Liquid Matter Division, European Physical Society
+        years: 2024-2027
+      - what: Member, Human Exploration Science Advisory Committee, European Space Agency
+        years: 2024-
+      - what: Member, European Space Sciences Committee
+        years: 2025-
+      - what: Panel reviewer, European Research Council (Starting and Consolidator Grants)
+        years: 2022-
+      - what: Coordinator, ESA Facility Definition Team for Soft Matter and Biophysics
+        past: true
+  - group: University of Vienna
+    items:
+      - what: Vice-Dean for Teaching and International Affairs, Faculty of Physics
+        years: 2026-2028
+      - what: Vice-Dean for Finance and International Affairs, Faculty of Physics
+        years: 2024-2026
+        past: true
+      - what: Member, Internationalisation Council of the University
+      - what: Faculty member, Vienna Doctoral School in Physics
+  - group: University of Milan
+    past: true
+    items:
+      - what: Rector's Delegate for innovation in teaching and learning
+      - what: Coordinator, Teaching and Learning working group of the 4EU+ European university alliance
+  - group: Conferences
+    items:
+      - what: Chair of the International Programme Committee, Liquid Matter Conference 2027, Barcelona
+        years: "2027"
+      - what: Chair and host, 17th International Meeting on Thermodiffusion (IMT17), Vienna
+        years: "2027"
+      - what: Chair and host, Annual European Rheology Conference (AERC), Vienna
+        years: "2029"

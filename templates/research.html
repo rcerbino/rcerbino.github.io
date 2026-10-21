@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "macros.html" import pub_ref %}
+{% block content %}
+<article class="prose">
+  <h1>Research</h1>
+  <p class="lede">{{ research.intro }}</p>
+</article>
+
+<nav class="toc" aria-label="Research themes">
+  <ul>
+  {% for t in research.themes %}<li><a href="#{{ t.id }}">{{ t.title }}</a></li>{% endfor %}
+    <li><a href="#funding">Funding</a></li>
+  </ul>
+</nav>
+
+{% for t in research.themes %}
+<section class="theme" id="{{ t.id }}">
+  <h2>{{ t.title }}</h2>
+  <div class="theme-body">
+    <p>{{ t.text }}</p>
+    {% if t.papers %}
+    <div class="key-papers">
+      <h3>Key papers</h3>
+      <ul class="pub-list compact">{% for d in t.papers %}{{ pub_ref(d) }}{% endfor %}</ul>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endfor %}
+
+<section class="lab">
+  <h2>The lab</h2>
+  <p>{{ research.lab }} More on the <a href="{{ profile.lab.url }}">SoMeX website</a>.</p>
+</section>
+
+<section class="funding" id="funding">
+  <h2>Funding</h2>
+  {% for status, heading in [("current", "Current projects"), ("past", "Earlier projects")] %}
+  <h3>{{ heading }}</h3>
+  <ul class="grants">
+  {% for g in research.funding if g.status == status %}
+    <li>
+      <p class="grant-title">{% if g.url %}<a href="{{ g.url }}">{{ g.title }}</a>{% else %}{{ g.title }}{% endif %}</p>
+      <p class="grant-meta">{{ g.funder }}{% if g.years %}, {{ g.years }}{% endif %}. {{ g.role }}{% if g.amount %}, {{ g.amount }}{% endif %}.</p>
+    </li>
+  {% endfor %}
+  </ul>
+  {% endfor %}
+  <p>{{ research.industry }}</p>
+</section>
+{% endblock %}

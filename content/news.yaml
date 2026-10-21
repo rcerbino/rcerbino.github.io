@@ -1,0 +1,31 @@
+# Personal news, newest first. date: YYYY-MM or YYYY-MM-DD.
+# Group news is pulled automatically from the SoMeX website and does not need
+# to be repeated here.
+news:
+  - date: 2026-04
+    text: >-
+      The FFG project NEFCoEG starts. It supports the ground programme of the
+      Sedimenting Colloids experiment for the International Space Station.
+    url: https://somexlab.github.io/project/26-04-01-nefcoeg/
+  - date: 2026-01
+    text: >-
+      ShearView, our compact open-source rheometer for microscopy, is published
+      in the Journal of Rheology.
+    url: https://doi.org/10.1122/8.0001101
+  - date: 2025-10
+    text: >-
+      "The Hitchhiker's guide to differential dynamic microscopy", a practical
+      tutorial on DDM, is out in The Journal of Chemical Physics.
+    url: https://doi.org/10.1063/5.0289471
+  - date: 2025
+    text: Research stay at ESPCI Paris.
+  - date: 2025
+    text: Joined the European Space Sciences Committee.
+  - date: 2024-10
+    text: Became Vice-Dean of the Faculty of Physics, University of Vienna.
+
+# Talks, newest first. kind: invited, keynote, plenary, seminar, contributed, lecture
+talks:
+  - date: 2025-09
+    event: CECAM workshop "Statistical Physics of Living Systems"
+    kind: talk

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<article class="prose">
+  <h1>About</h1>
+  {% for para in about.bio %}<p>{{ para }}</p>
+  {% endfor %}
+</article>
+
+<section class="cv" id="cv">
+  <h2>Positions</h2>
+  <dl class="timeline">
+  {% for x in about.positions %}
+    <dt>{{ x.years }}</dt><dd><strong>{{ x.what }}</strong><br>{{ x.where }}</dd>
+  {% endfor %}
+  </dl>
+
+  <h2>Education</h2>
+  <dl class="timeline">
+  {% for x in about.education %}
+    <dt>{{ x.years }}</dt><dd><strong>{{ x.what }}</strong><br>{{ x.where }}</dd>
+  {% endfor %}
+  </dl>
+
+  <h2>Research stays</h2>
+  <dl class="timeline">
+  {% for x in about.visiting %}
+    <dt>{{ x.years }}</dt><dd>Visiting researcher, {{ x.where }}</dd>
+  {% endfor %}
+  </dl>
+
+  <h2>Honours</h2>
+  <dl class="timeline">
+  {% for x in about.honors %}
+    <dt>{{ x.years }}</dt><dd>{{ x.what }}</dd>
+  {% endfor %}
+  </dl>
+
+  <h2 id="service">Service and roles</h2>
+  {% for g in about.service %}
+  <h3>{{ g.group }}</h3>
+  <dl class="timeline">
+    {% for it in g["items"] %}
+    <dt>{{ it.years | default('', true) }}</dt><dd>{{ it.what }}</dd>
+    {% endfor %}
+  </dl>
+  {% endfor %}
+
+  <h2>In numbers</h2>
+  <ul class="figures">
+    <li><span class="num">{{ stats.total }}</span><span class="lbl">publications since {{ stats.first_year }}</span></li>
+    <li><span class="num">{{ "{:,}".format(profile.metrics.citations) }}</span><span class="lbl">citations</span></li>
+    <li><span class="num">{{ profile.metrics.h_index }}</span><span class="lbl">h-index</span></li>
+  </ul>
+  <p class="quiet">Citations and h-index from {{ profile.metrics.source }}, {{ profile.metrics.as_of }}.</p>
+
+  <h2>Short biography</h2>
+  <p class="shortbio">{{ about.short_bio }}</p>
+  <p class="quiet">Free to use for talks and event programmes.</p>
+</section>
+{% endblock %}

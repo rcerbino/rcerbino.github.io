@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "macros.html" import pub_item %}
+{% block content %}
+<header class="page-head">
+  <h1>Publications</h1>
+  <p>{{ stats.total }} publications since {{ stats.first_year }}, including {{ stats.peer }} journal articles and reviews.
+     The list updates itself from my <a href="https://orcid.org/{{ profile.ids[0].value }}">ORCID record</a>.
+     Profiles:
+     {% for i in profile.ids %}<a href="{{ i.url }}">{{ i.label }}</a>{% if not loop.last %}, {% endif %}{% endfor %}.</p>
+</header>
+
+<section class="selected">
+  <h2>Selected</h2>
+  <ol class="pub-list">{% for p in selected %}{{ pub_item(p) }}{% endfor %}</ol>
+</section>
+
+<section class="all-pubs">
+  <h2 id="all">All publications</h2>
+  <form class="pub-filter" role="search" onsubmit="return false">
+    <label for="pub-q">Search titles, authors and journals</label>
+    <input id="pub-q" type="search" placeholder="e.g. foam, Giavazzi, Nature" autocomplete="off">
+    <fieldset>
+      <legend>Show</legend>
+      <label><input type="radio" name="pub-type" value="all" checked> All</label>
+      {% for key, label, items in pub_groups %}
+      <label><input type="radio" name="pub-type" value="{{ key }}"> {{ label }} <span class="n">{{ items|length }}</span></label>
+      {% endfor %}
+    </fieldset>
+    <p class="pub-count" aria-live="polite"></p>
+  </form>
+
+  {% for key, label, items in pub_groups %}
+  <section class="pub-group" data-group="{{ key }}">
+    <h3>{{ label }}</h3>
+    {% set ns = namespace(year=None) %}
+    {% for p in items %}
+      {% if p.year != ns.year %}
+        {% if not loop.first %}</ol>{% endif %}
+        <h4 class="year">{{ p.year }}</h4>
+        <ol class="pub-list">
+        {% set ns.year = p.year %}
+      {% endif %}
+      {{ pub_item(p, show_year=false) }}
+      {% if loop.last %}</ol>{% endif %}
+    {% endfor %}
+  </section>
+  {% endfor %}
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ root }}js/publications.js" defer></script>
+{% endblock %}

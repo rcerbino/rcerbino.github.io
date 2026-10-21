@@ -1,0 +1,151 @@
+# Research themes. "papers" are DOIs from the publication list; the site shows
+# their full reference automatically.
+
+intro: >-
+  Soft matter is everywhere: in food, paint, cosmetics, and in the cells and
+  tissues of our own bodies. What these materials have in common is that their
+  building blocks are large, slow and easily pushed around. My group builds
+  optical tools to watch that motion directly, and uses them to understand how
+  soft and living materials flow, rearrange, age and fail.
+
+themes:
+  - id: ddm
+    title: Seeing motion with a microscope
+    text: >-
+      In 2008, with Veronique Trappe, I introduced Differential Dynamic
+      Microscopy (DDM). It analyses the differences between frames of an
+      ordinary microscope movie in Fourier space and returns the same kind of
+      information as a light-scattering experiment: how fast things move, at
+      every length scale at once, without tracking individual objects. DDM now
+      runs on microscopes in many laboratories, for samples ranging from
+      proteins and nanoparticles to bacteria and tissues. We keep extending it,
+      for example to samples under oscillatory shear.
+    papers:
+      - 10.1103/physrevlett.100.188102
+      - 10.1103/physreve.80.031403
+      - 10.1063/1.5001027
+      - 10.1063/5.0289471
+
+  - id: rheo
+    title: Soft materials under stress
+    text: >-
+      Gels, foams and dense suspensions can behave like solids or like liquids
+      depending on how hard and how fast they are pushed. We combine rheology
+      with microscopy to see what happens inside the material while it yields,
+      flows or breaks. For this we built ShearView, a compact open-source shear
+      cell that sits on top of an optical microscope. A current project asks
+      whether gels can be "trained", like muscles, to change their properties
+      after they have formed.
+    papers:
+      - 10.1122/8.0001101
+      - 10.1103/physrevlett.133.088202
+      - 10.1103/physrevlett.124.088005
+
+  - id: living
+    title: Living matter
+    text: >-
+      Sheets of cells behave like a soft material that can jam like a solid or
+      flow like a liquid. With biologist colleagues, especially the group of
+      Giorgio Scita in Milan, we measure how epithelial and cancer cells move
+      collectively, how they unjam, and how these physical transitions are tied
+      to development and disease. Our methods also quantify motion inside cells
+      and the mechanics of the cell nucleus.
+    papers:
+      - 10.1038/nmat4848
+      - 10.1038/s41563-019-0425-1
+      - 10.1039/c8sm00126j
+      - 10.1038/s41467-026-77357-8
+
+  - id: space
+    title: Fluctuations, on Earth and in space
+    text: >-
+      When a fluid mixture is not in equilibrium, for example while one
+      component diffuses into the other, its concentration fluctuates on
+      unexpectedly large scales. On Earth gravity hides most of this, so we
+      study it in orbit. I took part in the GRADFLEX experiment flown on the
+      FOTON-M3 satellite in 2007, and I now coordinate the science team of the
+      Sedimenting Colloids experiment, planned for the International Space
+      Station, which will look at how particles settle when the effective
+      gravity can be tuned.
+    papers:
+      - 10.1038/ncomms1290
+      - 10.1038/s41526-022-00246-z
+
+  - id: scattering
+    title: Scattering without a scattering instrument
+    text: >-
+      Before DDM, my work focused on near-field scattering: measuring
+      scattering information from the speckle pattern recorded close to the
+      sample, first with visible light and later with X-rays at synchrotrons.
+      These ideas still shape how we design experiments today.
+    papers:
+      - 10.1038/nphys837
+      - 10.1016/j.cocis.2009.07.003
+
+lab: >-
+  The SoMeX laboratory has its own spinning-disk confocal microscope on a fully
+  automated inverted microscope with an incubator, a dedicated cell-culture room
+  (biosafety level 2), a research rheometer, the in-house ShearView rheo-microscope,
+  and access to the Vienna Scientific Cluster for heavy image analysis.
+
+# Grants. status: current or past. role: PI, Co-PI, PI of the Vienna node, ...
+funding:
+  - title: Non-Equilibrium Fluctuations in Colloids under Effective Gravity (NEFCoEG)
+    funder: FFG, Austrian Space Applications Programme
+    years: 2026-2029
+    role: Principal investigator
+    amount: EUR 636k
+    status: current
+    url: https://somexlab.github.io/project/26-04-01-nefcoeg/
+  - title: MechanoSynth
+    funder: WWTF (Vienna Science and Technology Fund)
+    years: 2025-2029
+    role: Principal investigator, Vienna node
+    amount: EUR 338k
+    status: current
+    url: https://somexlab.github.io/project/25-11-01-mechanosynth/
+  - title: Transforming Gels Through Training (TRAINGEL)
+    funder: FWF and ANR (Austria-France)
+    years: 2025-2028
+    role: Principal investigator, Vienna node
+    amount: EUR 481k
+    status: current
+    url: https://somexlab.github.io/project/24-10-21-traingel/
+  - title: Magnetic particle transport
+    funder: FWF
+    years: 2025-2028
+    role: Co-principal investigator
+    amount: EUR 363k
+    status: current
+  - title: Advancing Research and Innovation of FORTH in Green Soft Matter (FORGREENSOFT)
+    funder: European Union, Horizon Europe (Widening)
+    years: 2022-2025
+    role: Principal investigator, Vienna node
+    amount: EUR 211k
+    status: past
+    url: https://somexlab.github.io/project/22-12-01-forgreensoft/
+  - title: The non-equilibrium physics of colloidal sedimentation (Lise Meitner fellowship of E. Lattuada)
+    funder: FWF
+    role: Host
+    amount: EUR 178k
+    status: past
+    url: https://somexlab.github.io/project/24-04-09-sedimentation/
+  - title: ANISOFT
+    funder: Italian Ministry of University and Research (FIRB)
+    role: Coordinator
+    amount: EUR 288k
+    status: past
+  - title: GRADFLEX, gradient-driven fluctuations in microgravity
+    funder: European Space Agency
+    role: Team member
+    amount: EUR 484k
+    status: past
+  - title: Marie Sklodowska-Curie Intra-European Fellowship
+    funder: European Union, FP6
+    years: 2006-2007
+    role: Fellow
+    amount: EUR 175k
+    status: past
+
+industry: >-
+  Research contracts with industry include Procter and Gamble and BASF.

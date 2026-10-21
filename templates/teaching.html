@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<article class="prose">
+  <h1>Teaching and mentoring</h1>
+  <p class="lede">{{ teaching.intro }}</p>
+</article>
+
+<section>
+  <h2>Courses</h2>
+  <ul class="courses">
+  {% for c in teaching.courses %}
+    <li>
+      <h3>{{ c.title }}</h3>
+      <p class="course-meta">{{ c.where }}{% if c.level %}, {{ c.level | lower }}{% endif %}</p>
+      <p>{{ c.text }}</p>
+    </li>
+  {% endfor %}
+  </ul>
+</section>
+
+<section class="prose">
+  <h2>Teaching innovation</h2>
+  {% for p in teaching.innovation %}<p>{{ p }}</p>
+  {% endfor %}
+</section>
+
+<section id="mentoring">
+  <h2>Mentoring</h2>
+  <p>{{ teaching.mentoring.intro }} <a href="{{ profile.lab.url }}people/">Meet the team</a>.</p>
+  <ul class="figures">
+  {% for c in teaching.mentoring.counts %}
+    <li><span class="num">{{ c.value }}</span><span class="lbl">{{ c.label | lower }}</span></li>
+  {% endfor %}
+  </ul>
+  <div class="people-cols">
+    <div>
+      <h3>Postdoctoral researchers</h3>
+      <ul class="plain">{% for p in teaching.mentoring.postdocs %}<li>{{ p.name }} <span class="quiet">{{ p.where }}</span></li>{% endfor %}</ul>
+    </div>
+    <div>
+      <h3>Completed PhD theses</h3>
+      <ul class="plain">{% for p in teaching.mentoring.phd_completed %}<li>{{ p.name }} <span class="quiet">{{ p.where }}</span></li>{% endfor %}</ul>
+      <h3>PhD theses in progress</h3>
+      <ul class="plain">{% for p in teaching.mentoring.phd_current %}<li>{{ p.name }} <span class="quiet">{{ p.where }}</span></li>{% endfor %}</ul>
+    </div>
+  </div>
+  <p>{{ teaching.mentoring.other }}</p>
+</section>
+{% endblock %}

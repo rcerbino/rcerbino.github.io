@@ -1,0 +1,93 @@
+intro: >-
+  Alongside research, I have worked for many years on how universities teach:
+  first as the Rector's Delegate for
+  innovation in teaching and learning at the University of Milan, now as
+  Vice-Dean for Teaching of the Faculty of Physics in Vienna.
+
+courses:
+  - title: Scientific Image Processing
+    where: University of Vienna
+    text: >-
+      A course I created on getting quantitative, reproducible results out of
+      scientific images. Co-taught with Maxime Lavaud.
+  - title: Theoretical Physics IV - Thermodynamics
+    level: Bachelor, physics teacher education
+    where: University of Vienna
+    text: >-
+      Thermodynamics for future secondary-school
+      physics teachers, with my own lecture notes.
+  - title: Academic Skills and Ethics
+    level: Master's, physics
+    where: University of Vienna
+    text: >-
+      Scientific writing and publishing, presenting, and research ethics and
+      integrity.
+  - title: Kicking off your PhD / Mastering your PhD
+    level: Doctoral
+    where: Vienna Doctoral School in Physics
+    text: >-
+      Two courses I designed for doctoral candidates, at the start and in the
+      later phase of their PhD.
+
+innovation:
+  - >-
+    At the University of Milan, as Rector's Delegate for innovation in teaching
+    and learning, I set up the university's Faculty Development programme for
+    teaching staff, represented the university in the 4EU+ European university
+    alliance and coordinated the alliance's Teaching and Learning working group.
+  - >-
+    In Vienna I develop soft-skills courses for master's and doctoral students and
+    work with colleagues on AI-based approaches to teaching and learning in
+    physics, including an AI tutor piloted in physics lectures.
+  - >-
+    I am a co-author of Italian textbooks of physics for medicine and biomedical
+    sciences.
+
+mentoring:
+  intro: >-
+    Numbers cover my time in Milan and in Vienna. The current team is on the
+    SoMeX website.
+  counts:
+    - label: Postdoctoral researchers supervised
+      value: 6
+    - label: PhD theses completed
+      value: 4
+    - label: PhD theses in progress
+      value: 3
+    - label: Master's theses completed
+      value: 15
+    - label: Master's theses in progress
+      value: 3
+    - label: Bachelor's theses
+      value: 25
+  postdocs:
+    - name: E. Lattuada
+      where: Vienna (FWF Lise Meitner Fellow)
+    - name: M. Lavaud
+      where: Vienna
+    - name: F. Giavazzi
+      where: Milan
+    - name: S. Biffi
+      where: Milan
+    - name: F. Serra
+      where: Milan
+    - name: G. Savorana
+      where: Milan
+  phd_completed:
+    - name: S. Mazzoni
+      where: Milan
+    - name: G. Donzelli
+      where: Milan
+    - name: S. Biffi
+      where: Milan
+    - name: P. Edera
+      where: Milan
+  phd_current:
+    - name: N. Kalafatakis
+      where: Vienna
+    - name: J. Di Franco
+      where: Vienna
+    - name: S. Khandelwal
+      where: Vienna
+  other: >-
+    I also mentor fellows of the Vienna Doctoral School in Physics.

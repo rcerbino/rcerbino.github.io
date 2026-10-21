@@ -1,0 +1,18 @@
+{% macro pub_item(p, show_year=true) %}
+<li class="pub" data-type="{{ p.type }}" data-year="{{ p.year }}">
+  <p class="pub-title">{% if p.url %}<a href="{{ p.url }}">{{ p.title }}</a>{% else %}{{ p.title }}{% endif %}</p>
+  <p class="pub-authors">{{ p.authors_html }}</p>
+  <p class="pub-venue">{% if p.venue %}<span class="journal">{{ p.venue }}</span>{% endif %}{% if show_year and p.year %} ({{ p.year }}){% endif %}{% if p.note %}. {{ p.note }}{% endif %}
+  {% for b in p.badges %}<span class="badge">{{ b }}</span>{% endfor %}</p>
+</li>
+{% endmacro %}
+
+{% macro pub_ref(doi) %}
+{% set p = pub(doi) %}
+{% if p %}
+<li class="pub compact">
+  <a href="{{ p.url }}">{{ p.title }}</a>
+  <span class="pub-venue"><span class="journal">{{ p.journal }}</span> ({{ p.year }})</span>
+</li>
+{% endif %}
+{% endmacro %}

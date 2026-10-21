@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>News and talks</h1>
+<div class="news-cols">
+  <section>
+    <h2>News</h2>
+    <ul class="news-list long">
+    {% for n in news.news %}
+      <li><span class="when">{{ n.date | date }}</span>
+        <span class="what">{% if n.url %}<a href="{{ n.url }}">{{ n.text }}</a>{% else %}{{ n.text }}{% endif %}</span></li>
+    {% endfor %}
+    </ul>
+
+    <h2>Talks</h2>
+    {% if news.talks %}
+    <ul class="news-list long">
+    {% for t in news.talks %}
+      <li><span class="when">{{ t.date | date }}</span>
+        <span class="what">{{ t.event }}{% if t.place %}, {{ t.place }}{% endif %}{% if t.title %}<br><em>{{ t.title }}</em>{% endif %}{% if t.kind and t.kind != 'talk' %} <span class="badge">{{ t.kind }}</span>{% endif %}</span></li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+
+  {% if group_news %}
+  <section class="group-feed">
+    <h2>From the SoMeX group</h2>
+    <ul class="feed">
+    {% for g in group_news %}
+      <li>
+        <p class="when">{{ g.date | date }}</p>
+        <p class="feed-title"><a href="{{ g.url }}">{{ g.title }}</a></p>
+        <p class="feed-sum">{{ g.summary }}</p>
+      </li>
+    {% endfor %}
+    </ul>
+    <p class="more"><a href="{{ profile.lab.url }}post/">More on the group website</a></p>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}
