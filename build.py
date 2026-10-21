@@ -100,6 +100,45 @@ def venue_text(p):
     return v
 
 
+def short_name(name):
+    """'Roberto Cerbino' or 'Cerbino R' or 'Cerbino, Roberto' -> 'R. Cerbino'"""
+    name = name.strip()
+    if "," in name:
+        fam, giv = [x.strip() for x in name.split(",", 1)]
+    else:
+        parts = name.split()
+        if len(parts) >= 2 and parts[-1].isupper() and len(parts[-1]) <= 3:
+            fam, giv = " ".join(parts[:-1]), " ".join(parts[-1])       # 'Barzaghi L'
+        else:
+            fam, giv = parts[-1], " ".join(parts[:-1])
+    inits = " ".join(g[0] + "." for g in giv.replace(".", " ").split() if g)
+    return f"{inits} {fam}".strip()
+
+
+def merge_preprints(pubs, preprints):
+    """Add unpublished preprints found by sync_preprints.py to the list, and
+    drop preprint entries from ORCID that duplicate them."""
+    norm = lambda t: "".join(c for c in t.lower() if c.isalnum())[:70]
+    standalone = preprints.get("standalone", [])
+    titles = [norm(s["title"]) for s in standalone]
+
+    def duplicate(t):
+        # ORCID sometimes keeps only the first part of a title
+        t = norm(t)
+        return any(len(min(t, u, key=len)) >= 15 and (t.startswith(u) or u.startswith(t))
+                   for u in titles)
+
+    out = [p for p in pubs if not (p["type"] == "preprint" and duplicate(p["title"]))]
+    for s in standalone:
+        authors = [{"name": short_name(a), "me": "Cerbino" in a} for a in s.get("authors", [])]
+        out.append({"doi": None, "title": s["title"], "authors": authors,
+                    "journal": f"{s['server']} preprint", "volume": "", "pages": "",
+                    "year": s.get("year"), "type": "preprint", "citations": None,
+                    "url": s["url"], "tags": [], "source": "preprint"})
+    out.sort(key=lambda e: (-(e.get("year") or 0), e["title"].lower()))
+    return out
+
+
 def main(check=False, preview=False):
     profile = load_yaml("profile.yaml")
     about = load_yaml("about.yaml")
@@ -108,6 +147,10 @@ def main(check=False, preview=False):
     news = load_yaml("news.yaml")
     pubs = load_json("publications.json", [])
     group_news = load_json("group_news.json", [])
+
+    preprints = load_json("preprints.json", {"links": {}, "standalone": []})
+    metrics = load_json("metrics.json", {"papers": {}})
+    pubs = merge_preprints(pubs, preprints)
 
     by_doi = {p["doi"]: p for p in pubs if p.get("doi")}
     problems = []
@@ -122,6 +165,13 @@ def main(check=False, preview=False):
         p["authors_html"] = authors_html(p["authors"])
         p["venue"] = venue_text(p)
         p["badges"] = [TAG_LABELS[t] for t in p.get("tags", []) if t in TAG_LABELS]
+        p["preprints"] = preprints["links"].get(p.get("doi"), []) if p.get("doi") else []
+        m = metrics["papers"].get(p.get("doi") or p["title"], {})
+        p["m"] = m
+        if m.get("top1"):
+            p["badges"].append("Top 1% cited")
+        elif m.get("top10"):
+            p["badges"].append("Top 10% cited")
 
     grouped = defaultdict(list)
     for p in pubs:
@@ -151,6 +201,9 @@ def main(check=False, preview=False):
     current_roles = [it["what"] for g in about.get("service", []) for it in g["items"]
                      if is_current(it, g)]
     stats = {
+        "metrics_updated": fmt_date(metrics["updated"]) if metrics.get("updated") else None,
+        "cited": sum(1 for p in pubs if p["m"].get("citations")),
+        "with_preprint": sum(1 for p in pubs if p["preprints"]),
         "total": len(pubs),
         "peer": len(peer),
         "first_year": min(years) if years else None,

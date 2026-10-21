@@ -1,0 +1,790 @@
+{
+ "updated": "2026-10-21",
+ "total_citations": 5028,
+ "papers": {
+  "10.1038/s41467-026-77357-8": {
+   "citations": 0,
+   "citation_source": "Crossref",
+   "semantic_scholar": 0,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/476988dab47c584577cf13994df80abd59e9fdc6"
+  },
+  "10.1002/advs.202508648": {
+   "citations": 3,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 3,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/5e6041b0fabac2633eac0d5f1375680dc94b3a9d",
+   "free_pdf": "https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/advs.202508648"
+  },
+  "10.1016/j.jcis.2026.140842": {
+   "citations": 1,
+   "citation_source": "Crossref",
+   "semantic_scholar": 1,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/cad7c3abd430e16269d6b0fb4a0e05184929044c"
+  },
+  "10.1038/s41563-025-02473-7": {
+   "citations": 2,
+   "citation_source": "Crossref",
+   "semantic_scholar": 2,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/4eef5f688008f9712c6e688e577b67d469225279"
+  },
+  "10.1122/8.0001101": {
+   "citations": 2,
+   "citation_source": "Crossref",
+   "semantic_scholar": 2,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/bab1497e247a549c67738f2767e26663047f7940",
+   "free_pdf": "https://pubs.aip.org/sor/jor/article-pdf/70/1/165/20853894/165_1_8.0001101.pdf"
+  },
+  "10.20935/acadmatsci8016": {
+   "citations": 0,
+   "citation_source": "Crossref",
+   "semantic_scholar": 0,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/632edd956e146ed873fd243afc86ba702dcca4df"
+  },
+  "Fisica: Semestre Filtro Medicina": {},
+  "10.1016/b978-0-443-29116-6.00019-9": {
+   "citations": 1,
+   "citation_source": "Crossref"
+  },
+  "10.1039/d5sm00284b": {
+   "citations": 2,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 2,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/e0ba84d8571e83f421945026ebf8204a30bd8c37"
+  },
+  "10.1039/d4sm01390e": {
+   "citations": 4,
+   "citation_source": "Crossref",
+   "semantic_scholar": 1,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/1eb5a417a227ebb949e0e3522e1681fbb6b58327"
+  },
+  "10.1063/5.0289471": {
+   "citations": 10,
+   "citation_source": "Crossref",
+   "semantic_scholar": 10,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/ba8f2be837e41131bc3f336c2de3a0b5ae8fef31"
+  },
+  "10.1039/d4sm00588k": {
+   "citations": 3,
+   "citation_source": "Crossref",
+   "semantic_scholar": 1,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/e7a2377d67c11cec884f4e8e875175d1f753c0e4",
+   "free_pdf": "https://pubs.rsc.org/en/content/articlepdf/2024/sm/d4sm00588k"
+  },
+  "10.1016/j.jcis.2023.12.163": {
+   "citations": 14,
+   "citation_source": "Crossref",
+   "semantic_scholar": 6,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/60d97c32c98b4f94fc977f9fe011a50d8d012584",
+   "free_pdf": "https://ars.els-cdn.com/content/image/1-s2.0-S0021979723025043-gr001_lrg.jpg"
+  },
+  "10.1103/physrevlett.133.088202": {
+   "citations": 7,
+   "citation_source": "Crossref",
+   "semantic_scholar": 2,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/17a4b5badee1b561df53d5ee22cab252720f536c"
+  },
+  "10.1039/9781837674589-00032": {
+   "citations": 1,
+   "citation_source": "Crossref"
+  },
+  "10.1088/2515-7639/ad06cc": {
+   "citations": 49,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 49,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/9a27d01dcedd235e5fe7a0977abfa6caebd035f2",
+   "free_pdf": "https://iopscience.iop.org/article/10.1088/2515-7639/ad06cc/pdf"
+  },
+  "Yielding under the microscope": {},
+  "10.1038/s41526-022-00246-z": {
+   "citations": 39,
+   "citation_source": "Crossref",
+   "semantic_scholar": 29,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/fa579e29c096a0067f98900158dd12a30cd64c4f",
+   "free_pdf": "https://www.nature.com/articles/s41526-022-00246-z.pdf"
+  },
+  "10.3389/fphy.2023.1173632": {
+   "citations": 3,
+   "citation_source": "Crossref",
+   "semantic_scholar": 3,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/ac1d35239a5343096c7bcca334974cf6e9ca5f7b",
+   "free_pdf": "https://public-pages-files-2025.frontiersin.org/journals/physics/articles/10.3389/fphy.2023.1173632/pdf"
+  },
+  "10.1016/j.physa.2023.128653": {
+   "citations": 14,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 14,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/1880437921883386dba1f3132e5f396fb80b4eb5"
+  },
+  "10.3389/978-2-83252-035-2": {
+   "citations": 0,
+   "citation_source": "Crossref"
+  },
+  "10.1021/acs.macromol.3c00782": {
+   "citations": 15,
+   "citation_source": "Crossref",
+   "semantic_scholar": 11,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/a60e6e3be7c44c7c2642dacd0bd20de79e5c5fb1",
+   "free_pdf": "https://pubs.acs.org/doi/pdf/10.1021/acs.macromol.3c00782"
+  },
+  "10.1038/s41563-022-01431-x": {
+   "citations": 84,
+   "citation_source": "Crossref",
+   "semantic_scholar": 78,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/c7f53072eeadbf8b4b3a758a6812b824917ae860",
+   "free_pdf": "https://www.nature.com/articles/s41563-022-01431-x.pdf"
+  },
+  "10.1002/advs.202102148": {
+   "citations": 3,
+   "citation_source": "Crossref",
+   "semantic_scholar": 3,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/45e85211ff291c502e25eb34cba6f76cc4713967",
+   "free_pdf": "https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/advs.202102148"
+  },
+  "10.1002/pol.20210217": {
+   "citations": 52,
+   "citation_source": "Crossref",
+   "semantic_scholar": 40,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/cbb504ead1e27e356954919f12d82c137a8f441e",
+   "free_pdf": "https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/pol.20210217"
+  },
+  "10.1364/oe.459708": {
+   "citations": 1,
+   "citation_source": "Crossref",
+   "semantic_scholar": 1,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/9ccb40f1c6199eee5d89e4eee1b0d510676244f4"
+  },
+  "10.1063/5.0087590": {
+   "citations": 9,
+   "citation_source": "Crossref",
+   "semantic_scholar": 7,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/1223c39d7aa0f636180f1a80374219eb3026c761"
+  },
+  "10.1140/epje/s10189-022-00189-z": {
+   "citations": 4,
+   "citation_source": "Crossref",
+   "semantic_scholar": 0,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/9b37b7042b8409d4dd327fb494e89cf8a83af975",
+   "free_pdf": "https://link.springer.com/content/pdf/10.1140/epje/s10189-022-00189-z.pdf"
+  },
+  "10.1080/13538322.2021.1951456": {
+   "citations": 13,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 13,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/9adee6c2758423f79d0180bab84b3988473db3a1",
+   "free_pdf": "https://ruj.uj.edu.pl/xmlui/handle/item/288588"
+  },
+  "10.3389/fphy.2022.1013805": {
+   "citations": 12,
+   "citation_source": "Crossref",
+   "semantic_scholar": 12,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/50f02ce04ef60fdfbf7a4f48595f349d575a005e",
+   "free_pdf": "https://www.frontiersin.org/articles/10.3389/fphy.2022.1013805/pdf"
+  },
+  "10.3389/fphy.2022.893777": {
+   "citations": 17,
+   "citation_source": "Crossref",
+   "semantic_scholar": 12,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/29250aa71c3502195b784000848f1777328b74c2"
+  },
+  "10.1039/d1sm01068a": {
+   "citations": 25,
+   "citation_source": "Crossref",
+   "semantic_scholar": 19,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/f2550440580fe2bbd53da92d66d0bb4df621ee26",
+   "free_pdf": "https://pubs.rsc.org/en/content/articlepdf/2021/sm/d1sm01068a"
+  },
+  "10.1039/d0sm01837f": {
+   "citations": 23,
+   "citation_source": "Crossref",
+   "semantic_scholar": 16,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/c8b84d5d6bbb5566a0b838c71c6369f956ed193f"
+  },
+  "10.1038/s41467-021-25809-8": {
+   "citations": 19,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 19,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/d3e52aa7c53061fd71c8ea76c9ff9694a29f8cd1"
+  },
+  "10.1088/1361-648x/abb684": {
+   "citations": 15,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 15,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/7ff8b1aa6924415a28db40ef442b379a43c92933",
+   "free_pdf": "https://iopscience.iop.org/article/10.1088/1361-648X/abb684/pdf"
+  },
+  "10.1140/epje/s10189-021-00063-4": {
+   "citations": 9,
+   "citation_source": "Crossref",
+   "semantic_scholar": 7,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/14b234e536ad8f869829c3a1bf1153065f6d8fbd",
+   "free_pdf": "https://link.springer.com/content/pdf/10.1140/epje/s10189-021-00063-4.pdf"
+  },
+  "10.1103/physrevlett.124.088005": {
+   "citations": 49,
+   "citation_source": "Crossref",
+   "semantic_scholar": 28,
+   "influential": 2,
+   "s2_url": "https://www.semanticscholar.org/paper/12cf8823a9bf74ae5b93779c21aa493bb6181381",
+   "free_pdf": "https://arxiv.org/pdf/1911.01611"
+  },
+  "10.1007/s12217-020-09815-x": {
+   "citations": 26,
+   "citation_source": "Crossref",
+   "semantic_scholar": 20,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/0363eb828bc7d7b41287de57e7f75331ea8b4f25",
+   "free_pdf": "https://link.springer.com/content/pdf/10.1007/s12217-020-09815-x.pdf"
+  },
+  "10.3934/mine.2020011": {
+   "citations": 4,
+   "citation_source": "Crossref",
+   "semantic_scholar": 3,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/392366d1625f73ced1effd9001349368bf20a282"
+  },
+  "10.1140/epje/i2019-11849-0": {
+   "citations": 42,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 42,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/0dc813ddcf417ae1f7fa6b91814c0f4218e5f9cf",
+   "free_pdf": "https://link.springer.com/content/pdf/10.1140/epje/i2019-11849-0.pdf"
+  },
+  "Fisica per medicina: con applicazioni fisiologiche, diagnostiche e terapeutiche": {},
+  "10.1038/s41556-019-0392-4": {
+   "citations": 368,
+   "citation_source": "Crossref",
+   "semantic_scholar": 320,
+   "influential": 21,
+   "s2_url": "https://www.semanticscholar.org/paper/0e049e0420e73a534578032cfa69f8144c177199",
+   "free_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/6859070"
+  },
+  "Problemi di Fisica Biomedica": {},
+  "10.1038/s41563-019-0425-1": {
+   "citations": 187,
+   "citation_source": "Crossref",
+   "semantic_scholar": 167,
+   "influential": 8,
+   "s2_url": "https://www.semanticscholar.org/paper/191217a87732d3976964b3a9cadba74cf79471fd",
+   "free_pdf": "https://www.biorxiv.org/content/biorxiv/early/2018/09/17/388553.full.pdf"
+  },
+  "10.1088/1361-648x/aa9bc5": {
+   "citations": 24,
+   "citation_source": "Crossref",
+   "semantic_scholar": 18,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/2c9bb752baeefd8783fe9048e6c4fb8403a52d52",
+   "free_pdf": "https://iopscience.iop.org/article/10.1088/1361-648X/aa9bc5/pdf"
+  },
+  "10.1039/c8sm00126j": {
+   "citations": 170,
+   "citation_source": "Crossref",
+   "semantic_scholar": 117,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/957db78ea8f045f8a060ae06dd6a5037b1bd7e23",
+   "free_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/5995478"
+  },
+  "Le sfide di una didattica moderna: nuovi approcci e motodologie presso la Statale di Milano": {},
+  "10.1016/j.cocis.2018.03.003": {
+   "citations": 16,
+   "citation_source": "Crossref",
+   "semantic_scholar": 14,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/510fed2f9346c1a26a52e369be602f7e1a1fb295",
+   "free_pdf": "https://ars.els-cdn.com/content/image/1-s2.0-S1359029417301310-fx1_lrg.jpg"
+  },
+  "10.3389/fphy.2018.00120": {
+   "citations": 41,
+   "citation_source": "Crossref",
+   "semantic_scholar": 30,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/6eade358087f08969352bd100dbaf9ac4c0e60eb",
+   "free_pdf": "https://www.frontiersin.org/articles/10.3389/fphy.2018.00120/pdf"
+  },
+  "10.1038/s41467-017-01414-6": {
+   "citations": 60,
+   "citation_source": "Crossref",
+   "semantic_scholar": 58,
+   "influential": 2,
+   "s2_url": "https://www.semanticscholar.org/paper/9b8b2b21ea25566164e30db328bb36acc1bb892b",
+   "free_pdf": "https://www.nature.com/articles/s41467-017-01414-6.pdf"
+  },
+  "10.1103/physrevmaterials.1.073804": {
+   "citations": 58,
+   "citation_source": "Crossref",
+   "semantic_scholar": 46,
+   "influential": 2,
+   "s2_url": "https://www.semanticscholar.org/paper/4e28bb0907997c714693f0304f3f520af849e767",
+   "free_pdf": "https://arxiv.org/pdf/1708.07170"
+  },
+  "10.1038/nmat4848": {
+   "citations": 322,
+   "citation_source": "Crossref",
+   "semantic_scholar": 266,
+   "influential": 6,
+   "s2_url": "https://www.semanticscholar.org/paper/bb34dd208d03d093ea365aa576b90fb17654aa0f",
+   "free_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/5407454"
+  },
+  "10.1088/1361-6463/aa7f8e": {
+   "citations": 52,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 52,
+   "influential": 2,
+   "s2_url": "https://www.semanticscholar.org/paper/8da41139a09890ccfb0e546d241a437478efb78b",
+   "free_pdf": "https://iopscience.iop.org/article/10.1088/1361-6463/aa7f8e/pdf"
+  },
+  "10.1140/epje/i2017-11587-3": {
+   "citations": 31,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 31,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/7f3f30410ed810e059709be481b7fd763a4b491b",
+   "free_pdf": "https://arxiv.org/pdf/1707.07501"
+  },
+  "10.1063/1.5001027": {
+   "citations": 80,
+   "citation_source": "Crossref",
+   "semantic_scholar": 65,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/4cf9af90eebc8921645c05bf6d9bf89f35a1f918",
+   "free_pdf": "https://aip.scitation.org/doi/pdf/10.1063/1.5001027"
+  },
+  "10.1063/1.5004554": {
+   "citations": 0,
+   "citation_source": "Crossref",
+   "semantic_scholar": 0,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/8aa862777f2ff9b4dcda11c504f7bb539b945249"
+  },
+  "10.1140/epje/i2016-16103-9": {
+   "citations": 23,
+   "citation_source": "Crossref",
+   "semantic_scholar": 23,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/7e2795e8e4fcc4aacced41193041ae090222e8df",
+   "free_pdf": "https://arxiv.org/pdf/1610.10026"
+  },
+  "10.1038/ncomms13191": {
+   "citations": 83,
+   "citation_source": "Crossref",
+   "semantic_scholar": 77,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/5e803d66c6ffcbeb1775bcbe34fab8813a08a76e",
+   "free_pdf": "https://www.nature.com/articles/ncomms13191.pdf"
+  },
+  "10.1007/s12217-016-9501-1": {
+   "citations": 42,
+   "citation_source": "Crossref",
+   "semantic_scholar": 38,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/7968b7441db90d7245e3880bceaf1da70dfffd86",
+   "free_pdf": "https://hal.science/hal-01804394v1/document"
+  },
+  "10.1088/0953-8984/28/19/195201": {
+   "citations": 27,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 27,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/08e5ec461e165784c894747d66a2ccbd4c220954",
+   "free_pdf": "https://iopscience.iop.org/article/10.1088/0953-8984/28/19/195201/pdf"
+  },
+  "10.1039/c6sm00935b": {
+   "citations": 33,
+   "citation_source": "Crossref",
+   "semantic_scholar": 28,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/d86b5fae77169f05589edf18c5869832337cbdf1",
+   "free_pdf": "https://pubs.rsc.org/en/content/articlepdf/2016/sm/c6sm00935b"
+  },
+  "10.1140/epje/i2016-16119-1": {
+   "citations": 35,
+   "citation_source": "Crossref",
+   "semantic_scholar": 34,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/a83914b8d5063374a23b7ae6df3fa08becff28e3",
+   "free_pdf": "http://eprints.ucm.es/42053/1/Ortiz42%20PREPRINT%2B%20emb%2012_12_2017.pdf"
+  },
+  "10.1039/c5sm90069g": {
+   "citations": 36,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 36,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/e5769e8887304d739e5c76fc328db1ccbfbe5667",
+   "free_pdf": "https://pubs.rsc.org/en/content/articlepdf/2015/sm/c5sm90069g"
+  },
+  "10.1038/srep14486": {
+   "citations": 39,
+   "citation_source": "Crossref",
+   "semantic_scholar": 38,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/0498d3cf727c9690f4aff6d90aed9b7d80525c01",
+   "free_pdf": "https://www.nature.com/articles/srep14486.pdf"
+  },
+  "10.1039/c4sm02144d": {
+   "citations": 65,
+   "citation_source": "Crossref",
+   "semantic_scholar": 16,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/73f4fcaf06b595b60f91bf8eb8eb71b3bd5c5e7c",
+   "free_pdf": "https://air.unimi.it/bitstream/2434/337276/4/Equilibrium%20gels%20of%20low-valence%20DNA%20nanostars%20a%20colloidal%20model.pdf"
+  },
+  "10.1140/epje/i2015-15064-9": {
+   "citations": 36,
+   "citation_source": "Crossref",
+   "semantic_scholar": 0,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/bb35a772acc54103b75e5bf0f7385d34403e5b12"
+  },
+  "10.1016/j.bios.2015.06.064": {
+   "citations": 29,
+   "citation_source": "Crossref",
+   "semantic_scholar": 26,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/2c241dabd5261c3154f89f56fcb19b6d40b0ea01"
+  },
+  "10.1007/978-3-319-09617-9_3": {
+   "citations": 0,
+   "citation_source": "Crossref",
+   "semantic_scholar": 0,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/508af87b123646b86a448e097bebafe5120582ff"
+  },
+  "10.1016/j.bios.2014.02.077": {
+   "citations": 94,
+   "citation_source": "Crossref",
+   "semantic_scholar": 94,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/90dd47a79d4e41cf94a3dc1a8263db38439a4c08"
+  },
+  "10.1088/2040-8978/16/8/083001": {
+   "citations": 108,
+   "citation_source": "Crossref",
+   "semantic_scholar": 100,
+   "influential": 5,
+   "s2_url": "https://www.semanticscholar.org/paper/0c94ee91df1c33859102fa1cc37e39824ff450f4",
+   "free_pdf": "http://hdl.handle.net/2434/238898"
+  },
+  "10.1039/c4sm00145a": {
+   "citations": 51,
+   "citation_source": "Crossref",
+   "semantic_scholar": 42,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/4c9b806203f7101d4250811a6991a7c2deecf0d1",
+   "free_pdf": "https://pubs.rsc.org/en/content/articlepdf/2014/sm/c4sm00145a"
+  },
+  "10.1073/pnas.1214589110": {
+   "citations": 37,
+   "citation_source": "Crossref",
+   "semantic_scholar": 37,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/30dedd8e2ede56cf3bdb0c74af662bef42094c2b",
+   "free_pdf": "https://www.pnas.org/content/pnas/110/23/9350.full.pdf"
+  },
+  "10.1002/adfm.201203792": {
+   "citations": 26,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 26,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/1f4bc43a3fdc53f216c813715d456eb129bd7f29"
+  },
+  "10.1073/pnas.1304632110": {
+   "citations": 238,
+   "citation_source": "Crossref",
+   "semantic_scholar": 206,
+   "influential": 13,
+   "s2_url": "https://www.semanticscholar.org/paper/96267e465df2a8ac629ad95aa09d39031a556568",
+   "free_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/3785745"
+  },
+  "10.1364/cleo_si.2012.ctu1j.4": {
+   "citations": 0,
+   "citation_source": "Crossref",
+   "semantic_scholar": 0,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/d989599aed1a296f4a3b981ac9d0279eee9fa747"
+  },
+  "10.1103/physrevlett.108.218103": {
+   "citations": 101,
+   "citation_source": "Crossref",
+   "semantic_scholar": 84,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/6fe7f049f246b024182f91acbe561f0237edd695",
+   "free_pdf": "http://nrs.harvard.edu/urn-3:HUL.InstRepos:41511270"
+  },
+  "10.1117/12.908462": {
+   "citations": 2,
+   "citation_source": "Crossref",
+   "semantic_scholar": 2,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/8235f3bec8ed4a39491ebdee7bdd6839a4a318c1"
+  },
+  "10.1039/c2sm25061f": {
+   "citations": 42,
+   "citation_source": "Crossref",
+   "semantic_scholar": 41,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/61a530beb2fba044b69f4a594f4250366c38cf0d"
+  },
+  "10.1088/0953-8984/24/28/284134": {
+   "citations": 12,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 12,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/84c9343e768c5a1e307111d90e386df0739d7780"
+  },
+  "10.1371/journal.pone.0047867": {
+   "citations": 37,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 37,
+   "influential": 2,
+   "s2_url": "https://www.semanticscholar.org/paper/1f18b6692df2818117c7f20f9ca01d9a796b9310",
+   "free_pdf": "https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0047867&type=printable"
+  },
+  "10.1073/pnas.1117463109": {
+   "citations": 87,
+   "citation_source": "Crossref",
+   "semantic_scholar": 82,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/2986c311cc93535e9c296817201d24277cd5d65c",
+   "free_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/3268275"
+  },
+  "10.1103/physrevlett.108.158102": {
+   "citations": 194,
+   "citation_source": "Crossref",
+   "semantic_scholar": 173,
+   "influential": 14,
+   "s2_url": "https://www.semanticscholar.org/paper/f09b345cdb170079ab65c2187d791556e5244fb6",
+   "free_pdf": "https://air.unimi.it/bitstream/2434/173499/3/026_Berujon_PRL_2012_suppl.pdf"
+  },
+  "X-ray speckle tracking: a new phase-sensitive imaging technique": {},
+  "10.1007/128_2011_230": {
+   "citations": 32,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 32,
+   "influential": 3,
+   "s2_url": "https://www.semanticscholar.org/paper/347234d2daab2101bffac488ac6130d994b6f876"
+  },
+  "10.1038/ncomms1290": {
+   "citations": 108,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 108,
+   "influential": 5,
+   "s2_url": "https://www.semanticscholar.org/paper/b5fd243cf8e0fff81aa0d55f79e0ad3ec02c5cca",
+   "free_pdf": "https://www.nature.com/articles/ncomms1290.pdf"
+  },
+  "10.1140/epjst/e2011-01509-9": {
+   "citations": 39,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 39,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/22d3ae4bd08c1ac3a3904d662ae48f792cd0490a"
+  },
+  "10.1088/1742-6596/327/1/012023": {
+   "citations": 0,
+   "citation_source": "Crossref",
+   "semantic_scholar": 0,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/9ce420de4494b90eed8d79eac8a74aa234f3da37",
+   "free_pdf": "https://iopscience.iop.org/article/10.1088/1742-6596/327/1/012023/pdf"
+  },
+  "10.1103/physrevlett.106.244502": {
+   "citations": 44,
+   "citation_source": "Crossref",
+   "semantic_scholar": 33,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/18f39f871b4b6e97641cca9c0446355f9d529a4c",
+   "free_pdf": "https://www.openaccessrepository.it/record/101781"
+  },
+  "10.1039/c1sm05813d": {
+   "citations": 35,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 35,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/c243648335efd9677d17ee7469cdec7bf29b9af7",
+   "free_pdf": "https://air.unimi.it/bitstream/2434/164610/3/soft%202011.pdf"
+  },
+  "10.1088/0953-8984/22/32/323102": {
+   "citations": 9,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 9,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/53b74106b76aadaf08d72d57bb0901ecb6345f75",
+   "free_pdf": "https://iopscience.iop.org/article/10.1088/0953-8984/22/32/323102/pdf"
+  },
+  "10.1364/oe.18.014519": {
+   "citations": 58,
+   "citation_source": "Crossref",
+   "semantic_scholar": 58,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/500b94296af7654bb2bbd0527c5cfb1d2e02e856"
+  },
+  "10.1073/pnas.1011199107": {
+   "citations": 107,
+   "citation_source": "Crossref",
+   "semantic_scholar": 101,
+   "influential": 2,
+   "s2_url": "https://www.semanticscholar.org/paper/23d8360ed7c2dc2c7dd98c19a4f6823568431602",
+   "free_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/2955086"
+  },
+  "10.1103/physrevlett.102.104503": {
+   "citations": 94,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 94,
+   "influential": 7,
+   "s2_url": "https://www.semanticscholar.org/paper/a437f63a98ce7421d3fca30b4dd136f843476b18"
+  },
+  "10.1016/j.cocis.2009.07.003": {
+   "citations": 57,
+   "citation_source": "Crossref",
+   "semantic_scholar": 49,
+   "influential": 2,
+   "s2_url": "https://www.semanticscholar.org/paper/5d554c77f263477d319490963b41681accca32fe"
+  },
+  "10.1103/physreve.80.031403": {
+   "citations": 159,
+   "citation_source": "Crossref",
+   "semantic_scholar": 126,
+   "influential": 11,
+   "s2_url": "https://www.semanticscholar.org/paper/66645040e7c991f5c344e1a5cb363e32ef0ed3e9",
+   "free_pdf": "https://boa.unimib.it/bitstream/10281/36546/5/PhysRevE_2009.pdf"
+  },
+  "10.1103/physrevlett.100.188102": {
+   "citations": 352,
+   "citation_source": "Crossref",
+   "semantic_scholar": 279,
+   "influential": 19,
+   "s2_url": "https://www.semanticscholar.org/paper/76ac43aa258ec64276e3f596c92e2313722547c3",
+   "free_pdf": "https://arxiv.org/pdf/1507.01344"
+  },
+  "10.1103/physrevlett.100.188104": {
+   "citations": 13,
+   "citation_source": "Crossref",
+   "semantic_scholar": 12,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/702deb87ceb801a13918326a4e533ddf0744452a"
+  },
+  "Non-equilibrium fluctuations in diffusion experiments": {},
+  "10.15011/jasma.25.3.617": {},
+  "10.1364/oe.16.004819": {
+   "citations": 3,
+   "citation_source": "Crossref",
+   "semantic_scholar": 3,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/98db90ecd64122ae24c5f3a891ca5d749beed4fa"
+  },
+  "Static and dynamic scattering with near field speckle": {},
+  "10.1038/nphys837": {
+   "citations": 113,
+   "citation_source": "Crossref",
+   "semantic_scholar": 102,
+   "influential": 3,
+   "s2_url": "https://www.semanticscholar.org/paper/412be7cfee199d71d9522995365dccfd7742d340"
+  },
+  "10.1103/physreva.75.053815": {
+   "citations": 59,
+   "citation_source": "Crossref",
+   "semantic_scholar": 41,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/521f512493a743f04fd8a0e670d62f454c1aebe6"
+  },
+  "10.1016/j.cocis.2007.03.005": {
+   "citations": 87,
+   "citation_source": "Crossref",
+   "semantic_scholar": 84,
+   "influential": 2,
+   "s2_url": "https://www.semanticscholar.org/paper/18354b78721a1e9453f9b2e078a2f4adb3052eae"
+  },
+  "10.1109/cleoe-iqec.2007.4386343": {
+   "citations": 0,
+   "citation_source": "Crossref",
+   "semantic_scholar": 0,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/a00e29162fbc00de1f9735aa8227f1e7b3d627e5"
+  },
+  "X-ray near-field speckles: a new approach to small-angle scattering": {},
+  "Capillarity and Wetting Phenomena: Drops, Bubbles, Pearls, Waves": {},
+  "10.1196/annals.1362.029": {
+   "citations": 11,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 11,
+   "influential": 1,
+   "s2_url": "https://www.semanticscholar.org/paper/e9fb0ebf138f1aac5c307e9e1bf2b4363033c01c"
+  },
+  "10.1364/ao.45.002155": {
+   "citations": 36,
+   "citation_source": "Crossref",
+   "semantic_scholar": 34,
+   "influential": 2,
+   "s2_url": "https://www.semanticscholar.org/paper/2af61bddb2e50ac7cb1dbbb324d59bf0aaafb474"
+  },
+  "10.2514/6.iac-05-a2.6.01": {
+   "citations": 0,
+   "citation_source": "Crossref",
+   "semantic_scholar": 0,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/b5bf72ceb339ff2b5892e6b178b3b598311fcc54"
+  },
+  "10.1103/physrevlett.94.064501": {
+   "citations": 47,
+   "citation_source": "Crossref",
+   "semantic_scholar": 42,
+   "influential": 2,
+   "s2_url": "https://www.semanticscholar.org/paper/97b0b7b8117cfb08e8d23b348a9193473ece08b6"
+  },
+  "GRADFLEX, Fluctuations in Microgravity": {},
+  "10.48550/arxiv.cond-mat/0309093": {},
+  "Shadowgraphic Study of Convection Onset in a Colloidal Suspension": {},
+  "10.1140/epje/i2004-10070-8": {
+   "citations": 26,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 26,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/31227db4f5001fc98c8c8bbcbc9ffb7d6aac4732"
+  },
+  "10.1080/0141861031000108178": {
+   "citations": 23,
+   "citation_source": "Crossref",
+   "semantic_scholar": 20,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/300e07d41b49b16fb8078c718a7f943b17a54d68"
+  },
+  "10.1103/physreve.66.055301": {
+   "citations": 53,
+   "citation_source": "Crossref",
+   "semantic_scholar": 52,
+   "influential": 0,
+   "s2_url": "https://www.semanticscholar.org/paper/3201f989deffe591946f1e43f05003fa2e534d90",
+   "free_pdf": "https://arxiv.org/pdf/cond-mat/0210053"
+  }
+ }
+}

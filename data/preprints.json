@@ -1,0 +1,349 @@
+{
+ "links": {
+  "10.1002/pol.20210217": [
+   {
+    "server": "arXiv",
+    "id": "2105.08457",
+    "url": "https://arxiv.org/abs/2105.08457",
+    "title": "Differential dynamic microscopy for the characterization of polymer systems",
+    "year": 2021,
+    "how": "stated by arXiv"
+   }
+  ],
+  "10.1016/j.jcis.2026.140842": [
+   {
+    "server": "SSRN",
+    "id": "10.2139/ssrn.5886534",
+    "url": "https://doi.org/10.2139/ssrn.5886534",
+    "title": "Probing Early-Stage Casein Micelle Aggregation during Milk Acidification with Differential Dynamic Mi-croscopy",
+    "year": 2025,
+    "how": "title 1.00"
+   }
+  ],
+  "10.1021/acs.macromol.3c00782": [
+   {
+    "server": "arXiv",
+    "id": "2307.12608",
+    "url": "https://arxiv.org/abs/2307.12608",
+    "title": "Protein sizing with Differential Dynamic Microscopy",
+    "year": 2023,
+    "how": "stated by arXiv"
+   }
+  ],
+  "10.1038/s41467-017-01414-6": [
+   {
+    "server": "bioRxiv",
+    "id": "10.1101/098590",
+    "url": "https://doi.org/10.1101/098590",
+    "title": "Active diffusion and advection in the  Drosophila  ooplasm result from the interplay of the actin and microtubule cytoskeletons",
+    "year": 2017,
+    "how": "Europe PMC link"
+   }
+  ],
+  "10.1038/s41467-021-25809-8": [
+   {
+    "server": "bioRxiv",
+    "id": "10.1101/2020.05.30.124933",
+    "url": "https://doi.org/10.1101/2020.05.30.124933",
+    "title": "The ubiquitin ligase Hecw controls oogenesis and neuronal homeostasis by promoting the liquid state of ribonucleoprotein particles",
+    "year": 2020,
+    "how": "Europe PMC link"
+   }
+  ],
+  "10.1038/s41467-026-77357-8": [
+   {
+    "server": "Research Square",
+    "id": "10.21203/rs.3.rs-6057847/v1",
+    "url": "https://doi.org/10.21203/rs.3.rs-6057847/v1",
+    "title": "Contact percolation sets flocking phase transition via chemo-mechanical feedback in heterogeneous breast cancer",
+    "year": 2025,
+    "how": "manual"
+   }
+  ],
+  "10.1038/s41563-019-0425-1": [
+   {
+    "server": "bioRxiv",
+    "id": "10.1101/388553",
+    "url": "https://doi.org/10.1101/388553",
+    "title": "Unjamming overcomes kinetic and proliferation arrest in terminally differentiated cells and promotes collective motility of carcinoma",
+    "year": 2018,
+    "how": "stated by bioRxiv"
+   }
+  ],
+  "10.1038/s41563-022-01431-x": [
+   {
+    "server": "Research Square",
+    "id": "10.21203/rs.3.rs-845173/v1",
+    "url": "https://doi.org/10.21203/rs.3.rs-845173/v1",
+    "title": "Tissue fluidification promotes a cGAS/STING-mediated cytosolic DNA response in invasive breast cancer",
+    "year": 2021,
+    "how": "Europe PMC link"
+   }
+  ],
+  "10.1038/s41563-025-02473-7": [
+   {
+    "server": "bioRxiv",
+    "id": "10.1101/2024.08.22.609159",
+    "url": "https://doi.org/10.1101/2024.08.22.609159",
+    "title": "Restoring mechanophenotype reverts malignant properties of ECM-enriched vocal fold cancer",
+    "year": 2024,
+    "how": "first author + 0.89 word overlap"
+   }
+  ],
+  "10.1038/srep14486": [
+   {
+    "server": "arXiv",
+    "id": "1502.03693",
+    "url": "https://arxiv.org/abs/1502.03693",
+    "title": "Dynamic scaling for the growth of non-equilibrium fluctuations during thermophoretic diffusion in microgravity",
+    "year": 2015,
+    "how": "title 1.00"
+   }
+  ],
+  "10.1039/c8sm00126j": [
+   {
+    "server": "arXiv",
+    "id": "1706.01113",
+    "url": "https://arxiv.org/abs/1706.01113",
+    "title": "Flocking Transition in Confluent Tissues",
+    "year": 2017,
+    "how": "title 0.99"
+   }
+  ],
+  "10.1039/d1sm01068a": [
+   {
+    "server": "arXiv",
+    "id": "2107.09608",
+    "url": "https://arxiv.org/abs/2107.09608",
+    "title": "Deformation profiles and microscopic dynamics of complex fluids during oscillatory shear experiments",
+    "year": 2021,
+    "how": "stated by arXiv"
+   }
+  ],
+  "10.1039/d4sm00588k": [
+   {
+    "server": "arXiv",
+    "id": "2405.10657",
+    "url": "https://arxiv.org/abs/2405.10657",
+    "title": "Anomalous relaxation of coarsening foams with viscoelastic continuous phase",
+    "year": 2024,
+    "how": "title 0.99"
+   }
+  ],
+  "10.1039/d5sm00284b": [
+   {
+    "server": "arXiv",
+    "id": "2407.18714",
+    "url": "https://arxiv.org/abs/2407.18714",
+    "title": "Tutorial for the growth and development of Myxococcus xanthus as a Model System at the Intersection of Biology and Physics",
+    "year": 2024,
+    "how": "manual"
+   }
+  ],
+  "10.1063/5.0289471": [
+   {
+    "server": "arXiv",
+    "id": "2507.05058",
+    "url": "https://arxiv.org/abs/2507.05058",
+    "title": "The Hitchhiker's Guide to Differential Dynamic Microscopy",
+    "year": 2025,
+    "how": "stated by arXiv"
+   }
+  ],
+  "10.1088/1361-6463/aa7f8e": [
+   {
+    "server": "arXiv",
+    "id": "1707.03060",
+    "url": "https://arxiv.org/abs/1707.03060",
+    "title": "Giant fluctuations and structural effects in a flocking epithelium",
+    "year": 2017,
+    "how": "stated by arXiv"
+   }
+  ],
+  "10.1088/1361-648x/aa9bc5": [
+   {
+    "server": "arXiv",
+    "id": "1710.05669",
+    "url": "https://arxiv.org/abs/1710.05669",
+    "title": "Dark Field Differential Dynamic Microscopy enables the accurate characterization of the roto-translational dynamics of bacteria and colloidal clusters",
+    "year": 2017,
+    "how": "stated by arXiv"
+   }
+  ],
+  "10.1088/1361-648x/abb684": [
+   {
+    "server": "arXiv",
+    "id": "2006.04919",
+    "url": "https://arxiv.org/abs/2006.04919",
+    "title": "Multiple dynamic regimes in a coarsening foam",
+    "year": 2020,
+    "how": "stated by arXiv"
+   }
+  ],
+  "10.1103/physreve.66.055301": [
+   {
+    "server": "arXiv",
+    "id": "cond-mat/0210053",
+    "url": "https://arxiv.org/abs/cond-mat/0210053",
+    "title": "Soret driven convection in a colloidal solution heated from above at very large solutal Rayleigh number",
+    "year": 2002,
+    "how": "stated by arXiv"
+   }
+  ],
+  "10.1103/physrevlett.100.188102": [
+   {
+    "server": "arXiv",
+    "id": "1507.01344",
+    "url": "https://arxiv.org/abs/1507.01344",
+    "title": "Differential Dynamic Microscopy: Probing wave vector dependent dynamics with a microscope",
+    "year": 2015,
+    "how": "stated by arXiv"
+   }
+  ],
+  "10.1103/physrevlett.124.088005": [
+   {
+    "server": "arXiv",
+    "id": "1911.01611",
+    "url": "https://arxiv.org/abs/1911.01611",
+    "title": "Emergence of Multiscale Dynamics in Colloidal Gels",
+    "year": 2019,
+    "how": "stated by arXiv"
+   }
+  ],
+  "10.1103/physrevlett.133.088202": [
+   {
+    "server": "arXiv",
+    "id": "2405.09382",
+    "url": "https://arxiv.org/abs/2405.09382",
+    "title": "Matrix viscoelasticity decouples bubble growth and dynamics in coarsening foams",
+    "year": 2024,
+    "how": "title 0.91"
+   }
+  ],
+  "10.1103/physrevmaterials.1.073804": [
+   {
+    "server": "arXiv",
+    "id": "1708.07170",
+    "url": "https://arxiv.org/abs/1708.07170",
+    "title": "Differential Dynamic Microscopy microrheology of soft materials: a tracking-free determination of the frequency-dependent loss and storage moduli",
+    "year": 2017,
+    "how": "stated by arXiv"
+   }
+  ],
+  "10.1122/8.0001101": [
+   {
+    "server": "arXiv",
+    "id": "2508.08951",
+    "url": "https://arxiv.org/abs/2508.08951",
+    "title": "ShearView: A Compact Stress- and Strain-Controlled Rheometer for Integrated Rheo-microscopy",
+    "year": 2025,
+    "how": "stated by arXiv"
+   }
+  ],
+  "10.1140/epje/i2016-16103-9": [
+   {
+    "server": "arXiv",
+    "id": "1610.10026",
+    "url": "https://arxiv.org/abs/1610.10026",
+    "title": "Equilibrium and non-equilibrium concentration fluctuations in a critical binary mixture",
+    "year": 2016,
+    "how": "stated by arXiv"
+   }
+  ],
+  "10.1140/epje/i2017-11587-3": [
+   {
+    "server": "arXiv",
+    "id": "1707.07501",
+    "url": "https://arxiv.org/abs/1707.07501",
+    "title": "Correcting artifacts from finite image size in Differential Dynamic Microscopy",
+    "year": 2017,
+    "how": "stated by arXiv"
+   }
+  ],
+  "10.1140/epje/s10189-021-00063-4": [
+   {
+    "server": "arXiv",
+    "id": "2103.15412",
+    "url": "https://arxiv.org/abs/2103.15412",
+    "title": "Probing roto-translational diffusion of small anisotropic colloidal particles with a bright-field microscope",
+    "year": 2021,
+    "how": "stated by arXiv"
+   }
+  ],
+  "10.1140/epje/s10189-022-00189-z": [
+   {
+    "server": "arXiv",
+    "id": "2203.06226",
+    "url": "https://arxiv.org/abs/2203.06226",
+    "title": "Non-invasive measurement of nuclear relative stiffness from quantitative analysis of microscopy data",
+    "year": 2022,
+    "how": "title 1.00"
+   }
+  ],
+  "10.1364/oe.18.014519": [
+   {
+    "server": "arXiv",
+    "id": "1005.2875",
+    "url": "https://arxiv.org/abs/1005.2875",
+    "title": "Noise in laser speckle correlation and imaging techniques",
+    "year": 2010,
+    "how": "stated by arXiv"
+   }
+  ],
+  "10.48550/arxiv.cond-mat/0309093": [
+   {
+    "server": "arXiv",
+    "id": "cond-mat/0309093",
+    "url": "https://arxiv.org/abs/cond-mat/0309093",
+    "title": "Introduction to Nonextensive Statistical Mechanics and Thermodynamics",
+    "year": 2003,
+    "how": "title 1.00"
+   }
+  ]
+ },
+ "standalone": [
+  {
+   "server": "arXiv",
+   "id": "2607.25697",
+   "url": "https://arxiv.org/abs/2607.25697",
+   "title": "Gravity-controlled non-equilibrium Casimir pressure in a binary liquid mixture",
+   "year": 2026,
+   "authors": [
+    "Marcin Piotr Pruszczyk",
+    "Roberto Cerbino",
+    "Andrea Gambassi"
+   ]
+  },
+  {
+   "server": "Research Square",
+   "id": "10.21203/rs.3.rs-10443230/v1",
+   "url": "https://doi.org/10.21203/rs.3.rs-10443230/v1",
+   "title": "Quantitative dynamic microscopy through scattering media without image reconstruction: a tool for biomedical optics",
+   "year": 2026,
+   "authors": [
+    "Fabio Giavazzi",
+    "Matteo Brizioli",
+    "Roberto Cerbino"
+   ]
+  },
+  {
+   "server": "arXiv",
+   "id": "2402.00221",
+   "url": "https://arxiv.org/abs/2402.00221",
+   "title": "Yielding under the microscope: a multi-scale perspective on brittle and ductile behaviors in oscillatory shear",
+   "year": 2024,
+   "authors": [
+    "P. Edera",
+    "M. Brizioli",
+    "M. Madani",
+    "E. Ngouamba",
+    "P. Coussot",
+    "V. Trappe",
+    "G. Petekidis",
+    "F. Giavazzi",
+    "R. Cerbino"
+   ]
+  }
+ ],
+ "unmatched": []
+}

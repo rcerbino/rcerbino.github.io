@@ -10,6 +10,10 @@
 # patch:  corrections for entries without full metadata, keyed by DOI or by the
 #         start of the title in lower case
 # extra:  entries that are not in ORCID at all (title, authors, journal, year, type, url)
+# preprint_of:          preprint id (arXiv id or preprint DOI) -> DOI of the published paper,
+#                       for pairs the automatic matching cannot see (title changed a lot)
+# standalone_preprints: preprint ids to show as unpublished even if they look matched
+# ignore_preprints:     preprint ids not to show at all
 tags:
   10.48550/arxiv.2402.00221:
   - preprint
@@ -144,3 +148,8 @@ extra:
 - 10.1016/j.jcis.2026.140842
 - 10.1039/c4sm02144d
 - 10.1063/1.5004554
+preprint_of:
+  10.21203/rs.3.rs-6057847/v1: 10.1038/s41467-026-77357-8   # Research Square "Contact percolation sets flocking phase transition..."
+  '2407.18714': 10.1039/d5sm00284b                          # arXiv Myxococcus tutorial -> Soft Matter 2025
+standalone_preprints: []
+ignore_preprints: []

@@ -15,6 +15,8 @@ Work through these steps in order. Keep the whole run short and factual.
 ```
 pip install --break-system-packages pyyaml jinja2
 python3 scripts/sync_publications.py
+python3 scripts/sync_preprints.py
+python3 scripts/sync_metrics.py
 python3 scripts/sync_group_news.py
 python3 build.py --check
 ```
@@ -25,9 +27,17 @@ python3 build.py --check
   `data/publications.json` since the last run (compare with `git diff`), add a
   news item to `content/news.yaml`, newest first:
   `date: YYYY-MM`, one plain sentence naming the paper and journal, `url:` the DOI link.
-- Check whether the preprint(s) in the list have been published; the sync script
-  does this by title, but if a published version exists under a different title,
-  add the arXiv title to `hide:` in `data/publications_overrides.yaml`.
+- Preprints: `data/preprints.json` links each preprint (arXiv, bioRxiv,
+  Research Square, SSRN, ...) to its journal version. Review two lists in it:
+  - `unmatched`: older preprints the script could not pair. Find the journal
+    version (titles often change on publication; same first author and topic)
+    and record the pair under `preprint_of:` in
+    `data/publications_overrides.yaml` (preprint id -> journal DOI). If it was
+    never published, add the id to `standalone_preprints:`.
+  - `standalone`: shown on the site as unpublished. For each, check whether a
+    journal version has appeared (search Crossref by title and by first author);
+    if so, add it to `preprint_of:`.
+  Then rerun `python3 scripts/sync_preprints.py`. Report every pairing you added.
 - Update `profile.yaml > metrics` only if you can read current figures from the
   Google Scholar profile; otherwise leave them.
 
@@ -93,7 +103,9 @@ because you were unsure.
 | Research themes, lab, grants | `content/research.yaml` |
 | Courses, teaching innovation, mentoring | `content/teaching.yaml` |
 | News and talks | `content/news.yaml` |
-| Publication tags (selected, review, cover), hidden items, fixes | `data/publications_overrides.yaml` |
+| Publication tags (selected, review, cover), hidden items, fixes, preprint pairings | `data/publications_overrides.yaml` |
+| Preprint links (generated) | `data/preprints.json` |
+| Per-paper citations, free full text (generated) | `data/metrics.json` |
 | Publication list (generated, do not edit by hand) | `data/publications.json` |
 | Group news (generated) | `data/group_news.json` |
 

@@ -18,7 +18,10 @@ review or a cover, or to hide one, edit `data/publications_overrides.yaml`.
 
 ## What updates by itself
 
-- Every Monday: publications (ORCID and Crossref) and SoMeX group news.
+- Every Monday: publications (ORCID and Crossref), links to preprint versions
+  (arXiv, bioRxiv, Research Square, ...), per-paper citations and free full
+  texts (Crossref, Semantic Scholar), and SoMeX group news. Altmetric badges
+  update live in the browser.
 - Every month: a Claude scheduled task adds news about new papers and proposes,
   as a pull request, talks, grants and roles it finds in mail and calendar.
   See `CLAUDE.md`.

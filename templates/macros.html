@@ -1,9 +1,24 @@
+{% macro pub_meta(p) %}
+{% set m = p.m %}
+{% if m.citations or p.preprints or m.free_pdf or p.doi %}
+<p class="pub-meta">
+  {% if m.citations %}
+    {% if m.s2_url %}<a class="cites" href="{{ m.s2_url }}" title="Citations, {{ m.citation_source }}">Cited {{ m.citations }}</a>{% else %}<span class="cites" title="Citations, {{ m.citation_source }}">Cited {{ m.citations }}</span>{% endif %}
+  {% endif %}
+  {% for pp in p.preprints %}<a href="{{ pp.url }}" title="{{ pp.server }} preprint{% if pp.year %}, {{ pp.year }}{% endif %}">{{ pp.server }}</a>{% endfor %}
+  {% if m.free_pdf %}<a href="{{ m.free_pdf }}">Free PDF</a>{% endif %}
+  {% if p.doi %}<span class="altmetric-embed" data-badge-type="2" data-doi="{{ p.doi }}" data-hide-no-mentions="true" data-badge-popover="right" data-link-target="_blank"></span>{% endif %}
+</p>
+{% endif %}
+{% endmacro %}
+
 {% macro pub_item(p, show_year=true) %}
-<li class="pub" data-type="{{ p.type }}" data-year="{{ p.year }}">
+<li class="pub" data-type="{{ p.type }}" data-year="{{ p.year }}" data-cites="{{ p.m.citations or 0 }}">
   <p class="pub-title">{% if p.url %}<a href="{{ p.url }}">{{ p.title }}</a>{% else %}{{ p.title }}{% endif %}</p>
   <p class="pub-authors">{{ p.authors_html }}</p>
   <p class="pub-venue">{% if p.venue %}<span class="journal">{{ p.venue }}</span>{% endif %}{% if show_year and p.year %} ({{ p.year }}){% endif %}{% if p.note %}. {{ p.note }}{% endif %}
   {% for b in p.badges %}<span class="badge">{{ b }}</span>{% endfor %}</p>
+  {{ pub_meta(p) }}
 </li>
 {% endmacro %}
 
@@ -12,7 +27,7 @@
 {% if p %}
 <li class="pub compact">
   <a href="{{ p.url }}">{{ p.title }}</a>
-  <span class="pub-venue"><span class="journal">{{ p.journal }}</span> ({{ p.year }})</span>
+  <span class="pub-venue"><span class="journal">{{ p.journal }}</span> ({{ p.year }}){% if p.m.citations %}, cited {{ p.m.citations }}{% endif %}</span>
 </li>
 {% endif %}
 {% endmacro %}

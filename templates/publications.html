@@ -7,6 +7,9 @@
      The list updates itself from my <a href="https://orcid.org/{{ profile.ids[0].value }}">ORCID record</a>.
      Profiles:
      {% for i in profile.ids %}<a href="{{ i.url }}">{{ i.label }}</a>{% if not loop.last %}, {% endif %}{% endfor %}.</p>
+  <p class="quiet">Under each paper: citations (the higher count of Crossref and Semantic Scholar, refreshed weekly{% if stats.metrics_updated %}, last on {{ stats.metrics_updated }}{% endif %}; Google Scholar counts are usually higher),
+     links to preprint versions ({{ stats.with_preprint }} papers have one) and to a free full text where one exists,
+     and the Altmetric score of attention in news, policy documents and social media, which updates live.</p>
 </header>
 
 <section class="selected">
@@ -26,8 +29,14 @@
       <label><input type="radio" name="pub-type" value="{{ key }}"> {{ label }} <span class="n">{{ items|length }}</span></label>
       {% endfor %}
     </fieldset>
+    <fieldset>
+      <legend>Order</legend>
+      <label><input type="radio" name="pub-order" value="type" checked> By type and year</label>
+      <label><input type="radio" name="pub-order" value="cites"> Most cited first</label>
+    </fieldset>
     <p class="pub-count" aria-live="polite"></p>
   </form>
+  <ol class="pub-list by-cites" hidden></ol>
 
   {% for key, label, items in pub_groups %}
   <section class="pub-group" data-group="{{ key }}">
@@ -49,4 +58,5 @@
 {% endblock %}
 {% block scripts %}
 <script src="{{ root }}js/publications.js" defer></script>
+<script src="https://d1bxh8uas1mnw7.cloudfront.net/assets/embed.js" async></script>
 {% endblock %}

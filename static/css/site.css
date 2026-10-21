@@ -120,6 +120,14 @@ ul.plain li:last-child { border-bottom: 0; }
 .pub-authors .me { color: var(--ink); font-weight: 600; }
 .journal { font-style: italic; }
 .badge { display: inline-block; font-family: var(--sans); font-size: 0.72rem; font-weight: 600; color: var(--accent-2); border: 1px solid currentColor; border-radius: 3px; padding: 0 0.35rem; margin-left: 0.4rem; vertical-align: 1px; }
+.pub-meta { font-family: var(--sans); font-size: 0.82rem; margin-top: 0.25rem !important; display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.9rem; }
+.pub-meta a { color: var(--accent); text-decoration: none; }
+.pub-meta a:hover { text-decoration: underline; }
+.pub-meta .cites { color: var(--ink); font-variant-numeric: tabular-nums; }
+.pub-meta a.cites { color: var(--ink); }
+.pub-meta .altmetric-embed { line-height: 0; }
+.pub-meta .altmetric-embed:empty { display: none; }
+[hidden] { display: none !important; }
 .pub.compact { padding: 0.4rem 0; font-size: 0.98rem; line-height: 1.4; }
 .pub.compact a { color: var(--ink); }
 .pub.compact .pub-venue { display: block; }
