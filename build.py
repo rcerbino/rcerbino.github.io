@@ -250,7 +250,16 @@ def main(check=False, preview=False):
     env = Environment(loader=FileSystemLoader(ROOT / "templates"), autoescape=True,
                       trim_blocks=True, lstrip_blocks=True)
     env.filters["date"] = fmt_date
-    env.globals.update(pub=pub, type_labels=TYPE_LABELS, type_short=TYPE_SHORT)
+    import hashlib
+
+    def asset(path):
+        """Static file URL with a content hash, so browsers fetch the new
+        version as soon as the file changes instead of using a cached copy."""
+        f = ROOT / "static" / path
+        h = hashlib.sha1(f.read_bytes()).hexdigest()[:8] if f.exists() else "0"
+        return f"{path}?v={h}"
+
+    env.globals.update(pub=pub, type_labels=TYPE_LABELS, type_short=TYPE_SHORT, asset=asset)
 
     if OUT.exists():
         shutil.rmtree(OUT)
