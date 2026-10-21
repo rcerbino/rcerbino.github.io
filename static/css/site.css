@@ -9,6 +9,14 @@
   --accent-2: #b8233f;    /* actin red: badges only */
   --speckle-ink: 47, 69, 197;
   --tint: #eef1fb;
+  /* publication types: text colour on a light tint */
+  --t-preprint: #8a4f00;    --t-preprint-bg: #fcefd6;
+  --t-article: #2f45c5;     --t-article-bg: #e6eafb;
+  --t-review: #0a6f63;      --t-review-bg: #dcf2ee;
+  --t-chapter: #7a35b5;     --t-chapter-bg: #f0e6fa;
+  --t-book: #3b6e17;        --t-book-bg: #e5f2da;
+  --t-proceedings: #8c3a5b; --t-proceedings-bg: #f8e4ec;
+  --t-other: #4f5966;       --t-other-bg: #e9edf1;
   --serif: "Spectral", Georgia, "Times New Roman", serif;
   --sans: "Public Sans", "Helvetica Neue", Arial, sans-serif;
   --measure: 40rem;
@@ -25,11 +33,25 @@
     --accent-2: #ff7a90;
     --speckle-ink: 147, 161, 255;
     --tint: #161c2a;
+    --t-preprint: #f2b75c; --t-preprint-bg: #3a2a10;
+    --t-article: #9eabff; --t-article-bg: #1f2650;
+    --t-review: #5fd3c2; --t-review-bg: #10302c;
+    --t-chapter: #c9a0f2; --t-chapter-bg: #2c1d40;
+    --t-book: #9fd47a; --t-book-bg: #1d2f12;
+    --t-proceedings: #f09ab8; --t-proceedings-bg: #3a1a27;
+    --t-other: #b4bdc8; --t-other-bg: #262c36;
   }
 }
 :root[data-theme="dark"] {
   --paper: #0d1119; --ink: #e4e8ee; --muted: #98a2b3; --rule: #283040;
   --accent: #93a1ff; --accent-2: #ff7a90; --speckle-ink: 147, 161, 255; --tint: #161c2a;
+  --t-preprint: #f2b75c; --t-preprint-bg: #3a2a10;
+  --t-article: #9eabff; --t-article-bg: #1f2650;
+  --t-review: #5fd3c2; --t-review-bg: #10302c;
+  --t-chapter: #c9a0f2; --t-chapter-bg: #2c1d40;
+  --t-book: #9fd47a; --t-book-bg: #1d2f12;
+  --t-proceedings: #f09ab8; --t-proceedings-bg: #3a1a27;
+  --t-other: #b4bdc8; --t-other-bg: #262c36;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -195,3 +217,22 @@ address { font-style: normal; }
   .site-nav, .speckle-band, .speckle-caption, .pub-filter, .site-footer { display: none; }
   body { font-size: 11pt; }
 }
+
+/* Publication type labels */
+.ptype { display: inline-block; font-family: var(--sans); font-size: 0.72rem; font-weight: 600; font-style: normal; line-height: 1.5; padding: 0 0.45rem; border-radius: 3px; margin-right: 0.5rem; vertical-align: 1px; white-space: nowrap; }
+.ptype-dot { display: inline-block; width: 0.6rem; height: 0.6rem; border-radius: 50%; margin-right: 0.5rem; vertical-align: 0.12em; }
+.ptype-preprint { color: var(--t-preprint); background: var(--t-preprint-bg); }
+.ptype-article { color: var(--t-article); background: var(--t-article-bg); }
+.ptype-review { color: var(--t-review); background: var(--t-review-bg); }
+.ptype-chapter { color: var(--t-chapter); background: var(--t-chapter-bg); }
+.ptype-book { color: var(--t-book); background: var(--t-book-bg); }
+.ptype-proceedings { color: var(--t-proceedings); background: var(--t-proceedings-bg); }
+.ptype-other { color: var(--t-other); background: var(--t-other-bg); }
+.ptype-dot.ptype-preprint { background: var(--t-preprint); }
+.ptype-dot.ptype-article { background: var(--t-article); }
+.ptype-dot.ptype-review { background: var(--t-review); }
+.ptype-dot.ptype-chapter { background: var(--t-chapter); }
+.ptype-dot.ptype-book { background: var(--t-book); }
+.ptype-dot.ptype-proceedings { background: var(--t-proceedings); }
+.ptype-dot.ptype-other { background: var(--t-other); }
+.pub-filter .ptype { margin-right: 0.15rem; }

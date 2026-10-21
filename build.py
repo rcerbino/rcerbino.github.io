@@ -44,6 +44,15 @@ TYPE_LABELS = {
     "other": "Other writing",
 }
 TYPE_ORDER = list(TYPE_LABELS)
+TYPE_SHORT = {
+    "preprint": "Preprint",
+    "article": "Article",
+    "review": "Review",
+    "chapter": "Book chapter",
+    "book": "Book",
+    "proceedings": "Proceedings",
+    "other": "Other",
+}
 TAG_LABELS = {"cover": "Cover", "editors-suggestion": "Editors' Suggestion"}
 
 
@@ -241,7 +250,7 @@ def main(check=False, preview=False):
     env = Environment(loader=FileSystemLoader(ROOT / "templates"), autoescape=True,
                       trim_blocks=True, lstrip_blocks=True)
     env.filters["date"] = fmt_date
-    env.globals.update(pub=pub, type_labels=TYPE_LABELS)
+    env.globals.update(pub=pub, type_labels=TYPE_LABELS, type_short=TYPE_SHORT)
 
     if OUT.exists():
         shutil.rmtree(OUT)

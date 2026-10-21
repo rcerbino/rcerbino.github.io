@@ -30,7 +30,9 @@
         c.classList.remove('hidden');
         var venue = c.querySelector('.pub-venue');
         if (venue && li.dataset.year && venue.textContent.indexOf('(' + li.dataset.year + ')') === -1) {
-          venue.insertAdjacentText('beforeend', ' (' + li.dataset.year + ')');
+          var j = venue.querySelector('.journal');
+          if (j) j.insertAdjacentText('afterend', ' (' + li.dataset.year + ')');
+          else venue.insertAdjacentText('beforeend', ' (' + li.dataset.year + ')');
         }
         byCites.appendChild(c);
       });

@@ -26,7 +26,7 @@
       <legend>Show</legend>
       <label><input type="radio" name="pub-type" value="all" checked> All</label>
       {% for key, label, items in pub_groups %}
-      <label><input type="radio" name="pub-type" value="{{ key }}"> {{ label }} <span class="n">{{ items|length }}</span></label>
+      <label><input type="radio" name="pub-type" value="{{ key }}"> <span class="ptype ptype-{{ key }}">{{ type_short[key] }}</span> <span class="n">{{ items|length }}</span></label>
       {% endfor %}
     </fieldset>
     <fieldset>
@@ -40,7 +40,7 @@
 
   {% for key, label, items in pub_groups %}
   <section class="pub-group" data-group="{{ key }}">
-    <h3>{{ label }}</h3>
+    <h3><span class="ptype-dot ptype-{{ key }}" aria-hidden="true"></span>{{ label }}</h3>
     {% set ns = namespace(year=None) %}
     {% for p in items %}
       {% if p.year != ns.year %}
