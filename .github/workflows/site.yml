@@ -43,11 +43,12 @@ jobs:
           python scripts/sync_preprints.py
           python scripts/sync_metrics.py
           python scripts/sync_group_news.py
+          python scripts/sync_people.py
           if ! git diff --quiet -- data/; then
             git config user.name "site-bot"
             git config user.email "site-bot@users.noreply.github.com"
             git add data/
-            git commit -m "Automatic refresh of publications, preprints, metrics and group news"
+            git commit -m "Automatic refresh of publications, preprints, metrics, group news and people"
             git push
           fi
 

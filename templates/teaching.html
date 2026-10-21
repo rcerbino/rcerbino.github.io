@@ -28,22 +28,34 @@
   <h2>Mentoring</h2>
   <p>{{ teaching.mentoring.intro }} <a href="{{ profile.lab.url }}people/">Meet the team</a>.</p>
   <ul class="figures">
-  {% for c in teaching.mentoring.counts %}
-    <li><span class="num">{{ c.value }}</span><span class="lbl">{{ c.label | lower }}</span></li>
+  {% for g in people_groups %}
+    <li><span class="num">{{ g.current|length + g.former|length }}</span><span class="lbl">{{ g.short }}</span></li>
   {% endfor %}
   </ul>
-  <div class="people-cols">
-    <div>
-      <h3>Postdoctoral researchers</h3>
-      <ul class="plain">{% for p in teaching.mentoring.postdocs %}<li>{{ p.name }} <span class="quiet">{{ p.where }}</span></li>{% endfor %}</ul>
+  {% macro person(p) %}
+  <li><a href="{{ p.url }}">{{ p.name }}</a>{% if p.role and (p.group in ('visitors', 'interns') or 'co-supervised' in p.role) %}<span class="quiet">, {{ p.role | replace(' Student', ' student') | replace(' Intern', ' intern') }}</span>{% endif %}
+    {% set bits = [] %}
+    {% if p.institution and 'University of Vienna' not in p.institution %}{% set _ = bits.append(p.institution) %}{% endif %}
+    {% if p.period %}{% set _ = bits.append(p.period) %}{% elif p.graduated %}{% set _ = bits.append('graduated ' ~ p.graduated) %}{% endif %}
+    {% if p.note %}{% set _ = bits.append(p.note) %}{% endif %}
+    {% if bits %}<span class="person-meta">{{ bits | join('; ') }}</span>{% endif %}
+  </li>
+  {% endmacro %}
+  <div class="people-groups">
+  {% for g in people_groups %}
+    <div class="people-group">
+      <h3>{{ g.label }}</h3>
+      {% if g.current %}
+      <h4>Current</h4>
+      <ul class="people">{% for p in g.current %}{{ person(p) }}{% endfor %}</ul>
+      {% endif %}
+      {% if g.former %}
+      <h4>Former</h4>
+      <ul class="people">{% for p in g.former %}{{ person(p) }}{% endfor %}</ul>
+      {% endif %}
     </div>
-    <div>
-      <h3>Completed PhD theses</h3>
-      <ul class="plain">{% for p in teaching.mentoring.phd_completed %}<li>{{ p.name }} <span class="quiet">{{ p.where }}</span></li>{% endfor %}</ul>
-      <h3>PhD theses in progress</h3>
-      <ul class="plain">{% for p in teaching.mentoring.phd_current %}<li>{{ p.name }} <span class="quiet">{{ p.where }}</span></li>{% endfor %}</ul>
-    </div>
+  {% endfor %}
   </div>
-  <p>{{ teaching.mentoring.other }}</p>
+  <p class="mentoring-other">{{ teaching.mentoring.other }}</p>
 </section>
 {% endblock %}

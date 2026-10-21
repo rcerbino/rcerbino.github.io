@@ -45,49 +45,17 @@ innovation:
 
 mentoring:
   intro: >-
-    Numbers cover my time in Milan and in Vienna. The current team is on the
-    SoMeX website.
-  counts:
-    - label: Postdoctoral researchers supervised
-      value: 6
-    - label: PhD theses completed
-      value: 4
-    - label: PhD theses in progress
-      value: 3
-    - label: Master's theses completed
-      value: 15
-    - label: Master's theses in progress
-      value: 3
-    - label: Bachelor's theses
-      value: 25
-  postdocs:
-    - name: E. Lattuada
-      where: Vienna (FWF Lise Meitner Fellow)
-    - name: M. Lavaud
-      where: Vienna
-    - name: F. Giavazzi
-      where: Milan
-    - name: S. Biffi
-      where: Milan
-    - name: F. Serra
-      where: Milan
-    - name: G. Savorana
-      where: Milan
-  phd_completed:
-    - name: S. Mazzoni
-      where: Milan
-    - name: G. Donzelli
-      where: Milan
-    - name: S. Biffi
-      where: Milan
-    - name: P. Edera
-      where: Milan
-  phd_current:
-    - name: N. Kalafatakis
-      where: Vienna
-    - name: J. Di Franco
-      where: Vienna
-    - name: S. Khandelwal
-      where: Vienna
+    The people I supervise or host in the SoMeX lab in Vienna. This list is
+    read from the SoMeX website and stays up to date on its own.
+  # slugs from the SoMeX website (the part after /author/) not to list here
+  exclude: [roberto-cerbino, mohandas, martina-benedikt]
+  # corrections to what the SoMeX website says, by slug
+  overrides:
+    alessia-de-cataldo:
+      group: phd
+      role: PhD student, co-supervised with Luigi Gentile
+  # people not on the SoMeX website: name, group (postdocs, phd, msc, bsc,
+  # visitors, interns), current (true/false), institution, period, note
+  extra: []
   other: >-
     I also mentor fellows of the Vienna Doctoral School in Physics.

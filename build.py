@@ -179,6 +179,20 @@ def main(check=False, preview=False):
     news = load_yaml("news.yaml")
     pubs = load_json("publications.json", [])
     group_news = load_json("group_news.json", [])
+    people = load_json("people.json", [])
+    groups_def = [("postdocs", "Postdoctoral researchers", "postdoctoral researchers"),
+                  ("phd", "PhD students", "PhD students"),
+                  ("msc", "Master's students", "master's students"),
+                  ("bsc", "Bachelor's students", "bachelor's students"),
+                  ("visitors", "Visiting researchers and students", "visiting researchers and students"),
+                  ("interns", "Interns", "interns")]
+    people_groups = []
+    for key, label, short in groups_def:
+        members = [p for p in people if p.get("group") == key]
+        if members:
+            people_groups.append({"key": key, "label": label, "short": short,
+                                  "current": [p for p in members if p.get("current")],
+                                  "former": [p for p in members if not p.get("current")]})
 
     preprints = load_json("preprints.json", {"links": {}, "standalone": []})
     metrics = load_json("metrics.json", {"papers": {}})
@@ -278,7 +292,7 @@ def main(check=False, preview=False):
     nav = [(link(path), label) for path, _, label in PAGES]
     ctx = dict(profile=profile, about=about, research=research, teaching=teaching,
                news=news, pubs=pubs, pub_groups=pub_groups, selected=selected,
-               years=years, stats=stats, current_roles=current_roles, group_news=group_news, nav=nav,
+               years=years, stats=stats, current_roles=current_roles, people_groups=people_groups, group_news=group_news, nav=nav,
                built=today.isoformat(), built_human=fmt_date(today.isoformat()),
                current_year=current_year, site_url=SITE_URL)
 

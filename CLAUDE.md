@@ -18,6 +18,7 @@ python3 scripts/sync_publications.py
 python3 scripts/sync_preprints.py
 python3 scripts/sync_metrics.py
 python3 scripts/sync_group_news.py
+python3 scripts/sync_people.py
 python3 build.py --check
 ```
 
@@ -109,6 +110,7 @@ because you were unsure.
 | Google Scholar counts per paper (written monthly by the separate Google Scholar snapshot task; preferred over `metrics.json` when present) | `data/scholar_citations.json` |
 | Publication list (generated, do not edit by hand) | `data/publications.json` |
 | Group news (generated) | `data/group_news.json` |
+| Supervised and hosted people, read from the SoMeX people page (generated; corrections in `content/teaching.yaml > mentoring`) | `data/people.json` |
 
 ## Do not move
 
