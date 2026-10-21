@@ -1,0 +1,682 @@
+{
+ "updated": "2026-10-21",
+ "source": "Google Scholar",
+ "profile": "https://scholar.google.com/citations?user=2Iq2JPIAAAAJ",
+ "papers": [
+  {
+   "title": "Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope",
+   "year": 2008,
+   "citations": 481
+  },
+  {
+   "title": "Functional transcription promoters at DNA double-strand breaks mediate RNA-driven phase separation of damage-response factors",
+   "year": 2019,
+   "citations": 436
+  },
+  {
+   "title": "Endocytic reawakening of motility in jammed epithelia",
+   "year": 2017,
+   "citations": 364
+  },
+  {
+   "title": "Phase behavior and critical activated dynamics of limited-valence DNA nanostars",
+   "year": 2013,
+   "citations": 298
+  },
+  {
+   "title": "Two-dimensional x-ray beam phase sensing",
+   "year": 2012,
+   "citations": 257
+  },
+  {
+   "title": "Scattering information obtained by optical microscopy: differential dynamic microscopy and beyond",
+   "year": 2009,
+   "citations": 231
+  },
+  {
+   "title": "Flocking transitions in confluent tissues",
+   "year": 2018,
+   "citations": 221
+  },
+  {
+   "title": "Unjamming overcomes kinetic and proliferation arrest in terminally differentiated cells and promotes collective motility of carcinoma",
+   "year": 2019,
+   "citations": 220
+  },
+  {
+   "title": "Bistable heat transfer in a nanofluid",
+   "year": 2009,
+   "citations": 157
+  },
+  {
+   "title": "X-ray-scattering information obtained from near-field speckle",
+   "year": 2008,
+   "citations": 150
+  },
+  {
+   "title": "Digital Fourier microscopy for soft matter dynamics",
+   "year": 2014,
+   "citations": 146
+  },
+  {
+   "title": "Fractal fronts of diffusion in microgravity",
+   "year": 2011,
+   "citations": 143
+  },
+  {
+   "title": "Characterizing concentrated, multiply scattering, and actively driven fluorescent systems with confocal differential dynamic microscopy",
+   "year": 2012,
+   "citations": 137
+  },
+  {
+   "title": "Right-handed double-helix ultrashort DNA yields chiral nematic phases with both right-and left-handed director twist",
+   "year": 2010,
+   "citations": 136
+  },
+  {
+   "title": "New trends in light scattering",
+   "year": 2007,
+   "citations": 115
+  },
+  {
+   "title": "Tissue fluidification promotes a cGAS–STING cytosolic DNA response in invasive breast cancer",
+   "year": 2023,
+   "citations": 110
+  },
+  {
+   "title": "Liquid crystal self-assembly of random-sequence DNA oligomers",
+   "year": 2012,
+   "citations": 104
+  },
+  {
+   "title": "Perspective: Differential dynamic microscopy extracts multi-scale activity in complex fluids and biological systems",
+   "year": 2017,
+   "citations": 104
+  },
+  {
+   "title": "A fast and simple label-free immunoassay based on a smartphone",
+   "year": 2014,
+   "citations": 103
+  },
+  {
+   "title": "Differential dynamic microscopy microrheology of soft materials: A tracking-free determination of the frequency-dependent loss and storage moduli",
+   "year": 2017,
+   "citations": 94
+  },
+  {
+   "title": "Re-entrant DNA gels",
+   "year": 2016,
+   "citations": 93
+  },
+  {
+   "title": "Equilibrium gels of low-valence DNA nanostars: a colloidal model for strong glass formers",
+   "year": 2015,
+   "citations": 82
+  },
+  {
+   "title": "Noise in laser speckle correlation and imaging techniques",
+   "year": 2010,
+   "citations": 79
+  },
+  {
+   "title": "Correlations of light in the deep Fresnel region: An extended Van Cittert and Zernike theorem",
+   "year": 2007,
+   "citations": 76
+  },
+  {
+   "title": "Active diffusion and advection in Drosophila oocytes result from the interplay of actin and microtubules",
+   "year": 2017,
+   "citations": 74
+  },
+  {
+   "title": "Near-field scattering techniques: Novel instrumentation and results from time and spatially resolved investigations of soft matter systems",
+   "year": 2009,
+   "citations": 74
+  },
+  {
+   "title": "Soft matter roadmap",
+   "year": 2024,
+   "citations": 74
+  },
+  {
+   "title": "Introduction to nonextensive statistical mechanics and thermodynamics",
+   "year": 2003,
+   "citations": 73
+  },
+  {
+   "title": "Viscoelasticity of nematic liquid crystals at a glance",
+   "year": 2014,
+   "citations": 73
+  },
+  {
+   "title": "Soret driven convection in a colloidal solution heated from above at very large solutal Rayleigh number",
+   "year": 2002,
+   "citations": 70
+  },
+  {
+   "title": "Differential dynamic microscopy for the characterization of polymer systems",
+   "year": 2022,
+   "citations": 66
+  },
+  {
+   "title": "Giant fluctuations and structural effects in a flocking epithelium",
+   "year": 2017,
+   "citations": 65
+  },
+  {
+   "title": "Scaling behavior for the onset of convection in a colloidal suspension",
+   "year": 2005,
+   "citations": 61
+  },
+  {
+   "title": "Emergence of multiscale dynamics in colloidal gels",
+   "year": 2020,
+   "citations": 59
+  },
+  {
+   "title": "European Space Agency experiments on thermodiffusion of fluid mixtures in space",
+   "year": 2019,
+   "citations": 58
+  },
+  {
+   "title": "Giant thermophoresis of poly(N-isopropylacrylamide) microgel particles",
+   "year": 2012,
+   "citations": 55
+  },
+  {
+   "title": "Kinetics of colloidal fractal aggregation by differential dynamic microscopy",
+   "year": 2011,
+   "citations": 54
+  },
+  {
+   "title": "Thermal Fluctuations in a Layer of Liquid Subjected to Temperature Gradients with and without the Influence of Gravity",
+   "year": 2011,
+   "citations": 53
+  },
+  {
+   "title": "Tracking-free determination of single-cell displacements and division rates in confluent monolayers",
+   "year": 2018,
+   "citations": 53
+  },
+  {
+   "title": "Shadowgraph analysis of non-equilibrium fluctuations for measuring transport properties in microgravity in the GRADFLEX experiment",
+   "year": 2016,
+   "citations": 51
+  },
+  {
+   "title": "Gradient-driven fluctuations experiment: fluid fluctuations in microgravity",
+   "year": 2006,
+   "citations": 49
+  },
+  {
+   "title": "DNA-Based soft phases",
+   "year": 2012,
+   "citations": 48
+  },
+  {
+   "title": "Image windowing mitigates edge effects in Differential Dynamic Microscopy",
+   "year": 2017,
+   "citations": 48
+  },
+  {
+   "title": "Topological defects of nematic liquid crystals confined in porous networks",
+   "year": 2011,
+   "citations": 48
+  },
+  {
+   "title": "Dynamic scaling for the growth of non-equilibrium fluctuations during thermophoretic diffusion in microgravity",
+   "year": 2015,
+   "citations": 47
+  },
+  {
+   "title": "Structure and dynamics of concentration fluctuations in a non-equilibrium dense colloidal suspension",
+   "year": 2016,
+   "citations": 45
+  },
+  {
+   "title": "Dark field differential dynamic microscopy enables accurate characterization of the roto-translational dynamics of bacteria and colloidal clusters",
+   "year": 2018,
+   "citations": 43
+  },
+  {
+   "title": "Equilibrium gels of trivalent DNA-nanostars: Effect of the ionic strength on the dynamics",
+   "year": 2015,
+   "citations": 43
+  },
+  {
+   "title": "Simultaneous characterization of rotational and translational diffusion of optically anisotropic particles by optical microscopy",
+   "year": 2016,
+   "citations": 42
+  },
+  {
+   "title": "How archer fish achieve a powerful impact: hydrodynamic instability of a pulsed jet in Toxotes jaculatrix",
+   "year": 2012,
+   "citations": 41
+  },
+  {
+   "title": "Multispot, label-free biodetection at a phantom plastic–water interface",
+   "year": 2013,
+   "citations": 40
+  },
+  {
+   "title": "The NEUF-DIX space project-Non-EquilibriUm Fluctuations during DIffusion in compleX liquids",
+   "year": 2016,
+   "citations": 39
+  },
+  {
+   "title": "Diffusion in liquid mixtures",
+   "year": 2023,
+   "citations": 38
+  },
+  {
+   "title": "Deformation profiles and microscopic dynamics of complex fluids during oscillatory shear experiments",
+   "year": 2021,
+   "citations": 36
+  },
+  {
+   "title": "Nematic liquid crystals embedded in cubic microlattices: memory effects and bistable pixels",
+   "year": 2013,
+   "citations": 34
+  },
+  {
+   "title": "Performance indicators in higher education quality management of learning and teaching: lessons from a benchlearning exercise of six European universities",
+   "year": 2022,
+   "citations": 33
+  },
+  {
+   "title": "Equilibrium and non-equilibrium concentration fluctuations in a critical binary mixture",
+   "year": 2016,
+   "citations": 32
+  },
+  {
+   "title": "Disentangling collective motion and local rearrangements in 2D and 3D cell assemblies",
+   "year": 2021,
+   "citations": 30
+  },
+  {
+   "title": "Giant fluctuations induced by thermal diffusion in complex liquids",
+   "year": 2020,
+   "citations": 29
+  },
+  {
+   "title": "Multiple dynamic regimes in a coarsening foam",
+   "year": 2021,
+   "citations": 29
+  },
+  {
+   "title": "Multi-spot, label-free immunoassay on reflectionless glass",
+   "year": 2015,
+   "citations": 28
+  },
+  {
+   "title": "Transient oscillations in Soret-driven convection in a colloidal suspension",
+   "year": 2004,
+   "citations": 28
+  },
+  {
+   "title": "Fast-onset Soret-driven convection in a colloidal suspension heated from above",
+   "year": 2003,
+   "citations": 26
+  },
+  {
+   "title": "Quantitative optical microscopy of colloids: the legacy of Jean Perrin",
+   "year": 2018,
+   "citations": 25
+  },
+  {
+   "title": "Introduction to viscoelasticity and plasticity, and their relation to the underlying microscopic dynamics in soft matter systems",
+   "year": 2023,
+   "citations": 22
+  },
+  {
+   "title": "Quantitative rheo-microscopy of soft matter",
+   "year": 2022,
+   "citations": 22
+  },
+  {
+   "title": "Hecw controls oogenesis and neuronal homeostasis by promoting the liquid state of ribonucleoprotein particles",
+   "year": 2021,
+   "citations": 20
+  },
+  {
+   "title": "Reciprocal space study of Brownian yet non-Gaussian diffusion of small tracers in a hard-sphere glass",
+   "year": 2022,
+   "citations": 20
+  },
+  {
+   "title": "The hitchhiker’s guide to differential dynamic microscopy",
+   "year": 2025,
+   "citations": 18
+  },
+  {
+   "title": "Protein sizing with differential dynamic microscopy",
+   "year": 2023,
+   "citations": 17
+  },
+  {
+   "title": "Mutual Voronoi tessellation in spoke pattern convection",
+   "year": 2008,
+   "citations": 16
+  },
+  {
+   "title": "Dynamics of anisotropic colloidal systems: What to choose, DLS, DDM or XPCS?",
+   "year": 2024,
+   "citations": 14
+  },
+  {
+   "title": "Fluctuations in diffusion processes in microgravity",
+   "year": 2006,
+   "citations": 14
+  },
+  {
+   "title": "Gradient-driven fluctuations in microgravity",
+   "year": 2012,
+   "citations": 14
+  },
+  {
+   "title": "Exploring soft matter with x-rays: from the discovery of the DNA structure to the challenges of free electron lasers",
+   "year": 2010,
+   "citations": 11
+  },
+  {
+   "title": "Multiscale heterogeneous dynamics in two-dimensional glassy colloids",
+   "year": 2022,
+   "citations": 10
+  },
+  {
+   "title": "Probing roto-translational diffusion of small anisotropic colloidal particles with a bright-field microscope",
+   "year": 2021,
+   "citations": 10
+  },
+  {
+   "title": "Restoring the tumour mechanophenotype of vocal fold cancer reverts its malignant properties",
+   "year": 2026,
+   "citations": 8
+  },
+  {
+   "title": "Yielding under the microscope: a multi-scale perspective on brittle and ductile behaviors in oscillatory shear",
+   "year": 2024,
+   "citations": 8
+  },
+  {
+   "title": "MicroMotility: State of the art, recent accomplishments and perspectives on the mathematical modeling of bio-motility at microscopic scales",
+   "year": 2020,
+   "citations": 7
+  },
+  {
+   "title": "Matrix viscoelasticity decouples bubble growth and mobility in coarsening foams",
+   "year": 2024,
+   "citations": 6
+  },
+  {
+   "title": "Non-invasive measurement of nuclear relative stiffness from quantitative analysis of microscopy data",
+   "year": 2022,
+   "citations": 5
+  },
+  {
+   "title": "Liquid Crystals: Nematic Liquid Crystals Embedded in Cubic Microlattices: Memory Effects and Bistable Pixels (Adv. Funct. Mater. 32/2013)",
+   "year": 2013,
+   "citations": 4
+  },
+  {
+   "title": "Shadowgraphic study of convection in a colloidal suspension",
+   "year": 2004,
+   "citations": 4
+  },
+  {
+   "title": "ShearView: A compact stress-and strain-controlled linear rheometer for integrated rheomicroscopy",
+   "year": 2026,
+   "citations": 4
+  },
+  {
+   "title": "Bistability of dielectrically anisotropic nematic crystals and the adaptation of endothelial collectives to stress fields",
+   "year": 2022,
+   "citations": 3
+  },
+  {
+   "title": "De Novo Gene Transcription of Connexin Mediates Cytoplasmic Fluid Exchange and Flocking Transitions in Physiological and Cancerous Epithelial Systems",
+   "year": 2026,
+   "citations": 3
+  },
+  {
+   "title": "One-and two-particle microrheology of soft materials based on optical-flow image analysis",
+   "year": 2025,
+   "citations": 3
+  },
+  {
+   "title": "Optical generation of Voronoi diagram",
+   "year": 2008,
+   "citations": 3
+  },
+  {
+   "title": "Probing out-of-equilibrium soft matter",
+   "year": 2023,
+   "citations": 3
+  },
+  {
+   "title": "Anomalous relaxation of coarsening foams with viscoelastic continuous phases",
+   "year": 2024,
+   "citations": 2
+  },
+  {
+   "title": "Capillarity and Wetting Phenomena: Drops, Bubbles, Pearls, Waves",
+   "year": 2006,
+   "citations": 2
+  },
+  {
+   "title": "Effect of configuration of the microchannels fabricated by femtosecond laser micromachining on topological defects in confined liquid crystals",
+   "year": 2012,
+   "citations": 2
+  },
+  {
+   "title": "Myxococcus xanthus for active matter studies: A tutorial for its growth and potential applications",
+   "year": 2025,
+   "citations": 2
+  },
+  {
+   "title": "Publisher Correction: Unjamming overcomes kinetic and proliferation arrest in terminally differentiated cells and promotes collective motility of carcinoma",
+   "year": 2022,
+   "citations": 2
+  },
+  {
+   "title": "Echo speckle imaging of dynamic processes in soft materials",
+   "year": 2022,
+   "citations": 1
+  },
+  {
+   "title": "From real to reciprocal space: Scattering information from real space images",
+   "year": 2025,
+   "citations": 1
+  },
+  {
+   "title": "GRADFLEX, Fluctuations in Microgravity",
+   "year": 2004,
+   "citations": 1
+  },
+  {
+   "title": "Gradflex: A microgravity experiment for gradient driven fluctuations",
+   "year": 2005,
+   "citations": 1
+  },
+  {
+   "title": "Near field heterodyne X-ray speckles",
+   "year": 2005,
+   "citations": 1
+  },
+  {
+   "title": "Non-equilibrium fluctuations in microgravity: initial results of GRADFLEX aboard FOTON-M3",
+   "year": 2008,
+   "citations": 1
+  },
+  {
+   "title": "Quantitative microscopy of active colloids",
+   "year": 2024,
+   "citations": 1
+  },
+  {
+   "title": "Bafilomycin induces mitochondrial reorganization, nuclear deformation and γH2AX increase in T24 bladder cancer cells",
+   "year": 2024,
+   "citations": 0
+  },
+  {
+   "title": "Bistability of nematic liquid crystals confined in 3D scaffold produced by two-photon polymerization",
+   "year": 2012,
+   "citations": 0
+  },
+  {
+   "title": "Contact percolation governs collective motility via mechano-chemical feedback in heterogeneous breast cancer",
+   "year": 2026,
+   "citations": 0
+  },
+  {
+   "title": "Contact percolation sets flocking phase transition via chemo-mechanical feedback in heterogeneous breast cancer",
+   "year": 2025,
+   "citations": 0
+  },
+  {
+   "title": "Differential Dynamic Microscopy as an Alternative to Dynamic Light Scattering for Turbid Nanoemulsions",
+   "year": null,
+   "citations": 0
+  },
+  {
+   "title": "Enhanced ethanol retention and thermal stability in calcium chloride-stabilized ethyl cellulose gel fuels",
+   "year": 2025,
+   "citations": 0
+  },
+  {
+   "title": "Fisica per medicina con applicazioni fisiologiche, diagnostiche e terapeutiche",
+   "year": 2018,
+   "citations": 0
+  },
+  {
+   "title": "Fisica: Semestre Filtro Medicina: Teoria ed esercizi per Medicina, Odontoiatria e Veterinaria",
+   "year": 2025,
+   "citations": 0
+  },
+  {
+   "title": "Flocking Transition in Confluent Tissues",
+   "year": 2017,
+   "citations": 0
+  },
+  {
+   "title": "GRADFLEX mixture, none equilibrium fluctuations in microgravity",
+   "year": 2008,
+   "citations": 0
+  },
+  {
+   "title": "GRADFLEX: The Microgravity Experiment for Gradient...",
+   "year": 2012,
+   "citations": 0
+  },
+  {
+   "title": "Gravity-controlled non-equilibrium Casimir pressure in a binary liquid mixture",
+   "year": 2026,
+   "citations": 0
+  },
+  {
+   "title": "L'arma segreta del pesce arciere",
+   "year": 2012,
+   "citations": 0
+  },
+  {
+   "title": "Le sfide di una didattica moderna: nuovi approcci e motodologie presso la Statale di Milano",
+   "year": 2018,
+   "citations": 0
+  },
+  {
+   "title": "Liquid Crystal Ordering of Random DNA Oligomers",
+   "year": 2012,
+   "citations": 0
+  },
+  {
+   "title": "Memory effects of nematic liquid crystals in porous network: the role of geometry",
+   "year": 2014,
+   "citations": 0
+  },
+  {
+   "title": "Non-equilibrium fluctuations on earth and in micro-gravity. The GRADFLEX experiment",
+   "year": 2011,
+   "citations": 0
+  },
+  {
+   "title": "Non-universality of Jamming in Cellular Monolayers",
+   "year": null,
+   "citations": 0
+  },
+  {
+   "title": "Portable, multispot, label-free immunoassay on a phantom perfluorinated plastic",
+   "year": 2015,
+   "citations": 0
+  },
+  {
+   "title": "Probing early-stage casein micelle aggregation during milk acidification with differential dynamic microscopy",
+   "year": 2026,
+   "citations": 0
+  },
+  {
+   "title": "Problemi di Fisica Biomedica",
+   "year": 2019,
+   "citations": 0
+  },
+  {
+   "title": "Quantitative dynamic microscopy through scattering media without image reconstruction: a tool for biomedical optics",
+   "year": 2026,
+   "citations": 0
+  },
+  {
+   "title": "rheo-echo-XPCS to study the dynamic of the yielding transition in colloidal glasses",
+   "year": 2026,
+   "citations": 0
+  },
+  {
+   "title": "Schrödinger’s Echoes in Soft Matter Physics",
+   "year": 2026,
+   "citations": 0
+  },
+  {
+   "title": "Simultaneous characterization of rotational and translational diffusion of anisotropic particles by optical microscopy",
+   "year": null,
+   "citations": 0
+  },
+  {
+   "title": "Soft X-ray Fresnel-like diffraction from thin films edges by an ultrafast laser plasma source",
+   "year": 2007,
+   "citations": 0
+  },
+  {
+   "title": "Static and dynamic scattering with near field speckle",
+   "year": 2008,
+   "citations": 0
+  },
+  {
+   "title": "Structure and dynamics of supercooled suspensions composed of fractal colloids",
+   "year": 2026,
+   "citations": 0
+  },
+  {
+   "title": "The Giant Fluctuations (NEUF-DIX) Space Project",
+   "year": 2017,
+   "citations": 0
+  },
+  {
+   "title": "The Giant Fluctuations (NEUF-DIX) space project: understanding diffusion in complex liquids",
+   "year": 2017,
+   "citations": 0
+  },
+  {
+   "title": "Thermophoretic convection of silica nanoparticles",
+   "year": 2007,
+   "citations": 0
+  },
+  {
+   "title": "X-ray near-field speckles: a new approach to small-angle scattering",
+   "year": 2007,
+   "citations": 0
+  },
+  {
+   "title": "X-ray speckle tracking: a new phase-sensitive imaging technique",
+   "year": 2012,
+   "citations": 0
+  }
+ ]
+}

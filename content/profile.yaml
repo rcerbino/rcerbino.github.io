@@ -44,7 +44,7 @@ ids:
 # scheduled task when a newer figure is available.
 metrics:
   source: Google Scholar
-  as_of: May 2026
-  citations: 6238
+  as_of: Oct 2026
+  citations: 6537
   h_index: 45
-  i10_index: 76
+  i10_index: 77
