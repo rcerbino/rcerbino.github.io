@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<article class="approach">
+  <header class="prose">
+    <h1>{{ approach.title }}</h1>
+    <p class="lede">{{ approach.intro }}</p>
+  </header>
+
+  <nav class="toc" aria-label="On this page">
+    <ul>
+    {% for s in approach.sections %}<li><a href="#{{ s.id }}">{{ s.title }}</a></li>{% endfor %}
+    </ul>
+  </nav>
+
+  {% for s in approach.sections %}
+  <section class="conviction" id="{{ s.id }}">
+    <h2>{{ s.title }}</h2>
+    <div class="prose">
+      {% for p in s.paragraphs %}<p>{{ p }}</p>
+      {% endfor %}
+    </div>
+
+    {% if s.id == 'reviewing' and review_chart %}
+    {% set rv = approach.reviewing %}
+    <ul class="figures">
+      <li><span class="num">{{ rv.total }}</span><span class="lbl">verified peer reviews since {{ review_chart[0].year }}</span></li>
+      <li><span class="num">{{ rv.ratio }}</span><span class="lbl">reviews for every paper published</span></li>
+    </ul>
+    {% set W = 720 %}{% set H = 220 %}{% set L = 34 %}{% set B = 26 %}{% set T = 10 %}
+    {% set n = review_chart|length %}
+    {% set step = (W - L - 6) / n %}
+    {% set bw = step * 0.36 %}
+    {% set ymax = ((review_max / 5)|round(0, 'ceil') * 5)|int %}
+    <figure class="review-chart">
+      <div class="chart-scroll">
+      <svg viewBox="0 0 {{ W }} {{ H }}" role="img" aria-labelledby="rc-title rc-desc">
+        <title id="rc-title">Peer reviews and published papers per year</title>
+        <desc id="rc-desc">Bar chart from {{ review_chart[0].year }} to {{ review_chart[-1].year }}. {% for r in review_chart %}{{ r.year }}: {{ r.reviews }} reviews, {{ r.papers }} papers. {% endfor %}</desc>
+        {% for t in range(0, ymax + 1, 5) %}
+          {% set y = H - B - (H - B - T) * t / ymax %}
+          <line class="grid" x1="{{ L }}" x2="{{ W - 4 }}" y1="{{ y }}" y2="{{ y }}"/>
+          <text class="tick" x="{{ L - 6 }}" y="{{ y + 4 }}" text-anchor="end">{{ t }}</text>
+        {% endfor %}
+        {% for r in review_chart %}
+          {% set x0 = L + step * loop.index0 + step * 0.12 %}
+          {% set hr = (H - B - T) * r.reviews / ymax %}
+          {% set hp = (H - B - T) * r.papers / ymax %}
+          <rect class="bar-reviews" x="{{ x0 }}" y="{{ H - B - hr }}" width="{{ bw }}" height="{{ hr }}"><title>{{ r.year }}: {{ r.reviews }} reviews</title></rect>
+          <rect class="bar-papers" x="{{ x0 + bw + 1 }}" y="{{ H - B - hp }}" width="{{ bw }}" height="{{ hp }}"><title>{{ r.year }}: {{ r.papers }} papers</title></rect>
+          {% if r.year % 2 == 0 %}<text class="tick" x="{{ x0 + bw }}" y="{{ H - 8 }}" text-anchor="middle">{{ r.year }}</text>{% endif %}
+        {% endfor %}
+      </svg>
+      </div>
+      <figcaption>
+        <span class="key key-reviews"></span> Peer reviews
+        <span class="key key-papers"></span> Papers published (journal articles and reviews)
+        <br><span class="quiet">Reviews: {{ rv.source }}, as of {{ rv.as_of }}; reviews not registered there are missing.
+        Papers: this site's publication list. {{ review_chart[-1].year }} is the year to date.</span>
+      </figcaption>
+    </figure>
+    {% if rv.awards %}
+    <p class="quiet">Recognition: {{ rv.awards | join('; ') }}.</p>
+    {% endif %}
+    {% endif %}
+
+    {% if s.links %}
+    <p class="more">{% for l in s.links %}<a href="{% if l.href.startswith('http') %}{{ l.href }}{% else %}{{ root }}{{ link(l.href.split('#')[0]) }}{% if '#' in l.href %}#{{ l.href.split('#')[1] }}{% endif %}{% endif %}">{{ l.label }}</a>{% if not loop.last %}<span class="sep"></span>{% endif %}{% endfor %}</p>
+    {% endif %}
+  </section>
+  {% endfor %}
+</article>
+{% endblock %}
