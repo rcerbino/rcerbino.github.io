@@ -110,8 +110,17 @@ sections:
       - >-
         Peer review only works if people who publish also review, and review
         carefully. I try to give back more than I take: over my career I have
-        reviewed more than three times as many papers as I have published. Since 2023
-        I also handle manuscripts as an Associate Editor of Soft Matter.
+        reviewed more than three times as many papers as I have published.
+      - >-
+        Since 2023 I also handle manuscripts as an Associate Editor of Soft
+        Matter. Editing takes time, but I do not see it as a reason to stop
+        reviewing, and I do my best to keep saying yes when I am asked.
+      - >-
+        As an editor I also see the other side. Many colleagues regularly turn
+        down invitations to review, while sending us a lot of papers. Peer
+        review was meant as a way of giving back to the community, and this
+        goes against what I believe: if we want others to read our work
+        carefully, we should be ready to do the same for them.
     links:
       - label: My reviewer record on Web of Science
         href: https://www.webofscience.com/wos/author/record/A-2286-2008
@@ -121,6 +130,7 @@ sections:
 # registered there, are missing, so these are lower bounds.
 reviewing:
   as_of: Oct 2026
+  editor_since: 2023   # start of Associate Editor role at Soft Matter
   source: Web of Science researcher profile (formerly Publons)
   total: 317
   awards:

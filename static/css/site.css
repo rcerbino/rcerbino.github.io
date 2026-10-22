@@ -268,5 +268,7 @@ address { font-style: normal; }
 .key-papers { background: var(--muted); opacity: 0.55; }
 .review-chart .bar-ratio { fill: var(--accent); opacity: 0.8; }
 .review-chart .avg { stroke: var(--accent-2); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.review-chart .marker { stroke: var(--ink); stroke-width: 1; opacity: 0.55; }
+.review-chart .marker-label { font-family: var(--sans); font-size: 11px; fill: var(--ink); opacity: 0.75; }
 .review-chart .avg-label { font-family: var(--sans); font-size: 11px; fill: var(--accent-2); }
 .review-chart + .review-chart { margin-top: 1.8rem; }
