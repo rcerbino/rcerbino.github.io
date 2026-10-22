@@ -88,18 +88,20 @@ service:
         years: 2023-
       - what: Series Editor, Soft and Biological Matter (Springer book series)
         years: 2024-
-  - group: European science and space
+  - group: European science and space policy
     items:
-      - what: Chair of the Board, Liquid Matter Division, European Physical Society
-        years: 2024-2027
       - what: Member, Human Exploration Science Advisory Committee, European Space Agency
         years: 2024-
       - what: Member, European Space Sciences Committee
         years: 2025-
       - what: Coordinator, ESA Facility Definition Team for Soft Matter and Biophysics
         years: 2023-2024
-  - group: Scientific societies
+  - group: Scientific societies (offices held)
     items:
+      - what: Chair of the Board, Liquid Matter Division, European Physical Society
+        years: 2024-2027
+      - what: Committee member, Particle Characterisation Interest Group, Royal Society of Chemistry
+        years: 2025-
       - what: Vice-Treasurer, Austrian Society for Rheology (OeGR)
         years: 2025-
       - what: Vice-Treasurer, ASSAI, Associazione per gli Scambi Scientifici Austria Italia (Austrian-Italian association for scientific exchange)
