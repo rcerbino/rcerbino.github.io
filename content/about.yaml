@@ -12,15 +12,16 @@ bio:
   - >-
     Roberto Cerbino (born 1975, Italy) is Professor of Experimental Soft Matter
     Physics at the University of Vienna, where he leads the SoMeX (Soft Matter
-    Experiments) laboratory. He studied physics at the University of Milan and
-    obtained his PhD there in 2004, with work on convective instabilities and
-    non-equilibrium fluctuations in complex fluids. He then held a Marie
+    Experiments) laboratory. He studied physics at the University of Milan,
+    where he obtained his Laurea in 2001 and his PhD in 2004, with work on
+    convective instabilities and non-equilibrium fluctuations in complex fluids.
+    After two years as a postdoctoral researcher in Milan, he held a Marie
     Sklodowska-Curie Intra-European Fellowship at the University of Fribourg
     (2006-2007), developing new optical approaches to non-equilibrium soft matter.
   - >-
-    He returned to the University of Milan in 2007 as a faculty member in the
-    Faculty of Medicine, working in applied and medical physics, and moved to
-    Vienna in 2021. Along the way he spent research periods at the University of
+    He returned to the University of Milan in 2007 as Ricercatore Universitario,
+    a permanent faculty position, in the field of applied and medical physics,
+    became Associate Professor in 2015, and moved to Vienna in 2021. Along the way he spent research periods at the University of
     Ottawa (2010), ENS Lyon (2018) and ESPCI Paris (2025).
   - >-
     His research combines new optical instruments with quantitative analysis to
@@ -45,22 +46,25 @@ education:
     what: PhD in Physics
     where: University of Milan, Italy
   - years: "2001"
-    what: MSc (Laurea) in Physics
-    where: University of Milan, Italy
-  - years: "1997"
-    what: BSc in Physics
+    what: Laurea in Physics
     where: University of Milan, Italy
 
 positions:
   - years: 2021-
     what: Professor of Experimental Soft Matter Physics
     where: Faculty of Physics, University of Vienna, Austria
-  - years: 2007-2021
-    what: Faculty member, applied and medical physics
-    where: Faculty of Medicine, University of Milan, Italy
+  - years: 2015-2021
+    what: Associate Professor (permanent faculty position)
+    where: University of Milan, Italy
+  - years: 2007-2015
+    what: Ricercatore Universitario (permanent faculty position)
+    where: University of Milan, Italy
   - years: 2006-2007
     what: Marie Sklodowska-Curie Intra-European Fellow (host F. Scheffold)
     where: University of Fribourg, Switzerland
+  - years: 2004-2006
+    what: Postdoctoral researcher
+    where: University of Milan, Italy
 
 visiting:
   - years: "2025"
@@ -76,7 +80,7 @@ honors:
   - years: 2006-2007
     what: Marie Sklodowska-Curie Intra-European Fellowship (EU, FP6)
 
-# Service and roles, grouped. Shown on the About page.
+# A selection of service and roles, grouped. Shown on the About page.
 service:
   - group: Editorial work
     items:

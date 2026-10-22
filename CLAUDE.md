@@ -90,8 +90,11 @@ because you were unsure.
   names keep their accents (Boesecke stays Bösecke, Nørgaard stays Nørgaard).
 - Bio and news in the third person in `about.yaml > bio` and `short_bio`;
   first person elsewhere (home intro, research, teaching).
-- For his Milan career say "faculty member"; do not name the Associate
-  Professor rank.
+- Milan career: postdoctoral researcher 2004-2006, Ricercatore Universitario
+  (permanent) 2007-2015, Associate Professor (permanent) 2015-2021. His only
+  degree before the PhD is the Laurea in Physics (2001); there is no separate
+  bachelor's degree.
+- "Selected service and roles" is a selection, not a complete list.
 - The lab name is spelled SoMeX.
 - Giant Fluctuations is on hold: do not present it as upcoming.
 - Do not add grant review panels or grant reviewing (European Research Council
