@@ -24,7 +24,7 @@
     {% set rv = approach.reviewing %}
     <ul class="figures">
       <li><span class="num">{{ rv.total }}</span><span class="lbl">verified peer reviews since {{ review_chart[0].year }}</span></li>
-      <li><span class="num">{{ rv.ratio }}</span><span class="lbl">reviews for every paper published</span></li>
+      <li><span class="num">{{ review_ratio }}</span><span class="lbl">reviews for every paper published, {{ review_chart[0].year }}-{{ review_chart[-1].year }}</span></li>
     </ul>
     {% set W = 720 %}{% set H = 220 %}{% set L = 34 %}{% set B = 26 %}{% set T = 10 %}
     {% set n = review_chart|length %}
@@ -57,6 +57,34 @@
         <br><span class="quiet">Reviews: {{ rv.source }}, as of {{ rv.as_of }}; reviews not registered there are missing.
         Papers: this site's publication list. {{ review_chart[-1].year }} is the year to date.</span>
       </figcaption>
+    </figure>
+
+    {% set rmax = (ratio_max|round(0, 'ceil'))|int %}
+    {% set rmax = rmax + (rmax % 2) %}
+    <figure class="review-chart">
+      <div class="chart-scroll">
+      <svg viewBox="0 0 {{ W }} {{ H }}" role="img" aria-labelledby="rr-title rr-desc">
+        <title id="rr-title">Peer reviews per paper published, by year</title>
+        <desc id="rr-desc">{% for r in review_chart %}{{ r.year }}: {% if r.ratio is not none %}{{ r.ratio }}{% else %}no papers{% endif %}. {% endfor %}Average over the period: {{ review_ratio }}.</desc>
+        {% for t in range(0, rmax + 1, 2) %}
+          {% set y = H - B - (H - B - T) * t / rmax %}
+          <line class="grid" x1="{{ L }}" x2="{{ W - 4 }}" y1="{{ y }}" y2="{{ y }}"/>
+          <text class="tick" x="{{ L - 6 }}" y="{{ y + 4 }}" text-anchor="end">{{ t }}</text>
+        {% endfor %}
+        {% for r in review_chart %}
+          {% set x0 = L + step * loop.index0 + step * 0.2 %}
+          {% if r.ratio is not none %}
+          {% set h = (H - B - T) * r.ratio / rmax %}
+          <rect class="bar-ratio" x="{{ x0 }}" y="{{ H - B - h }}" width="{{ step * 0.6 }}" height="{{ h }}"><title>{{ r.year }}: {{ r.ratio }} reviews per paper ({{ r.reviews }} reviews, {{ r.papers }} papers)</title></rect>
+          {% endif %}
+          {% if r.year % 2 == 0 %}<text class="tick" x="{{ x0 + step * 0.3 }}" y="{{ H - 8 }}" text-anchor="middle">{{ r.year }}</text>{% endif %}
+        {% endfor %}
+        {% set ya = H - B - (H - B - T) * review_ratio / rmax %}
+        <line class="avg" x1="{{ L }}" x2="{{ W - 4 }}" y1="{{ ya }}" y2="{{ ya }}"/>
+        <text class="avg-label" x="{{ L + step * 3.2 }}" y="{{ ya - 6 }}" text-anchor="start">average {{ review_ratio }}</text>
+      </svg>
+      </div>
+      <figcaption>Peer reviews per paper published, each year. The dashed line is the average over the whole period.</figcaption>
     </figure>
     {% if rv.awards %}
     <p class="quiet">Recognition: {{ rv.awards | join('; ') }}.</p>

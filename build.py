@@ -259,10 +259,14 @@ def main(check=False, preview=False):
     review_chart = []
     if per_year:
         for y in range(min(per_year), max(per_year) + 1):
-            review_chart.append({"year": y, "reviews": per_year.get(y, 0),
-                                 "papers": papers_per_year.get(y, 0)})
+            r_, p_ = per_year.get(y, 0), papers_per_year.get(y, 0)
+            review_chart.append({"year": y, "reviews": r_, "papers": p_,
+                                 "ratio": round(r_ / p_, 1) if p_ else None})
     review_max = max([max(r["reviews"], r["papers"]) for r in review_chart] or [1])
     papers_in_span = sum(r["papers"] for r in review_chart)
+    reviews_in_span = sum(r["reviews"] for r in review_chart)
+    review_ratio = round(reviews_in_span / papers_in_span, 1) if papers_in_span else None
+    ratio_max = max([r["ratio"] for r in review_chart if r["ratio"]] or [1])
 
     stats = {
         "metrics_updated": fmt_date(metrics["updated"]) if metrics.get("updated") else None,
@@ -307,7 +311,7 @@ def main(check=False, preview=False):
     ctx = dict(profile=profile, about=about, research=research, teaching=teaching,
                news=news, pubs=pubs, pub_groups=pub_groups, selected=selected,
                years=years, stats=stats, current_roles=current_roles, people_groups=people_groups,
-               approach=approach, review_chart=review_chart, review_max=review_max, papers_in_span=papers_in_span, group_news=group_news, nav=nav,
+               approach=approach, review_chart=review_chart, review_max=review_max, papers_in_span=papers_in_span, review_ratio=review_ratio, ratio_max=ratio_max, group_news=group_news, nav=nav,
                built=today.isoformat(), built_human=fmt_date(today.isoformat()),
                current_year=current_year, site_url=SITE_URL)
 

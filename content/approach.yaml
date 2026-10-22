@@ -110,7 +110,7 @@ sections:
       - >-
         Peer review only works if people who publish also review, and review
         carefully. I try to give back more than I take: over my career I have
-        reviewed more than twice as many papers as I have published. Since 2023
+        reviewed more than three times as many papers as I have published. Since 2023
         I also handle manuscripts as an Associate Editor of Soft Matter.
     links:
       - label: My reviewer record on Web of Science
@@ -123,7 +123,6 @@ reviewing:
   as_of: Oct 2026
   source: Web of Science researcher profile (formerly Publons)
   total: 317
-  ratio: "2.3"
   awards:
     - Top reviewer in Physics, Publons (2018)
     - Top reviewer in Physics and Astronomy, Publons (2016)
