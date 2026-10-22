@@ -27,7 +27,7 @@
       <li><span class="num">{{ review_ratio }}</span><span class="lbl">reviews for every paper published, {{ review_chart[0].year }}-{{ review_chart[-1].year }}</span></li>
     </ul>
     {% set W = 720 %}{% set H = 236 %}{% set L = 34 %}{% set B = 26 %}{% set T = 26 %}
-    {% set ed = namespace(i=none) %}{% for r in review_chart %}{% if r.year == rv.editor_since %}{% set ed.i = loop.index0 %}{% endif %}{% endfor %}
+    {% set years = review_chart | map(attribute='year') | list %}
     {% set n = review_chart|length %}
     {% set step = (W - L - 6) / n %}
     {% set bw = step * 0.36 %}
@@ -50,17 +50,18 @@
           <rect class="bar-papers" x="{{ x0 + bw + 1 }}" y="{{ H - B - hp }}" width="{{ bw }}" height="{{ hp }}"><title>{{ r.year }}: {{ r.papers }} papers</title></rect>
           {% if r.year % 2 == 0 %}<text class="tick" x="{{ x0 + bw }}" y="{{ H - 8 }}" text-anchor="middle">{{ r.year }}</text>{% endif %}
         {% endfor %}
-        {% if ed.i is not none %}{% set xm = L + step * ed.i %}
+        {% for e in rv.editor_roles or [] %}{% if e.year in years %}{% set xm = L + step * years.index(e.year) %}
         <line class="marker" x1="{{ xm }}" x2="{{ xm }}" y1="{{ T - 14 }}" y2="{{ H - B }}"/>
-        <text class="marker-label" x="{{ xm + 5 }}" y="{{ T - 6 }}" text-anchor="start">Editor, Soft Matter</text>
-        {% endif %}
+        {% if e.side == 'left' %}<text class="marker-label" x="{{ xm - 5 }}" y="{{ T - 6 }}" text-anchor="end">{{ e.label }}</text>
+        {% else %}<text class="marker-label" x="{{ xm + 5 }}" y="{{ T - 6 }}" text-anchor="start">{{ e.label }}</text>{% endif %}
+        {% endif %}{% endfor %}
       </svg>
       </div>
       <figcaption>
         <span class="key key-reviews"></span> Peer reviews
         <span class="key key-papers"></span> Papers published (journal articles and reviews)
         <br><span class="quiet">Reviews: {{ rv.source }}, as of {{ rv.as_of }}; reviews not registered there are missing.
-        Papers: this site's publication list. {{ review_chart[-1].year }} is the year to date.{% if ed.i is not none %} The vertical line marks {{ rv.editor_since }}, when I became an Associate Editor of Soft Matter.{% endif %}</span>
+        Papers: this site's publication list. {{ review_chart[-1].year }} is the year to date.{% if rv.editor_roles %} The vertical lines mark when I became an Associate Editor of Frontiers in Physics (2021) and of Soft Matter (2023).{% endif %}</span>
       </figcaption>
     </figure>
 
@@ -87,13 +88,14 @@
         {% set ya = H - B - (H - B - T) * review_ratio / rmax %}
         <line class="avg" x1="{{ L }}" x2="{{ W - 4 }}" y1="{{ ya }}" y2="{{ ya }}"/>
         <text class="avg-label" x="{{ L + step * 3.2 }}" y="{{ ya - 6 }}" text-anchor="start">average {{ review_ratio }}</text>
-        {% if ed.i is not none %}{% set xm = L + step * ed.i %}
+        {% for e in rv.editor_roles or [] %}{% if e.year in years %}{% set xm = L + step * years.index(e.year) %}
         <line class="marker" x1="{{ xm }}" x2="{{ xm }}" y1="{{ T - 14 }}" y2="{{ H - B }}"/>
-        <text class="marker-label" x="{{ xm + 5 }}" y="{{ T - 6 }}" text-anchor="start">Editor, Soft Matter</text>
-        {% endif %}
+        {% if e.side == 'left' %}<text class="marker-label" x="{{ xm - 5 }}" y="{{ T - 6 }}" text-anchor="end">{{ e.label }}</text>
+        {% else %}<text class="marker-label" x="{{ xm + 5 }}" y="{{ T - 6 }}" text-anchor="start">{{ e.label }}</text>{% endif %}
+        {% endif %}{% endfor %}
       </svg>
       </div>
-      <figcaption>Peer reviews per paper published, each year. The dashed line is the average over the whole period; the vertical line marks the start of my editorial work for Soft Matter.</figcaption>
+      <figcaption>Peer reviews per paper published, each year. The dashed line is the average over the whole period; the vertical lines mark the start of my editorial roles.</figcaption>
     </figure>
     {% if rv.awards %}
     <p class="quiet">Recognition: {{ rv.awards | join('; ') }}.</p>

@@ -112,8 +112,9 @@ sections:
         carefully. I try to give back more than I take: over my career I have
         reviewed more than three times as many papers as I have published.
       - >-
-        Since 2023 I also handle manuscripts as an Associate Editor of Soft
-        Matter. Editing takes time, but I do not see it as a reason to stop
+        Since 2021 I have also handled manuscripts as an editor: first as an
+        Associate Editor of Frontiers in Physics (2021-2023), and since 2023 of
+        Soft Matter. Editing takes time, but I do not see it as a reason to stop
         reviewing, and I do my best to keep saying yes when I am asked.
       - >-
         As an editor I also see the other side. Many colleagues regularly turn
@@ -130,7 +131,15 @@ sections:
 # registered there, are missing, so these are lower bounds.
 reviewing:
   as_of: Oct 2026
-  editor_since: 2023   # start of Associate Editor role at Soft Matter
+  # Start of each editorial role, drawn as vertical lines on the charts.
+  # side: where the label sits relative to the line (left or right).
+  editor_roles:
+    - year: 2021
+      label: "Editor, Frontiers in Physics"
+      side: left
+    - year: 2023
+      label: "Editor, Soft Matter"
+      side: right
   source: Web of Science researcher profile (formerly Publons)
   total: 317
   awards:
