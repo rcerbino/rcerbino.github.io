@@ -30,6 +30,7 @@ PAGES = [
     ("research/index.html", "research.html", "Research"),
     ("publications/index.html", "publications.html", "Publications"),
     ("teaching/index.html", "teaching.html", "Teaching"),
+    ("approach/index.html", "approach.html", "Approach"),
     ("news/index.html", "news.html", "News"),
     ("contact/index.html", "contact.html", "Contact"),
 ]
@@ -177,6 +178,7 @@ def main(check=False, preview=False):
     research = load_yaml("research.yaml")
     teaching = load_yaml("teaching.yaml")
     news = load_yaml("news.yaml")
+    approach = load_yaml("approach.yaml")
     pubs = load_json("publications.json", [])
     group_news = load_json("group_news.json", [])
     people = load_json("people.json", [])
@@ -250,6 +252,22 @@ def main(check=False, preview=False):
 
     current_roles = [it["what"] for g in about.get("service", []) for it in g["items"]
                      if is_current(it, g)]
+    rv = approach.get("reviewing") or {}
+    per_year = {int(k): v for k, v in (rv.get("per_year") or {}).items()}
+    papers_per_year = Counter(p["year"] for p in pubs
+                              if p.get("year") and p["type"] in ("article", "review"))
+    review_chart = []
+    if per_year:
+        for y in range(min(per_year), max(per_year) + 1):
+            r_, p_ = per_year.get(y, 0), papers_per_year.get(y, 0)
+            review_chart.append({"year": y, "reviews": r_, "papers": p_,
+                                 "ratio": round(r_ / p_, 1) if p_ else None})
+    review_max = max([max(r["reviews"], r["papers"]) for r in review_chart] or [1])
+    papers_in_span = sum(r["papers"] for r in review_chart)
+    reviews_in_span = sum(r["reviews"] for r in review_chart)
+    review_ratio = round(reviews_in_span / papers_in_span, 1) if papers_in_span else None
+    ratio_max = max([r["ratio"] for r in review_chart if r["ratio"]] or [1])
+
     stats = {
         "metrics_updated": fmt_date(metrics["updated"]) if metrics.get("updated") else None,
         "scholar_as_of": fmt_date(scholar["updated"]) if scholar.get("updated") else None,
@@ -292,7 +310,8 @@ def main(check=False, preview=False):
     nav = [(link(path), label) for path, _, label in PAGES]
     ctx = dict(profile=profile, about=about, research=research, teaching=teaching,
                news=news, pubs=pubs, pub_groups=pub_groups, selected=selected,
-               years=years, stats=stats, current_roles=current_roles, people_groups=people_groups, group_news=group_news, nav=nav,
+               years=years, stats=stats, current_roles=current_roles, people_groups=people_groups,
+               approach=approach, review_chart=review_chart, review_max=review_max, papers_in_span=papers_in_span, review_ratio=review_ratio, ratio_max=ratio_max, group_news=group_news, nav=nav,
                built=today.isoformat(), built_human=fmt_date(today.isoformat()),
                current_year=current_year, site_url=SITE_URL)
 

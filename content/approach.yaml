@@ -1,0 +1,171 @@
+# "Approach" page: Roberto's personal views, in his own voice. Every opinion
+# here comes from Roberto; do not add or change opinions without his approval.
+
+title: How I work, and why
+intro: >-
+  This page is about the convictions behind my work: why I do research the way
+  I do, why I give time to committees and communities, and what I hope younger
+  researchers take from it. The SoMeX website describes how our lab works; this
+  is my personal view.
+
+sections:
+  - id: fun
+    title: Have fun and enjoy the ride
+    paragraphs:
+      - >-
+        If I had to give one piece of advice to a young researcher, it would be
+        this. Research is demanding, uncertain and often frustrating, but it is
+        also one of the few jobs where curiosity is the job description. The
+        rest of this page is, in a way, about how to keep it that way.
+
+  - id: funding
+    title: Ambition and realism in research funding
+    paragraphs:
+      - >-
+        I do not think we have found a good balance between ambition and
+        realism in the way research is funded. Funding tends to go to
+        researchers who are already successful. In Italian we say "piove sempre
+        sul bagnato": it always rains where the ground is already wet. With the
+        budget cuts many countries are facing, I expect this to get worse,
+        not better.
+      - >-
+        This is where collaborative, and often interdisciplinary, work comes in.
+        When groups with different skills join forces, they can take on
+        questions that none of them could tackle alone, and they give ideas and
+        people who would not be funded on their own a real chance.
+
+  - id: committees
+    title: Why I serve on committees
+    paragraphs:
+      - >-
+        Committees are not glamorous, but they are where important parts of
+        our work are decided. I accept these roles to help them work well, to
+        bring in new ideas, and to make sure we do not get stuck in the past
+        but help shape what comes next.
+    links:
+      - label: Current roles
+        href: about/#service
+
+  - id: space
+    title: Why I keep going back to space
+    paragraphs:
+      - >-
+        In 2001, just after my master's thesis, I stepped in to help my
+        supervisor pull off our first space experiment, GRADFLEX, which flew
+        on the FOTON-M3 satellite in 2007. It was a huge learning experience
+        and an enormous amount of work. Like David Foster Wallace after his
+        cruise ("A Supposedly Fun Thing I'll Never Do Again"), I promised
+        myself I would never do it again.
+      - >-
+        But you know how it goes: space sucks you in. Today I coordinate the
+        science team of Sedimenting Colloids, an experiment planned for the
+        International Space Station, and I serve on the committees that advise
+        the European Space Agency on its science. Removing gravity lets us see
+        physics that is hidden on Earth, and that is hard to resist.
+    links:
+      - label: Fluctuations, on Earth and in space
+        href: research/#space
+
+  - id: communities
+    title: Building communities
+    paragraphs:
+      - >-
+        In 2014 Stefano Buzzaccaro, Emanuela Zaccarelli and I founded the
+        Italian Soft Days. We were three colleagues and friends who wanted to
+        show the world that the soft matter community was young and lively.
+        The first meeting took place in Rome, and seven editions later we got
+        older, but the young and lively community is still there.
+      - >-
+        After moving to Vienna, in 2022 I started the Vienna Soft Matter Day
+        with Emanuela Bianchi, Peter van Oostrum and Anđela Šarić, to bring
+        together the soft matter community of the Vienna area. It is free of
+        registration fees and open to everyone, from master's students to
+        professors, and it now rotates among the city's universities and
+        institutes.
+    links:
+      - label: Italian Soft Days
+        href: https://sites.google.com/site/italiansoftdays/home
+      - label: Vienna Soft Matter Day
+        href: https://vsmd.org
+
+  - id: open
+    title: Methods that others can use
+    paragraphs:
+      - >-
+        I am proudest of the methods that other people pick up and use.
+        Differential Dynamic Microscopy is now run on microscopes around the
+        world, and our group shares its tools openly: the fastddm software
+        library and the ShearView rheometer are both open source, and we write
+        tutorials so that newcomers can start quickly. Most of my papers have
+        a preprint or a free full text, linked from the publication list.
+    links:
+      - label: fastddm on GitHub
+        href: https://github.com/somexlab/fastddm
+      - label: Publications
+        href: publications/
+
+  - id: reviewing
+    title: Editing and reviewing
+    paragraphs:
+      - >-
+        Peer review only works if people who publish also review, and review
+        carefully. I try to give back more than I take: over my career I have
+        reviewed more than three times as many papers as I have published.
+      - >-
+        Since 2021 I have also handled manuscripts as an editor: first as an
+        Associate Editor of Frontiers in Physics (2021-2023), and since 2023 of
+        Soft Matter. Editing takes time, but I do not see it as a reason to stop
+        reviewing, and I do my best to keep saying yes when I am asked.
+      - >-
+        As an editor I also see the other side. Many colleagues regularly turn
+        down invitations to review, while sending us a lot of papers. Peer
+        review was meant as a way of giving back to the community, and this
+        goes against what I believe: if we want others to read our work
+        carefully, we should be ready to do the same for them.
+    links:
+      - label: My reviewer record on Web of Science
+        href: https://www.webofscience.com/wos/author/record/A-2286-2008
+
+# Verified peer reviews per year, read from the Web of Science researcher
+# profile (formerly Publons). Reviews done before records were kept, or not
+# registered there, are missing, so these are lower bounds.
+reviewing:
+  as_of: Oct 2026
+  # Start of each editorial role, drawn as vertical lines on the charts.
+  # side: where the label sits relative to the line (left or right).
+  editor_roles:
+    - year: 2021
+      label: "Editor, Frontiers in Physics"
+      side: left
+    - year: 2023
+      label: "Editor, Soft Matter"
+      side: right
+  source: Web of Science researcher profile (formerly Publons)
+  total: 317
+  awards:
+    - Top reviewer in Physics, Publons (2018)
+    - Top reviewer in Physics and Astronomy, Publons (2016)
+  per_year:
+    2004: 1
+    2005: 3
+    2006: 3
+    2007: 3
+    2008: 2
+    2009: 3
+    2010: 4
+    2011: 8
+    2012: 24
+    2013: 15
+    2014: 16
+    2015: 17
+    2016: 17
+    2017: 24
+    2018: 20
+    2019: 17
+    2020: 25
+    2021: 23
+    2022: 24
+    2023: 17
+    2024: 13
+    2025: 16
+    2026: 22
