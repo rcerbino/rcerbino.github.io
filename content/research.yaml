@@ -126,6 +126,7 @@ funding:
     url: https://somexlab.github.io/project/22-12-01-forgreensoft/
   - title: The non-equilibrium physics of colloidal sedimentation (Lise Meitner fellowship of E. Lattuada)
     funder: FWF
+    years: 2022-2024
     role: Host
     amount: EUR 178k
     status: past
@@ -148,4 +149,5 @@ funding:
     status: past
 
 industry: >-
-  Research contracts with industry include Procter and Gamble and BASF.
+  Research contracts with industry include Procter and Gamble and BASF
+  (2026, Differential Dynamic Microscopy study of drying polymer films).

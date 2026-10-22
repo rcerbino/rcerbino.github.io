@@ -23,6 +23,19 @@
   {% for p in teaching.innovation %}<p>{{ p }}</p>
   {% endfor %}
 </section>
+{% if teaching.projects %}
+<section>
+  <h3>European projects on teaching and learning</h3>
+  <ul class="grants">
+  {% for g in teaching.projects %}
+    <li>
+      <p class="grant-title"><a href="{{ g.url }}">{{ g.acronym }}: {{ g.title }}</a></p>
+      <p class="grant-meta">Erasmus+ Strategic Partnership, {{ g.years }}, coordinated by {{ g.coordinator }}. {{ g.role }}{% if g.amount %}. EU grant {{ g.amount }}{% endif %}.</p>
+    </li>
+  {% endfor %}
+  </ul>
+</section>
+{% endif %}
 
 <section id="mentoring">
   <h2>Mentoring</h2>

@@ -33,9 +33,10 @@ courses:
 innovation:
   - >-
     At the University of Milan, as Rector's Delegate for the development of
-    innovative teaching methodologies (2017-2018), I set up the university's Faculty Development programme for
-    teaching staff. From 2020 to 2021 I led the work package on innovative
-    education of the 4EU+ European university alliance.
+    innovative teaching methodologies (2017-2018), I set up the university's
+    Faculty Development programme for teaching staff. In the 4EU+ European
+    university alliance I co-led Flagship 1 (2019-2020) and then led the work
+    package on innovative education (2020-2021).
   - >-
     In Vienna I develop soft-skills courses for master's and doctoral students and
     work with colleagues on AI-based approaches to teaching and learning in
@@ -43,6 +44,34 @@ innovation:
   - >-
     I am a co-author of Italian textbooks of physics for medicine and biomedical
     sciences.
+
+# European projects on teaching and learning (Erasmus+ Key Action 2,
+# Strategic Partnerships for higher education). Amounts are the EU grant to
+# the whole partnership.
+projects:
+  - acronym: SQELT
+    title: Sustainable Quality Enhancement in Higher Education Learning and Teaching
+    years: 2017-2020
+    number: 2017-1-DE01-KA203-003527
+    coordinator: evalag, Germany
+    role: Leader of the University of Milan team
+    amount: EUR 406k
+    url: https://www.evalag.de/de/internationales/kooperationsprojekte/sqelt
+  - acronym: ABC to VLE
+    title: Beyond curriculum design
+    years: 2018-2020
+    number: 2018-1-UK01-KA203-048123
+    coordinator: University College London, UK
+    role: University of Milan partner team
+    url: https://elearning.upt.ro/en/project/abc-to-vle-beyond-curriculum-design-2/
+  - acronym: LTSHE
+    title: Learning and Teaching Space in Higher Education
+    years: 2019-2022
+    number: 2019-1-UK01-KA203-061968
+    coordinator: Birmingham City University, UK
+    role: University of Milan partner team, until 2021
+    amount: EUR 253k
+    url: https://www.evalag.de/de/internationales/kooperationsprojekte/ltshe
 
 mentoring:
   intro: >-

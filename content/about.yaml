@@ -34,7 +34,7 @@ bio:
     fluctuations studied on the ground and in space.
   - >-
     He is an Associate Editor of Soft Matter, Series Editor of the Springer
-    series on Soft Matter and Biophysics, and a Fellow of the Royal Society of
+    book series Soft and Biological Matter, and a Fellow of the Royal Society of
     Chemistry. He chairs the Board of the Liquid Matter Division of the European
     Physical Society and serves on
     the European Space Agency's Human Exploration Science Advisory Committee and
@@ -85,7 +85,9 @@ service:
   - group: Editorial work
     items:
       - what: Associate Editor, Soft Matter (Royal Society of Chemistry)
-      - what: Series Editor, Soft Matter and Biophysics (Springer)
+        years: 2023-
+      - what: Series Editor, Soft and Biological Matter (Springer book series)
+        years: 2024-
   - group: European science and space
     items:
       - what: Chair of the Board, Liquid Matter Division, European Physical Society
@@ -103,8 +105,10 @@ service:
       - what: Vice-Dean for Finance and International Affairs, Faculty of Physics
         years: 2024-2026
         past: true
-      - what: Member, Internationalisation Council of the University
+      - what: Member for the Faculty of Physics, Internationalisation Council of the University
+        years: 2024-
       - what: Faculty member, Vienna Doctoral School in Physics
+        years: 2021-
   - group: University of Milan
     past: true
     items:
@@ -112,6 +116,8 @@ service:
         years: 2017-2018
       - what: Leader of Work Package 2, Innovative Education, of the 4EU+ European university alliance
         years: 2020-2021
+      - what: Co-leader, Flagship 1 "Health and demographic change in an urban environment", 4EU+ European university alliance
+        years: 2019-2020
       - what: Steering Committee, NOLIMITS imaging platform
         years: 2016-2021
       - what: Direction Board, University Linguistic Centre (newly founded)
