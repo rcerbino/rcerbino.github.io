@@ -262,10 +262,10 @@ address { font-style: normal; }
 .review-chart .bar-reviews { fill: var(--accent); }
 .review-chart .bar-papers { fill: var(--muted); opacity: 0.55; }
 .review-chart figcaption { font-family: var(--sans); font-size: 0.88rem; margin-top: 0.4rem; }
-.key { display: inline-block; width: 0.8rem; height: 0.8rem; border-radius: 2px; vertical-align: -1px; margin: 0 0.3rem 0 0.8rem; }
-.key:first-child { margin-left: 0; }
-.key-reviews { background: var(--accent); }
-.key-papers { background: var(--muted); opacity: 0.55; }
+.swatch { display: inline-block; width: 0.8rem; height: 0.8rem; border-radius: 2px; vertical-align: -1px; margin: 0 0.3rem 0 0.8rem; }
+.swatch:first-child { margin-left: 0; }
+.swatch-reviews { background: var(--accent); }
+.swatch-papers { background: var(--muted); opacity: 0.55; }
 .review-chart .bar-ratio { fill: var(--accent); opacity: 0.8; }
 .review-chart .avg { stroke: var(--accent-2); stroke-width: 1.5; stroke-dasharray: 5 4; }
 .review-chart .marker { stroke: var(--ink); stroke-width: 1; opacity: 0.55; }
