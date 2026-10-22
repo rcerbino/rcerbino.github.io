@@ -70,12 +70,23 @@ sections:
     title: Building communities
     paragraphs:
       - >-
-        The Italian Soft Days started with three colleagues and friends who
-        wanted to show the world that the soft matter community was young and
-        lively. We got older, but the young and lively community is still
-        there. The Vienna Soft Matter Day grew from the same spirit: a free,
-        open meeting where students present next to professors and everyone is
-        welcome.
+        In 2014 Stefano Buzzaccaro, Emanuela Zaccarelli and I founded the
+        Italian Soft Days. We were three colleagues and friends who wanted to
+        show the world that the soft matter community was young and lively.
+        The first meeting took place in Rome, and seven editions later we got
+        older, but the young and lively community is still there.
+      - >-
+        After moving to Vienna, in 2022 I started the Vienna Soft Matter Day
+        with Emanuela Bianchi, Peter van Oostrum and Anđela Šarić, to bring
+        together the soft matter community of the Vienna area. It is free of
+        registration fees and open to everyone, from master's students to
+        professors, and it now rotates among the city's universities and
+        institutes.
+    links:
+      - label: Italian Soft Days
+        href: https://sites.google.com/site/italiansoftdays/home
+      - label: Vienna Soft Matter Day
+        href: https://vsmd.org
 
   - id: open
     title: Methods that others can use
