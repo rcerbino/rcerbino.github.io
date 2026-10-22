@@ -95,7 +95,7 @@ service:
       - what: Member, European Space Sciences Committee
         years: 2025-
       - what: Coordinator, ESA Facility Definition Team for Soft Matter and Biophysics
-        past: true
+        years: 2023-2024
   - group: University of Vienna
     items:
       - what: Vice-Dean for Teaching and International Affairs, Faculty of Physics
@@ -108,8 +108,16 @@ service:
   - group: University of Milan
     past: true
     items:
-      - what: Rector's Delegate for innovation in teaching and learning
-      - what: Coordinator, Teaching and Learning working group of the 4EU+ European university alliance
+      - what: Rector's Delegate for the development of innovative teaching methodologies
+        years: 2017-2018
+      - what: Leader of Work Package 2, Innovative Education, of the 4EU+ European university alliance
+        years: 2020-2021
+      - what: Steering Committee, NOLIMITS imaging platform
+        years: 2016-2021
+      - what: Direction Board, University Linguistic Centre (newly founded)
+        years: 2015-2021
+      - what: Steering Committee, Faculty of Medicine and Surgery
+        years: 2010-2012 and 2015-2021
   - group: Conferences
     items:
       - what: Chair of the International Programme Committee, Liquid Matter Conference 2027, Barcelona

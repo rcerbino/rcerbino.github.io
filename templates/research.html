@@ -35,7 +35,7 @@
 
 <section class="funding" id="funding">
   <h2>Funding</h2>
-  {% for status, heading in [("current", "Current projects"), ("past", "Earlier projects")] %}
+  {% for status, heading in [("current", "Current projects"), ("past", "Selected earlier projects")] %}
   <h3>{{ heading }}</h3>
   <ul class="grants">
   {% for g in research.funding if g.status == status %}
