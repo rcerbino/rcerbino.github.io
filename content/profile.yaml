@@ -5,6 +5,7 @@ affiliation: Faculty of Physics, University of Vienna
 lab:
   name: SoMeX (Soft Matter Experiments)
   url: https://somexlab.github.io/
+  directions: https://somexlab.github.io/directions/
 portrait: img/portrait.jpg
 
 # One paragraph shown on the home page

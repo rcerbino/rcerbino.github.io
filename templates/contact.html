@@ -9,6 +9,7 @@
     <p><a href="tel:{{ profile.contact.phone | replace(' ', '') }}">{{ profile.contact.phone }}</a></p>
     <h2>Address</h2>
     <address>{% for l in profile.contact.address %}{{ l }}{% if not loop.last %}<br>{% endif %}{% endfor %}</address>
+    {% if profile.lab.directions %}<p><a href="{{ profile.lab.directions }}">How to reach us</a>: a step-by-step guide from the main entrance to the SoMeX lab, with photos.</p>{% endif %}
     <p class="quiet">{{ profile.contact.office_note }} <a href="{{ profile.lab.url }}contact/">SoMeX contact</a>.</p>
   </section>
   <section>
