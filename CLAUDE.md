@@ -97,6 +97,8 @@ because you were unsure.
 - "Selected service and roles" is a selection, not a complete list.
 - The lab name is spelled SoMeX.
 - Giant Fluctuations is on hold: do not present it as upcoming.
+- Industry research contracts are mentioned only in general terms: never name
+  the companies.
 - Do not add grant review panels or grant reviewing (European Research Council
   or any other funder) to the bio, roles or news: Roberto finds them meaningless
   there.
