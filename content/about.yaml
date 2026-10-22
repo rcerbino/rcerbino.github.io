@@ -98,6 +98,12 @@ service:
         years: 2025-
       - what: Coordinator, ESA Facility Definition Team for Soft Matter and Biophysics
         years: 2023-2024
+  - group: Scientific societies
+    items:
+      - what: Vice-Treasurer, Austrian Society for Rheology (OeGR)
+        years: 2025-
+      - what: Vice-Treasurer, ASSAI, Associazione per gli Scambi Scientifici Austria Italia (Austrian-Italian association for scientific exchange)
+        years: 2024-
   - group: University of Vienna
     items:
       - what: Vice-Dean for Teaching and International Affairs, Faculty of Physics
