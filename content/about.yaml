@@ -35,7 +35,7 @@ bio:
     He is an Associate Editor of Soft Matter, Series Editor of the Springer
     series on Soft Matter and Biophysics, and a Fellow of the Royal Society of
     Chemistry. He chairs the Board of the Liquid Matter Division of the European
-    Physical Society, reviews for the European Research Council, and serves on
+    Physical Society and serves on
     the European Space Agency's Human Exploration Science Advisory Committee and
     on the European Space Sciences Committee. At the University of Vienna he is
     Vice-Dean of the Faculty of Physics, for Teaching and International Affairs.
@@ -90,8 +90,6 @@ service:
         years: 2024-
       - what: Member, European Space Sciences Committee
         years: 2025-
-      - what: Panel reviewer, European Research Council (Starting and Consolidator Grants)
-        years: 2022-
       - what: Coordinator, ESA Facility Definition Team for Soft Matter and Biophysics
         past: true
   - group: University of Vienna

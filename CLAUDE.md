@@ -94,6 +94,9 @@ because you were unsure.
   Professor rank.
 - The lab name is spelled SoMeX.
 - Giant Fluctuations is on hold: do not present it as upcoming.
+- Do not add grant review panels or grant reviewing (European Research Council
+  or any other funder) to the bio, roles or news: Roberto finds them meaningless
+  there.
 
 ## Where things live
 
