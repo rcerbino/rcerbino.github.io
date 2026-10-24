@@ -5,12 +5,15 @@
    Brownian motion: fine grains change fast, coarse ones slowly. That q-dependent
    decorrelation is exactly what Differential Dynamic Microscopy measures. */
 (function () {
-  var canvas = document.getElementById('speckle');
+  var all = document.querySelectorAll('#speckle, canvas.speckle');
+  for (var n = 0; n < all.length; n++) run(all[n]);
+
+function run(canvas) {
   if (!canvas || !canvas.getContext) return;
   var ctx = canvas.getContext('2d');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  var CELL = 5;          // CSS pixels per simulation cell
+  var CELL = parseFloat(canvas.dataset.cell) || 5;   // CSS pixels per simulation cell
   var WAVES = 64;
   var D = 0.04;          // "diffusion coefficient" of the phases, per frame
   var off = document.createElement('canvas');
@@ -122,4 +125,5 @@
     var onScheme = function () { color = rgb(); frame(0.01); };
     mq.addEventListener ? mq.addEventListener('change', onScheme) : mq.addListener(onScheme);
   }
+}
 })();

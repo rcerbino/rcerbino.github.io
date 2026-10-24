@@ -11,6 +11,7 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 FEED = "https://somexlab.github.io/post/index.xml"
+LIST = "https://somexlab.github.io/post/"   # its post list carries small thumbnails
 OUT = Path(__file__).resolve().parent.parent / "data" / "group_news.json"
 KEEP = 12
 
@@ -22,6 +23,21 @@ def text(s):
     s = html.unescape(re.sub(r"<[^>]+>", " ", html.unescape(s or "")))
     s = PICTO.sub("", s)
     return re.sub(r"\s+", " ", s).strip()
+
+
+def thumbnails():
+    """Small pictures (about 150 px wide) that the group site shows next to
+    each post in its list, keyed by the post's address."""
+    try:
+        req = urllib.request.Request(LIST, headers={"User-Agent": "cerbino-website/1.0"})
+        page = urllib.request.urlopen(req, timeout=30).read().decode("utf-8", "replace")
+    except Exception:
+        return {}
+    base = "https://somexlab.github.io"
+    # animated GIFs stay large even when resized, so they are left out
+    return {base + a: base + img for a, img in
+            re.findall(r'<a href="?(/post/[^" >]+)"?>\s*<img src="?(/post/[^" >]+)', page)
+            if not img.lower().endswith(".gif")}
 
 
 def main():
@@ -47,11 +63,15 @@ def main():
             "summary": summary,
         })
     items.sort(key=lambda x: x["date"], reverse=True)
-    new = json.dumps(items[:KEEP], indent=1, ensure_ascii=False)
+    items = items[:KEEP]
+    thumbs = thumbnails()
+    for x in items:
+        x["image"] = thumbs.get(x["url"], "")
+    new = json.dumps(items, indent=1, ensure_ascii=False)
     old = OUT.read_text() if OUT.exists() else ""
     if new != old:
         OUT.write_text(new)
-        print(f"group_news.json updated ({len(items[:KEEP])} items)")
+        print(f"group_news.json updated ({len(items)} items)")
     else:
         print("group news unchanged")
     return 0

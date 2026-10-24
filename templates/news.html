@@ -1,6 +1,7 @@
 {% extends "base.html" %}
+{% from "macros.html" import page_head %}
 {% block content %}
-<h1>News and talks</h1>
+{{ page_head("News and talks", news.intro, visuals.heads[page], root) }}
 <div class="news-cols">
   <section>
     <h2>News</h2>
@@ -27,7 +28,8 @@
     <h2>From the SoMeX group</h2>
     <ul class="feed">
     {% for g in group_news %}
-      <li>
+      <li{% if g.image %} class="has-image"{% endif %}>
+        {% if g.image %}<a class="feed-img" href="{{ g.url }}" tabindex="-1" aria-hidden="true"><img src="{{ g.image }}" alt="" loading="lazy"></a>{% endif %}
         <p class="when">{{ g.date | date }}</p>
         <p class="feed-title"><a href="{{ g.url }}">{{ g.title }}</a></p>
         <p class="feed-sum">{{ g.summary }}</p>

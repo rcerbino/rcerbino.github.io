@@ -272,3 +272,82 @@ address { font-style: normal; }
 .review-chart .marker-label { font-family: var(--sans); font-size: 11px; fill: var(--ink); opacity: 0.75; }
 .review-chart .avg-label { font-family: var(--sans); font-size: 11px; fill: var(--accent-2); }
 .review-chart + .review-chart { margin-top: 1.8rem; }
+
+/* ---- Inner-page visuals --------------------------------------------------
+   Each inner page opens with a round "view down the microscope" holding a lab
+   image or a live speckle pattern. Inside pages, photos sit as plain plates
+   with a caption. Charts reuse the review-chart look. */
+:root { --field: #0b1220; --milan: #2f45c5; --fribourg: #0a8a78; --vienna: #b8233f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --field: #05080f; --milan: #93a1ff; --fribourg: #5fd3c2; --vienna: #ff7a90; } }
+:root[data-theme="dark"] { --field: #05080f; --milan: #93a1ff; --fribourg: #5fd3c2; --vienna: #ff7a90; }
+
+.page-head { display: grid; gap: 1.2rem 3.5rem; align-items: start; margin: 0 0 1rem; }
+.page-head h1 { margin-bottom: 0.6rem; }
+.page-head-text > :last-child { margin-bottom: 0; }
+@media (min-width: 52rem) {
+  .page-head { grid-template-columns: minmax(0, 1fr) 15rem; }
+  .page-head .eyepiece { margin-top: 2.6rem; }
+}
+.eyepiece { margin: 0; max-width: 15rem; }
+.eyepiece-field {
+  position: relative; aspect-ratio: 1; border-radius: 50%; overflow: hidden;
+  background: var(--field);
+  box-shadow: 0 0 0 1px var(--rule), 0 0 0 7px var(--paper), 0 0 0 8px var(--rule);
+}
+.eyepiece-field img, .eyepiece-field canvas { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* the soft dark rim you see looking into an eyepiece */
+.eyepiece-field::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, transparent 58%, rgba(5, 8, 15, 0.55) 100%);
+}
+.eyepiece canvas.speckle { background: var(--tint); }
+.eyepiece figcaption, .plate figcaption, .pub-strip figcaption, .career-map figcaption {
+  font-family: var(--sans); font-size: 0.82rem; line-height: 1.45; color: var(--muted); margin-top: 0.9rem;
+}
+@media (max-width: 51.99rem) {
+  .page-head .eyepiece { display: grid; grid-template-columns: 6.5rem 1fr; gap: 1rem; align-items: center; max-width: 26rem; order: -1; margin-top: 1.5rem; }
+  .page-head .eyepiece figcaption { margin: 0; }
+  .page-head h1 { margin-top: 1rem; }
+}
+
+.plate { margin: 1.4rem 0 0; }
+.plate img, .plate-speckle { display: block; width: 100%; border-radius: 3px; }
+.plate img { aspect-ratio: var(--aspect, 2.2 / 1); object-fit: cover; background: var(--field); }
+.plate-speckle { aspect-ratio: var(--aspect, 2.2 / 1); overflow: hidden; background: var(--tint); }
+.plate-speckle canvas { display: block; width: 100%; height: 100%; }
+.plate.wide { max-width: var(--wide); margin: 1.2rem 0 1.6rem; }
+.plate.wide img { aspect-ratio: auto; }
+.theme-text { max-width: var(--measure); }
+.lab-body { display: grid; gap: 0 3.5rem; }
+@media (min-width: 56rem) { .lab-body { grid-template-columns: minmax(0, var(--measure)) minmax(0, 1fr); align-items: start; } .lab-body .plate { margin-top: 0.3rem; } }
+
+/* Publications per year */
+.pub-strip { margin: 1.6rem 0 0.4rem; max-width: 52rem; }
+.pub-strip svg, .career-map svg { display: block; width: 100%; min-width: 34rem; height: auto; }
+.pub-strip .grid { stroke: var(--rule); stroke-width: 1; }
+.pub-strip .tick, .career-map .tick { font-family: var(--sans); font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.pub-strip .seg { stroke: var(--paper); stroke-width: 0.8; }
+.seg-preprint { fill: var(--t-preprint); } .seg-article { fill: var(--t-article); }
+.seg-review { fill: var(--t-review); } .seg-chapter { fill: var(--t-chapter); }
+.seg-book { fill: var(--t-book); } .seg-proceedings { fill: var(--t-proceedings); }
+.seg-other { fill: var(--t-other); }
+
+/* Career map */
+.career-map { margin: 2rem 0 0.5rem; max-width: 52rem; }
+.career-map .place-milan { fill: var(--milan); } .career-map .place-fribourg { fill: var(--fribourg); }
+.career-map .place-vienna { fill: var(--vienna); }
+.career-map .place-label { font-family: var(--sans); font-size: 11.5px; font-weight: 600; }
+.career-map .place-label.milan { fill: var(--milan); } .career-map .place-label.fribourg { fill: var(--fribourg); } .career-map .place-label.vienna { fill: var(--vienna); }
+.career-map .ms-year, .career-map .stay-year { fill: var(--muted); }
+.career-map .ms-line { stroke: var(--muted); stroke-width: 1; opacity: 0.5; }
+.career-map .ms-label { font-family: var(--sans); font-size: 11.5px; fill: var(--ink); }
+.career-map .stay { fill: var(--paper); stroke: var(--ink); stroke-width: 1.2; }
+.career-map .stay-label { font-family: var(--sans); font-size: 11px; fill: var(--muted); }
+
+/* Group news with pictures */
+.feed li.has-image { display: grid; grid-template-columns: 6.5rem 1fr; column-gap: 1rem; }
+.feed li.has-image > * { grid-column: 2; }
+.feed li.has-image .feed-img { grid-column: 1; grid-row: 1 / span 3; }
+.feed-img img { display: block; width: 6.5rem; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 3px; background: var(--field); }
+
+@media print { .eyepiece, .plate, .pub-strip, .career-map { display: none; } }

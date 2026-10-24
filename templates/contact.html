@@ -1,6 +1,9 @@
 {% extends "base.html" %}
+{% from "macros.html" import page_head %}
 {% block content %}
-<h1>Contact</h1>
+{% call page_head("Contact", None, visuals.heads[page], root) %}
+  <p class="lede">Email is the quickest way to reach me.{% if profile.lab.directions %} If you are coming to see us, <a href="{{ profile.lab.directions }}">this guide</a> takes you from the main entrance to the lab.{% endif %}</p>
+{% endcall %}
 <div class="contact-grid">
   <section>
     <h2>Email</h2>

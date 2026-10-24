@@ -1,8 +1,7 @@
 {% extends "base.html" %}
-{% from "macros.html" import pub_item %}
+{% from "macros.html" import pub_item, page_head %}
 {% block content %}
-<header class="page-head">
-  <h1>Publications</h1>
+{% call page_head("Publications", None, visuals.heads[page], root) %}
   <p>{{ stats.total }} publications since {{ stats.first_year }}, including {{ stats.peer }} journal articles and reviews.
      The list updates itself from my <a href="https://orcid.org/{{ profile.ids[0].value }}">ORCID record</a>.
      Profiles:
@@ -10,7 +9,9 @@
   <p class="quiet">Under each paper: citations ({% if stats.scholar_as_of %}from Google Scholar, as of {{ stats.scholar_as_of }}, refreshed monthly; where Google Scholar has no matching record, the higher count of Crossref and Semantic Scholar{% else %}the higher count of Crossref and Semantic Scholar, refreshed weekly{% if stats.metrics_updated %}, last on {{ stats.metrics_updated }}{% endif %}; Google Scholar counts are usually higher{% endif %}),
      links to preprint versions ({{ stats.with_preprint }} papers have one) and to a free full text where one exists,
      and the Altmetric score of attention in news, policy documents and social media, which updates live.</p>
-</header>
+{% endcall %}
+
+{% include "pub_strip.html" %}
 
 <section class="selected">
   <h2>Selected</h2>

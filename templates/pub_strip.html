@@ -1,0 +1,31 @@
+{# Papers per year, stacked by type, oldest year on the left. #}
+{% if pub_strip %}
+{% set W = 720 %}{% set H = 150 %}{% set L = 26 %}{% set B = 22 %}{% set T = 8 %}
+{% set n = pub_strip | length %}
+{% set step = (W - L - 4) / n %}
+{% set ymax = ((pub_strip_max / 2) | round(0, 'ceil') * 2) | int %}
+<figure class="pub-strip">
+  <div class="chart-scroll">
+  <svg viewBox="0 0 {{ W }} {{ H }}" role="img" aria-labelledby="ps-title ps-desc">
+    <title id="ps-title">Publications per year, by type</title>
+    <desc id="ps-desc">{% for r in pub_strip %}{{ r.year }}: {{ r.total }}. {% endfor %}</desc>
+    {% for t in range(0, ymax + 1, 2) %}
+      {% set y = H - B - (H - B - T) * t / ymax %}
+      <line class="grid" x1="{{ L }}" x2="{{ W - 2 }}" y1="{{ y }}" y2="{{ y }}"/>
+      {% if t %}<text class="tick" x="{{ L - 5 }}" y="{{ y + 4 }}" text-anchor="end">{{ t }}</text>{% endif %}
+    {% endfor %}
+    {% for r in pub_strip %}
+      {% set x0 = L + step * loop.index0 + step * 0.14 %}
+      {% set acc = namespace(y=H - B) %}
+      {% for t, c in r.parts %}
+        {% set h = (H - B - T) * c / ymax %}
+        <rect class="seg seg-{{ t }}" x="{{ x0 }}" y="{{ acc.y - h }}" width="{{ step * 0.72 }}" height="{{ h }}"><title>{{ r.year }}: {{ c }} {{ type_labels[t] | lower }}</title></rect>
+        {% set acc.y = acc.y - h %}
+      {% endfor %}
+      {% if r.year % 5 == 0 %}<text class="tick" x="{{ x0 + step * 0.36 }}" y="{{ H - 6 }}" text-anchor="middle">{{ r.year }}</text>{% endif %}
+    {% endfor %}
+  </svg>
+  </div>
+  <figcaption>Publications per year, coloured by type as in the list below. {{ current_year }} is the year to date.</figcaption>
+</figure>
+{% endif %}
