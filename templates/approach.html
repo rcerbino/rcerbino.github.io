@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros.html" import page_head %}
+{% from "macros.html" import page_head, plate %}
 {% block content %}
 <article class="approach">
   {{ page_head(approach.title, approach.intro, visuals.heads[page], root) }}
@@ -17,6 +17,7 @@
       {% for p in s.paragraphs %}<p>{{ p }}</p>
       {% endfor %}
     </div>
+    {{ plate((visuals.approach or {}).get(s.id), root) }}
 
     {% if s.id == 'reviewing' and review_chart %}
     {% set rv = approach.reviewing %}

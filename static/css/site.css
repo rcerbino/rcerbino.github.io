@@ -350,4 +350,8 @@ address { font-style: normal; }
 .feed li.has-image .feed-img { grid-column: 1; grid-row: 1 / span 3; }
 .feed-img img { display: block; width: 6.5rem; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 3px; background: var(--field); }
 
+.plate.native img { aspect-ratio: auto; width: auto; max-width: 100%; max-height: 24rem; object-fit: contain; background: #fff; padding: 0.6rem; border: 1px solid var(--rule); }
+.plate .credit { display: block; margin-top: 0.15rem; }
+.plate .credit a { color: inherit; }
+.approach .plate { max-width: var(--measure); }
 @media print { .eyepiece, .plate, .pub-strip, .career-map { display: none; } }

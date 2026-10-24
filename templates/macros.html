@@ -60,10 +60,10 @@
 {# A rectangular figure with a caption, for photos inside a page. #}
 {% macro plate(v, root, cls='') %}
 {% if v %}
-<figure class="plate{% if cls %} {{ cls }}{% endif %}"{% if v.aspect %} style="--aspect: {{ v.aspect }}"{% endif %}>
+<figure class="plate{% if cls %} {{ cls }}{% endif %}{% if v.native %} native{% endif %}"{% if v.aspect %} style="--aspect: {{ v.aspect }}"{% endif %}>
   {% if v.speckle %}<div class="plate-speckle"><canvas class="speckle" data-cell="4" aria-hidden="true"></canvas></div>
   {% else %}<img src="{{ root }}{{ v.src }}" alt="" loading="lazy"{% if v.position %} style="object-position: {{ v.position }}"{% endif %}>{% endif %}
-  {% if v.caption %}<figcaption>{{ v.caption }}</figcaption>{% endif %}
+  {% if v.caption or v.credit %}<figcaption>{{ v.caption }}{% if v.credit %} <span class="credit">Figure: {% if v.credit_url %}<a href="{{ v.credit_url }}">{{ v.credit }}</a>{% else %}{{ v.credit }}{% endif %}.</span>{% endif %}</figcaption>{% endif %}
 </figure>
 {% endif %}
 {% endmacro %}

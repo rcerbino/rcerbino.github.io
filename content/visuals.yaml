@@ -4,8 +4,11 @@
 # either a photo from the SoMeX lab (src) or a live, simulated speckle
 # pattern (speckle: true). Captions are short and say what the image is.
 #
-# Lab photos come from the SoMeX website (somexlab.github.io, CC BY-NC-ND 4.0)
-# and are credited there. Keep the files in static/img/lab/.
+# Lab photos come from the SoMeX website (somexlab.github.io, CC BY-NC-ND 4.0);
+# keep them in static/img/lab/. Figures from open-access papers live in
+# static/img/papers/ and must carry a credit (authors, journal, year, licence)
+# and a link to the paper; use only figures whose licence allows reuse.
+# native: true shows a figure whole, at its own shape, on a white card.
 
 heads:
   About:
@@ -30,23 +33,31 @@ heads:
   Contact:
     src: img/lab/entrance.jpg
     position: 50% 35%
-    caption: The entrance of the Faculty of Physics, Boltzmanngasse 5.
+    caption: The main entrance of the Faculty of Physics, Strudlhofgasse 4, where the directions to the lab start.
 
 # Figures next to the research themes (research.yaml theme ids).
 themes:
   ddm:
-    src: img/lab/fastddm.jpg
-    caption: From our work on fastddm, our open software for Differential Dynamic Microscopy.
+    src: img/papers/ddm-steps.jpg
+    native: true
+    caption: "How DDM works: subtract two images taken a time apart (a-c), compute the power spectrum of the difference (d), see how it grows with the time delay at each wave vector (e) and read off the relaxation rate (f)."
+    credit: P. Edera et al., Soft Matter (2021), CC BY 4.0
+    credit_url: https://doi.org/10.1039/d1sm01068a
   rheo:
-    src: img/lab/shear-cell.jpg
-    caption: From our work on soft materials under shear, combining rheology and microscopy.
+    src: img/papers/shearview.jpg
+    native: true
+    caption: ShearView, our compact rheometer that sits on top of an optical microscope.
+    credit: N. Kalafatakis and R. Cerbino, Journal of Rheology (2026), arXiv version, CC BY 4.0
+    credit_url: https://arxiv.org/abs/2508.08951
   living:
     src: img/lab/monolayer.jpg
     caption: From our work on the structure and motion of cell monolayers.
   space:
-    src: img/lab/sedimentation.jpg
-    aspect: 16 / 9
-    caption: From our project on the physics of colloidal sedimentation.
+    src: img/papers/fractal-fronts.jpg
+    native: true
+    caption: Concentration fluctuations during diffusion, in space (top, aboard the FOTON-M3 satellite) and on Earth (bottom). Without gravity they grow much larger.
+    credit: A. Vailati et al., Nature Communications (2011), CC BY-NC-SA 3.0
+    credit_url: https://doi.org/10.1038/ncomms1290
   scattering:
     speckle: true
     caption: A live simulated speckle pattern. Small grains change fast, large ones slowly, as for particles in Brownian motion.
@@ -84,3 +95,12 @@ career:
     - {year: 2010, label: Ottawa}
     - {year: 2018, label: Lyon}
     - {year: 2025, label: Paris}
+
+# Figures next to sections of the Approach page (approach.yaml section ids).
+approach:
+  space:
+    src: img/papers/gradflex.jpg
+    native: true
+    caption: The GRADFLEX instrument, our first space experiment.
+    credit: R. Cerbino et al., Scientific Reports (2015), CC BY 4.0
+    credit_url: https://doi.org/10.1038/srep14486
