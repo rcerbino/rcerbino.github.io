@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-21",
+ "updated": "2026-10-24",
  "source": "Google Scholar",
  "profile": "https://scholar.google.com/citations?user=2Iq2JPIAAAAJ",
  "papers": [
@@ -11,12 +11,12 @@
   {
    "title": "Functional transcription promoters at DNA double-strand breaks mediate RNA-driven phase separation of damage-response factors",
    "year": 2019,
-   "citations": 436
+   "citations": 437
   },
   {
    "title": "Endocytic reawakening of motility in jammed epithelia",
    "year": 2017,
-   "citations": 364
+   "citations": 365
   },
   {
    "title": "Phase behavior and critical activated dynamics of limited-valence DNA nanostars",
@@ -26,7 +26,7 @@
   {
    "title": "Two-dimensional x-ray beam phase sensing",
    "year": 2012,
-   "citations": 257
+   "citations": 258
   },
   {
    "title": "Scattering information obtained by optical microscopy: differential dynamic microscopy and beyond",
@@ -36,12 +36,12 @@
   {
    "title": "Flocking transitions in confluent tissues",
    "year": 2018,
-   "citations": 221
+   "citations": 222
   },
   {
    "title": "Unjamming overcomes kinetic and proliferation arrest in terminally differentiated cells and promotes collective motility of carcinoma",
    "year": 2019,
-   "citations": 220
+   "citations": 221
   },
   {
    "title": "Bistable heat transfer in a nanofluid",
@@ -189,7 +189,7 @@
    "citations": 54
   },
   {
-   "title": "Thermal Fluctuations in a Layer of Liquid Subjected to Temperature Gradients with and without the Influence of Gravity",
+   "title": "Thermal Fluctuations in a Layer of Liquid  Subjected to Temperature Gradients <?format ?>with and without the Influence of Gravity",
    "year": 2011,
    "citations": 53
   },
@@ -204,14 +204,14 @@
    "citations": 51
   },
   {
-   "title": "Gradient-driven fluctuations experiment: fluid fluctuations in microgravity",
-   "year": 2006,
+   "title": "DNA-Based soft phases",
+   "year": 2012,
    "citations": 49
   },
   {
-   "title": "DNA-Based soft phases",
-   "year": 2012,
-   "citations": 48
+   "title": "Gradient-driven fluctuations experiment: fluid fluctuations in microgravity",
+   "year": 2006,
+   "citations": 49
   },
   {
    "title": "Image windowing mitigates edge effects in Differential Dynamic Microscopy",
