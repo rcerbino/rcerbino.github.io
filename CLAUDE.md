@@ -53,8 +53,8 @@ Search his Gmail and Google Calendar (all calendars he owns, in particular
 "Roberto - Work", not only the primary one) for the period since the last run,
 looking for things that belong on a professional website:
 
-- invited talks, keynotes, plenary lectures and seminars he gave or has firmly
-  accepted (event name, place, month, title if known)
+- (talks are not part of this step: the "Talks list update" task below looks
+  after them every two weeks)
 - grants awarded to him (not applications), with funder, years, role, amount
 - prizes, fellowships, elected or appointed roles, editorial or committee
   positions, conferences he chairs or organises
@@ -95,6 +95,65 @@ Add two reminders to the summary when they apply:
   QR code (static/img/qr-cerbino-eu.png and .svg, also at
   https://rcerbino.github.io/img/qr-cerbino-eu.png) on the last slide, naming
   the event and date.
+
+## Talks list update (scheduled task, every two weeks)
+
+Keeps `content/talks.yaml` complete. Changes go live only after Roberto
+approves them.
+
+1. Find the last check: the newest of (a) the date of the last commit that
+   touched `content/talks.yaml` (`git log -1 --format=%cs -- content/talks.yaml`)
+   and (b) the creation date of the last pull request titled "Talks update"
+   (`gh pr list --state all --search "Talks update in:title" --limit 1`).
+   Look at everything since then, with a few days of overlap.
+2. Open pull request: if a "Talks update" pull request is still open, Roberto
+   has not answered it yet. Add new findings to that branch and pull request
+   instead of opening a second one, and mention it again in the report.
+3. Talks folder on Roberto's Mac: `/Users/roberto/Documents/docs/talks` (in
+   device_bash: `$HOME/mnt/talks`). One subfolder per year, one folder per
+   talk inside it. List the folders of the current and the previous year with
+   their file dates, and look at every folder created or changed since the last
+   check. Read the title slide with
+   `python3 scripts/slide_text.py <file.key|file.pptx|file.pdf>` (copy the
+   script to the Mac first, or stage the file into the container). Abstracts,
+   programmes or invitations saved in the folder help too. The file save time is
+   a clue to the date, not proof. Skip group meetings, project meetings,
+   committee and internal university presentations, and talks by other people
+   kept as material.
+4. Gmail and Google Calendar: search the same period for talks, seminars,
+   colloquia, lectures at schools and keynotes Roberto gave (invitations he
+   accepted, programmes, "thank you for your talk" messages, travel for a
+   talk). Read every calendar he owns (call list_calendars; the work calendar
+   is "Roberto - Work"). Search results show only the ~5 oldest messages of a
+   thread with no marker: always open the full thread with get_thread before
+   deciding. Add only talks that have already taken place. List talks
+   scheduled for the coming weeks in the report, but do not add them yet.
+5. For each talk found, compare with `content/talks.yaml` (it may already be
+   there under another wording). Also correct an existing entry when a source
+   clearly shows a wrong date, event or kind. For new entries use the exact day
+   when a programme, email or slide gives it, the title as on the title slide,
+   the official event name, "City, Country" as place (accents kept), and kind
+   (plenary, keynote, invited, contributed, seminar, colloquium, lecture,
+   public, teaching; "invited" only when the invitation or programme says so).
+   Talks given by co-authors are not listed.
+6. If there is something to change: work on a branch `talks/YYYY-MM-DD` (or
+   the open one), edit `content/talks.yaml` (newest first, same format), run
+   `python3 build.py --check`, push, and open a pull request titled
+   "Talks update YYYY-MM-DD". In its description, list each change as one line
+   with its source (folder and file, email subject and date, calendar event, or
+   web page). Never merge it yourself.
+7. If Roberto replies in the run's session to approve (all, or some items),
+   apply exactly what he approved, merge the pull request into main with
+   `gh pr merge --squash`, wait for the "Build and publish" workflow to finish,
+   and check https://rcerbino.github.io/talks/ shows the change. If he asks for
+   changes, edit the branch first. If he rejects an item, drop it and note it in
+   the pull request so later runs do not propose it again.
+8. Report (it becomes his notification), ASCII only, short: the proposed
+   changes, one line each, with the pull request link; how to approve (merge
+   the pull request on GitHub, or reply "approve" or "approve 1, 3" to this
+   run); talks coming up in the next five weeks, with a reminder to put
+   cerbino.eu or the QR code on the last slide. If nothing was found and no pull
+   request is waiting, say "No new talks since <date>".
 
 ## Writing style for site text
 
