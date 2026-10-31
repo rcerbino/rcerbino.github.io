@@ -129,6 +129,13 @@ Google Analytics 4 (`content/profile.yaml > analytics > ga4`, the same property
 the old Google Sites page used) loads only after a visitor accepts the consent
 banner (`static/js/consent.js`); keep it that way. Preview builds leave it out.
 
+## Search engines
+
+The site is verified in Google Search Console (property
+https://rcerbino.github.io/, sitemap submitted) with the meta tag in
+`content/profile.yaml > site_verification`. Never remove that tag. Each page has
+its own search description in `content/profile.yaml > descriptions`.
+
 ## Do not move
 
 `static/roberto.jpg`, `static/somex.png` and `static/univie.png` are published at
