@@ -63,6 +63,16 @@ ids:
     value: A-2286-2008
     url: https://www.webofscience.com/wos/author/record/A-2286-2008
 
+# Other places where Roberto is present (Contact page, footer, and the
+# structured data that tells search engines these accounts are his).
+social:
+  - label: LinkedIn
+    url: https://www.linkedin.com/in/robertocerbino/
+  - label: Bluesky
+    url: https://bsky.app/profile/cerbino.bsky.social
+  - label: X
+    url: https://x.com/cerbino
+
 # Bibliometrics as reported by the source named below. Updated by the
 # scheduled task when a newer figure is available.
 metrics:

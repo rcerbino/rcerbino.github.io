@@ -20,7 +20,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ root }}{{ asset('css/site.css') }}">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Person","name":"{{ profile.name }}","jobTitle":"{{ profile.title }}","affiliation":{"@type":"Organization","name":"University of Vienna"},"url":"{{ site_url }}/","image":"{{ site_url }}/{{ profile.portrait }}","sameAs":[{% for i in profile.ids %}"{{ i.url }}"{% if not loop.last %},{% endif %}{% endfor %}]}
+{"@context":"https://schema.org","@type":"Person","name":"{{ profile.name }}","jobTitle":"{{ profile.title }}","affiliation":{"@type":"Organization","name":"University of Vienna"},"url":"{{ site_url }}/","image":"{{ site_url }}/{{ profile.portrait }}","sameAs":[{% for i in (profile.ids or []) + (profile.social or []) %}"{{ i.url }}"{% if not loop.last %},{% endif %}{% endfor %},"{{ profile.lab.url }}"]}
 </script>
 </head>
 {% set ga = (profile.analytics or {}).get('ga4') if not preview else none %}
@@ -45,7 +45,8 @@
 <footer class="site-footer">
   <div class="wrap footer-inner">
     <p>{{ profile.name }}, {{ profile.affiliation }}.
-       Group website: <a href="{{ profile.lab.url }}">{{ profile.lab.name }}</a>.</p>
+       Group website: <a href="{{ profile.lab.url }}">{{ profile.lab.name }}</a>.{% if profile.social %}
+       Also on {% for x in profile.social %}<a href="{{ x.url }}" rel="me">{{ x.label }}</a>{% if loop.revindex == 2 %} and {% elif not loop.last %}, {% endif %}{% endfor %}.{% endif %}</p>
     <p class="quiet">Updated {{ built_human }}. Publications refresh automatically from
        <a href="https://orcid.org/{{ profile.ids[0].value }}">ORCID</a>.{% if ga %}
        <button type="button" class="linklike" data-consent-open>Cookie settings</button>{% endif %}</p>

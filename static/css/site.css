@@ -253,6 +253,7 @@ address { font-style: normal; }
 /* Approach page */
 .conviction { border-top: 1px solid var(--rule); margin-top: 2.5rem; }
 .conviction h2 { margin-top: 1.6rem; }
+.contact-grid .social { display: flex; flex-wrap: wrap; gap: 0.3rem 1.4rem; font-family: var(--sans); }
 .conviction .more { display: flex; flex-wrap: wrap; gap: 0.3rem 1.4rem; }
 .review-chart { margin: 1.2rem 0 0.6rem; max-width: 52rem; }
 .chart-scroll { overflow-x: auto; }

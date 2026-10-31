@@ -22,6 +22,10 @@
       <dt>{{ i.label }}</dt><dd><a href="{{ i.url }}">{{ i.value }}</a></dd>
     {% endfor %}
     </dl>
+    {% if profile.social %}
+    <h2>Elsewhere</h2>
+    <p class="social">{% for x in profile.social %}<a href="{{ x.url }}" rel="me">{{ x.label }}</a>{% if not loop.last %}<span class="sep"></span>{% endif %}{% endfor %}</p>
+    {% endif %}
     <h2>Joining the group</h2>
     <p>Open positions are announced on the <a href="{{ profile.lab.url }}">SoMeX website</a>.
        If you are interested in a master's thesis, a PhD or a postdoc, write to me with a short CV and a few lines on what you would like to work on.</p>
