@@ -308,6 +308,30 @@ def main(check=False, preview=False):
     env = Environment(loader=FileSystemLoader(ROOT / "templates"), autoescape=True,
                       trim_blocks=True, lstrip_blocks=True)
     env.filters["date"] = fmt_date
+
+    import re as _re
+
+    def linkify(text, root=""):
+        """Escape text and turn [link text](url) into links. A url of the
+        form site:research/#space points to a page of this site."""
+        out, pos = [], 0
+        for m in _re.finditer(r"\[([^\]]+)\]\(([^)\s]+)\)", text):
+            url = m.group(2)
+            if url.startswith("site:"):
+                path, _, frag = url[5:].partition("#")
+                url = root + link(path) + ("#" + frag if frag else "")
+            out.append(str(escape(text[pos:m.start()])))
+            out.append(f'<a href="{escape(url)}">{escape(m.group(1))}</a>')
+            pos = m.end()
+        out.append(str(escape(text[pos:])))
+        return Markup("".join(out))
+
+    def linked(text, url):
+        """Text as a link when a url is given, plain (escaped) otherwise."""
+        return Markup(f'<a href="{escape(url)}">{escape(text)}</a>') if url else escape(text)
+
+    env.filters["linkify"] = linkify
+    env.filters["linked"] = linked
     import hashlib
 
     def asset(path):

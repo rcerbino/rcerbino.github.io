@@ -108,6 +108,10 @@ Add two reminders to the summary when they apply:
   degree before the PhD is the Laurea in Physics (2001); there is no separate
   bachelor's degree.
 - "Selected service and roles" is a selection, not a complete list.
+- Links on the About page: in `about.yaml > bio` write `[text](url)`, or
+  `[text](site:research/#space)` for a page of this site; list entries
+  (positions, stays, honours, service) take a `url:` field. Link only to pages
+  that exist and load; leave an entry plain if there is no good page.
 - The lab name is spelled SoMeX.
 - Giant Fluctuations is on hold: do not present it as upcoming.
 - Industry research contracts are mentioned only in general terms: never name

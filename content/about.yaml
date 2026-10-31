@@ -11,12 +11,12 @@ short_bio: >-
 bio:
   - >-
     Roberto Cerbino (born 1975, Italy) is Professor of Experimental Soft Matter
-    Physics at the University of Vienna, where he leads the SoMeX (Soft Matter
-    Experiments) laboratory. He studied physics at the University of Milan,
+    Physics at the University of Vienna, where he leads the [SoMeX (Soft Matter
+    Experiments) laboratory](https://somexlab.github.io/). He studied physics at the University of Milan,
     where he obtained his Laurea in 2001 and his PhD in 2004, with work on
     convective instabilities and non-equilibrium fluctuations in complex fluids.
-    After two years as a postdoctoral researcher in Milan, he held a Marie
-    Sklodowska-Curie Intra-European Fellowship at the University of Fribourg
+    After two years as a postdoctoral researcher in Milan, he held a [Marie
+    Sklodowska-Curie](https://marie-sklodowska-curie-actions.ec.europa.eu/) Intra-European Fellowship at the [University of Fribourg](https://www.unifr.ch/phys/en/research/groups/scheffold/)
     (2006-2007), developing new optical approaches to non-equilibrium soft matter.
   - >-
     He returned to the University of Milan in 2007 as Ricercatore Universitario,
@@ -25,90 +25,110 @@ bio:
     Ottawa (2010), ENS Lyon (2018) and ESPCI Paris (2025).
   - >-
     His research combines new optical instruments with quantitative analysis to
-    understand soft and biological materials. He is best known for Differential
-    Dynamic Microscopy (DDM), introduced with Veronique Trappe in 2008, which
+    understand soft and biological materials. He is best known for [Differential
+    Dynamic Microscopy](site:research/#ddm) (DDM), [introduced with Veronique Trappe in 2008](https://doi.org/10.1103/PhysRevLett.100.188102), which
     extracts scattering-type information about motion at many length scales from
     ordinary microscope movies and is now used in laboratories worldwide. His
-    work spans colloids, gels and foams under deformation, active and living
-    matter such as migrating epithelial and cancer cells, and non-equilibrium
-    fluctuations studied on the ground and in space.
+    work spans [colloids, gels and foams under deformation](site:research/#rheo), [active and living
+    matter](site:research/#living) such as migrating epithelial and cancer cells, and non-equilibrium
+    fluctuations studied [on the ground and in space](site:research/#space).
   - >-
-    He is an Associate Editor of Soft Matter, Series Editor of the Springer
-    book series Soft and Biological Matter, and a Fellow of the Royal Society of
-    Chemistry. He chairs the Board of the Liquid Matter Division of the European
-    Physical Society and serves on
-    the European Space Agency's Human Exploration Science Advisory Committee and
-    on the European Space Sciences Committee. At the University of Vienna he is
-    Vice-Dean of the Faculty of Physics, for Teaching and International Affairs.
+    He is an Associate Editor of [Soft Matter](https://pubs.rsc.org/en/journals/journalissues/sm), Series Editor of the Springer
+    book series [Soft and Biological Matter](https://link.springer.com/series/10783), and a Fellow of the Royal Society of
+    Chemistry. He chairs the Board of the [Liquid Matter Division of the European
+    Physical Society](https://www.eps.org/eps-cmd) and serves on
+    the European Space Agency's [Human Spaceflight and Exploration Science Advisory Committee](https://explorationscience.esa.int/science-advisory/test-science-advisory-groups/) and
+    on the [European Space Sciences Committee](https://www.essc.esf.org/). At the University of Vienna he is
+    Vice-Dean of the [Faculty of Physics](https://physik.univie.ac.at/), for Teaching and International Affairs.
 
 education:
   - years: "2004"
     what: PhD in Physics
     where: University of Milan, Italy
+    url: https://www.unimi.it/en
   - years: "2001"
     what: Laurea in Physics
     where: University of Milan, Italy
+    url: https://www.unimi.it/en
 
 positions:
   - years: 2021-
     what: Professor of Experimental Soft Matter Physics
     where: Faculty of Physics, University of Vienna, Austria
+    url: https://physik.univie.ac.at/
   - years: 2015-2021
     what: Associate Professor (permanent faculty position)
     where: University of Milan, Italy
+    url: https://www.unimi.it/en
   - years: 2007-2015
     what: Ricercatore Universitario (permanent faculty position)
     where: University of Milan, Italy
+    url: https://www.unimi.it/en
   - years: 2006-2007
     what: Marie Sklodowska-Curie Intra-European Fellow (host F. Scheffold)
     where: University of Fribourg, Switzerland
+    url: https://www.unifr.ch/phys/en/research/groups/scheffold/
   - years: 2004-2006
     what: Postdoctoral researcher
     where: University of Milan, Italy
+    url: https://www.unimi.it/en
 
 visiting:
   - years: "2025"
     where: ESPCI Paris, France
+    url: https://www.espci.psl.eu/en/
   - years: "2018"
     where: ENS Lyon, France
+    url: https://www.ens-lyon.fr/en/
   - years: "2010"
     where: University of Ottawa, Canada
+    url: https://www.uottawa.ca/en
 
 honors:
   - years: "2023"
     what: Fellow of the Royal Society of Chemistry (FRSC)
   - years: 2006-2007
     what: Marie Sklodowska-Curie Intra-European Fellowship (EU, FP6)
+    url: https://marie-sklodowska-curie-actions.ec.europa.eu/
 
 # A selection of service and roles, grouped. Shown on the About page.
 service:
   - group: Editorial work
     items:
       - what: Associate Editor, Soft Matter (Royal Society of Chemistry)
+        url: https://pubs.rsc.org/en/journals/journalissues/sm
         years: 2023-
       - what: Series Editor, Soft and Biological Matter (Springer book series)
+        url: https://link.springer.com/series/10783
         years: 2024-
       - what: Section Editor, Papers in Physics
+        url: https://www.papersinphysics.org/
         years: 2020-
       - what: Associate Editor, Frontiers in Physics, Soft Matter Physics section
+        url: https://www.frontiersin.org/journals/physics/sections/soft-matter-physics
         years: 2021-2023
   - group: European space science
     items:
-      - what: Member, Human Exploration Science Advisory Committee, European Space Agency
+      - what: Member, Human Spaceflight and Exploration Science Advisory Committee, European Space Agency
+        url: https://explorationscience.esa.int/science-advisory/test-science-advisory-groups/
         years: 2024-
       - what: Member, European Space Sciences Committee
+        url: https://www.essc.esf.org/
         years: 2025-
       - what: Coordinator, ESA Facility Definition Team for Soft Matter and Biophysics
         years: 2023-2024
   - group: Scientific societies (offices held)
     items:
       - what: Chair of the Board, Liquid Matter Division, European Physical Society
+        url: https://www.eps.org/eps-cmd
         years: 2024-2027
       - what: Committee member, Particle Characterisation Interest Group, Royal Society of Chemistry
+        url: https://www.rsc.org/membership-and-community/connect-with-others/through-interests/interest-groups/particle-characterisation/
         years: 2025-
       - what: Vice-Treasurer, Austrian Society for Rheology (OeGR)
         years: 2025-
       - what: Vice-Treasurer, ASSAI, Associazione per gli Scambi Scientifici Austria Italia (Austrian-Italian association for scientific exchange)
+        url: https://www.assai.at/
         years: 2024-
   - group: University of Vienna
     items:
@@ -120,6 +140,7 @@ service:
       - what: Member for the Faculty of Physics, Internationalisation Council of the University
         years: 2024-
       - what: Faculty member, Vienna Doctoral School in Physics
+        url: https://vds-physics.univie.ac.at/
         years: 2021-
   - group: University of Milan
     past: true
@@ -127,10 +148,13 @@ service:
       - what: Rector's Delegate for the development of innovative teaching methodologies
         years: 2017-2018
       - what: Leader of Work Package 2, Innovative Education, of the 4EU+ European university alliance
+        url: https://4euplus.eu/
         years: 2020-2021
       - what: Co-leader, Flagship 1 "Health and demographic change in an urban environment", 4EU+ European university alliance
+        url: https://4euplus.eu/
         years: 2019-2020
       - what: Steering Committee, NOLIMITS imaging platform
+        url: https://www.unimi.it/en/research/places-organizations-and-infrastructures/unitech/nolimits-unitech
         years: 2016-2021
       - what: Direction Board, University Linguistic Centre (newly founded)
         years: 2015-2021

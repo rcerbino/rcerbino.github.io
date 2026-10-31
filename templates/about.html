@@ -3,7 +3,7 @@
 {% block content %}
 {% call page_head("About", None, visuals.heads[page], root) %}
   <div class="prose">
-  {% for para in about.bio %}<p>{{ para }}</p>
+  {% for para in about.bio %}<p>{{ para | linkify(root) }}</p>
   {% endfor %}
   </div>
 {% endcall %}
@@ -14,28 +14,28 @@
   <h2>Positions</h2>
   <dl class="timeline">
   {% for x in about.positions %}
-    <dt>{{ x.years }}</dt><dd><strong>{{ x.what }}</strong><br>{{ x.where }}</dd>
+    <dt>{{ x.years }}</dt><dd><strong>{{ x.what }}</strong><br>{{ x.where | linked(x.url) }}</dd>
   {% endfor %}
   </dl>
 
   <h2>Education</h2>
   <dl class="timeline">
   {% for x in about.education %}
-    <dt>{{ x.years }}</dt><dd><strong>{{ x.what }}</strong><br>{{ x.where }}</dd>
+    <dt>{{ x.years }}</dt><dd><strong>{{ x.what }}</strong><br>{{ x.where | linked(x.url) }}</dd>
   {% endfor %}
   </dl>
 
   <h2>Selected research stays</h2>
   <dl class="timeline">
   {% for x in about.visiting %}
-    <dt>{{ x.years }}</dt><dd>Visiting researcher, {{ x.where }}</dd>
+    <dt>{{ x.years }}</dt><dd>Visiting researcher, {{ x.where | linked(x.url) }}</dd>
   {% endfor %}
   </dl>
 
   <h2>Selected honours</h2>
   <dl class="timeline">
   {% for x in about.honors %}
-    <dt>{{ x.years }}</dt><dd>{{ x.what }}</dd>
+    <dt>{{ x.years }}</dt><dd>{{ x.what | linked(x.url) }}</dd>
   {% endfor %}
   </dl>
 
@@ -44,18 +44,18 @@
   <h3>{{ g.group }}</h3>
   <dl class="timeline">
     {% for it in g["items"] %}
-    <dt>{{ it.years | default('', true) }}</dt><dd>{{ it.what }}</dd>
+    <dt>{{ it.years | default('', true) }}</dt><dd>{{ it.what | linked(it.url) }}</dd>
     {% endfor %}
   </dl>
   {% endfor %}
 
   <h2>In numbers</h2>
   <ul class="figures">
-    <li><span class="num">{{ stats.total }}</span><span class="lbl">publications since {{ stats.first_year }}</span></li>
+    <li><span class="num">{{ stats.total }}</span><span class="lbl"><a href="{{ root }}{{ link('publications/') }}">publications</a> since {{ stats.first_year }}</span></li>
     <li><span class="num">{{ "{:,}".format(profile.metrics.citations) }}</span><span class="lbl">citations</span></li>
     <li><span class="num">{{ profile.metrics.h_index }}</span><span class="lbl">h-index</span></li>
   </ul>
-  <p class="quiet">Citations and h-index from {{ profile.metrics.source }}, {{ profile.metrics.as_of }}.</p>
+  <p class="quiet">Citations and h-index from {% set gs = profile.ids | selectattr('label', 'equalto', profile.metrics.source) | first %}{{ profile.metrics.source | linked(gs.url if gs else None) }}, {{ profile.metrics.as_of }}.</p>
 
   <h2>Short biography</h2>
   <p class="shortbio">{{ about.short_bio }}</p>
