@@ -4,11 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% if page == "Home" %}{{ profile.name }}{% else %}{{ page }} | {{ profile.name }}{% endif %}</title>
-<meta name="description" content="{{ about.short_bio | trim }}">
+{% set desc = ((profile.descriptions or {}).get(page) or about.short_bio) | trim %}
+<meta name="description" content="{{ desc }}">
+{% for name, code in (profile.site_verification or {}).items() %}<meta name="{{ name }}" content="{{ code }}">
+{% endfor %}
 <meta name="author" content="{{ profile.name }}">
 <link rel="canonical" href="{{ site_url }}/{{ path }}">
 <meta property="og:title" content="{{ profile.name }}{% if page != 'Home' %} | {{ page }}{% endif %}">
-<meta property="og:description" content="{{ profile.title }}, {{ profile.affiliation }}">
+<meta property="og:description" content="{{ desc }}">
 <meta property="og:type" content="profile">
 <meta property="og:image" content="{{ site_url }}/{{ profile.portrait }}">
 <link rel="icon" href="{{ root }}img/favicon.svg" type="image/svg+xml">

@@ -8,6 +8,21 @@ lab:
   directions: https://somexlab.github.io/directions/
 portrait: img/portrait.jpg
 
+# One sentence per page, shown by Google under the search result (about
+# 150 characters). The home page uses about.yaml > short_bio.
+descriptions:
+  About: Biography and CV of Roberto Cerbino, Professor of Experimental Soft Matter Physics at the University of Vienna, with positions, honours and roles.
+  Research: Research of Roberto Cerbino and the SoMeX lab in Vienna - Differential Dynamic Microscopy, soft materials under stress, living matter and experiments in space.
+  Publications: All publications of Roberto Cerbino, with citations, preprints and free full texts, updated automatically from ORCID.
+  Teaching: Courses taught by Roberto Cerbino at the University of Vienna, his work on innovative teaching, and the students and researchers he supervises.
+  Approach: Roberto Cerbino on how he does research and why - funding, committees, space science, scientific communities, open methods and peer review.
+  News: News and talks of Roberto Cerbino, and the latest from the SoMeX soft matter lab at the University of Vienna.
+  Contact: How to contact Roberto Cerbino, Faculty of Physics, University of Vienna, and how to find the SoMeX lab.
+
+# Codes that prove to search engines that this site is Roberto's
+# (Google Search Console, Bing Webmaster Tools). Added as meta tags.
+site_verification: {}
+
 # Google Analytics 4 (property "sites.google.com/site/cerbino - GA4", the same
 # one the old Google Sites page used, so the visit history continues).
 # It loads only after a visitor accepts it in the consent banner.
