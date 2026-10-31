@@ -355,3 +355,22 @@ address { font-style: normal; }
 .plate .credit a { color: inherit; }
 .approach .plate { max-width: var(--measure); }
 @media print { .eyepiece, .plate, .pub-strip, .career-map { display: none; } }
+
+/* Cookie consent banner (only when Google Analytics is configured) */
+.consent {
+  position: fixed; left: 1rem; right: 1rem; bottom: 1rem; z-index: 20;
+  max-width: 34rem; margin-left: auto;
+  background: var(--paper); color: var(--ink); border: 1px solid var(--rule);
+  border-radius: 6px; box-shadow: 0 6px 24px rgba(10, 15, 30, 0.12);
+  padding: 0.9rem 1.1rem; font-family: var(--sans); font-size: 0.92rem; line-height: 1.5;
+}
+.consent[hidden] { display: none; }
+.consent p { margin: 0; }
+.consent-buttons { display: flex; gap: 0.6rem; margin-top: 0.7rem !important; }
+.consent button {
+  font: inherit; font-weight: 500; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer;
+  border: 1px solid var(--accent); background: var(--accent); color: var(--paper);
+}
+.consent button[data-consent="denied"] { background: transparent; color: var(--accent); }
+.linklike { font: inherit; color: var(--muted); background: none; border: 0; padding: 0; text-decoration: underline; text-underline-offset: 0.18em; cursor: pointer; }
+@media print { .consent { display: none; } }

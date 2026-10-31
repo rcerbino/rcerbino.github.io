@@ -123,6 +123,12 @@ because you were unsure.
 | Group news (generated) | `data/group_news.json` |
 | Supervised and hosted people, read from the SoMeX people page (generated; corrections in `content/teaching.yaml > mentoring`) | `data/people.json` |
 
+## Analytics
+
+Google Analytics 4 (`content/profile.yaml > analytics > ga4`, the same property
+the old Google Sites page used) loads only after a visitor accepts the consent
+banner (`static/js/consent.js`); keep it that way. Preview builds leave it out.
+
 ## Do not move
 
 `static/roberto.jpg`, `static/somex.png` and `static/univie.png` are published at

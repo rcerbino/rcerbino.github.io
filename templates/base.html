@@ -20,6 +20,7 @@
 {"@context":"https://schema.org","@type":"Person","name":"{{ profile.name }}","jobTitle":"{{ profile.title }}","affiliation":{"@type":"Organization","name":"University of Vienna"},"url":"{{ site_url }}/","image":"{{ site_url }}/{{ profile.portrait }}","sameAs":[{% for i in profile.ids %}"{{ i.url }}"{% if not loop.last %},{% endif %}{% endfor %}]}
 </script>
 </head>
+{% set ga = (profile.analytics or {}).get('ga4') if not preview else none %}
 <body class="page-{{ page | lower | replace(' ', '-') }}">
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-header">
@@ -43,9 +44,20 @@
     <p>{{ profile.name }}, {{ profile.affiliation }}.
        Group website: <a href="{{ profile.lab.url }}">{{ profile.lab.name }}</a>.</p>
     <p class="quiet">Updated {{ built_human }}. Publications refresh automatically from
-       <a href="https://orcid.org/{{ profile.ids[0].value }}">ORCID</a>.</p>
+       <a href="https://orcid.org/{{ profile.ids[0].value }}">ORCID</a>.{% if ga %}
+       <button type="button" class="linklike" data-consent-open>Cookie settings</button>{% endif %}</p>
   </div>
 </footer>
+{% if ga %}
+<div class="consent" role="dialog" aria-live="polite" aria-label="Cookie choice" hidden>
+  <p>This site uses Google Analytics to count visits, which sets cookies in your browser. Is that all right?</p>
+  <p class="consent-buttons">
+    <button type="button" data-consent="granted">Accept</button>
+    <button type="button" data-consent="denied">Decline</button>
+  </p>
+</div>
+<script src="{{ root }}{{ asset('js/consent.js') }}" data-ga="{{ ga }}" defer></script>
+{% endif %}
 {% if page != 'Home' %}<script src="{{ root }}{{ asset('js/speckle.js') }}" defer></script>{% endif %}
 {% block scripts %}{% endblock %}
 </body>

@@ -332,7 +332,7 @@ def main(check=False, preview=False):
                years=years, stats=stats, current_roles=current_roles, people_groups=people_groups,
                approach=approach, review_chart=review_chart, review_max=review_max, papers_in_span=papers_in_span, review_ratio=review_ratio, ratio_max=ratio_max, group_news=group_news, nav=nav, visuals=visuals, pub_strip=pub_strip, pub_strip_max=pub_strip_max,
                built=today.isoformat(), built_human=fmt_date(today.isoformat()),
-               current_year=current_year, site_url=SITE_URL)
+               current_year=current_year, site_url=SITE_URL, preview=preview)
 
     for path, template, label in PAGES:
         depth = path.count("/")

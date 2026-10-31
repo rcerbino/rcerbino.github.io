@@ -8,6 +8,12 @@ lab:
   directions: https://somexlab.github.io/directions/
 portrait: img/portrait.jpg
 
+# Google Analytics 4 (property "sites.google.com/site/cerbino - GA4", the same
+# one the old Google Sites page used, so the visit history continues).
+# It loads only after a visitor accepts it in the consent banner.
+analytics:
+  ga4: G-JP64XL4924
+
 # One paragraph shown on the home page
 intro: >-
   I am a physicist. With my group at the University of Vienna I use light and
