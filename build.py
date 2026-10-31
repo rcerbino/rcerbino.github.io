@@ -194,8 +194,12 @@ def main(check=False, preview=False):
                   ("phd", "PhD students", "PhD students", "PhD student"),
                   ("msc", "Master's students", "master's students", "master's student"),
                   ("bsc", "Bachelor's students", "bachelor's students", "bachelor's student"),
-                  ("visitors", "Visiting researchers and students", "visiting researchers and students", "visiting researcher or student"),
+                  ("visitors", "Visiting students", "visiting students", "visiting student"),
                   ("interns", "Interns", "interns", "intern")]
+    # Senior visiting scientists are collaborators, shown on the Research page
+    visiting_scientists = sorted([p for p in people if p.get("group") == "scientists"],
+                                 key=lambda p: p["name"].split()[-1])
+    visiting_scientists.sort(key=lambda p: str(p.get("period", ""))[-4:], reverse=True)  # newest year first
     people_groups = []
     for key, label, short, one in groups_def:
         members = [p for p in people if p.get("group") == key]
@@ -332,7 +336,7 @@ def main(check=False, preview=False):
     nav = [(link(path), label) for path, _, label in PAGES if label not in FOOTER_ONLY]
     ctx = dict(profile=profile, about=about, research=research, teaching=teaching,
                news=news, pubs=pubs, pub_groups=pub_groups, selected=selected,
-               years=years, stats=stats, current_roles=current_roles, people_groups=people_groups,
+               years=years, stats=stats, current_roles=current_roles, people_groups=people_groups, visiting_scientists=visiting_scientists,
                approach=approach, review_chart=review_chart, review_max=review_max, papers_in_span=papers_in_span, review_ratio=review_ratio, ratio_max=ratio_max, group_news=group_news, nav=nav, visuals=visuals, pub_strip=pub_strip, pub_strip_max=pub_strip_max,
                built=today.isoformat(), built_human=fmt_date(today.isoformat()),
                current_year=current_year, site_url=SITE_URL, preview=preview)

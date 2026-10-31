@@ -34,6 +34,16 @@
     <p>{{ research.lab }} More on the <a href="{{ profile.lab.url }}">SoMeX website</a>.</p>
     {{ plate(visuals.lab, root) }}
   </div>
+  {% if visiting_scientists %}
+  <h3 id="visitors">Visiting scientists</h3>
+  <p>Colleagues who came to Vienna to work with us.</p>
+  <ul class="people visiting">
+  {% for p in visiting_scientists %}
+    <li>{% if p.url %}<a href="{{ p.url }}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}
+      <span class="person-meta">{{ [p.institution, p.period, p.note] | select | join('; ') }}</span></li>
+  {% endfor %}
+  </ul>
+  {% endif %}
 </section>
 
 <section class="funding" id="funding">

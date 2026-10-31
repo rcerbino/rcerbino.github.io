@@ -132,6 +132,7 @@ Add two reminders to the summary when they apply:
 | Publication list (generated, do not edit by hand) | `data/publications.json` |
 | Group news (generated) | `data/group_news.json` |
 | Supervised and hosted people, read from the SoMeX people page (generated; corrections in `content/teaching.yaml > mentoring`) | `data/people.json` |
+| Visiting senior scientists (collaborators, shown on the Research page under The lab): `group: scientists` in `content/teaching.yaml > mentoring > extra` | `data/people.json` |
 
 ## Analytics
 

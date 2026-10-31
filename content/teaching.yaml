@@ -89,24 +89,26 @@ mentoring:
       group: phd
       role: PhD student, co-supervised with Luigi Gentile
   # people not on the SoMeX website: name, group (postdocs, phd, msc, bsc,
-  # visitors, interns), current (true/false), institution, period, note
+  # visitors, interns), current (true/false), institution, period, note.
+  # group "scientists" = visiting senior scientists (collaborators, not
+  # supervised): listed on the Research page under The lab, not in Mentoring.
   extra:
     # Research in Teams project "Non-equilibrium hydrodynamic Casimir-like
     # forces in colloidal suspensions" (RIT0123), Erwin Schroedinger Institute,
     # March-August 2023 (https://www.esi.ac.at/events/e500/). Norma Palmero,
     # the fourth team member, is already listed from the SoMeX website.
     - name: Giovanni Volpe
-      group: visitors
+      group: scientists
       institution: University of Gothenburg (Sweden)
       period: "2023"
       note: Research in Teams program of the Erwin Schrödinger Institute
     - name: Agnese Callegari
-      group: visitors
+      group: scientists
       institution: University of Gothenburg (Sweden)
       period: "2023"
       note: Research in Teams program of the Erwin Schrödinger Institute
     - name: Giuseppe Pesce
-      group: visitors
+      group: scientists
       institution: University of Naples Federico II (Italy)
       period: "2023"
       note: Research in Teams program of the Erwin Schrödinger Institute
