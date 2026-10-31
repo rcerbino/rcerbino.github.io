@@ -15,19 +15,19 @@ talks:
     event: "Seminar, Center for Anatomy and Cell Biology, Medical University of Vienna"
     place: "Vienna, Austria"
     kind: seminar
-  - date: 2026-09
+  - date: 2026-09-25
+    title: "The life cycle of a research idea: how research actually happens"
+    event: "Young Minds Scholar Day, Joint Meeting of the Austrian Physical Society and the EPS Condensed Matter Division (ÖPG-CMD 2026)"
+    place: "Graz, Austria"
+    kind: invited
+  - date: 2026-09-08
     title: "ShearView: an open-source compact rheometer for integrated rheo-microscopy"
     event: "ECIS 2026 (European Colloid and Interface Society conference)"
     place: "Granada, Spain"
     kind: contributed
-  - date: 2026-09
-    title: "The life cycle of a research idea: how research actually happens"
-    event: "ÖPG Young Minds session, Annual Meeting of the Austrian Physical Society (with EPS)"
-    place: "Graz, Austria"
-    kind: invited
   - date: 2026-07-28
     title: "Differential dynamic microscopy: fundamentals and applications"
-    event: "Cargèse Soft Matter Summer School"
+    event: "Summer School Soft Matter Systems: from Fundamentals to Sensory Perception"
     place: "Cargèse, France"
     kind: lecture
   - date: 2026-06-30
@@ -35,6 +35,11 @@ talks:
     event: "MST Days, PhD school in Materials Science and Technology, University of Padova"
     place: "Padova, Italy"
     kind: invited
+  - date: 2026-06-12
+    title: "Scattering information from real space microscopy: doing light scattering without a light-scattering setup"
+    event: "17th European Summer School on Scattering Methods Applied to Soft Condensed Matter (Bombannes 2026)"
+    place: "Carcans-Maubuisson, France"
+    kind: lecture
   - date: 2026-06-04
     title: "Multiscale dynamics in inert and living soft matter"
     event: "TSU Seminar, Jawaharlal Nehru Centre for Advanced Scientific Research (JNCASR)"
@@ -50,18 +55,13 @@ talks:
     event: "Seminar, IIT Hyderabad"
     place: "Hyderabad, India"
     kind: seminar
-  - date: 2026-06
-    title: "Scattering information from real space microscopy: doing light scattering without a light-scattering setup"
-    event: "17th European Summer School on Scattering Methods Applied to Soft Condensed Matter (Bombannes 2026)"
-    place: "Carcans-Maubuisson, France"
-    kind: lecture
   - date: 2026-05-28
     title: "Non-universality of jamming in cellular monolayers"
     event: "International Soft Matter Conference (ISMC 2026)"
     place: "Goa, India"
-    kind: invited
+    kind: contributed
   - date: 2026-05-24
-    title: "Probing soft matter dynamics with light: from DLS to DDM (with M. Lavaud)"
+    title: "Probing soft matter dynamics with light: from DLS to DDM"
     event: "ISMC 2026 Mini-school, Microscopy and Imaging"
     place: "Goa, India"
     kind: lecture
@@ -207,7 +207,7 @@ talks:
     kind: lecture
   - date: 2024-05-16
     title: "Yielding under the microscope: a multi-scale perspective on brittle and ductile behaviors in oscillatory shear"
-    event: "EUROMECH Colloquium 637: a multidisciplinary discussion on binder"
+    event: "EUROMECH Colloquium 637: a multidisciplinary discussion on binder cohesion"
     place: "Vienna, Austria"
     kind: invited
   - date: 2024-05-10
@@ -234,7 +234,7 @@ talks:
     title: "Rheo-microscopy and micro-rheology for soft matter"
     event: "Meeting of the Austrian Society of Rheology"
     place: "Linz, Austria"
-    kind: invited
+    kind: keynote
   - date: 2023-10-13
     title: "An active journey in academia through the lens of soft matter physics"
     event: "ActiveMatter meeting"
@@ -305,7 +305,7 @@ talks:
     event: "Active Matter meeting (training network)"
     place: "Lisbon, Portugal"
     kind: invited
-  - date: 2022-03-30
+  - date: 2022-03-31
     title: "Cellular jamming and unjamming: a physics perspective"
     event: "Seminar Series on Modern Concepts in Structural Biology, Vienna BioCenter"
     place: "Vienna, Austria"
@@ -362,7 +362,7 @@ talks:
     kind: invited
   - date: 2020-10
     title: "The physics of glassy epithelia and its connection with cancer"
-    event: "Microswimmers 2020, International Conference of the DFG priority programme SPP 1726 (online)"
+    event: "International Conference Motile Active Matter, DFG Priority Programme SPP 1726 Microswimmers (online)"
     place: "online"
     kind: invited
   - date: 2020-09
@@ -390,7 +390,7 @@ talks:
     event: "Festival della Scienza 2019"
     place: "Genoa, Italy"
     kind: public
-  - date: 2019-09
+  - date: 2019-09-10
     title: "Differential dynamic microscopy extracts multi-scale activity in complex fluids and biological systems"
     event: "33rd Conference of the European Colloid and Interface Society (ECIS 2019)"
     place: "Leuven, Belgium"
@@ -555,6 +555,11 @@ talks:
     event: "10th Liquid Matter Conference (LIQUIDS 2017)"
     place: "Ljubljana, Slovenia"
     kind: contributed
+  - date: 2017-07
+    title: "Dynamics, structure and interactions in soft and biological matter"
+    event: "IFOM Summer School in Quantitative Biology"
+    place: "Milan, Italy"
+    kind: lecture
   - date: 2017-06-07
     title: "Endocytic reawakening and flocking in jammed epithelia"
     event: "University of Naples Federico II"
@@ -590,7 +595,7 @@ talks:
     event: "IFOM Summer School in Quantitative Biology"
     place: "Milan, Italy"
     kind: lecture
-  - date: 2016-05
+  - date: 2016-05-31
     title: "Equilibrium and non-equilibrium fluctuations in soft matter"
     event: "12th International Meeting on Thermodiffusion (IMT12)"
     place: "Madrid, Spain"
@@ -745,16 +750,16 @@ talks:
     event: "Physics Department, LMU Munich"
     place: "Munich, Germany"
     kind: seminar
+  - date: 2007-08-07
+    title: "Near field speckles: a new tool for X-ray scientists"
+    event: "Gordon Research Conference on X-ray Physics"
+    place: "New London, NH, USA"
+    kind: invited
   - date: 2007-08-02
     title: "Near field X-ray speckles"
     event: "Physics Department, Harvard University"
     place: "Cambridge, MA, USA"
     kind: seminar
-  - date: 2007-08
-    title: "Near field speckles: a new tool for X-ray scientists"
-    event: "Gordon Research Conference on X-ray Physics"
-    place: "New Hampshire, USA"
-    kind: invited
   - date: 2006-12-12
     title: "X-ray near field speckles"
     event: "Laboratoire des Colloïdes, Verres et Nanomatériaux, University of Montpellier"
