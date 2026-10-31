@@ -66,6 +66,9 @@
       <h4>Former</h4>
       <ul class="people">{% for p in g.former %}{{ person(p) }}{% endfor %}</ul>
       {% endif %}
+      {% if g.key == 'visitors' and visiting_scientists %}
+      <p class="quiet">Senior colleagues who came to work with us are listed under <a href="{{ root }}{{ link('research/') }}#visitors">Visiting scientists</a> on the Research page.</p>
+      {% endif %}
     </div>
   {% endfor %}
   </div>

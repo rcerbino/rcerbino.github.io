@@ -11,6 +11,13 @@ courses:
     text: >-
       A course I created on getting quantitative, reproducible results out of
       scientific images. Co-taught with Maxime Lavaud.
+  - title: Principles of Soft Matter Physics
+    level: Master's and doctoral, physics
+    where: University of Vienna
+    text: >-
+      The physical principles behind colloids, polymers and other soft
+      materials: thermal fluctuations, hydrodynamics and elasticity, with
+      theory and experiments side by side. Co-taught with Christos Likos.
   - title: Theoretical Physics IV - Thermodynamics
     level: Bachelor, physics teacher education
     where: University of Vienna
