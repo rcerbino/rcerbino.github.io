@@ -182,6 +182,8 @@ ul.plain li:last-child { border-bottom: 0; }
 .timeline dt, .timeline dd { padding: 0.5rem 0; border-bottom: 1px solid var(--rule); margin: 0; }
 .timeline dt { font-family: var(--sans); font-size: 0.9rem; color: var(--muted); padding-top: 0.62rem; }
 .timeline dd strong { font-weight: 500; }
+.figures-intro { margin-bottom: 0.4rem; }
+.figures-intro + .figures { margin-top: 0.4rem; }
 .figures { list-style: none; padding: 0; margin: 1rem 0; display: flex; flex-wrap: wrap; gap: 1.5rem 3rem; }
 .figures li { display: flex; flex-direction: column; }
 .figures .num { font-size: 2.2rem; line-height: 1.1; font-weight: 500; }

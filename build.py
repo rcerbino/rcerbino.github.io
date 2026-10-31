@@ -190,17 +190,17 @@ def main(check=False, preview=False):
     pubs = load_json("publications.json", [])
     group_news = load_json("group_news.json", [])
     people = load_json("people.json", [])
-    groups_def = [("postdocs", "Postdoctoral researchers", "postdoctoral researchers"),
-                  ("phd", "PhD students", "PhD students"),
-                  ("msc", "Master's students", "master's students"),
-                  ("bsc", "Bachelor's students", "bachelor's students"),
-                  ("visitors", "Visiting researchers and students", "visiting researchers and students"),
-                  ("interns", "Interns", "interns")]
+    groups_def = [("postdocs", "Postdoctoral researchers", "postdoctoral researchers", "postdoctoral researcher"),
+                  ("phd", "PhD students", "PhD students", "PhD student"),
+                  ("msc", "Master's students", "master's students", "master's student"),
+                  ("bsc", "Bachelor's students", "bachelor's students", "bachelor's student"),
+                  ("visitors", "Visiting researchers and students", "visiting researchers and students", "visiting researcher or student"),
+                  ("interns", "Interns", "interns", "intern")]
     people_groups = []
-    for key, label, short in groups_def:
+    for key, label, short, one in groups_def:
         members = [p for p in people if p.get("group") == key]
         if members:
-            people_groups.append({"key": key, "label": label, "short": short,
+            people_groups.append({"key": key, "label": label, "short": short, "one": one,
                                   "current": [p for p in members if p.get("current")],
                                   "former": [p for p in members if not p.get("current")]})
 

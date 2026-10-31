@@ -77,6 +77,10 @@ mentoring:
   intro: >-
     The people I supervise or host in the SoMeX lab in Vienna. This list is
     read from the SoMeX website and stays up to date on its own.
+  # shown just above the numbers
+  totals_intro: >-
+    In total, since the lab's first recruitment in 2022, I have supervised or
+    hosted:
   # slugs from the SoMeX website (the part after /author/) not to list here
   exclude: [roberto-cerbino, mohandas, martina-benedikt]
   # corrections to what the SoMeX website says, by slug

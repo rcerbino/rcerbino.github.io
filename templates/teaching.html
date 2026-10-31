@@ -39,9 +39,10 @@
   <h2>Mentoring</h2>
   <p>{{ teaching.mentoring.intro }} <a href="{{ profile.lab.url }}people/">Meet the team</a>.</p>
   {{ plate(visuals.group, root, 'wide') }}
+  {% if teaching.mentoring.totals_intro %}<p class="figures-intro">{{ teaching.mentoring.totals_intro }}</p>{% endif %}
   <ul class="figures">
   {% for g in people_groups %}
-    <li><span class="num">{{ g.current|length + g.former|length }}</span><span class="lbl">{{ g.short }}</span></li>
+    {% set n = g.current|length + g.former|length %}<li><span class="num">{{ n }}</span><span class="lbl">{{ g.one if n == 1 else g.short }}</span></li>
   {% endfor %}
   </ul>
   {% macro person(p) %}
