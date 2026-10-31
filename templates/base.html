@@ -15,9 +15,7 @@
 <meta property="og:type" content="profile">
 <meta property="og:image" content="{{ site_url }}/{{ profile.portrait }}">
 <link rel="icon" href="{{ root }}img/favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ root }}{{ asset('css/fonts.css') }}">
 <link rel="stylesheet" href="{{ root }}{{ asset('css/site.css') }}">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Person","name":"{{ profile.name }}","jobTitle":"{{ profile.title }}","affiliation":{"@type":"Organization","name":"University of Vienna"},"url":"{{ site_url }}/","image":"{{ site_url }}/{{ profile.portrait }}","sameAs":[{% for i in (profile.ids or []) + (profile.social or []) %}"{{ i.url }}"{% if not loop.last %},{% endif %}{% endfor %},"{{ profile.lab.url }}"]}
@@ -48,13 +46,14 @@
        Group website: <a href="{{ profile.lab.url }}">{{ profile.lab.name }}</a>.{% if profile.social %}
        Also on {% for x in profile.social %}<a href="{{ x.url }}" rel="me">{{ x.label }}</a>{% if loop.revindex == 2 %} and {% elif not loop.last %}, {% endif %}{% endfor %}.{% endif %}</p>
     <p class="quiet">Updated {{ built_human }}. Publications refresh automatically from
-       <a href="https://orcid.org/{{ profile.ids[0].value }}">ORCID</a>.{% if ga %}
+       <a href="https://orcid.org/{{ profile.ids[0].value }}">ORCID</a>.
+       <a href="{{ root }}{{ link('legal/') }}">Legal notice and privacy</a>.{% if ga %}
        <button type="button" class="linklike" data-consent-open>Cookie settings</button>{% endif %}</p>
   </div>
 </footer>
 {% if ga %}
 <div class="consent" role="dialog" aria-live="polite" aria-label="Cookie choice" hidden>
-  <p>This site uses Google Analytics to count visits, which sets cookies in your browser. Is that all right?</p>
+  <p>This site uses Google Analytics to count visits, which sets cookies in your browser. Is that all right? <a href="{{ root }}{{ link('legal/') }}#analytics">More information</a></p>
   <p class="consent-buttons">
     <button type="button" data-consent="granted">Accept</button>
     <button type="button" data-consent="denied">Decline</button>

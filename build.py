@@ -35,7 +35,10 @@ PAGES = [
     ("approach/index.html", "approach.html", "Approach"),
     ("news/index.html", "news.html", "News"),
     ("contact/index.html", "contact.html", "Contact"),
+    ("legal/index.html", "legal.html", "Legal notice and privacy"),
 ]
+# Pages reached from the footer only, not from the main menu
+FOOTER_ONLY = {"Legal notice and privacy"}
 
 TYPE_LABELS = {
     "preprint": "Preprints",
@@ -326,7 +329,7 @@ def main(check=False, preview=False):
         return target
 
     env.globals["link"] = link
-    nav = [(link(path), label) for path, _, label in PAGES]
+    nav = [(link(path), label) for path, _, label in PAGES if label not in FOOTER_ONLY]
     ctx = dict(profile=profile, about=about, research=research, teaching=teaching,
                news=news, pubs=pubs, pub_groups=pub_groups, selected=selected,
                years=years, stats=stats, current_roles=current_roles, people_groups=people_groups,

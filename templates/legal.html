@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+{# Legal notice (Offenlegung, Austrian Media Act) and privacy statement (GDPR).
+   Keep it in line with what the site actually loads: update it whenever a
+   third-party service is added or removed. #}
+<article class="prose legal">
+  <h1>Legal notice and privacy</h1>
+  <p class="quiet">Last updated 31 October 2026.</p>
+
+  <h2 id="notice">Legal notice</h2>
+  <p>Disclosure under section 25 of the Austrian Media Act (Offenlegung gemäß § 25 Mediengesetz).</p>
+  <p>Owner and person responsible for the content: {{ profile.name }}, Vienna, Austria.<br>
+     Contact: <span class="email" data-u="{{ profile.contact.email_user }}" data-d="{{ profile.contact.email_domain }}">{{ profile.contact.email_user }} (at) {{ profile.contact.email_domain }}</span></p>
+  <p>Purpose of the site: information about the scientific work, teaching and professional activities of {{ profile.name }}.</p>
+  <p>This is a personal website. It is not an official website of the University of Vienna, and the views expressed here are my own.</p>
+
+  <h2 id="privacy">Privacy</h2>
+  <p>This section explains which personal data are processed when you visit this site, why, and what rights you have under the EU General Data Protection Regulation (GDPR).</p>
+
+  <h3>Who is responsible</h3>
+  <p>{{ profile.name }}, Vienna, Austria, reachable at the email address above.</p>
+
+  <h3>Hosting</h3>
+  <p>The site is hosted on GitHub Pages, a service of GitHub, Inc. (USA). To deliver the pages and keep the service secure, GitHub processes technical data such as your IP address, the page requested and the time of the request. The legal basis is my legitimate interest in running a secure website (Article 6(1)(f) GDPR). See the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub privacy statement</a>.</p>
+  <p>Small pictures in the list of group news are loaded from the website of my research group, which is also hosted on GitHub Pages.</p>
+
+  <h3 id="analytics">Visit statistics (Google Analytics)</h3>
+  <p>Only if you click "Accept" in the cookie banner, this site uses Google Analytics 4 to count visits and to see which pages and links are used. Google Analytics then sets cookies (named _ga and _ga_...) that are kept for up to two years, and sends Google information such as the pages you view, the links you click, your browser and device, and your approximate location. Google states that Google Analytics 4 does not store IP addresses. The data are kept for 14 months.</p>
+  <p>The provider is Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Ireland. Data may be transferred to Google LLC in the USA, which is certified under the EU-US Data Privacy Framework. The legal basis is your consent (Article 6(1)(a) GDPR). See <a href="https://policies.google.com/privacy">Google's privacy policy</a>.</p>
+  <p>If you click "Decline", Google Analytics is not loaded and no cookies are set. You can change your choice at any time with "Cookie settings" at the bottom of every page; withdrawing consent also removes the Google Analytics cookies. Your choice itself is stored only in your own browser (local storage), not in a cookie.</p>
+
+  <h3>Attention scores for papers (Altmetric)</h3>
+  <p>The publication lists show Altmetric badges, which summarise how much attention a paper received online. To display them, your browser loads a script and data from Altmetric, a service of Digital Science and Research Solutions Ltd (London, UK), which receives your IP address. Altmetric does not get cookies from this site. The legal basis is my legitimate interest in showing the reach of my publications (Article 6(1)(f) GDPR). See the <a href="https://www.digital-science.com/privacy-policy/">Digital Science privacy policy</a>.</p>
+
+  <h3>Links to other websites</h3>
+  <p>This site links to journals, preprint servers, databases and social networks. Once you follow such a link, the privacy policy of that website applies.</p>
+
+  <h3>Your rights</h3>
+  <p>You have the right to access your data, to have them corrected or erased, to restrict or object to their processing, to data portability, and to withdraw consent at any time without affecting earlier processing (Articles 7 and 15 to 21 GDPR). To exercise these rights, write to the email address above. You also have the right to complain to the Austrian Data Protection Authority (Österreichische Datenschutzbehörde, Barichgasse 40-42, 1030 Vienna, <a href="https://www.dsb.gv.at/">dsb.gv.at</a>).</p>
+</article>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('.email').forEach(function (el) {
+  var a = el.dataset.u + '@' + el.dataset.d;
+  el.innerHTML = '<a href="mailto:' + a + '">' + a + '</a>';
+});
+</script>
+{% endblock %}

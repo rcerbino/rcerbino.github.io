@@ -86,6 +86,16 @@ End with a short summary for Roberto: what went live, what is waiting in the
 pull request (with its link), and anything that looked relevant but you left out
 because you were unsure.
 
+Add two reminders to the summary when they apply:
+- For each new journal article or review added this month: remind Roberto to
+  announce it on Bluesky, LinkedIn and X, linking the paper (DOI link), and give
+  the link.
+- For each talk, seminar or lecture in his calendars ("Roberto - Work" and the
+  others he owns) in the coming five weeks: remind him to put cerbino.eu or the
+  QR code (static/img/qr-cerbino-eu.png and .svg, also at
+  https://rcerbino.github.io/img/qr-cerbino-eu.png) on the last slide, naming
+  the event and date.
+
 ## Writing style for site text
 
 - Plain words, short sentences, few acronyms (spell out on first use).
@@ -128,6 +138,16 @@ because you were unsure.
 Google Analytics 4 (`content/profile.yaml > analytics > ga4`, the same property
 the old Google Sites page used) loads only after a visitor accepts the consent
 banner (`static/js/consent.js`); keep it that way. Preview builds leave it out.
+
+## Legal notice and privacy
+
+`templates/legal.html` (page /legal/, linked from the footer) holds the legal
+notice under the Austrian Media Act and the privacy statement. It lists every
+outside service the site contacts: GitHub Pages hosting, Google Analytics (only
+after consent), Altmetric badges, pictures from the SoMeX site. Fonts are served
+from the site itself (`static/fonts`, `static/css/fonts.css`); do not go back to
+Google Fonts. If you add or remove any outside service, update the privacy
+statement and its date in the same change.
 
 ## Search engines
 
