@@ -46,7 +46,7 @@
   {% endfor %}
   </ul>
   {% macro person(p) %}
-  <li><a href="{{ p.url }}">{{ p.name }}</a>{% if p.role and (p.group in ('visitors', 'interns') or 'co-supervised' in p.role) %}<span class="quiet">, {{ p.role | replace(' Student', ' student') | replace(' Intern', ' intern') }}</span>{% endif %}
+  <li>{% if p.url %}<a href="{{ p.url }}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}{% if p.role and (p.group in ('visitors', 'interns') or 'co-supervised' in p.role) %}<span class="quiet">, {{ p.role | replace(' Student', ' student') | replace(' Intern', ' intern') }}</span>{% endif %}
     {% set bits = [] %}
     {% if p.institution and 'University of Vienna' not in p.institution %}{% set _ = bits.append(p.institution) %}{% endif %}
     {% if p.period %}{% set _ = bits.append(p.period) %}{% elif p.graduated %}{% set _ = bits.append('graduated ' ~ p.graduated) %}{% endif %}

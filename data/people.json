@@ -350,5 +350,35 @@
   "institution": "",
   "graduated": "",
   "url": "https://somexlab.github.io/author/jonas-wagner/"
+ },
+ {
+  "current": false,
+  "url": "",
+  "institution": "University of Gothenburg (Sweden)",
+  "period": "2023",
+  "role": "",
+  "name": "Giovanni Volpe",
+  "group": "visitors",
+  "note": "Research in Teams program of the Erwin Schrödinger Institute"
+ },
+ {
+  "current": false,
+  "url": "",
+  "institution": "University of Gothenburg (Sweden)",
+  "period": "2023",
+  "role": "",
+  "name": "Agnese Callegari",
+  "group": "visitors",
+  "note": "Research in Teams program of the Erwin Schrödinger Institute"
+ },
+ {
+  "current": false,
+  "url": "",
+  "institution": "University of Gothenburg (Sweden)",
+  "period": "2023",
+  "role": "",
+  "name": "Giuseppe Pesce",
+  "group": "visitors",
+  "note": "Research in Teams program of the Erwin Schrödinger Institute"
  }
 ]
