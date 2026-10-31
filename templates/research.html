@@ -1,10 +1,7 @@
 {% extends "base.html" %}
-{% from "macros.html" import pub_ref %}
+{% from "macros.html" import pub_ref, page_head, plate %}
 {% block content %}
-<article class="prose">
-  <h1>Research</h1>
-  <p class="lede">{{ research.intro }}</p>
-</article>
+{{ page_head("Research", research.intro, visuals.heads[page], root) }}
 
 <nav class="toc" aria-label="Research themes">
   <ul>
@@ -17,7 +14,10 @@
 <section class="theme" id="{{ t.id }}">
   <h2>{{ t.title }}</h2>
   <div class="theme-body">
-    <p>{{ t.text }}</p>
+    <div class="theme-text">
+      <p>{{ t.text }}</p>
+      {{ plate(visuals.themes[t.id], root) }}
+    </div>
     {% if t.papers %}
     <div class="key-papers">
       <h3>Key papers</h3>
@@ -30,7 +30,10 @@
 
 <section class="lab">
   <h2>The lab</h2>
-  <p>{{ research.lab }} More on the <a href="{{ profile.lab.url }}">SoMeX website</a>.</p>
+  <div class="lab-body">
+    <p>{{ research.lab }} More on the <a href="{{ profile.lab.url }}">SoMeX website</a>.</p>
+    {{ plate(visuals.lab, root) }}
+  </div>
 </section>
 
 <section class="funding" id="funding">

@@ -1,9 +1,7 @@
 {% extends "base.html" %}
+{% from "macros.html" import page_head, plate %}
 {% block content %}
-<article class="prose">
-  <h1>Teaching and mentoring</h1>
-  <p class="lede">{{ teaching.intro }}</p>
-</article>
+{{ page_head("Teaching and mentoring", teaching.intro, visuals.heads[page], root) }}
 
 <section>
   <h2>Current courses</h2>
@@ -40,6 +38,7 @@
 <section id="mentoring">
   <h2>Mentoring</h2>
   <p>{{ teaching.mentoring.intro }} <a href="{{ profile.lab.url }}people/">Meet the team</a>.</p>
+  {{ plate(visuals.group, root, 'wide') }}
   <ul class="figures">
   {% for g in people_groups %}
     <li><span class="num">{{ g.current|length + g.former|length }}</span><span class="lbl">{{ g.short }}</span></li>

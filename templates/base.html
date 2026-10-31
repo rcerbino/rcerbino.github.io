@@ -46,6 +46,7 @@
        <a href="https://orcid.org/{{ profile.ids[0].value }}">ORCID</a>.</p>
   </div>
 </footer>
+{% if page != 'Home' %}<script src="{{ root }}{{ asset('js/speckle.js') }}" defer></script>{% endif %}
 {% block scripts %}{% endblock %}
 </body>
 </html>

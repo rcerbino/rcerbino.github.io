@@ -31,3 +31,39 @@
 </li>
 {% endif %}
 {% endmacro %}
+
+{# A round "view down the microscope": a lab photo or a live speckle pattern. #}
+{% macro eyepiece(v, root, size='') %}
+{% if v %}
+<figure class="eyepiece{% if size %} eyepiece-{{ size }}{% endif %}">
+  <div class="eyepiece-field">
+    {% if v.speckle %}<canvas class="speckle" data-cell="4" aria-hidden="true"></canvas>
+    {% else %}<img src="{{ root }}{{ v.src }}" alt="" loading="lazy"{% if v.position %} style="object-position: {{ v.position }}"{% endif %}>{% endif %}
+  </div>
+  {% if v.caption %}<figcaption>{{ v.caption }}</figcaption>{% endif %}
+</figure>
+{% endif %}
+{% endmacro %}
+
+{# Page title, lede and the round picture, for every inner page. #}
+{% macro page_head(title, lede, v, root) %}
+<header class="page-head">
+  <div class="page-head-text">
+    <h1>{{ title }}</h1>
+    {% if lede %}<p class="lede">{{ lede }}</p>{% endif %}
+    {% if caller %}{{ caller() }}{% endif %}
+  </div>
+  {{ eyepiece(v, root) }}
+</header>
+{% endmacro %}
+
+{# A rectangular figure with a caption, for photos inside a page. #}
+{% macro plate(v, root, cls='') %}
+{% if v %}
+<figure class="plate{% if cls %} {{ cls }}{% endif %}{% if v.native %} native{% endif %}"{% if v.aspect %} style="--aspect: {{ v.aspect }}"{% endif %}>
+  {% if v.speckle %}<div class="plate-speckle"><canvas class="speckle" data-cell="4" aria-hidden="true"></canvas></div>
+  {% else %}<img src="{{ root }}{{ v.src }}" alt="" loading="lazy"{% if v.position %} style="object-position: {{ v.position }}"{% endif %}>{% endif %}
+  {% if v.caption or v.credit %}<figcaption>{{ v.caption }}{% if v.credit %} <span class="credit">Figure: {% if v.credit_url %}<a href="{{ v.credit_url }}">{{ v.credit }}</a>{% else %}{{ v.credit }}{% endif %}.</span>{% endif %}</figcaption>{% endif %}
+</figure>
+{% endif %}
+{% endmacro %}

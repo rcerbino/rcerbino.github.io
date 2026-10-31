@@ -45,6 +45,8 @@ TYPE_LABELS = {
     "other": "Other writing",
 }
 TYPE_ORDER = list(TYPE_LABELS)
+# Stacking order in the papers-per-year chart: journal work at the bottom.
+STRIP_ORDER = ["article", "review", "chapter", "book", "proceedings", "other", "preprint"]
 TYPE_SHORT = {
     "preprint": "Preprint",
     "article": "Article",
@@ -179,6 +181,7 @@ def main(check=False, preview=False):
     teaching = load_yaml("teaching.yaml")
     news = load_yaml("news.yaml")
     approach = load_yaml("approach.yaml")
+    visuals = load_yaml("visuals.yaml")
     pubs = load_json("publications.json", [])
     group_news = load_json("group_news.json", [])
     people = load_json("people.json", [])
@@ -268,6 +271,20 @@ def main(check=False, preview=False):
     review_ratio = round(reviews_in_span / papers_in_span, 1) if papers_in_span else None
     ratio_max = max([r["ratio"] for r in review_chart if r["ratio"]] or [1])
 
+    # Publications per year, split by type, for the strip chart on the
+    # Publications page (oldest year on the left).
+    by_year = defaultdict(Counter)
+    for p in pubs:
+        if p.get("year"):
+            by_year[p["year"]][p["type"]] += 1
+    pub_strip = []
+    if by_year:
+        for y in range(min(by_year), current_year + 1):
+            c = by_year.get(y, Counter())
+            pub_strip.append({"year": y, "total": sum(c.values()),
+                              "parts": [(t, c[t]) for t in STRIP_ORDER if c.get(t)]})
+    pub_strip_max = max([r["total"] for r in pub_strip] or [1])
+
     stats = {
         "metrics_updated": fmt_date(metrics["updated"]) if metrics.get("updated") else None,
         "scholar_as_of": fmt_date(scholar["updated"]) if scholar.get("updated") else None,
@@ -311,7 +328,7 @@ def main(check=False, preview=False):
     ctx = dict(profile=profile, about=about, research=research, teaching=teaching,
                news=news, pubs=pubs, pub_groups=pub_groups, selected=selected,
                years=years, stats=stats, current_roles=current_roles, people_groups=people_groups,
-               approach=approach, review_chart=review_chart, review_max=review_max, papers_in_span=papers_in_span, review_ratio=review_ratio, ratio_max=ratio_max, group_news=group_news, nav=nav,
+               approach=approach, review_chart=review_chart, review_max=review_max, papers_in_span=papers_in_span, review_ratio=review_ratio, ratio_max=ratio_max, group_news=group_news, nav=nav, visuals=visuals, pub_strip=pub_strip, pub_strip_max=pub_strip_max,
                built=today.isoformat(), built_human=fmt_date(today.isoformat()),
                current_year=current_year, site_url=SITE_URL)
 

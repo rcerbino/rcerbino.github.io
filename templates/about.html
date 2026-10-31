@@ -1,10 +1,14 @@
 {% extends "base.html" %}
+{% from "macros.html" import page_head %}
 {% block content %}
-<article class="prose">
-  <h1>About</h1>
+{% call page_head("About", None, visuals.heads[page], root) %}
+  <div class="prose">
   {% for para in about.bio %}<p>{{ para }}</p>
   {% endfor %}
-</article>
+  </div>
+{% endcall %}
+
+{% include "career.html" %}
 
 <section class="cv" id="cv">
   <h2>Positions</h2>

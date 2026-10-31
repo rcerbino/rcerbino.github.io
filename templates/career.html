@@ -1,0 +1,36 @@
+{# Career map: where and when, drawn from content/visuals.yaml > career. #}
+{% set cm = visuals.career %}
+{% if cm %}
+{% set W = 720 %}{% set L = 14 %}{% set R = 14 %}
+{% set y0 = cm.start %}{% set y1 = current_year + 1 %}
+{% set sx = (W - L - R) / (y1 - y0) %}
+{% set by = 70 %}
+<figure class="career-map">
+  <div class="chart-scroll">
+  <svg viewBox="0 0 {{ W }} 150" role="img" aria-labelledby="cm-title cm-desc">
+    <title id="cm-title">Career at a glance</title>
+    <desc id="cm-desc">{% for p in cm.places %}{{ p.name }} {{ p.from }}-{{ current_year if p.to == 'now' else p.to }}. {% endfor %}{% for m in cm.milestones %}{{ m.label }} {{ m.year }}. {% endfor %}Research stays: {% for s in cm.stays %}{{ s.label }} {{ s.year }}{% if not loop.last %}, {% endif %}{% endfor %}.</desc>
+    {% for p in cm.places %}
+      {% set to = y1 if p.to == 'now' else p.to %}
+      <rect class="place place-{{ p.colour }}" x="{{ L + (p.from - y0) * sx }}" y="{{ by }}" width="{{ (to - p.from) * sx }}" height="12" rx="1"/>
+    {% endfor %}
+    {% for m in cm.milestones %}
+      {% set x = L + (m.year - y0) * sx %}
+      {% set ty = 24 + 16 * m.row %}
+      <line class="ms-line" x1="{{ x }}" x2="{{ x }}" y1="{{ ty + 4 }}" y2="{{ by }}"/>
+      <text class="ms-label" x="{{ x - 4 if m.side == 'left' else x + 4 }}" y="{{ ty }}" text-anchor="{{ 'end' if m.side == 'left' else 'start' }}">{{ m.label }} <tspan class="ms-year">{{ m.year }}</tspan></text>
+    {% endfor %}
+    {% for l in cm.labels %}
+      {% set x = L + (l.at - y0) * sx %}
+      <text class="place-label {{ l.colour }}" x="{{ x }}" y="{{ by + 28 }}" text-anchor="middle">{{ l.name }}</text>
+    {% endfor %}
+    {% for s in cm.stays %}
+      {% set x = L + (s.year - y0 + 0.5) * sx %}
+      <circle class="stay" cx="{{ x }}" cy="{{ by + 46 }}" r="3.5"/>
+      <text class="stay-label" x="{{ x }}" y="{{ by + 64 }}" text-anchor="middle">{{ s.label }} <tspan class="stay-year">{{ s.year }}</tspan></text>
+    {% endfor %}
+  </svg>
+  </div>
+  <figcaption>Career at a glance. Dots below the line are selected research stays abroad.</figcaption>
+</figure>
+{% endif %}

@@ -1,10 +1,8 @@
 {% extends "base.html" %}
+{% from "macros.html" import page_head, plate %}
 {% block content %}
 <article class="approach">
-  <header class="prose">
-    <h1>{{ approach.title }}</h1>
-    <p class="lede">{{ approach.intro }}</p>
-  </header>
+  {{ page_head(approach.title, approach.intro, visuals.heads[page], root) }}
 
   <nav class="toc" aria-label="On this page">
     <ul>
@@ -19,6 +17,7 @@
       {% for p in s.paragraphs %}<p>{{ p }}</p>
       {% endfor %}
     </div>
+    {{ plate((visuals.approach or {}).get(s.id), root) }}
 
     {% if s.id == 'reviewing' and review_chart %}
     {% set rv = approach.reviewing %}
