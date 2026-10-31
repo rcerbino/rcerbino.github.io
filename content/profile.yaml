@@ -21,7 +21,8 @@ descriptions:
 
 # Codes that prove to search engines that this site is Roberto's
 # (Google Search Console, Bing Webmaster Tools). Added as meta tags.
-site_verification: {}
+site_verification:
+  google-site-verification: rpGpgC9CtMTX9rKrxLdkS1TPj9cdZXfH-4vm3Pj1DXM
 
 # Google Analytics 4 (property "sites.google.com/site/cerbino - GA4", the same
 # one the old Google Sites page used, so the visit history continues).
