@@ -115,7 +115,7 @@ talks:
     event: "Shining Light on Squishy Stuff (workshop in honour of Luca Cipelletti)"
     place: "Montpellier, France"
     kind: invited
-  - date: 2025-06
+  - date: 2025-06-10
     title: "Hydrodynamic fluctuations in sedimenting colloids: following in Perrin's footsteps to the International Space Station"
     event: "16th International Meeting on Thermodiffusion (IMT16)"
     place: "Milan, Italy"
@@ -320,7 +320,7 @@ talks:
     event: "SLAM talk, ISTA (host J. Palacci)"
     place: "Klosterneuburg, Austria"
     kind: seminar
-  - date: 2021-09
+  - date: 2021-09-22
     title: "From single cells to tissues: a geometrical approach"
     event: "Initial Training on Theoretical Methods for Active Matter, training network school organised from Oxford (online)"
     place: "Oxford, UK"
@@ -330,7 +330,7 @@ talks:
     event: "11th Liquid Matter Conference (online, organised from Prague)"
     place: "Prague, Czech Republic (online)"
     kind: keynote
-  - date: 2021-07
+  - date: 2021-07-16
     title: "Amorphous soft matter under oscillatory shear: rheology and microscopic dynamics (2 lectures)"
     event: "XV Summer School Fundamental Problems in Statistical Physics (FPSP XV)"
     place: "Bruneck, Italy"
@@ -355,17 +355,17 @@ talks:
     event: "Seminar, IISER Pune (online)"
     place: "Pune, India"
     kind: seminar
-  - date: 2020-11
+  - date: 2020-11-09
     title: "Unveiling the complex dynamics of biological systems by differential dynamic microscopy"
     event: "32nd International Conference on Science and Technology of Complex Fluids (ICSTCF), Universidad de Guanajuato (online)"
     place: "León, Mexico"
     kind: invited
-  - date: 2020-10
+  - date: 2020-10-27
     title: "The physics of glassy epithelia and its connection with cancer"
     event: "International Conference Motile Active Matter, DFG Priority Programme SPP 1726 Microswimmers (online)"
     place: "online"
     kind: invited
-  - date: 2020-09
+  - date: 2020-09-18
     title: "Microrheology: a love story of matter and light"
     event: "Materials Summer School, 3rd edition (online)"
     place: "Bari, Italy"
@@ -405,17 +405,17 @@ talks:
     event: "Soft Matter Workshop Milan-Düsseldorf-Guanajuato"
     place: "Düsseldorf, Germany"
     kind: invited
-  - date: 2019-07
+  - date: 2019-07-10
     title: "Optical techniques for the investigation of soft matter; The jamming and unjamming transitions in dense cell collectives"
     event: "International School Water and Water Systems, 2nd Course: Polymers and Soft Materials: Glasses, Gels and Networks"
     place: "Erice, Italy"
     kind: lecture
-  - date: 2019-06
+  - date: 2019-06-25
     title: "Tracking-free one- and two-point microrheology of soft materials"
     event: "9th Hellenic Society of Rheology Conference (HSR 2019)"
     place: "Samos, Greece"
     kind: contributed
-  - date: 2019-06
+  - date: 2019-06-05
     title: "Tracking-free one- and two-point microrheology of soft materials"
     event: "5th International Soft Matter Conference (ISMC 2019)"
     place: "Edinburgh, UK"
@@ -440,7 +440,7 @@ talks:
     event: "Chinese Academy of Sciences"
     place: "Beijing, China"
     kind: seminar
-  - date: 2019-03
+  - date: 2019-03-25
     title: "The unjamming transition in dense cell collectives"
     event: "MicroMotility 2019: Biological micromotility and bio-inspired micro-robotics, Istituto Veneto di Scienze Lettere e Arti"
     place: "Venice, Italy"
@@ -460,6 +460,11 @@ talks:
     event: "Una Settimana da Bio"
     place: "Segrate, Italy"
     kind: public
+  - date: 2018-06-24
+    title: "Extracting scattering information from real space microscopy: a primer"
+    event: "14th European Summer School on Scattering Methods Applied to Soft Condensed Matter (Bombannes 2018)"
+    place: "Carcans-Maubuisson, France"
+    kind: lecture
   - date: 2018-06-06
     title: "Optical microscopy and light scattering: reconciliation after infidelity"
     event: "École Normale Supérieure de Lyon"
@@ -475,11 +480,6 @@ talks:
     event: "Institut Lumière Matière, University Lyon 1"
     place: "Lyon, France"
     kind: seminar
-  - date: 2018-06
-    title: "Extracting scattering information from real space microscopy: a primer"
-    event: "14th European Summer School on Scattering Methods Applied to Soft Condensed Matter (Bombannes 2018)"
-    place: "Carcans-Maubuisson, France"
-    kind: lecture
   - date: 2018-05-25
     title: "Liquid, glassy and flocking states in epithelial monolayers"
     event: "LIPhy, University Grenoble Alpes"
@@ -490,16 +490,16 @@ talks:
     event: "German Aerospace Center (DLR)"
     place: "Cologne, Germany"
     kind: seminar
+  - date: 2018-04-18
+    title: "Differential dynamic microscopy microrheology: frequency-dependent moduli without tracking!"
+    event: "Annual European Rheology Conference (AERC 2018)"
+    place: "Sorrento, Italy"
+    kind: keynote
   - date: 2018-04-12
     title: "Differential dynamic microscopy extracts multi-scale activity in complex fluids and biological systems"
     event: "Biotechnology Center (BIOTEC), TU Dresden"
     place: "Dresden, Germany"
     kind: seminar
-  - date: 2018-04
-    title: "Differential dynamic microscopy microrheology: frequency-dependent moduli without tracking!"
-    event: "Annual European Rheology Conference (AERC 2018)"
-    place: "Sorrento, Italy"
-    kind: keynote
   - date: 2018-03-22
     title: "Unjamming by flocking in epithelial cell monolayers"
     event: "Heinrich Heine University"
@@ -525,7 +525,7 @@ talks:
     event: "COST Workshop Dynamics of Self-Organization: from colloids to biomaterials"
     place: "Barcelona, Spain"
     kind: invited
-  - date: 2017-11
+  - date: 2017-10-26
     title: "eXel: experiment of enhanced learning at La Statale"
     event: "LERU meeting"
     place: "Milan, Italy"
@@ -585,7 +585,7 @@ talks:
     event: "IFOM-BIOMETRA cancer workshop"
     place: "Milan, Italy"
     kind: invited
-  - date: 2016-09
+  - date: 2016-09-06
     title: "Structure and dynamics of epithelial cell monolayers"
     event: "Trends in Nanotechnology (TNT 2016)"
     place: "Fribourg, Switzerland"
@@ -600,7 +600,7 @@ talks:
     event: "12th International Meeting on Thermodiffusion (IMT12)"
     place: "Madrid, Spain"
     kind: keynote
-  - date: 2015-09
+  - date: 2015-09-23
     title: "Direct observation of stress relaxation in foams"
     event: "101st Congress of the Italian Physical Society (SIF)"
     place: "Rome, Italy"
@@ -705,7 +705,7 @@ talks:
     event: "Istituto Nazionale dei Tumori"
     place: "Milan, Italy"
     kind: seminar
-  - date: 2011-02
+  - date: 2011-02-11
     title: "Differential dynamic microscopy of fluctuating liquid crystals"
     event: "European Conference on Liquid Crystals (ECLC 2011)"
     place: "Maribor, Slovenia"
@@ -785,12 +785,12 @@ talks:
     event: "Physics Department, University of Fribourg"
     place: "Fribourg, Switzerland"
     kind: seminar
-  - date: 2005-09
+  - date: 2005-09-22
     title: "Giant fluctuations in microgravity: the GRADFLEX experiment"
     event: "ELGRA Biennial Symposium and General Assembly"
     place: "Santorini, Greece"
     kind: contributed
-  - date: 2004-08
+  - date: 2004-08-16
     title: "Shadowgraphic study of convection onset in a colloidal suspension"
     event: "Photon Correlation and Scattering Conference (PCS 2004)"
     place: "Amsterdam, Netherlands"
