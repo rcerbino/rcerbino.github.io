@@ -1,6 +1,7 @@
 # cerbino.eu
 
-Personal website of Roberto Cerbino, published with GitHub Pages at https://cerbino.eu.
+Personal website of Roberto Cerbino, published with GitHub Pages at https://rcerbino.github.io.
+The domain cerbino.eu forwards there (permanent redirect set in the Aruba control panel).
 
 ## Editing
 

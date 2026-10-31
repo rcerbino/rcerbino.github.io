@@ -20,7 +20,9 @@ from markupsafe import Markup, escape
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "_site"
-SITE_URL = "https://cerbino.eu"
+# The site is served at rcerbino.github.io; cerbino.eu forwards here with a
+# permanent redirect set in the Aruba panel (Redirect e sottodomini).
+SITE_URL = "https://rcerbino.github.io"
 MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split()
 
 PAGES = [
@@ -342,7 +344,6 @@ def main(check=False, preview=False):
 
     (OUT / "404.html").write_text(env.get_template("404.html").render(
         **ctx, page="Not found", root="/", path="404"), encoding="utf-8")
-    (OUT / "CNAME").write_text("cerbino.eu\n")
     (OUT / ".nojekyll").write_text("")
     (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n")
     urls = "".join(f"<url><loc>{SITE_URL}/{p.replace('index.html', '')}</loc>"

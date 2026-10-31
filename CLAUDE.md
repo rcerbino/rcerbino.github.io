@@ -1,6 +1,9 @@
 # Instructions for Claude: maintaining cerbino.eu
 
-This repository is Roberto Cerbino's personal website. It is a small static site:
+This repository is Roberto Cerbino's personal website, served at
+https://rcerbino.github.io. The domain cerbino.eu is registered at Aruba and
+forwards there with a permanent (301) redirect set in the Aruba panel; DNS was
+not changed, so do not add a CNAME file or a GitHub Pages custom domain. It is a small static site:
 content lives in `content/*.yaml`, generated data in `data/`, templates in
 `templates/`, and `build.py` turns them into `_site/`. GitHub Actions builds and
 publishes on every push to `main`, and refreshes publications and group news
