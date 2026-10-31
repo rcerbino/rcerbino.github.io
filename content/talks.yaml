@@ -590,7 +590,7 @@ talks:
     event: "Trends in Nanotechnology (TNT 2016)"
     place: "Fribourg, Switzerland"
     kind: invited
-  - date: 2016-07
+  - date: 2016-07-25
     title: "Dynamics, structure and interactions in soft and biological matter"
     event: "IFOM Summer School in Quantitative Biology"
     place: "Milan, Italy"
@@ -635,7 +635,7 @@ talks:
     event: "Workshop FISICO"
     place: "Milan, Italy"
     kind: contributed
-  - date: 2013-09
+  - date: 2013-09-18
     title: "Viscoelasticity of nematic liquid crystals at a glance"
     event: "International Soft Matter Conference 2013 (ISMC 2013)"
     place: "Rome, Italy"
@@ -650,7 +650,7 @@ talks:
     event: "University of Luxembourg"
     place: "Luxembourg"
     kind: seminar
-  - date: 2012-10
+  - date: 2012-10-26
     title: "Fourier-space microscopy reveals the dynamic properties of soft materials"
     event: "Slonano 2012"
     place: "Ljubljana, Slovenia"
