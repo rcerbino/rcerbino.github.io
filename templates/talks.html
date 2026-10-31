@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% from "macros.html" import page_head %}
+
+{% macro talk_item(t, with_year=false) %}
+<li class="talk" data-group="{{ t.group }}">
+  <span class="when">{% if with_year %}{{ t.date | date }}{% else %}{{ t.date | day }}{% endif %}</span>
+  <span class="what">
+    <span class="talk-title">{{ t.title }}</span>
+    <span class="talk-event"><span class="tdot tdot-{{ t.group }}" title="{{ talk_group_labels[t.group] }}" aria-hidden="true"></span>{{ t.event }}{% if t.place %}, {{ t.place }}{% endif %}{% if t.badge %} <span class="badge">{{ t.badge }}</span>{% endif %}</span>
+  </span>
+</li>
+{% endmacro %}
+
+{% block content %}
+{% call page_head("Talks", talks_intro, visuals.heads[page], root) %}
+  {% set g = talk_stats.counts %}{% set k = talk_stats.kinds %}
+  <p>{{ talk_stats.total }} talks since {{ talk_stats.first_year }}: {{ g.conference }} at conferences and workshops
+    ({{ k.plenary or 0 }} plenary, {{ k.keynote or 0 }} keynote, {{ k.invited or 0 }} invited), {{ g.seminar }} seminars and colloquia,
+    {{ g.lecture }} lectures at schools and courses, and {{ g.public }} talks for the public or about teaching.</p>
+{% endcall %}
+
+{% if talk_strip %}
+{% set W = 720 %}{% set H = 150 %}{% set L = 26 %}{% set B = 22 %}{% set T = 8 %}
+{% set n = talk_strip | length %}
+{% set step = (W - L - 4) / n %}
+{% set ymax = ((talk_strip_max / 4) | round(0, 'ceil') * 4) | int %}
+<figure class="pub-strip talk-strip">
+  <div class="chart-scroll">
+  <svg viewBox="0 0 {{ W }} {{ H }}" role="img" aria-labelledby="ts-title ts-desc">
+    <title id="ts-title">Talks per year, by kind</title>
+    <desc id="ts-desc">{% for r in talk_strip %}{{ r.year }}: {{ r.total }}. {% endfor %}</desc>
+    {% for t in range(0, ymax + 1, 4) %}
+      {% set y = H - B - (H - B - T) * t / ymax %}
+      <line class="grid" x1="{{ L }}" x2="{{ W - 2 }}" y1="{{ y }}" y2="{{ y }}"/>
+      {% if t %}<text class="tick" x="{{ L - 5 }}" y="{{ y + 4 }}" text-anchor="end">{{ t }}</text>{% endif %}
+    {% endfor %}
+    {% for r in talk_strip %}
+      {% set x0 = L + step * loop.index0 + step * 0.14 %}
+      {% set acc = namespace(y=H - B) %}
+      {% for g, c in r.parts %}
+        {% set h = (H - B - T) * c / ymax %}
+        <rect class="seg tseg-{{ g }}" x="{{ x0 }}" y="{{ acc.y - h }}" width="{{ step * 0.72 }}" height="{{ h }}"><title>{{ r.year }}: {{ c }} - {{ talk_group_labels[g] | lower }}</title></rect>
+        {% set acc.y = acc.y - h %}
+      {% endfor %}
+      {% if r.year % 5 == 0 %}<text class="tick" x="{{ x0 + step * 0.36 }}" y="{{ H - 6 }}" text-anchor="middle">{{ r.year }}</text>{% endif %}
+    {% endfor %}
+  </svg>
+  </div>
+  <figcaption>Talks per year:
+    {% for key, label, n in talk_stats.groups %}<span class="tdot tdot-{{ key }}" aria-hidden="true"></span>{{ label | lower }}{% if not loop.last %}, {% endif %}{% endfor %}.
+    {{ current_year }} is the year to date.</figcaption>
+</figure>
+{% endif %}
+
+{% if talk_highlights %}
+<section class="selected">
+  <h2>Plenary and keynote talks</h2>
+  <ol class="news-list long talk-list">{% for t in talk_highlights %}{{ talk_item(t, with_year=true) }}{% endfor %}</ol>
+</section>
+{% endif %}
+
+<section class="all-talks">
+  <h2 id="all">All talks</h2>
+  <form class="pub-filter talk-filter" role="search" onsubmit="return false">
+    <label for="talk-q">Search titles, events and places</label>
+    <input id="talk-q" type="search" placeholder="e.g. jamming, Paris, colloquium" autocomplete="off">
+    <fieldset>
+      <legend>Show</legend>
+      <label><input type="radio" name="talk-group" value="all" checked> All <span class="n">{{ talk_stats.total }}</span></label>
+      {% for key, label, n in talk_stats.groups %}
+      <label><input type="radio" name="talk-group" value="{{ key }}"> <span class="tdot tdot-{{ key }}" aria-hidden="true"></span>{{ label }} <span class="n">{{ n }}</span></label>
+      {% endfor %}
+    </fieldset>
+    <p class="pub-count" aria-live="polite"></p>
+  </form>
+
+  {% for year, items in talk_years %}
+  <h4 class="year">{{ year }}</h4>
+  <ol class="news-list long talk-list">
+    {% for t in items %}{{ talk_item(t) }}{% endfor %}
+  </ol>
+  {% endfor %}
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ root }}{{ asset('js/talks.js') }}" defer></script>
+{% endblock %}

@@ -381,3 +381,17 @@ address { font-style: normal; }
 /* Links inside CV lists: quiet until hovered, so the lists stay readable */
 .cv .timeline a { color: inherit; text-decoration-color: color-mix(in srgb, currentColor 35%, transparent); text-underline-offset: .18em; }
 .cv .timeline a:hover { color: var(--accent); text-decoration-color: currentColor; }
+
+/* Talks: one colour per group (conferences, seminars, schools, public),
+   taken from the publication palette. */
+.tdot { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; margin-right: 0.45rem; vertical-align: 0.08em; }
+.tdot-conference, .tseg-conference { background: var(--t-article); fill: var(--t-article); }
+.tdot-seminar, .tseg-seminar { background: var(--t-review); fill: var(--t-review); }
+.tdot-lecture, .tseg-lecture { background: var(--t-chapter); fill: var(--t-chapter); }
+.tdot-public, .tseg-public { background: var(--t-preprint); fill: var(--t-preprint); }
+.talk .what { display: block; }
+.talk-title { display: block; line-height: 1.4; }
+.talk-event { display: block; font-family: var(--sans); font-size: 0.86rem; color: var(--muted); line-height: 1.45; margin-top: 0.1rem; }
+.talk.hidden { display: none; }
+.talk-strip figcaption .tdot { margin-left: 0.15rem; margin-right: 0.25rem; }
+.talk-list + .year { margin-top: 1.6rem; }

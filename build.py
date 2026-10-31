@@ -31,6 +31,7 @@ PAGES = [
     ("about/index.html", "about.html", "About"),
     ("research/index.html", "research.html", "Research"),
     ("publications/index.html", "publications.html", "Publications"),
+    ("talks/index.html", "talks.html", "Talks"),
     ("teaching/index.html", "teaching.html", "Teaching"),
     ("approach/index.html", "approach.html", "Approach"),
     ("news/index.html", "news.html", "News"),
@@ -63,6 +64,19 @@ TYPE_SHORT = {
 }
 TAG_LABELS = {"cover": "Cover", "editors-suggestion": "Editors' Suggestion"}
 
+# Talks (content/talks.yaml): each kind belongs to one group, shown as a
+# coloured dot and used by the filter on the Talks page.
+TALK_GROUPS = [
+    # (key, label, kinds)
+    ("conference", "Conferences and workshops", ["plenary", "keynote", "invited", "contributed"]),
+    ("seminar", "Seminars and colloquia", ["seminar", "colloquium"]),
+    ("lecture", "Schools and courses", ["lecture"]),
+    ("public", "Public and teaching", ["public", "teaching"]),
+]
+TALK_GROUP_OF = {k: key for key, _, kinds in TALK_GROUPS for k in kinds}
+# Kinds that get a badge next to the talk
+TALK_BADGES = {"plenary": "Plenary", "keynote": "Keynote", "invited": "Invited"}
+
 
 def load_yaml(name):
     return yaml.safe_load((ROOT / "content" / name).read_text(encoding="utf-8")) or {}
@@ -81,6 +95,15 @@ def fmt_date(value):
         return s
     y, m = parts[0], MONTHS[int(parts[1]) - 1]
     return f"{int(parts[2])} {m} {y}" if len(parts) == 3 else f"{m} {y}"
+
+
+def fmt_day(value):
+    """Date inside a year group: '2026-04-05' -> '5 Apr', '2026-04' -> 'Apr', 2026 -> ''."""
+    parts = str(value).split("-")
+    if len(parts) == 1:
+        return ""
+    m = MONTHS[int(parts[1]) - 1]
+    return f"{int(parts[2])} {m}" if len(parts) == 3 else m
 
 
 def authors_html(authors, limit=14):
@@ -185,6 +208,7 @@ def main(check=False, preview=False):
     research = load_yaml("research.yaml")
     teaching = load_yaml("teaching.yaml")
     news = load_yaml("news.yaml")
+    talks_doc = load_yaml("talks.yaml")
     approach = load_yaml("approach.yaml")
     visuals = load_yaml("visuals.yaml")
     pubs = load_json("publications.json", [])
@@ -294,6 +318,39 @@ def main(check=False, preview=False):
                               "parts": [(t, c[t]) for t in STRIP_ORDER if c.get(t)]})
     pub_strip_max = max([r["total"] for r in pub_strip] or [1])
 
+    # Talks: newest first, grouped by year, with counts and a per-year chart
+    talks = sorted(talks_doc.get("talks") or [], key=lambda t: str(t["date"]), reverse=True)
+    for t in talks:
+        if t.get("kind") not in TALK_GROUP_OF:
+            problems.append(f"Unknown talk kind {t.get('kind')!r} in talks.yaml ({t['date']})")
+        t["group"] = TALK_GROUP_OF.get(t.get("kind"), "conference")
+        t["year"] = int(str(t["date"])[:4])
+        t["badge"] = TALK_BADGES.get(t.get("kind"))
+    talk_years = []
+    for t in talks:
+        if not talk_years or talk_years[-1][0] != t["year"]:
+            talk_years.append((t["year"], []))
+        talk_years[-1][1].append(t)
+    kind_count = Counter(t.get("kind") for t in talks)
+    talk_stats = {
+        "total": len(talks),
+        "first_year": min((t["year"] for t in talks), default=None),
+        "groups": [(key, label, sum(1 for t in talks if t["group"] == key)) for key, label, _ in TALK_GROUPS],
+        "kinds": kind_count,
+        "counts": {key: sum(1 for t in talks if t["group"] == key) for key, _, _ in TALK_GROUPS},
+    }
+    talk_highlights = [t for t in talks if t.get("kind") in ("plenary", "keynote")]
+    talk_strip = []
+    if talks:
+        ty = defaultdict(Counter)
+        for t in talks:
+            ty[t["year"]][t["group"]] += 1
+        for y in range(min(ty), current_year + 1):
+            c = ty.get(y, Counter())
+            talk_strip.append({"year": y, "total": sum(c.values()),
+                               "parts": [(key, c[key]) for key, _, _ in TALK_GROUPS if c.get(key)]})
+    talk_strip_max = max([r["total"] for r in talk_strip] or [1])
+
     stats = {
         "metrics_updated": fmt_date(metrics["updated"]) if metrics.get("updated") else None,
         "scholar_as_of": fmt_date(scholar["updated"]) if scholar.get("updated") else None,
@@ -308,6 +365,7 @@ def main(check=False, preview=False):
     env = Environment(loader=FileSystemLoader(ROOT / "templates"), autoescape=True,
                       trim_blocks=True, lstrip_blocks=True)
     env.filters["date"] = fmt_date
+    env.filters["day"] = fmt_day
 
     import re as _re
 
@@ -341,7 +399,8 @@ def main(check=False, preview=False):
         h = hashlib.sha1(f.read_bytes()).hexdigest()[:8] if f.exists() else "0"
         return f"{path}?v={h}"
 
-    env.globals.update(pub=pub, type_labels=TYPE_LABELS, type_short=TYPE_SHORT, asset=asset)
+    env.globals.update(pub=pub, type_labels=TYPE_LABELS, type_short=TYPE_SHORT, asset=asset,
+                       talk_group_labels={k: l for k, l, _ in TALK_GROUPS})
 
     if OUT.exists():
         shutil.rmtree(OUT)
@@ -362,6 +421,8 @@ def main(check=False, preview=False):
                news=news, pubs=pubs, pub_groups=pub_groups, selected=selected,
                years=years, stats=stats, current_roles=current_roles, people_groups=people_groups, visiting_scientists=visiting_scientists,
                approach=approach, review_chart=review_chart, review_max=review_max, papers_in_span=papers_in_span, review_ratio=review_ratio, ratio_max=ratio_max, group_news=group_news, nav=nav, visuals=visuals, pub_strip=pub_strip, pub_strip_max=pub_strip_max,
+               talks=talks, talks_intro=talks_doc.get("intro"), talk_years=talk_years, talk_stats=talk_stats, talk_highlights=talk_highlights,
+               talk_strip=talk_strip, talk_strip_max=talk_strip_max,
                built=today.isoformat(), built_human=fmt_date(today.isoformat()),
                current_year=current_year, site_url=SITE_URL, preview=preview)
 

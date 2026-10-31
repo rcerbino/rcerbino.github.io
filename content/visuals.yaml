@@ -20,6 +20,10 @@ heads:
   Publications:
     src: img/lab/gel-particles.jpg
     caption: From our work on training and memory in soft materials.
+  Talks:
+    src: img/lab/sedimentation.jpg
+    position: 45% 50%
+    caption: Colloids settling under gravity, imaged from above and from the side. Image from the SoMeX lab.
   Teaching:
     src: img/lab/lab-bench.jpg
     position: 62% 40%

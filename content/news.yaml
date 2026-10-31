@@ -28,8 +28,4 @@ news:
   - date: 2024-10
     text: Became Vice-Dean of the Faculty of Physics, University of Vienna.
 
-# Talks, newest first. kind: invited, keynote, plenary, seminar, contributed, lecture
-talks:
-  - date: 2025-09
-    event: CECAM workshop "Statistical Physics of Living Systems"
-    kind: talk
+# Talks are in content/talks.yaml (the most recent ones also show on this page).

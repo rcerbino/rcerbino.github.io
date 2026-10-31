@@ -12,14 +12,15 @@
     {% endfor %}
     </ul>
 
-    <h2>Selected talks</h2>
-    {% if news.talks %}
+    {% if talks %}
+    <h2>Recent talks</h2>
     <ul class="news-list long">
-    {% for t in news.talks %}
+    {% for t in talks[:6] %}
       <li><span class="when">{{ t.date | date }}</span>
-        <span class="what">{{ t.event }}{% if t.place %}, {{ t.place }}{% endif %}{% if t.title %}<br><em>{{ t.title }}</em>{% endif %}{% if t.kind and t.kind != 'talk' %} <span class="badge">{{ t.kind }}</span>{% endif %}</span></li>
+        <span class="what">{{ t.event }}{% if t.place %}, {{ t.place }}{% endif %}<br><em>{{ t.title }}</em>{% if t.badge %} <span class="badge">{{ t.badge }}</span>{% endif %}</span></li>
     {% endfor %}
     </ul>
+    <p class="more"><a href="{{ root }}{{ link('talks/') }}">All {{ talks | length }} talks</a></p>
     {% endif %}
   </section>
 

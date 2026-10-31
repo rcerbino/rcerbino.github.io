@@ -71,7 +71,7 @@ Rules:
   on the SoMeX website or in a paper).
 
 Put everything you found on a new branch `update/YYYY-MM`, edit the right YAML
-file (`news.yaml` for news and talks, `research.yaml` for grants,
+file (`news.yaml` for news, `talks.yaml` for talks, `research.yaml` for grants,
 `about.yaml` for roles and honours, `teaching.yaml` for teaching), run
 `python3 build.py --check`, and open a pull request titled
 "Website update for <Month YYYY>". In the pull request description list each
@@ -128,7 +128,8 @@ Add two reminders to the summary when they apply:
 | Biography, CV, service and roles | `content/about.yaml` |
 | Research themes, lab, grants | `content/research.yaml` |
 | Courses, teaching innovation, mentoring | `content/teaching.yaml` |
-| News and talks | `content/news.yaml` |
+| News | `content/news.yaml` |
+| Talks (all of them, newest first; the Talks page shows them all, the News page the six most recent). Each has `date`, `title`, `event`, `place` and a `kind`: plenary, keynote, invited, contributed, seminar, colloquium, lecture, public or teaching. Proper names keep their accents (Düsseldorf, Cargèse). Talks given by co-authors are not listed. | `content/talks.yaml` |
 | Publication tags (selected, review, cover), hidden items, fixes, preprint pairings | `data/publications_overrides.yaml` |
 | Preprint links (generated) | `data/preprints.json` |
 | Per-paper citations, free full text (generated) | `data/metrics.json` |
