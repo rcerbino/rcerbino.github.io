@@ -1,6 +1,6 @@
 {
- "updated": "2026-11-02",
- "total_citations": 5030,
+ "updated": "2026-11-09",
+ "total_citations": 5034,
  "papers": {
   "10.1038/s41467-026-77357-8": {
    "citations": 0,
@@ -8,7 +8,7 @@
    "semantic_scholar": 0,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/476988dab47c584577cf13994df80abd59e9fdc6",
-   "fwci": 0.0,
+   "fwci": 1.88,
    "top1": false,
    "top10": false
   },
@@ -24,14 +24,14 @@
    "top10": false
   },
   "10.1016/j.jcis.2026.140842": {
-   "citations": 1,
-   "citation_source": "Crossref",
-   "semantic_scholar": 1,
+   "citations": 2,
+   "citation_source": "Semantic Scholar",
+   "semantic_scholar": 2,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/cad7c3abd430e16269d6b0fb4a0e05184929044c",
-   "fwci": 3.12,
+   "fwci": 4.74,
    "top1": false,
-   "top10": false
+   "top10": true
   },
   "10.1038/s41563-025-02473-7": {
    "citations": 3,
@@ -39,7 +39,7 @@
    "semantic_scholar": 3,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/4eef5f688008f9712c6e688e577b67d469225279",
-   "fwci": 13.52,
+   "fwci": 7.51,
    "top1": false,
    "top10": true
   },
@@ -50,7 +50,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/bab1497e247a549c67738f2767e26663047f7940",
    "free_pdf": "https://pubs.aip.org/sor/jor/article-pdf/70/1/165/20853894/165_1_8.0001101.pdf",
-   "fwci": 0.6,
+   "fwci": 0.88,
    "top1": false,
    "top10": false
   },
@@ -68,7 +68,7 @@
   "10.1016/b978-0-443-29116-6.00019-9": {
    "citations": 1,
    "citation_source": "Crossref",
-   "fwci": 7.03,
+   "fwci": 5.13,
    "top1": false,
    "top10": true
   },
@@ -78,7 +78,7 @@
    "semantic_scholar": 2,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/e0ba84d8571e83f421945026ebf8204a30bd8c37",
-   "fwci": 0.07,
+   "fwci": 0.06,
    "top1": false,
    "top10": false
   },
@@ -88,7 +88,7 @@
    "semantic_scholar": 1,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/1eb5a417a227ebb949e0e3522e1681fbb6b58327",
-   "fwci": 1.19,
+   "fwci": 0.88,
    "top1": false,
    "top10": false
   },
@@ -99,7 +99,7 @@
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/ba8f2be837e41131bc3f336c2de3a0b5ae8fef31",
    "free_pdf": "https://pubs.aip.org/aip/jcp/article-pdf/doi/10.1063/5.0289471/20773519/161501_1_5.0289471.pdf",
-   "fwci": 1.27,
+   "fwci": 1.5,
    "top1": false,
    "top10": false
   },
@@ -110,7 +110,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/e7a2377d67c11cec884f4e8e875175d1f753c0e4",
    "free_pdf": "https://pubs.rsc.org/en/content/articlepdf/2024/sm/d4sm00588k",
-   "fwci": 0.2,
+   "fwci": 0.18,
    "top1": false,
    "top10": false
   },
@@ -121,7 +121,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/60d97c32c98b4f94fc977f9fe011a50d8d012584",
    "free_pdf": "https://ars.els-cdn.com/content/image/1-s2.0-S0021979723025043-gr001_lrg.jpg",
-   "fwci": 1.47,
+   "fwci": 1.34,
    "top1": false,
    "top10": false
   },
@@ -131,14 +131,15 @@
    "semantic_scholar": 2,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/17a4b5badee1b561df53d5ee22cab252720f536c",
-   "fwci": 0.7,
+   "free_pdf": "https://arxiv.org/pdf/2405.09382",
+   "fwci": 0.75,
    "top1": false,
    "top10": false
   },
   "10.1039/9781837674589-00032": {
    "citations": 1,
    "citation_source": "Crossref",
-   "fwci": 2.3,
+   "fwci": 1.9,
    "top1": false,
    "top10": true
   },
@@ -149,7 +150,7 @@
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/9a27d01dcedd235e5fe7a0977abfa6caebd035f2",
    "free_pdf": "https://iopscience.iop.org/article/10.1088/2515-7639/ad06cc/pdf",
-   "fwci": 2.81,
+   "fwci": 3.14,
    "top1": false,
    "top10": true
   },
@@ -161,7 +162,7 @@
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/fa579e29c096a0067f98900158dd12a30cd64c4f",
    "free_pdf": "https://www.nature.com/articles/s41526-022-00246-z.pdf",
-   "fwci": 1.12,
+   "fwci": 0.79,
    "top1": false,
    "top10": false
   },
@@ -200,19 +201,19 @@
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/a60e6e3be7c44c7c2642dacd0bd20de79e5c5fb1",
    "free_pdf": "https://pubs.acs.org/doi/pdf/10.1021/acs.macromol.3c00782",
-   "fwci": 1.96,
+   "fwci": 1.55,
    "top1": false,
    "top10": false
   },
   "10.1038/s41563-022-01431-x": {
    "citations": 84,
    "citation_source": "Crossref",
-   "semantic_scholar": 80,
+   "semantic_scholar": 81,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/c7f53072eeadbf8b4b3a758a6812b824917ae860",
    "free_pdf": "https://www.nature.com/articles/s41563-022-01431-x.pdf",
-   "fwci": 8.54,
-   "top1": true,
+   "fwci": 6.11,
+   "top1": false,
    "top10": true
   },
   "10.1002/advs.202102148": {
@@ -222,7 +223,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/45e85211ff291c502e25eb34cba6f76cc4713967",
    "free_pdf": "https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/advs.202102148",
-   "fwci": 0.53,
+   "fwci": 0.29,
    "top1": false,
    "top10": false
   },
@@ -233,9 +234,9 @@
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/cbb504ead1e27e356954919f12d82c137a8f441e",
    "free_pdf": "https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/pol.20210217",
-   "fwci": 2.58,
+   "fwci": 2.28,
    "top1": false,
-   "top10": true
+   "top10": false
   },
   "10.1364/oe.459708": {
    "citations": 1,
@@ -243,7 +244,7 @@
    "semantic_scholar": 1,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/9ccb40f1c6199eee5d89e4eee1b0d510676244f4",
-   "fwci": 0.09,
+   "fwci": 0.1,
    "top1": false,
    "top10": false
   },
@@ -253,7 +254,7 @@
    "semantic_scholar": 7,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/1223c39d7aa0f636180f1a80374219eb3026c761",
-   "fwci": 0.42,
+   "fwci": 0.4,
    "top1": false,
    "top10": false
   },
@@ -264,7 +265,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/9b37b7042b8409d4dd327fb494e89cf8a83af975",
    "free_pdf": "https://link.springer.com/content/pdf/10.1140/epje/s10189-022-00189-z.pdf",
-   "fwci": 0.53,
+   "fwci": 0.39,
    "top1": false,
    "top10": false
   },
@@ -275,7 +276,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/9adee6c2758423f79d0180bab84b3988473db3a1",
    "free_pdf": "https://ruj.uj.edu.pl/xmlui/handle/item/288588",
-   "fwci": 5.93,
+   "fwci": 4.41,
    "top1": false,
    "top10": true
   },
@@ -286,7 +287,7 @@
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/50f02ce04ef60fdfbf7a4f48595f349d575a005e",
    "free_pdf": "https://www.frontiersin.org/articles/10.3389/fphy.2022.1013805/pdf",
-   "fwci": 0.89,
+   "fwci": 0.82,
    "top1": false,
    "top10": false
   },
@@ -296,7 +297,7 @@
    "semantic_scholar": 12,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/29250aa71c3502195b784000848f1777328b74c2",
-   "fwci": 0.84,
+   "fwci": 0.79,
    "top1": false,
    "top10": false
   },
@@ -307,7 +308,7 @@
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/f2550440580fe2bbd53da92d66d0bb4df621ee26",
    "free_pdf": "https://pubs.rsc.org/en/content/articlepdf/2021/sm/d1sm01068a",
-   "fwci": 1.66,
+   "fwci": 1.07,
    "top1": false,
    "top10": false
   },
@@ -317,7 +318,7 @@
    "semantic_scholar": 16,
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/c8b84d5d6bbb5566a0b838c71c6369f956ed193f",
-   "fwci": 1.37,
+   "fwci": 0.98,
    "top1": false,
    "top10": false
   },
@@ -327,7 +328,7 @@
    "semantic_scholar": 19,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/d3e52aa7c53061fd71c8ea76c9ff9694a29f8cd1",
-   "fwci": 0.78,
+   "fwci": 0.63,
    "top1": false,
    "top10": false
   },
@@ -338,7 +339,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/7ff8b1aa6924415a28db40ef442b379a43c92933",
    "free_pdf": "https://iopscience.iop.org/article/10.1088/1361-648X/abb684/pdf",
-   "fwci": 1.17,
+   "fwci": 1.04,
    "top1": false,
    "top10": false
   },
@@ -349,7 +350,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/14b234e536ad8f869829c3a1bf1153065f6d8fbd",
    "free_pdf": "https://link.springer.com/content/pdf/10.1140/epje/s10189-021-00063-4.pdf",
-   "fwci": 0.76,
+   "fwci": 0.65,
    "top1": false,
    "top10": false
   },
@@ -360,7 +361,7 @@
    "influential": 2,
    "s2_url": "https://www.semanticscholar.org/paper/12cf8823a9bf74ae5b93779c21aa493bb6181381",
    "free_pdf": "https://arxiv.org/pdf/1911.01611",
-   "fwci": 3.31,
+   "fwci": 3.08,
    "top1": false,
    "top10": true
   },
@@ -371,7 +372,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/0363eb828bc7d7b41287de57e7f75331ea8b4f25",
    "free_pdf": "https://link.springer.com/content/pdf/10.1007/s12217-020-09815-x.pdf",
-   "fwci": 2.31,
+   "fwci": 1.46,
    "top1": false,
    "top10": false
   },
@@ -381,7 +382,7 @@
    "semantic_scholar": 3,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/392366d1625f73ced1effd9001349368bf20a282",
-   "fwci": 0.74,
+   "fwci": 0.47,
    "top1": false,
    "top10": false
   },
@@ -392,7 +393,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/0dc813ddcf417ae1f7fa6b91814c0f4218e5f9cf",
    "free_pdf": "https://link.springer.com/content/pdf/10.1140/epje/i2019-11849-0.pdf",
-   "fwci": 0.82,
+   "fwci": 0.55,
    "top1": false,
    "top10": false
   },
@@ -400,11 +401,11 @@
   "10.1038/s41556-019-0392-4": {
    "citations": 368,
    "citation_source": "Crossref",
-   "semantic_scholar": 320,
+   "semantic_scholar": 322,
    "influential": 21,
    "s2_url": "https://www.semanticscholar.org/paper/0e049e0420e73a534578032cfa69f8144c177199",
    "free_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/6859070",
-   "fwci": 14.73,
+   "fwci": 13.4,
    "top1": true,
    "top10": true
   },
@@ -416,8 +417,8 @@
    "influential": 8,
    "s2_url": "https://www.semanticscholar.org/paper/191217a87732d3976964b3a9cadba74cf79471fd",
    "free_pdf": "https://www.biorxiv.org/content/biorxiv/early/2018/09/17/388553.full.pdf",
-   "fwci": 10.99,
-   "top1": true,
+   "fwci": 7.0,
+   "top1": false,
    "top10": true
   },
   "10.1088/1361-648x/aa9bc5": {
@@ -427,7 +428,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/2c9bb752baeefd8783fe9048e6c4fb8403a52d52",
    "free_pdf": "https://iopscience.iop.org/article/10.1088/1361-648X/aa9bc5/pdf",
-   "fwci": 0.69,
+   "fwci": 0.64,
    "top1": false,
    "top10": false
   },
@@ -438,7 +439,7 @@
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/957db78ea8f045f8a060ae06dd6a5037b1bd7e23",
    "free_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/5995478",
-   "fwci": 8.72,
+   "fwci": 6.15,
    "top1": false,
    "top10": true
   },
@@ -450,7 +451,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/510fed2f9346c1a26a52e369be602f7e1a1fb295",
    "free_pdf": "https://ars.els-cdn.com/content/image/1-s2.0-S1359029417301310-fx1_lrg.jpg",
-   "fwci": 0.14,
+   "fwci": 0.13,
    "top1": false,
    "top10": false
   },
@@ -461,7 +462,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/6eade358087f08969352bd100dbaf9ac4c0e60eb",
    "free_pdf": "https://www.frontiersin.org/articles/10.3389/fphy.2018.00120/pdf",
-   "fwci": 1.39,
+   "fwci": 0.88,
    "top1": false,
    "top10": false
   },
@@ -472,7 +473,7 @@
    "influential": 2,
    "s2_url": "https://www.semanticscholar.org/paper/9b8b2b21ea25566164e30db328bb36acc1bb892b",
    "free_pdf": "https://www.nature.com/articles/s41467-017-01414-6.pdf",
-   "fwci": 1.75,
+   "fwci": 1.26,
    "top1": false,
    "top10": false
   },
@@ -483,18 +484,18 @@
    "influential": 2,
    "s2_url": "https://www.semanticscholar.org/paper/4e28bb0907997c714693f0304f3f520af849e767",
    "free_pdf": "https://arxiv.org/pdf/1708.07170",
-   "fwci": 3.24,
+   "fwci": 1.92,
    "top1": false,
-   "top10": true
+   "top10": false
   },
   "10.1038/nmat4848": {
    "citations": 322,
    "citation_source": "Crossref",
-   "semantic_scholar": 266,
+   "semantic_scholar": 267,
    "influential": 6,
    "s2_url": "https://www.semanticscholar.org/paper/bb34dd208d03d093ea365aa576b90fb17654aa0f",
    "free_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/5407454",
-   "fwci": 13.42,
+   "fwci": 9.56,
    "top1": true,
    "top10": true
   },
@@ -505,7 +506,7 @@
    "influential": 2,
    "s2_url": "https://www.semanticscholar.org/paper/8da41139a09890ccfb0e546d241a437478efb78b",
    "free_pdf": "https://iopscience.iop.org/article/10.1088/1361-6463/aa7f8e/pdf",
-   "fwci": 2.64,
+   "fwci": 1.89,
    "top1": false,
    "top10": false
   },
@@ -516,7 +517,7 @@
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/7f3f30410ed810e059709be481b7fd763a4b491b",
    "free_pdf": "https://arxiv.org/pdf/1707.07501",
-   "fwci": 1.04,
+   "fwci": 1.07,
    "top1": false,
    "top10": false
   },
@@ -527,7 +528,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/4cf9af90eebc8921645c05bf6d9bf89f35a1f918",
    "free_pdf": "https://aip.scitation.org/doi/pdf/10.1063/1.5001027",
-   "fwci": 3.0,
+   "fwci": 2.86,
    "top1": false,
    "top10": true
   },
@@ -548,7 +549,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/7e2795e8e4fcc4aacced41193041ae090222e8df",
    "free_pdf": "https://arxiv.org/pdf/1610.10026",
-   "fwci": 2.18,
+   "fwci": 1.48,
    "top1": false,
    "top10": false
   },
@@ -559,7 +560,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/5e803d66c6ffcbeb1775bcbe34fab8813a08a76e",
    "free_pdf": "https://www.nature.com/articles/ncomms13191.pdf",
-   "fwci": 7.1,
+   "fwci": 4.99,
    "top1": false,
    "top10": true
   },
@@ -570,7 +571,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/7968b7441db90d7245e3880bceaf1da70dfffd86",
    "free_pdf": "https://hal.science/hal-01804394v1/document",
-   "fwci": 5.19,
+   "fwci": 3.31,
    "top1": false,
    "top10": true
   },
@@ -581,7 +582,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/08e5ec461e165784c894747d66a2ccbd4c220954",
    "free_pdf": "https://iopscience.iop.org/article/10.1088/0953-8984/28/19/195201/pdf",
-   "fwci": 1.78,
+   "fwci": 1.55,
    "top1": false,
    "top10": false
   },
@@ -592,7 +593,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/d86b5fae77169f05589edf18c5869832337cbdf1",
    "free_pdf": "https://pubs.rsc.org/en/content/articlepdf/2016/sm/c6sm00935b",
-   "fwci": 2.67,
+   "fwci": 2.31,
    "top1": false,
    "top10": false
   },
@@ -603,7 +604,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/a83914b8d5063374a23b7ae6df3fa08becff28e3",
    "free_pdf": "http://eprints.ucm.es/42053/1/Ortiz42%20PREPRINT%2B%20emb%2012_12_2017.pdf",
-   "fwci": 2.23,
+   "fwci": 1.94,
    "top1": false,
    "top10": false
   },
@@ -625,9 +626,9 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/0498d3cf727c9690f4aff6d90aed9b7d80525c01",
    "free_pdf": "https://www.nature.com/articles/srep14486.pdf",
-   "fwci": 4.89,
+   "fwci": 2.94,
    "top1": false,
-   "top10": true
+   "top10": false
   },
   "10.1039/c4sm02144d": {
    "citations": 65,
@@ -636,7 +637,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/73f4fcaf06b595b60f91bf8eb8eb71b3bd5c5e7c",
    "free_pdf": "https://air.unimi.it/bitstream/2434/337276/4/Equilibrium%20gels%20of%20low-valence%20DNA%20nanostars%20a%20colloidal%20model.pdf",
-   "fwci": 3.24,
+   "fwci": 2.64,
    "top1": false,
    "top10": true
   },
@@ -646,7 +647,7 @@
    "semantic_scholar": 0,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/bb35a772acc54103b75e5bf0f7385d34403e5b12",
-   "fwci": 1.32,
+   "fwci": 1.05,
    "top1": false,
    "top10": false
   },
@@ -656,7 +657,7 @@
    "semantic_scholar": 26,
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/2c241dabd5261c3154f89f56fcb19b6d40b0ea01",
-   "fwci": 1.01,
+   "fwci": 0.81,
    "top1": false,
    "top10": false
   },
@@ -676,7 +677,7 @@
    "semantic_scholar": 94,
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/90dd47a79d4e41cf94a3dc1a8263db38439a4c08",
-   "fwci": 7.44,
+   "fwci": 6.68,
    "top1": false,
    "top10": true
   },
@@ -687,7 +688,7 @@
    "influential": 5,
    "s2_url": "https://www.semanticscholar.org/paper/0c94ee91df1c33859102fa1cc37e39824ff450f4",
    "free_pdf": "http://hdl.handle.net/2434/238898",
-   "fwci": 5.6,
+   "fwci": 4.98,
    "top1": false,
    "top10": true
   },
@@ -698,7 +699,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/4c9b806203f7101d4250811a6991a7c2deecf0d1",
    "free_pdf": "https://pubs.rsc.org/en/content/articlepdf/2014/sm/c4sm00145a",
-   "fwci": 2.03,
+   "fwci": 2.13,
    "top1": false,
    "top10": false
   },
@@ -709,17 +710,17 @@
    "influential": 2,
    "s2_url": "https://www.semanticscholar.org/paper/30dedd8e2ede56cf3bdb0c74af662bef42094c2b",
    "free_pdf": "https://www.pnas.org/content/pnas/110/23/9350.full.pdf",
-   "fwci": 2.83,
+   "fwci": 2.09,
    "top1": false,
-   "top10": true
+   "top10": false
   },
   "10.1002/adfm.201203792": {
-   "citations": 26,
+   "citations": 28,
    "citation_source": "Semantic Scholar",
-   "semantic_scholar": 26,
+   "semantic_scholar": 28,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/1f4bc43a3fdc53f216c813715d456eb129bd7f29",
-   "fwci": 1.18,
+   "fwci": 1.17,
    "top1": false,
    "top10": false
   },
@@ -730,7 +731,7 @@
    "influential": 13,
    "s2_url": "https://www.semanticscholar.org/paper/96267e465df2a8ac629ad95aa09d39031a556568",
    "free_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/3785745",
-   "fwci": 4.66,
+   "fwci": 4.14,
    "top1": false,
    "top10": true
   },
@@ -751,9 +752,9 @@
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/6fe7f049f246b024182f91acbe561f0237edd695",
    "free_pdf": "http://nrs.harvard.edu/urn-3:HUL.InstRepos:41511270",
-   "fwci": 2.79,
+   "fwci": 2.48,
    "top1": false,
-   "top10": true
+   "top10": false
   },
   "10.1117/12.908462": {
    "citations": 2,
@@ -761,7 +762,7 @@
    "semantic_scholar": 2,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/8235f3bec8ed4a39491ebdee7bdd6839a4a318c1",
-   "fwci": 1.52,
+   "fwci": 1.41,
    "top1": false,
    "top10": false
   },
@@ -771,9 +772,9 @@
    "semantic_scholar": 41,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/61a530beb2fba044b69f4a594f4250366c38cf0d",
-   "fwci": 3.81,
+   "fwci": 2.52,
    "top1": false,
-   "top10": true
+   "top10": false
   },
   "10.1088/0953-8984/24/28/284134": {
    "citations": 12,
@@ -781,18 +782,18 @@
    "semantic_scholar": 12,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/84c9343e768c5a1e307111d90e386df0739d7780",
-   "fwci": 0.88,
+   "fwci": 0.65,
    "top1": false,
    "top10": false
   },
   "10.1371/journal.pone.0047867": {
-   "citations": 37,
+   "citations": 38,
    "citation_source": "Semantic Scholar",
-   "semantic_scholar": 37,
+   "semantic_scholar": 38,
    "influential": 2,
    "s2_url": "https://www.semanticscholar.org/paper/1f18b6692df2818117c7f20f9ca01d9a796b9310",
    "free_pdf": "https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0047867&type=printable",
-   "fwci": 4.3,
+   "fwci": 4.59,
    "top1": false,
    "top10": true
   },
@@ -803,7 +804,7 @@
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/2986c311cc93535e9c296817201d24277cd5d65c",
    "free_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/3268275",
-   "fwci": 1.8,
+   "fwci": 1.36,
    "top1": false,
    "top10": false
   },
@@ -814,7 +815,7 @@
    "influential": 15,
    "s2_url": "https://www.semanticscholar.org/paper/f09b345cdb170079ab65c2187d791556e5244fb6",
    "free_pdf": "https://air.unimi.it/bitstream/2434/173499/3/026_Berujon_PRL_2012_suppl.pdf",
-   "fwci": 8.32,
+   "fwci": 8.52,
    "top1": false,
    "top10": true
   },
@@ -825,7 +826,7 @@
    "semantic_scholar": 32,
    "influential": 3,
    "s2_url": "https://www.semanticscholar.org/paper/347234d2daab2101bffac488ac6130d994b6f876",
-   "fwci": 2.48,
+   "fwci": 2.6,
    "top1": false,
    "top10": false
   },
@@ -836,7 +837,7 @@
    "influential": 5,
    "s2_url": "https://www.semanticscholar.org/paper/b5fd243cf8e0fff81aa0d55f79e0ad3ec02c5cca",
    "free_pdf": "https://www.nature.com/articles/ncomms1290.pdf",
-   "fwci": 8.39,
+   "fwci": 6.32,
    "top1": false,
    "top10": true
   },
@@ -846,7 +847,7 @@
    "semantic_scholar": 39,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/22d3ae4bd08c1ac3a3904d662ae48f792cd0490a",
-   "fwci": 0.85,
+   "fwci": 0.94,
    "top1": false,
    "top10": false
   },
@@ -868,7 +869,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/18f39f871b4b6e97641cca9c0446355f9d529a4c",
    "free_pdf": "https://www.openaccessrepository.it/record/101781",
-   "fwci": 2.2,
+   "fwci": 1.94,
    "top1": false,
    "top10": false
   },
@@ -879,7 +880,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/c243648335efd9677d17ee7469cdec7bf29b9af7",
    "free_pdf": "https://air.unimi.it/bitstream/2434/164610/3/soft%202011.pdf",
-   "fwci": 2.04,
+   "fwci": 1.99,
    "top1": false,
    "top10": false
   },
@@ -890,7 +891,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/53b74106b76aadaf08d72d57bb0901ecb6345f75",
    "free_pdf": "https://iopscience.iop.org/article/10.1088/0953-8984/22/32/323102/pdf",
-   "fwci": 0.07,
+   "fwci": 0.08,
    "top1": false,
    "top10": false
   },
@@ -900,7 +901,7 @@
    "semantic_scholar": 59,
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/500b94296af7654bb2bbd0527c5cfb1d2e02e856",
-   "fwci": 1.76,
+   "fwci": 2.16,
    "top1": false,
    "top10": false
   },
@@ -911,7 +912,7 @@
    "influential": 2,
    "s2_url": "https://www.semanticscholar.org/paper/23d8360ed7c2dc2c7dd98c19a4f6823568431602",
    "free_pdf": "https://www.ncbi.nlm.nih.gov/pmc/articles/2955086",
-   "fwci": 3.31,
+   "fwci": 3.15,
    "top1": false,
    "top10": true
   },
@@ -921,9 +922,9 @@
    "semantic_scholar": 95,
    "influential": 7,
    "s2_url": "https://www.semanticscholar.org/paper/a437f63a98ce7421d3fca30b4dd136f843476b18",
-   "fwci": 3.0,
+   "fwci": 3.44,
    "top1": false,
-   "top10": false
+   "top10": true
   },
   "10.1016/j.cocis.2009.07.003": {
    "citations": 57,
@@ -931,7 +932,7 @@
    "semantic_scholar": 50,
    "influential": 2,
    "s2_url": "https://www.semanticscholar.org/paper/5d554c77f263477d319490963b41681accca32fe",
-   "fwci": 0.14,
+   "fwci": 0.12,
    "top1": false,
    "top10": false
   },
@@ -942,7 +943,7 @@
    "influential": 11,
    "s2_url": "https://www.semanticscholar.org/paper/66645040e7c991f5c344e1a5cb363e32ef0ed3e9",
    "free_pdf": "https://boa.unimib.it/bitstream/10281/36546/5/PhysRevE_2009.pdf",
-   "fwci": 0.8,
+   "fwci": 0.71,
    "top1": false,
    "top10": false
   },
@@ -953,7 +954,7 @@
    "influential": 19,
    "s2_url": "https://www.semanticscholar.org/paper/76ac43aa258ec64276e3f596c92e2313722547c3",
    "free_pdf": "https://arxiv.org/pdf/1507.01344",
-   "fwci": 2.21,
+   "fwci": 1.94,
    "top1": false,
    "top10": false
   },
@@ -963,7 +964,7 @@
    "semantic_scholar": 12,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/702deb87ceb801a13918326a4e533ddf0744452a",
-   "fwci": 1.09,
+   "fwci": 0.46,
    "top1": false,
    "top10": false
   },
@@ -975,7 +976,7 @@
    "semantic_scholar": 3,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/98db90ecd64122ae24c5f3a891ca5d749beed4fa",
-   "fwci": 0.99,
+   "fwci": 0.65,
    "top1": false,
    "top10": false
   },
@@ -986,7 +987,7 @@
    "semantic_scholar": 102,
    "influential": 3,
    "s2_url": "https://www.semanticscholar.org/paper/412be7cfee199d71d9522995365dccfd7742d340",
-   "fwci": 6.46,
+   "fwci": 6.34,
    "top1": false,
    "top10": true
   },
@@ -996,17 +997,17 @@
    "semantic_scholar": 41,
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/521f512493a743f04fd8a0e670d62f454c1aebe6",
-   "fwci": 2.24,
+   "fwci": 1.81,
    "top1": false,
    "top10": false
   },
   "10.1016/j.cocis.2007.03.005": {
    "citations": 87,
    "citation_source": "Crossref",
-   "semantic_scholar": 84,
+   "semantic_scholar": 83,
    "influential": 2,
    "s2_url": "https://www.semanticscholar.org/paper/18354b78721a1e9453f9b2e078a2f4adb3052eae",
-   "fwci": 5.49,
+   "fwci": 4.35,
    "top1": false,
    "top10": true
   },
@@ -1028,7 +1029,7 @@
    "semantic_scholar": 11,
    "influential": 1,
    "s2_url": "https://www.semanticscholar.org/paper/e9fb0ebf138f1aac5c307e9e1bf2b4363033c01c",
-   "fwci": 0.39,
+   "fwci": 0.38,
    "top1": false,
    "top10": false
   },
@@ -1038,7 +1039,7 @@
    "semantic_scholar": 34,
    "influential": 2,
    "s2_url": "https://www.semanticscholar.org/paper/2af61bddb2e50ac7cb1dbbb324d59bf0aaafb474",
-   "fwci": 1.93,
+   "fwci": 1.91,
    "top1": false,
    "top10": false
   },
@@ -1058,7 +1059,7 @@
    "semantic_scholar": 42,
    "influential": 2,
    "s2_url": "https://www.semanticscholar.org/paper/97b0b7b8117cfb08e8d23b348a9193473ece08b6",
-   "fwci": 4.16,
+   "fwci": 4.08,
    "top1": false,
    "top10": true
   },
@@ -1075,7 +1076,7 @@
    "semantic_scholar": 26,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/31227db4f5001fc98c8c8bbcbc9ffb7d6aac4732",
-   "fwci": 1.6,
+   "fwci": 1.54,
    "top1": false,
    "top10": false
   },
@@ -1085,7 +1086,7 @@
    "semantic_scholar": 20,
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/300e07d41b49b16fb8078c718a7f943b17a54d68",
-   "fwci": 1.56,
+   "fwci": 1.52,
    "top1": false,
    "top10": false
   },
@@ -1096,7 +1097,7 @@
    "influential": 0,
    "s2_url": "https://www.semanticscholar.org/paper/3201f989deffe591946f1e43f05003fa2e534d90",
    "free_pdf": "https://arxiv.org/pdf/cond-mat/0210053",
-   "fwci": 3.29,
+   "fwci": 3.09,
    "top1": false,
    "top10": true
   }
