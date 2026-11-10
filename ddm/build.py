@@ -21,6 +21,13 @@ SITE_HEAD = """<meta name="description" content="Differential dynamic microscopy
 <link rel="stylesheet" href="../css/fonts.css">"""
 
 
+DOC_START = """<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+"""
+
+
 def assemble():
     src = (HERE / "page.src.html").read_text()
     parts = {"/*OBJECTIVES*/": "data/objectives.min.json", "/*OPTICS*/": "optics.js", "/*MOVIE*/": "movie.js",
@@ -31,6 +38,9 @@ def assemble():
         t = (HERE / f).read_text()
         assert "</script" not in t, f
         out = out.replace(k, t)
+    # the source is a fragment: give it a document type (standards mode), a character set and a viewport
+    # for phones, which the site pages get from templates/base.html
+    out = DOC_START + out
     bad = [c for c in out if ord(c) > 127]
     assert not bad, "non-ASCII characters: %r" % sorted(set(bad))
     return out

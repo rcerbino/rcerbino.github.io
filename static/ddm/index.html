@@ -1,3 +1,7 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DDM, hands on | Roberto Cerbino</title>
 <meta name="description" content="Differential dynamic microscopy (DDM) hands on: simulate a microscopy experiment in your browser and size colloidal particles from how they move, step by step, from the raw movie to the result.">
 <meta name="author" content="Roberto Cerbino">
@@ -107,6 +111,8 @@ html[data-level="curious"] details.math { display: none; }
 .chip.warn { color: var(--warn); background: var(--warn-bg); }
 .chip.bad { color: var(--bad); background: var(--bad-bg); }
 .chip.info { color: var(--muted); background: var(--tint); }
+.tscroll { overflow-x: auto; min-width: 0; }
+.result, .result > *, .predict, .step-body > *, .steps > * { min-width: 0; }
 table.sizing { width: 100%; border-collapse: collapse; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
 table.sizing td { white-space: nowrap; }
 table.sizing th, table.sizing td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--rule); text-align: right; vertical-align: top; }
@@ -114,7 +120,7 @@ table.sizing th[scope="row"], table.sizing thead th:first-child { text-align: le
 table.sizing thead th { color: var(--muted); font-weight: 500; font-size: 0.8rem; }
 table.sizing tr.main th, table.sizing tr.main td { font-weight: 700; }
 table.sizing tr.truth th, table.sizing tr.truth td { color: var(--accent-2); }
-table.sizing .note { display: block; font-size: 0.76rem; font-weight: 400; color: var(--muted); }
+table.sizing .note { white-space: normal; display: block; font-size: 0.76rem; font-weight: 400; color: var(--muted); }
 .checks ul { list-style: none; margin: 0.3rem 0 0; padding: 0; display: grid; gap: 0.45rem; }
 .checks li { display: grid; grid-template-columns: 4.2rem 1fr; gap: 0.6rem; align-items: start; font-size: 0.86rem; line-height: 1.45; }
 .checks li .chip { justify-self: stretch; text-align: center; }
@@ -188,7 +194,7 @@ figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(
 .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .reasons { font-family: var(--sans); font-size: 0.82rem; color: var(--muted); margin: 0; padding-left: 1.1rem; }
 
-details.math { font-family: var(--sans); font-size: 0.92rem; border-left: 2px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; padding: 0.55rem 0.9rem; max-width: var(--measure); }
+details.math { min-width: 0; font-family: var(--sans); font-size: 0.92rem; border-left: 2px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; padding: 0.55rem 0.9rem; max-width: var(--measure); }
 details.math summary { cursor: pointer; font-weight: 600; color: var(--accent); }
 details.math .eq { font-family: var(--serif); font-size: 1.05rem; margin: 0.6rem 0; overflow-x: auto; white-space: nowrap; }
 details.math p { margin: 0.5rem 0; }
@@ -198,6 +204,9 @@ pre.code { font-family: var(--mono); font-size: 0.8rem; background: var(--paper)
 .predict { font-family: var(--sans); font-size: 0.92rem; border: 1px dashed var(--accent); border-radius: 6px; padding: 0.7rem 0.9rem; display: grid; gap: 0.5rem; max-width: var(--measure); }
 .predict .q { font-weight: 600; }
 .predict .a { color: var(--ink); }
+.predict .verdict { font-weight: 600; }
+.predict button:disabled { cursor: default; opacity: 0.55; }
+.predict button[aria-pressed="true"] { opacity: 1; border-color: var(--accent); font-weight: 600; }
 
 /* what matters */
 .matters { border-top: 1px solid var(--rule); padding-block: 2.5rem 1rem; }
@@ -236,7 +245,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
     <div>
       <p class="eyebrow">Differential dynamic microscopy</p>
       <h1>Sizing particles from how they move</h1>
-      <p class="lede">Particles in a liquid jiggle because the molecules around them keep kicking them, and small particles jiggle faster than large ones. Differential dynamic microscopy (DDM) measures this motion from an ordinary microscope movie without following any single particle, so it works for particles too small to be seen as well as for large ones. From how fast they wander follows their size: the same principle as dynamic light scattering (DLS), but with a microscope, many scattering angles at once, and in samples where DLS struggles (turbid, fluorescent or tiny ones). Particle sizing is one use of DDM among many (see "Beyond sizing" below). Here a simulated microscope lets you run the whole analysis yourself, from the raw movie to a particle size.</p>
+      <p class="lede">Particles in a liquid jiggle because the molecules around them keep kicking them, and small particles jiggle faster than large ones. Differential dynamic microscopy (DDM) measures this motion from an ordinary microscope movie without following any single particle, so it works even when the particles are too small, too faint or too crowded to be followed one by one. From how fast they wander follows their size: the same principle as dynamic light scattering (DLS), but with a microscope, many scattering angles at once, and in samples where DLS struggles (turbid or fluorescent ones, or a drop too small for a cuvette). Particle sizing is one use of DDM among many (see "Beyond sizing" below). Here a simulated microscope lets you run the whole analysis yourself, from the raw movie to a particle size.</p>
       <fieldset class="levels">
         <legend>How deep do you want to go?</legend>
         <div class="level-opts" role="radiogroup">
@@ -258,7 +267,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap bench-head" aria-labelledby="bench-title">
     <p class="eyebrow">Hands on</p>
     <h2 id="bench-title">The bench</h2>
-    <p class="prose">Change the sample, the microscope or the camera on the left. The movie is recorded again and every step below updates. A run takes a few seconds, because every particle is imaged with the real optics of the microscope.</p>
+    <p class="prose">Change the sample, the microscope or the camera with the controls (on the left, or just below on a phone). The movie is recorded again and every step below updates. A run takes from a few seconds to about a minute, because every particle is imaged through a detailed model of the microscope's optics.</p>
   </section>
 
   <div class="wrap bench">
@@ -295,8 +304,8 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <p><b>Bright field.</b> The condenser fills its aperture with mutually incoherent plane waves (spatial coherence) at the wavelengths of the lamp spectrum (temporal coherence). For each of them, the light scattered by the sphere, computed exactly with Mie theory from the particle and liquid refractive indices, interferes with the transmitted light after passing the objective pupil. The intensities are then added. The same formula covers the other transmitted-light methods by changing the illumination and the pupil: <b>phase contrast</b> lights the sample through a thin annulus and gives the objective pupil a ring that dims the direct light and shifts its phase by a quarter wave; <b>dark field</b> uses illumination steeper than the objective can collect, so only the |<i>E</i><sub>s</sub>|<sup>2</sup> term is left; <b>DIC</b> multiplies the pupil by <i>i</i> sin((<b>&kappa;</b>&middot;<b>s</b> + &phi;)/2), with <b>s</b> the shear and &phi; the bias, so the image depends on the direction of <b>q</b>. For a particle at distance <i>z</i> from focus, the Fourier transform of its image is</p>
           <div class="eq"><i>K</i>(<b>q</b>, <i>z</i>) = &lang; &minus;(2&pi;/<i>k</i>) <i>P</i>(<b>&kappa;</b>)<i>P</i>(<b>&kappa;</b>+<b>q</b>) <i>S</i>(&theta;) e<sup><i>i</i>(<i>k<sub>z</sub></i>(<b>&kappa;</b>) &minus; <i>k<sub>z</sub></i>(<b>&kappa;</b>+<b>q</b>))<i>z</i></sup> / <i>k<sub>z</sub></i> + c.c.(&minus;<b>q</b>) &rang;<sub>source, &lambda;</sub> + |<i>E</i><sub>s</sub>|<sup>2</sup> term</div>
           <p>with <i>S</i> = (<i>S</i><sub>1</sub> + <i>S</i><sub>2</sub>)/2 the Mie amplitude at the scattering angle &theta; and <i>P</i> the pupil with aplanatic apodization. At <i>q</i> = 0 the interference term equals minus the extinction cross-section (optical theorem), which the code checks.</p>
-          <p><b>Fluorescence.</b> Emission is incoherent: the image is the dyed sphere convolved with the scalar Debye point spread function. <b>Confocal</b> (spinning disk or point scanning): excitation spread times emission spread convolved with the pinhole projected on the sample; cross-talk between the disk pinholes is neglected.</p>
-          <p><b>Movie.</b> Dilute particles diffuse in 3D (Stokes-Einstein, reflecting walls); each frame is the sum of their images, recorded with the detector's pixel size, quantum efficiency, shot noise, read noise and full well. Each particle is imaged when its row is exposed (rolling shutters) or scanned (point scanners). Neglected: multiple scattering, interference between light scattered by different particles, aberrations of immersion objectives focusing into water, polarization effects of high-NA optics (paraxial polarizers; the DIC prisms are treated as ideal), stray light in dark field other than a fixed share of the illumination, hydrodynamic hindrance near the walls.</p>
+          <p><b>Fluorescence.</b> Emission is incoherent: the image is the dyed sphere convolved with the Debye point spread function (scalar, or vector at high NA). <b>Confocal</b> (spinning disk or point scanning): excitation spread times emission spread convolved with the pinhole projected on the sample; cross-talk between the disk pinholes is neglected.</p>
+          <p><b>Movie.</b> Dilute particles diffuse in 3D (Stokes-Einstein, reflecting walls); each frame is the sum of their images, recorded with the detector's pixel size, quantum efficiency, shot noise, read noise and full well. Each particle is imaged when its row is exposed (rolling shutters) or scanned (point scanners). Included: spherical aberration from focusing into the liquid; optionally vector (high-NA) optics, settling under gravity and slower translation near the glass. Neglected: multiple scattering, interference between light scattered by different particles, other aberrations (for example a wrong cover-glass thickness), polarizers acting on rods and ellipsoids beyond the paraxial approximation, imperfect DIC prisms, stray light in dark field other than a fixed share of the illumination, slower rotation near the glass.</p>
           <p><b>Particles that turn.</b> Each particle carries an axis <b>u</b> that diffuses on the sphere (rotational diffusion D<sub>R</sub>), and moves with D<sub>&#8741;</sub> along it and D<sub>&#8869;</sub> across it in its own frame (Perrin's formulas for ellipsoids, Tirado and Garcia de la Torre for rods). Its polarizability is a tensor &alpha; = &alpha;<sub>&#8869;</sub> I + (&alpha;<sub>&#8741;</sub> &minus; &alpha;<sub>&#8869;</sub>) <b>u u</b>, from the material's birefringence and from the shape. With a polarizer along <b>e</b><sub>P</sub> and an analyzer along <b>e</b><sub>A</sub>, the interference term is weighted by (<b>e</b><sub>A</sub>&middot;<b>e</b><sub>P</sub>)(<b>e</b><sub>A</sub>&middot;&alpha;&middot;<b>e</b><sub>P</sub>) and the scattered intensity by |<b>e</b><sub>A</sub>&middot;&alpha;&middot;<b>e</b><sub>P</sub>|<sup>2</sup>. Spheres keep their exact Mie field, scaled by these weights. Rods and ellipsoids are filled with small scatterers (Rayleigh-Gans), which also gives their shape in the image; in the scattered intensity the shape sets a tilt-dependent brightness &lang;|F(<b>Q</b>)|<sup>2</sup>&rang; over the illumination and collection angles.</p>
           <p class="small">Checked against miepython (amplitudes to 1e-10), the optical theorem, a brute-force sum over 3000 source points, and the amplitude formula of fastDDM tutorial 6 in its range of validity.</p>
         </details>
@@ -332,7 +341,7 @@ img_seq = fd.read_images(file_names)</pre>
             <div class="toolbar"><label for="lag">Delay</label><input type="range" id="lag" min="0" max="10" value="5"><output id="lag-out" class="readout"></output></div>
           </figure>
           <div class="text">
-            <p>Subtract a frame from one taken a little later. Everything that stays still, such as dust or uneven light, cancels out. What is left is only what moved.</p>
+            <p>Subtract a frame from one taken a little later. Everything that stays still, such as dust or uneven light, cancels out. What is left is what moved, plus the camera noise.</p>
             <p>Move the delay slider. With a short delay the difference is faint. With a longer one it grows, until the two frames have nothing left in common.</p>
             <p id="diff-note"></p>
           </div>
@@ -358,7 +367,7 @@ img_seq = fd.read_images(file_names)</pre>
           <div class="text">
             <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie.</p>
             <p>The centre of the map holds wide stripes, the edge holds fine ones. Click the map to see which pattern a point stands for. The map uses the same delay as step 3.</p>
-            <p class="lvl-2">Distance from the centre is the wave vector <i>q</i> = 2&pi; / spacing. The particles have no preferred direction, so the map is round, and we average it along circles to get one value for each <i>q</i>. The dashed circle marks the finest pattern the objective can resolve.</p>
+            <p class="lvl-2">Distance from the centre is the size of the wave vector, <i>q</i> = 2&pi; / spacing. The particles have no preferred direction, so the map is round (DIC and drift are exceptions), and we average it along circles to get one value for each <i>q</i>. The dashed circle marks the finest pattern the objective can resolve.</p>
           </div>
         </div>
         <details class="math" data-open-at="researcher">
@@ -388,17 +397,17 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
             <div class="chart"><canvas id="chart-curves" aria-label="Curves for several wave vectors"></canvas></div>
             <div class="legend" id="curves-legend"></div>
           </figure>
-          <div class="predict lvl-2" data-predict="size">
+          <div class="predict" data-predict="size" data-right="right">
             <div class="q">Predict first: the particles become twice as large. Do the curves move to the left or to the right?</div>
             <div class="btns"><button type="button" data-guess="left">Left, faster</button><button type="button" data-guess="right">Right, slower</button></div>
-            <div class="a" hidden>Right. A particle twice as large has half the diffusion coefficient, so every pattern takes twice as long to change. The bench now runs with the larger particles so you can check.</div>
+            <div class="a" hidden><span class="verdict"></span> To the right. A particle twice as large has half the diffusion coefficient, so every pattern takes twice as long to change. The bench now runs with the larger particles so you can check.</div>
           </div>
         </div>
         <details class="math" data-open-at="researcher">
           <summary>The math: fitting the curves</summary>
           <div class="eq"><i>d</i>(<i>q</i>, &Delta;<i>t</i>) = <i>A</i>(<i>q</i>) [1 &minus; <i>f</i>(<i>q</i>, &Delta;<i>t</i>)] + <i>B</i>(<i>q</i>)</div>
           <p><i>A</i>(<i>q</i>) holds the sample's signal seen through the microscope, <i>B</i>(<i>q</i>) the camera noise. For particles in Brownian motion the intermediate scattering function is a simple exponential, <i>f</i> = exp(&minus;&Gamma;&Delta;<i>t</i>). For a mixture of sizes a stretched exponential, <i>f</i> = exp[&minus;(&Gamma;&Delta;<i>t</i>)<sup>&beta;</sup>] with &beta; &lt; 1, describes the data better.</p>
-          <p>First guesses as in fastDDM: <i>B</i> from the flat noise floor beyond the optical cut-off, <i>A</i> + <i>B</i> from twice the temporal variance of each Fourier mode, &Gamma; from the delay where <i>f</i> falls to 1/e. Then a least-squares fit for every <i>q</i>.</p>
+          <p>First guesses as in fastDDM: <i>B</i> from the flat noise floor beyond the optical cut-off when the image reaches it, otherwise from the zero-delay intercept of a quadratic fit to the first five delays, <i>A</i> + <i>B</i> from twice the temporal variance of each Fourier mode, &Gamma; from the delay where <i>f</i> falls to 1/e. Then a least-squares fit for every <i>q</i>.</p>
           <div class="lvl-3"><pre class="code">B_est, _ = fd.noise_est.estimate_camera_noise(aa, mode='polyfit', num_points=5)
 A_est = 2 * aa.var - B_est
 from fastddm.fit import fit_multik
@@ -415,9 +424,9 @@ fit_res, model_res = fit_multik(aa, model, k_ref, use_err=True,
           <div class="text">
             <p>Now plot how fast each pattern changes against how fine it is. For particles that wander at random, halving the stripe spacing makes the change four times faster. On these logarithmic axes the points fall on a straight line of slope 2.</p>
             <p>The height of that line gives the diffusion coefficient. The Stokes-Einstein relation turns it into a size, using the temperature and the viscosity of the liquid.</p>
-            <p>Hollow grey points are outside what this movie can measure: patterns as large as the image or finer than the microscope resolves, changes faster than one frame or slower than half the movie. They are left out of the result.</p>
+            <p>Hollow grey points are outside what this movie can measure: patterns as large as the image or finer than the microscope resolves, changes faster than one frame or slower than half the movie, signal lost in the camera noise. They are left out of the result.</p>
             <p class="lvl-2">Below the plot the result compares the size from several ways of fitting, and checks it against the quality criteria of the standard for dynamic light scattering, ISO 22412. "Repeat 5 times" records five new movies with the same settings, as the standard asks for repeatability.</p>
-            <p>Particles that turn add a second, faster step to each curve. Its rate is the translation rate plus a constant, 6 D<sub>R</sub>, so on this plot it lies above the line and flattens out at small q. The squares show it when the fit finds it.</p>
+            <p id="turn-note">Particles that turn add a second, faster step to each curve. Its rate is the translation rate plus a constant, 6 D<sub>R</sub>, so on this plot it lies above the line and flattens out at small q. The squares show it when the fit finds it.</p>
           </div>
           <figure class="viz">
             <div class="chart"><canvas id="chart-rates" aria-label="Relaxation rate against wave vector"></canvas></div>
@@ -425,10 +434,10 @@ fit_res, model_res = fit_multik(aa, model, k_ref, use_err=True,
           </figure>
           <div class="step-body">
             <div class="result" id="result" aria-live="polite"></div>
-            <div class="predict lvl-2" data-predict="warm">
+            <div class="predict" data-predict="warm" data-right="no">
               <div class="q">Predict first: you warm the water from 22 to 45 &deg;C. Does the measured size change?</div>
               <div class="btns"><button type="button" data-guess="yes">Yes</button><button type="button" data-guess="no">No</button></div>
-              <div class="a" hidden>No. The particles move faster because warm water is thinner and the thermal kicks are stronger, but Stokes-Einstein uses the new temperature and viscosity, so the size comes out the same. The bench now runs at 45 &deg;C.</div>
+              <div class="a" hidden><span class="verdict"></span> No. The particles move faster because warm water is less viscous and the thermal kicks are stronger, but Stokes-Einstein uses the new temperature and viscosity, so the size comes out the same. The bench now runs at 45 &deg;C.</div>
             </div>
           </div>
           <figure class="viz lvl-2">
@@ -463,8 +472,8 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
           <div class="eq">ln <i>f</i>(<i>q</i>, &Delta;<i>t</i>) &asymp; &minus;&Gamma;&#772; &Delta;<i>t</i> + &mu;<sub>2</sub> &Delta;<i>t</i><sup>2</sup> / 2, &nbsp;&nbsp; PI = &mu;<sub>2</sub> / &Gamma;&#772;<sup>2</sup></div>
           <p>with <i>f</i> = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i>, fitted by weighted least squares (weights <i>f</i><sup>2</sup>) from the first delay down to a tenth of the first value, as ISO 22412:2025 (annex A.1.2) prescribes for DLS, here for the first-order function. The mean size follows from &Gamma;&#772;/<i>q</i><sup>2</sup>, the polydispersity index PI is averaged over <i>q</i>. If the rates follow a <b>Schulz</b> (gamma) distribution, the average is exact:</p>
           <div class="eq"><i>f</i>(<i>q</i>, &Delta;<i>t</i>) = (1 + PI &Gamma;&#772; &Delta;<i>t</i>)<sup>&minus;1/PI</sup></div>
-          <p>which becomes the simple exponential as PI &rarr; 0. The table fits it to all <i>q</i> at once with <b>one PI shared by all</b> (each <i>q</i> keeps its own amplitude, noise and mean rate), which is much less noisy than a PI fitted at each <i>q</i> separately. Both PIs may come out below zero: the same formula is continued there so that noise is not pushed up against a bound at zero (which made identical particles read 0.01-0.1); only a PI clearly above zero means a spread of sizes. Its uncertainty comes from repeating the shared fit on four interleaved groups of <i>q</i>. For broad distributions the second-order cumulants read low, as in DLS (0.14 for a true PI of 0.2, from the third cumulant); third-order cumulants are less biased but noisier (researcher level, under Details).</p>
-          <p><b>What a spread of sizes means for PI.</b> PI is the relative variance of the decay rates, not of the sizes. For a narrow distribution PI &asymp; (relative spread)<sup>2</sup>; for small particles, whose signal grows as <i>d</i><sup>6</sup>, a Schulz spread <i>s</i> gives PI = <i>s</i><sup>2</sup>/(1 + 4<i>s</i><sup>2</sup>): 0.0025 for 5 %, 0.035 for 20 %, 0.066 for 30 %, 0.125 for 50 % (a little less in practice, as the optics weighs large particles down at high <i>q</i>). The width shown next to each PI is &radic;PI. With the movies simulated here (256 frames, a few thousand particles) one movie fixes PI to about &plusmn; 0.02-0.04, so spreads below about 20 % cannot be told from identical particles, and broad distributions read low (about 0.03-0.08 for a true 0.1). A DLS run averages over far more particles and time; averaging five repeated movies helps. In the simulation a Schulz size distribution of mean <i>d</i>&#772; and relative standard deviation &sigma; is <i>p</i>(<i>d</i>) &prop; <i>d</i><sup><i>z</i></sup> exp[&minus;(<i>z</i>+1)<i>d</i>/<i>d</i>&#772;] with <i>z</i> = 1/&sigma;<sup>2</sup> &minus; 1, represented by five sizes (generalised Gauss-Laguerre quadrature, exact moments up to the ninth). The true PI shown is computed from the simulated particles and their actual brightness at each <i>q</i>.</p>
+          <p>which becomes the simple exponential as PI &rarr; 0. The table fits it to all <i>q</i> at once with <b>one PI shared by all</b> (each <i>q</i> keeps its own amplitude, noise and mean rate), which is much less noisy than a PI fitted at each <i>q</i> separately. Both PIs may come out below zero: the same formula is continued there so that noise is not pushed up against a bound at zero; only a PI clearly above zero means a spread of sizes. Its uncertainty comes from repeating the shared fit on four interleaved groups of <i>q</i>. For broad distributions the second-order cumulants read low, as in DLS (for example 0.14 for a true PI of 0.2, because the third cumulant is left out); third-order cumulants are less biased but noisier (researcher level, under Details).</p>
+          <p><b>What a spread of sizes means for PI.</b> PI is the relative variance of the decay rates, not of the sizes. For a narrow distribution PI &asymp; (relative spread)<sup>2</sup>; for small particles, whose signal grows as <i>d</i><sup>6</sup>, a Schulz spread <i>s</i> gives PI = <i>s</i><sup>2</sup>/(1 + 4<i>s</i><sup>2</sup>): 0.0025 for 5 %, 0.035 for 20 %, 0.066 for 30 %, 0.125 for 50 % (a little less in practice, as the optics weighs large particles down at high <i>q</i>). The width shown next to each PI is &radic;PI. With the movies simulated here (256 frames, a few thousand particles) one movie fixes PI to about &plusmn; 0.02-0.04, so spreads below about 20-35 % cannot be told from identical particles (the PI check gives the limit for each run), and broad distributions read low (about 0.03-0.08 for a true 0.1). A DLS run averages over far more particles and time; averaging five repeated movies helps. In the simulation a Schulz size distribution of mean <i>d</i>&#772; and relative standard deviation &sigma; is <i>p</i>(<i>d</i>) &prop; <i>d</i><sup><i>z</i></sup> exp[&minus;(<i>z</i>+1)<i>d</i>/<i>d</i>&#772;] with <i>z</i> = 1/&sigma;<sup>2</sup> &minus; 1, represented by five sizes (generalised Gauss-Laguerre quadrature, exact moments up to the ninth). The true PI shown is computed from the simulated particles and their actual brightness at each <i>q</i>.</p>
           <p><b>Repeatability and bias.</b> Everything below uses the fit chosen under Analysis (the headline). A quick estimate cuts the movie into 4 parts (2 below 256 frames), analyses each at the same <i>q</i> and takes their spread divided by &radic;<i>N</i>; it is a lower bound, because the parts share the same particles. "Repeat 5 times" does what ISO 22412 (10.3) asks: five new movies with the same settings and new particles; their relative standard deviation should be below 2 % for monodisperse particles of 50-200 nm. The mean of the five is then compared with the true size as in the reference-material test of ISO 10.1: the difference must stay within the expanded uncertainty, 2 &times; 1.5 % = 3 % here (the simulation's true value has no uncertainty of its own). The uncertainty quoted with the headline is the larger of the scatter between <i>q</i> and the quick estimate.</p>
           <p><b>Other checks.</b> The size from the lower and the upper half of the <i>q</i> used must agree (ISO 10.2: the result must not depend on the range analysed); a free power law must give an exponent near 2; cumulants and the fit at each <i>q</i> must agree.</p>
         </details>
@@ -496,7 +505,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       <li><b>Microrheology.</b> The motion of tracer particles tells how viscous and how elastic the surrounding material is, frequency by frequency, without tracking a single tracer: P. Edera, D. Bergamini, V. Trappe, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1103/PhysRevMaterials.1.073804">Differential dynamic microscopy microrheology of soft materials: a tracking-free determination of the frequency-dependent loss and storage moduli</a>, Phys. Rev. Materials 1, 073804 (2017).</li>
       <li><b>Proteins.</b> Single proteins and small aggregates sized in bright field at a few milligrams per millilitre, with first results on virial coefficients from how the motion changes with concentration: C. Guidolin, C. Heim, N. B. P. Adams, P. Baaske, V. Rondelli, R. Cerbino and F. Giavazzi, <a href="https://doi.org/10.1021/acs.macromol.3c00782">Protein sizing with differential dynamic microscopy</a>, Macromolecules 56, 8290 (2023).</li>
       <li><b>Concentrated suspensions.</b> When particles crowd, how they are arranged (the structure factor) and how the liquid couples their motion (the hydrodynamic function) both show up in the measured rates; confocal DDM measures them even in turbid samples: P. J. Lu, F. Giavazzi, T. E. Angelini, E. Zaccarelli, F. Jargstorff, A. B. Schofield, J. N. Wilking, M. B. Romanowsky, D. A. Weitz and R. Cerbino, <a href="https://doi.org/10.1103/PhysRevLett.108.218103">Characterizing concentrated, multiply scattering, and actively driven fluorescent systems with confocal differential dynamic microscopy</a>, Phys. Rev. Lett. 108, 218103 (2012).</li>
-      <li><b>Particles that turn.</b> Rotations as well as translations, from anisotropic particles; this page simulates them (choose a shape other than a sphere).</li>
+      <li><b>Particles that turn.</b> Rotations as well as translations, from anisotropic particles; this page simulates them (choose birefringent spheres or a shape other than a sphere).</li>
     </ul>
     <p class="prose">The first three are not simulated here: they need particles that interact with each other or with a surrounding material, and the particles on this page do not.</p>
   </section>
@@ -504,7 +513,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   <section class="wrap further" aria-labelledby="h-about">
     <h2 id="h-about">About this tool</h2>
     <p class="prose">This page is a simple tool, generated with Claude Opus 5.5, that simulates a realistic microscopy experiment in which DDM is used to study the roto-translational Brownian motion of colloidal particles. The microscope, light sources, cameras, spinning disk and point scanner are modelled mostly on the instruments of our SoMeX lab. The particles do not interact with each other: each one diffuses and turns on its own (if you choose, it also settles under gravity and slows down near the glass), so every sample is a dilute suspension. The aim is not to produce accurate, research-quality data, but to give anyone thinking of using DDM an idea of the many options and of how each one affects a DDM experiment.</p>
-    <p class="prose">If you find something that looks wrong or does not work, please let me know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
+    <p class="prose">If you find something that looks wrong or does not work, please let us know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
   </section>
 
   <section class="wrap further" aria-labelledby="h-further">
@@ -3471,13 +3480,12 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   function objIndexByName(name) { for (let i = 0; i < OBJECTIVES.length; i++) if (OBJECTIVES[i].n === name) return i; throw new Error("objective not found: " + name); }
 
   // the standard sample: 200 nm polystyrene beads in water, 20x / 0.5, ELWD condenser fully open, green filter
-  const narrow = window.matchMedia("(max-width: 40rem)").matches;
   const BASE = {
     mode: "brightfield", particle: "ps", n_custom: 1.59, diameter_um: 0.2, size_spread: 0, size_dist: "schulz", phi: 2e-4,
     liquid: "water", glycerol_w: 0.5, n_liquid: 1.333, visc_mPa_s: 1.0, T_C: 22, cell_um: 20, focus_frac: 0.5, drift_um_s: 0, settle: "off", rho_custom: 1.05, rho_liquid: 1.0, optics: "auto",
     objective: objIndexByName("CFI Plan Fluor 20X"), condenser: "elwd", na_c: 0.3, source: "green",
     dye: "green", rate_ph_ms: 200, bg_e_ms: 2, light_frac: 0.5,
-    camera: "orca", cam_mode: "standard", iface: "cameralink", binning: 1, roi: 512, sim_px: narrow ? 64 : 128, n_frames: 256,
+    camera: "orca", cam_mode: "standard", iface: "cameralink", binning: 1, roi: 512, sim_px: 128, n_frames: 256,
     annulus: "Ph2", ring_T: 0.25, df_kind: "dry", df_light_e: 1e7, stray_frac: 1e-4, dic_shear_um: 0.24, dic_bias_deg: 90, dic_angle_deg: 45,
     scanner: "resonant", scan_px: 512, zoom: 1, line_avg: 2, pinhole_au: 1, scan_rate: 2e7,
     frame_rate_hz: 100, exposure_ms: 0.2,
@@ -3670,7 +3678,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     { key: "df_light_e", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Lamp power (electrons per pixel if all the light reached the camera)", kind: "log", min: 1e4, max: 1e10, fmt: function (v) { return fmtPhi(v); }, when: function () { return state.mode === "darkfield" || (TRANS() && state.mode !== "dic" && state.analyzer === "on"); }, hint: function () { return state.mode === "darkfield" ? "" : "With an analyzer the lamp is turned up to fill the camera, up to this limit."; } },
     { key: "stray_frac", group: "Microscope (Nikon Ti2-E)", lvl: 3, label: "Stray light (share of the illumination)", kind: "log", min: 1e-6, max: 1e-2, fmt: function (v) { return fmtPhi(v); }, when: function () { return state.mode === "darkfield"; }, hint: "Light scattered by dust, cover-glass defects and the optics; it sets the dark-field background." },
     { key: "dye", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Dye", kind: "select", options: Object.keys(DYES).map(function (k) { return [k, DYES[k].label]; }), when: FL },
-    { key: "rate_ph_ms", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Excitation: photons per particle per ms at the camera", kind: "log", min: 1, max: 20000, fmt: function (v) { return fmtSig(v, 2); }, when: function () { return state.mode === "fluorescence" || state.mode === "spinning"; }, hint: "Photons reaching the camera; the camera's quantum efficiency is applied on top." },
+    { key: "rate_ph_ms", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Brightness: photons per particle per ms reaching the camera", kind: "log", min: 1, max: 20000, fmt: function (v) { return fmtSig(v, 2); }, when: function () { return state.mode === "fluorescence" || state.mode === "spinning"; }, hint: "Photons reaching the camera; the camera's quantum efficiency is applied on top." },
     { key: "bg_e_ms", group: "Microscope (Nikon Ti2-E)", lvl: 3, label: "Background light (photons per pixel per ms)", kind: "log", min: 0.01, max: 100, fmt: function (v) { return fmtSig(v, 2); }, when: function () { return state.mode === "fluorescence" || state.mode === "spinning"; } },
 
     { key: "scanner", group: "Scanner (Nikon AX R)", lvl: 1, label: "Scanner", kind: "select", options: Object.keys(SCANNERS).map(function (k) { return [k, SCANNERS[k].label]; }), when: SCANNING },
@@ -3686,7 +3694,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     { key: "roi", group: "Camera and recording", lvl: 2, label: "Region of interest on the sensor", kind: "select", num: true, options: function () { const c = cam(); return c.rois.map(function (r) { return [r, r + " x " + r + (r === c.rows ? " (full height)" : "")]; }); }, when: function () { return !SCANNING(); } },
     { key: "binning", group: "Camera and recording", lvl: 2, label: "Binning", kind: "select", num: true, options: function () { return allowedBins().map(function (b) { return [b, b + " x " + b + (cam().bin_charge && b > 1 ? " (on chip)" : "")]; }); }, when: function () { return !SCANNING(); }, hint: binHint },
     { key: "frame_rate_hz", group: "Camera and recording", lvl: 1, label: "Frame rate", kind: "log", min: 0.5, max: 30000, fmt: function (v) { return fmtNum(v) + " frames/s"; }, hint: function () { return "Up to " + fmtNum(maxFps()) + " frames/s with these settings."; } },
-    { key: "exposure_ms", group: "Camera and recording", lvl: 2, label: "Exposure time", kind: "log", min: 0.01, max: 2000, fmt: function (v) { return fmtSig(v, 2) + " ms"; }, when: function () { return !SCANNING(); }, hint: function () { const t = minExposureMs(); return t > 0 ? "At least " + fmtSig(t, 2) + " ms here" + (state.mode === "spinning" ? " (the disk must sweep the field at least once, over 1000 sweeps per second)" : "") + "." : ""; } },
+    { key: "exposure_ms", group: "Camera and recording", lvl: 2, label: "Exposure time", kind: "log", min: 0.01, max: 2000, fmt: function (v) { return fmtSig(v, 2) + " ms"; }, when: function () { return !SCANNING(); }, hint: function () { const t = minExposureMs(); return t > 0 ? "At least " + fmtSig(t, 2) + " ms here" + (state.mode === "spinning" ? " (the disk sweeps the field about 1000 times a second, and each exposure must last at least one sweep)" : "") + "." : ""; } },
     { key: "light_frac", group: "Camera and recording", lvl: 2, label: "Lamp brightness (background as a share of the full well)", kind: "log", min: 0.002, max: 0.9, fmt: function (v) { return fmtSig(100 * v, 2) + " %"; }, when: function () { return TRANS() && state.mode !== "darkfield"; }, hint: function () { const fw = detFullWell(); return "Background " + Math.round(state.light_frac * fw) + " electrons per pixel; shot noise " + fmtSig(100 / Math.sqrt(state.light_frac * fw), 2) + " %."; } },
     { key: "n_frames", group: "Camera and recording", lvl: 2, label: "Number of frames", kind: "select", num: true, options: [[128, "128"], [256, "256"], [512, "512"], [1024, "1024"], [2048, "2048"]],
       hint: function () { return "The browser holds up to " + maxFrames(simPx()) + " frames at " + simPx() + " x " + simPx() + " pixels; asking for more makes the simulated image smaller."; } },
@@ -3881,6 +3889,13 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   let lastKey = null;
   function onChange(key) {
     lastKey = key;
+    // switching to phase contrast with an objective that has no phase ring: take the phase objective of the same
+    // magnification with the closest NA (Plan Fluor 20X -> Plan Fluor DLL 20X Ph1), so phase contrast is really on
+    if (key === "mode" && state.mode === "phase" && !objRing()) {
+      const o0 = objective(); let best = -1, bd = Infinity;
+      OBJECTIVES.forEach(function (o, i) { if (!o.ph || o.m !== o0.m) return; const k = o.ph.replace(/^Ext\s*/i, "").replace(/^PH/i, "Ph"); if (!ANNULI[k]) return; const dd = Math.abs(o.na - o0.na) + (o.n.split(" ")[1] === o0.n.split(" ")[1] ? 0 : 0.05); if (dd < bd) { bd = dd; best = i; } });
+      if (best >= 0) state.objective = best;
+    }
     if ((key === "mode" || key === "objective") && state.mode === "phase" && objRing()) state.annulus = objRing();
     if (key === "shape" && SHAPE_MATERIALS[state.shape].indexOf(state.particle) < 0) state.particle = SHAPE_MATERIALS[state.shape][0];
     // typical particles of each birefringent material (MFA: radius 90 nm; birefringence not published, value assumed)
@@ -4295,7 +4310,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const f = cache.res.fits.find(function (ff) { return ff.bin === selBin(); });
     let txt = "Stripe spacing <b>" + fmtSig(spacing, 2) + " " + MU + "m</b>";
     if (level !== "curious") txt += ", q = <b>" + q.toFixed(2) + " " + MU + "m<sup>-1</sup></b>, direction " + ang + "&deg;";
-    if (f && f.reason === null) txt += ". This pattern renews in about <b>" + fmtTime(1 / f.gamma_hz) + "</b>; it is the thick curve in step 5.";
+    if (f && f.reason === null) txt += ". This pattern renews in about <b>" + fmtTime(1 / f.gamma_hz) + "</b>; it is the thick curve in step 5" + (level !== "curious" ? ", the ring at q = " + f.q_per_um.toFixed(2) + " that contains it" : "") + ".";
     else if (f) txt += ". Not used: " + f.reason + ".";
     $("pick-out").innerHTML = txt;
   }
@@ -4535,7 +4550,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     }
     const fw = wallFactor(tr), target = (cache.cfg.size_spread > 0 ? seenDiameter(tr, res) : tr.diameter_um) / fw;
     const dev = res.diameter_um / target - 1, err = res.diameter_rel_err;
-    if (Math.abs(dev) <= Math.max(0.05, 2 * err)) return { cls: "good", text: fw < 0.97 ? "As expected near the glass (" + Math.round(100 * (1 / fw - 1)) + " % larger)" : "Matches the true size (within " + Math.round(100 * Math.max(0.05, 2 * err)) + " %)", dev: dev };
+    if (Math.abs(dev) <= Math.max(0.05, 2 * err)) return { cls: "good", text: fw < 0.97 ? "As expected near the glass (" + Math.round(100 * (1 / fw - 1)) + " % larger)" : Math.abs(dev) <= 0.05 ? "Matches the true size (within 5 %)" : "Off by " + Math.round(100 * Math.abs(dev)) + " %, within the uncertainty of this movie", dev: dev };
     if (Math.abs(dev) <= 0.15) return { cls: "warn", text: "Off by " + Math.round(100 * Math.abs(dev)) + " %", dev: dev };
     return { cls: "bad", text: "Wrong by " + Math.round(100 * Math.abs(dev)) + " %", dev: dev };
   }
@@ -4565,9 +4580,12 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     if (level === "researcher" && r && r.gain !== undefined) h += '<dt>Second mode</dt><dd>removes ' + Math.round(100 * r.gain) + ' % of the one-mode misfit; ' + Math.round(100 * (r.fast_share || 0)) + ' % of the signal' + (r.D_r_s ? '; rate from the ' + (r.from || 'joint fit') + (r.joint_rate_s && r.from !== 'joint fit' ? ' (joint fit: ' + fmtRate(r.joint_rate_s) + ')' : '') : '') + '</dd>';
     h += '</dl>';
     $("result").innerHTML = h;
-    $("hero-result").innerHTML = '<span>Turning ' + fmtRate(6 * tr.D_r_s) + '</span><span class="n">' + (r && r.D_r_s ? fmtRate(6 * r.D_r_s) : "?") + '</span><span>measured</span><span class="chip ' + rv.cls + '">' + rv.text + '</span>';
-    $("hero-cap").textContent = "Simulated " + ($("c-mode").selectedOptions[0].textContent).toLowerCase() + " movie" + (cache.cfg.polarization ? " between polarizers" : "") + ", " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
+    $("hero-result").innerHTML = '<span>True turning rate</span><span class="n">' + fmtRate(6 * tr.D_r_s) + '</span><span>Measured by DDM</span><span class="n">' + (r && r.D_r_s ? fmtRate(6 * r.D_r_s) : "not seen") + '</span><span class="chip ' + rv.cls + '">' + rv.text + '</span>';
+    $("hero-cap").textContent = "Simulated " + MODE_SHORT[state.mode] + " movie" + (cache.cfg.polarization ? " between polarizers" : "") + ", " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
   }
+  const MODE_SHORT = { brightfield: "bright-field", phase: "phase-contrast", darkfield: "dark-field", dic: "DIC", fluorescence: "widefield fluorescence", spinning: "spinning-disk confocal (X-Light V3)", scanning: "point-scanning confocal (AX R)" };
+  // width of the image of a point (Rayleigh distance, 0.61 lambda / NA): the smallest spot the optics can make
+  function spotWidth() { return 0.61 * centralWavelength() / Math.min(objective().na, nLiquid(centralWavelength())); }
   const MODEL_NAME = { simple: "simple exponential", stretched: "stretched exponential", schulz: "Schulz distribution of rates", two: "two-mode model", three: "three-mode model" };
   function pctTxt(x) { return x === null || x === undefined || !isFinite(x) ? "-" : (x < 0.0995 ? (100 * x).toFixed(1) : Math.round(100 * x)) + " %"; }
   // ISO 22412 applies its repeatability figure to monodisperse particles of 50-200 nm
@@ -4635,18 +4653,18 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
         if (pi === null || pi === undefined) return "-";
         let t = pi.toFixed(3) + (pe !== null && pe !== undefined ? " \u00b1 " + pe.toFixed(3) : "");
         if (pi > 0 && (pe === null || pe === undefined || pi > 2 * pe)) t += '<span class="note">width about ' + Math.round(100 * Math.sqrt(pi)) + ' %</span>';
-        else if (pe !== null && pe !== undefined) t += '<span class="note">not above zero</span>';
+        else if (pe !== null && pe !== undefined) t += '<span class="note">consistent with 0</span>';
         return t;
       };
       const row = function (cls, name, d, pi, pe, err, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + (d ? fmtSize(d) : "-") + '</td><td>' + piCell(pi, pe) + '</td><td>' + (err === null || err === undefined ? "-" : "\u00b1 " + pctTxt(err)) + '</td></tr>'; };
-      let t = '<table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">Size</th><th scope="col">PI</th><th scope="col">Uncertainty</th></tr></thead><tbody>';
+      let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">Size</th><th scope="col">PI</th><th scope="col">Uncertainty</th></tr></thead><tbody>';
       t += row("main", "Fit at each q: " + MODEL_NAME[res.fit_model], res.diameter_um, null, null, res.diameter_rel_err, "the headline");
       if (cu && cu.D_um2_s) t += row("", "Cumulants, 2nd order", sizeFromD(cu.D_um2_s), cu.pi, cu.pi_err, cu.rel_err, "as in ISO 22412, " + cu.n_points + " q");
       if (sch) t += row("", "Schulz, one PI for all q", sizeFromD(sch.D_um2_s), sch.pi, sch.pi_err, sch.rel_err, sch.n_points + " q");
       const qs = cu && cu.per_q.length ? cu.per_q.map(function (e) { return e.q_per_um; }) : res.used.map(function (f) { return f.q_per_um; }), tt = seenOver(tr, qs);
       const sg = cfg.size_spread;
       t += row("truth", "True (simulation)", sg > 0 ? seenDiameter(tr, res) : tr.diameter_um / fw, sg > 0 ? tt.pi : 0, null, null, sg > 0 ? "weighted by the signal; a " + Math.round(100 * sg) + " % spread of sizes gives PI about s\u00b2/(1 + 4s\u00b2) = " + (sg * sg / (1 + 4 * sg * sg)).toFixed(4) : (fw < 0.97 ? "in-plane, near the glass" : ""));
-      t += '</tbody></table>';
+      t += '</tbody></table></div>';
       h += t;
       // quality checks
       const ch = qualityChecks();
@@ -4670,12 +4688,14 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const br = $("btn-repeat"); if (br) br.addEventListener("click", startRepeat);
     $("hero-result").innerHTML = res.diameter_um === null
       ? '<span>Particles of ' + fmtSize(tr.diameter_um) + '. With these settings DDM cannot size them.</span><span class="chip bad">Not measurable</span>'
-      : '<span>True size</span><span class="n">' + fmtSize(tr.diameter_um) + '</span><span>Measured by DDM</span><span class="n">' + fmtSize(res.diameter_um) + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
-    $("hero-cap").textContent = "Simulated " + ($("c-mode").selectedOptions[0].textContent).toLowerCase() + " movie, " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m." + (tr.diameter_um < 0.3 ? " The particles are too small to see one by one." : "");
+      : (cache.cfg.size_spread > 0
+        ? '<span>True mean size</span><span class="n">' + fmtSize(tr.diameter_um) + '</span><span>weighted as DDM sees them</span><span class="n">' + fmtSize(seenDiameter(tr, res)) + '</span>'
+        : '<span>True size</span><span class="n">' + fmtSize(tr.diameter_um) + '</span>') + '<span>Measured by DDM</span><span class="n">' + fmtSize(res.diameter_um) + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
+    $("hero-cap").textContent = "Simulated " + MODE_SHORT[state.mode] + " movie, " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m." + (tr.diameter_um < spotWidth() ? " Each spot is one particle, blurred by the optics to more than its true size." : "");
   }
   function renderRepeatTable() {
     const rp = repeat, rows = rp.runs;
-    let t = '<table class="sizing"><thead><tr><th scope="col">Movie</th><th scope="col">Fit at each q</th><th scope="col">Cumulants</th><th scope="col">PI cumulants</th><th scope="col">PI Schulz</th></tr></thead><tbody>';
+    let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Movie</th><th scope="col">Fit at each q</th><th scope="col">Cumulants</th><th scope="col">PI cumulants</th><th scope="col">PI Schulz</th></tr></thead><tbody>';
     rows.forEach(function (r, k) { t += '<tr><th scope="row">' + (k + 1) + '</th><td>' + fmtSize(r.main_d) + '</td><td>' + (r.cum_d ? fmtSize(r.cum_d) : "-") + '</td><td>' + (r.cum_pi === null ? "-" : r.cum_pi.toFixed(3)) + '</td><td>' + (r.sch_pi === null || r.sch_pi === undefined ? "-" : r.sch_pi.toFixed(3)) + '</td></tr>'; });
     if (rows.length >= 2) {
       const a = repeatStats(rows.map(function (r) { return r.main_d; })), cs = rows.filter(function (r) { return r.cum_d; }), b = cs.length >= 2 ? repeatStats(cs.map(function (r) { return r.cum_d; })) : null;
@@ -4685,17 +4705,29 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       t += '<tr><th scope="row">Spread</th><td>' + pctTxt(a.rsd) + '</td><td>' + (b ? pctTxt(b.rsd) : "-") + '</td><td>' + (c ? "\u00b1 " + (c.sd / Math.sqrt(ps.length)).toFixed(3) : "-") + '</td><td>' + (e ? "\u00b1 " + (e.sd / Math.sqrt(zs.length)).toFixed(3) : "-") + '</td></tr>';
       t += '<tr><td colspan="5" class="small" style="text-align:left; white-space: normal;">Sizes: relative standard deviation of the five. PI: uncertainty of the mean of five (standard deviation / &radic;5).</td></tr>';
     }
-    return t + '</tbody></table>';
+    return t + '</tbody></table></div>';
+  }
+  // what the reader can expect to see in the movie: resolved particles, or spots set by the optics
+  function visibilityText(cfg, m) {
+    const w = spotWidth(), d = cfg.diameter_um;
+    if (d >= w) return "These particles are larger than the smallest detail the microscope resolves, so you see each one " + (TURNS() ? "with its shape" : "as a small disc or ring") + "; DDM still never needs to find them.";
+    let t = "Each particle is smaller than the smallest detail the microscope resolves (about " + fmtSig(w, 2) + " " + MU + "m here), so it shows as a blurred spot of about that width, whatever its true size: you can follow the spots, but not measure the particles from them.";
+    // spots in the in-focus layer (depth of field about n lambda / NA^2) and their mean distance
+    const lam = centralWavelength(), na = Math.min(objective().na, nLiquid(lam)), dof = Math.min(cfg.cell_um, nLiquid(lam) * lam / (na * na) + w);
+    const nIn = (m.info.n_particles || 0) * dof / cfg.cell_um, gap = nIn > 0 ? m.L_um / Math.sqrt(nIn) : Infinity;
+    if (gap < 1.5 * w) t += " There are so many of them that the spots overlap into a shifting grain.";
+    else if (d < 0.1 && TRANS()) t += " Particles this small give faint spots that can drown in the camera noise.";
+    return t;
   }
   function renderText() {
-    const m = cache.movie, cfg = cache.cfg, small = cfg.diameter_um < 0.3;
+    const m = cache.movie, cfg = cache.cfg;
     const modeTxt = { brightfield: "a bright-field microscope", phase: "a phase-contrast microscope", darkfield: "a dark-field microscope", dic: "a DIC microscope", fluorescence: "a widefield fluorescence microscope", spinning: "a spinning-disk confocal microscope", scanning: "a point-scanning confocal microscope" }[state.mode];
     const shapeTxt = state.shape === "sphere" ? "" : { bisphere: "birefringent spherical ", prolate: "cigar-shaped ", oblate: "disc-shaped ", rod: "rod-shaped " }[state.shape];
     $("movie-text").textContent = "The movie shows " + fmtSize(cfg.diameter_um) + " " + shapeTxt + MATERIALS[state.particle].toLowerCase().replace(" (set the index)", "") + " particles in " + (LIQUIDS[state.liquid].toLowerCase()) + ", filmed through " + modeTxt + " " + fmtNum(cfg.frame_rate_hz) + " times a second. " +
-      (small ? "Each particle is smaller than the blur of the optics, so you see a faint, shifting grain rather than dots." : "These particles are large enough to see one by one, but DDM never needs to find them.") +
-      " Particles above and below the focal plane add their blurred images too." + (TURNS() ? " They also turn, which changes how they look" + (cfg.polarization ? " between the polarizers." : state.mode === "darkfield" ? " in dark field." : ".") : "");
+      visibilityText(cfg, m) + " Particles above and below the focal plane add wider, fainter blurs." + (TURNS() ? " They also turn, which changes how they look" + (cfg.polarization ? " between the polarizers." : state.mode === "darkfield" ? " in dark field." : ".") : "");
     $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s = " + fmtSig(m.T / m.frame_rate_hz, 3) + " s. Cell " + cfg.cell_um + " " + MU + "m thick, focus " + fmtSig(cfg.focus_um, 2) + " " + MU + "m above the bottom, " + m.info.n_particles + " particles.";
-    $("diff-note").textContent = small && TRANS() ? "With particles this small the difference looks like plain noise to the eye. The order hidden in it appears in the next step." : "";
+    if ($("turn-note")) $("turn-note").hidden = !TURNS();
+    $("diff-note").textContent = "A particle that moved leaves a pair of spots, one darker and one brighter, at its old and its new place. Their arrangement looks random; the order hidden in it appears in the next step.";
     const sb = $("movie-scale"), target = m.L_um / 4, nice = niceStep(target) > target ? niceStep(target) / 2 : niceStep(target);
     sb.querySelector("i").style.width = (100 * nice / m.L_um).toFixed(1) + "%"; sb.querySelector("span").textContent = fmtSig(nice, 2) + " " + MU + "m"; sb.style.width = "100%";
   }
@@ -4725,7 +4757,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     } else L.push("  No result: too few usable wave vectors.");
     L.push("");
     L.push("Evaluation");
-    L.push("  Algorithm: differential dynamic microscopy; structure function azimuthally averaged (central cross masked); noise B from the zero-delay intercept, A + B = 2 var; " + MODEL_NAME[r.fit_model] + " fit at each q; D as the weighted mean of Gamma / q^2 (geometric mean, logarithmic scale); cumulants to second order on f(q, dt) from f = 1 down to f1/10.");
+    L.push("  Algorithm: differential dynamic microscopy; structure function azimuthally averaged (central cross masked); " + (r.B_floor !== null && r.B_floor !== undefined ? "noise B from the flat floor beyond the optical cut-off" : "noise B from the zero-delay intercept of the first five delays") + ", A + B = 2 var; " + MODEL_NAME[r.fit_model] + " fit at each q; D as the weighted mean of Gamma / q^2 (geometric mean, logarithmic scale); cumulants to second order on f(q, dt) from f = 1 down to f1/10.");
     L.push("  Wave vectors used: " + (r.used.length ? r.used[0].q_per_um.toFixed(2) + " to " + r.used[r.used.length - 1].q_per_um.toFixed(2) + " um^-1" : "none") + "; delays " + fmtTime(r.taus_s[0]) + " to " + fmtTime(r.taus_s[r.taus_s.length - 1]) + ".");
     L.push("  Results are weighted by the signal of each particle in the images (the counterpart of intensity weighting in DLS); no conversion to volume or number distributions.");
     L.push("");
@@ -4754,18 +4786,18 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   function ECOLI(mode) { return { sim_px: BASE.sim_px, shape: "rod", particle: "bacterium", diameter_um: 2, aspect: 2.5, liquid: "custom", n_liquid: 1.345, visc_mPa_s: 1.87, T_C: 24, mode: mode, df_kind: "annulus", annulus: "Ph3", condenser: "lwd", na_c: 0.3, objective: objIndexByName("CFI Achromat 10X"), binning: 2, frame_rate_hz: 20, exposure_ms: 5, n_frames: 512, phi: 4e-4, cell_um: 50, source: "halogen", settle: "on", rho_liquid: 1.10 }; }
   function PEANUT(images) { return { sim_px: BASE.sim_px, shape: "prolate", particle: "silica", diameter_um: 1.72, aspect: 2.3, objective: objIndexByName("CFI S Plan Fluor ELWD 40XC"), condenser: "lwd", na_c: 0.52, binning: 2, frame_rate_hz: 25, exposure_ms: 2, n_frames: 512, phi: 5e-3, cell_um: 5, focus_frac: 0.12, settle: "on", images: images }; }
   const CARDS = [
-    { lvl: 1, title: "A camera that is too slow", text: "If a pattern renews completely between two frames, its rate cannot be read. Fine patterns are lost first. Use a faster frame rate (a smaller region of interest on the camera allows it) or a lower magnification.",
+    { lvl: 1, title: "A camera that is too slow", text: "If a pattern renews completely between two frames, its rate cannot be read. Fine patterns are lost first. Use a faster frame rate (a smaller region of interest on the camera allows it), or a lower magnification, which looks at wider and slower patterns.",
       shows: [{ label: "Show me", set: { frame_rate_hz: 8, exposure_ms: 1 }, go: "step-rates" }] },
     { lvl: 1, title: "A movie that is too short", text: "Wide patterns change slowly. If the movie ends before they have renewed, their curves never reach the top. Large particles need long movies.",
       shows: [{ label: "Show me", set: { diameter_um: 1, phi: 1e-3, frame_rate_hz: 100, n_frames: 128 }, go: "step-curves" }] },
-    { lvl: 1, title: "Too little light", text: "Shot noise adds a flat floor to every curve and hides the patterns whose signal is weakest. More light, more frames or binning help.",
-      shows: [{ label: "Dim light", set: { light_frac: 0.005 }, go: "step-rates", lvl: 2 }, { label: "Dim light, 2 x 2 binning", set: { light_frac: 0.005, binning: 2, phi: 2.5e-5 }, go: "step-rates", lvl: 2 }] },
+    { lvl: 1, title: "Too little light", text: "Shot noise adds a flat floor to every curve and hides the patterns whose signal is weakest. More light helps most; binning (a wider field with coarser pixels) and more frames help a little.",
+      shows: [{ label: "Dim light", set: { light_frac: 0.005 }, go: "step-rates" }, { label: "Dim light, 2 x 2 binning", set: { light_frac: 0.005, binning: 2 }, go: "step-rates" }, { label: "Four times more light", set: { light_frac: 0.02 }, go: "step-rates" }] },
     { lvl: 2, title: "Matching refractive indices", text: "A particle is visible in bright field only because its refractive index differs from the liquid's. PMMA (1.49) in water with 90 % glycerol (1.46) almost disappears, and so does the signal.",
       shows: [{ label: "PMMA in water", set: { particle: "pmma", diameter_um: 0.3, phi: 2e-4, frame_rate_hz: 100 }, go: "step-setup" }, { label: "PMMA in 90 % glycerol", set: { particle: "pmma", diameter_um: 0.3, phi: 2e-4, liquid: "glycerol", glycerol_w: 0.9, frame_rate_hz: 2 , exposure_ms: 1 }, go: "step-setup" }] },
     { lvl: 2, title: "The condenser aperture", text: "Closing the aperture diaphragm makes the light more coherent: particles show stronger, ringed images and stay visible further from focus. Opening it gives sharper optical sections and less contrast.",
       shows: [{ label: "Nearly closed (NA 0.05)", set: { na_c: 0.05 }, go: "step-setup" }, { label: "LWD fully open (NA 0.52)", set: { condenser: "lwd", na_c: 0.52 }, go: "step-setup" }] },
     { lvl: 2, title: "Magnification and aperture", text: "The objective sets which patterns you can see. Low magnification gives a wide field and reaches large spacings; a high numerical aperture resolves finer ones. The dashed circle in step 4 moves with it.",
-      shows: [{ label: "10x, NA 0.3", set: { objective: objIndexByName("CFI Plan Fluor 10X"), frame_rate_hz: 30, phi: 2.5e-5 }, go: "step-map" }, { label: "40x, NA 0.75", set: { objective: objIndexByName("CFI Plan Fluor 40X"), frame_rate_hz: 300, exposure_ms: 1, phi: 4e-4 }, go: "step-map" }] },
+      shows: [{ label: "10x, NA 0.3", set: { objective: objIndexByName("CFI Plan Fluor 10X"), frame_rate_hz: 30 }, go: "step-map" }, { label: "40x, NA 0.75", set: { objective: objIndexByName("CFI Plan Fluor 40X"), frame_rate_hz: 300, exposure_ms: 1, phi: 4e-4 }, go: "step-map" }] },
     { lvl: 2, title: "Confocal sectioning", text: "A confocal microscope sees a thin slice. Particles that wander out of the slice look as if they had renewed the pattern, so at small q the rate stops falling and levels off at about one over the time needed to diffuse out of the slice. Compare the points with the dashed line of pure diffusion; the size comes out too small.",
       shows: [{ label: "Spinning disk, Kinetix", set: { mode: "spinning", camera: "kinetix", cam_mode: "dynamic", iface: "pcie", binning: 2, n_frames: 512, objective: objIndexByName("CFI Plan Apochromat IR 60XC WI"), diameter_um: 0.2, phi: 1e-4, cell_um: 10, focus_frac: 0.5, frame_rate_hz: 100, exposure_ms: 4 }, go: "step-rates" },
               { label: "Point scanning, AX R", set: { mode: "scanning", objective: objIndexByName("CFI Plan Apochromat IR 60XC WI"), diameter_um: 0.5, phi: 1e-3, cell_um: 10, focus_frac: 0.5, scan_px: 512, line_avg: 2, frame_rate_hz: 14, scan_rate: 1e8 }, go: "step-rates", lvl: 3 }] },
@@ -4773,7 +4805,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       shows: [{ label: "Phase contrast, 40x Ph2", set: { mode: "phase", objective: objIndexByName("CFI Plan Fluor DLL 40X"), annulus: "Ph2", diameter_um: 0.3, phi: 2e-4, frame_rate_hz: 200, exposure_ms: 0.2 }, go: "step-setup" },
               { label: "Poor man's dark field: Ph3 annulus, 10x", set: { mode: "darkfield", df_kind: "annulus", annulus: "Ph3", objective: objIndexByName("CFI Plan Fluor 10X"), diameter_um: 0.3, phi: 5e-5, frame_rate_hz: 30 }, go: "step-setup" },
               { label: "Rich man's dark field: dry condenser, 20x", set: { mode: "darkfield", df_kind: "dry", diameter_um: 0.3, phi: 2e-4, frame_rate_hz: 100 }, go: "step-setup" }] },
-    { lvl: 2, title: "DIC sees a direction", text: "DIC compares the image with a copy shifted by a fraction of a micrometre. Patterns across the shear barely show for particles near focus, so the map in step 4 gets squashed along one direction; particles far from focus look the same in every direction and round it again. The radial average still gives the right dynamics.",
+    { lvl: 2, title: "DIC sees a direction", text: "DIC compares the image with a copy shifted by a fraction of a micrometre. Stripes that run along the shear barely show for particles near focus, so the map in step 4 gets squashed along one direction; particles far from focus look the same in every direction and round it again. The radial average still gives the right dynamics.",
       shows: [{ label: "DIC, 60x water", set: { mode: "dic", objective: objIndexByName("CFI Plan Apochromat IR 60XC WI"), condenser: "lwd", na_c: 0.5, diameter_um: 0.3, phi: 4e-4, cell_um: 10, focus_frac: 0.5, frame_rate_hz: 200, exposure_ms: 0.2 }, go: "step-map" }] },
     { lvl: 3, title: "When each row is recorded", text: "A rolling-shutter camera exposes its rows one after the other and a point scanner records them line by line, so the top and bottom of a frame are not taken at the same moment. For fast dynamics this mixes time into the vertical direction. A global shutter avoids it.",
       shows: [{ label: "ORCA, full chip at 100 frames/s", set: { camera: "orca", roi: 2048, binning: 4, diameter_um: 0.1, phi: 2e-5, frame_rate_hz: 100 }, go: "step-map" }, { label: "CB2, global shutter", set: { camera: "cb2", cam_mode: "b12", iface: "cxp", roi: 512, binning: 1, frame_rate_hz: 100, exposure_ms: 5.3 }, go: "step-map" }] },
@@ -4824,6 +4856,10 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     document.querySelectorAll(".predict").forEach(function (box) {
       box.querySelectorAll("button[data-guess]").forEach(function (btn) {
         btn.addEventListener("click", function () {
+          if (box.classList.contains("answered")) return;
+          box.classList.add("answered");
+          box.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = true; b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+          box.querySelector(".verdict").textContent = btn.getAttribute("data-guess") === box.getAttribute("data-right") ? "Well guessed." : "Not quite.";
           box.querySelector(".a").hidden = false;
           const kind = box.getAttribute("data-predict");
           if (kind === "size") state.diameter_um = Math.min(5, state.diameter_um * 2);
@@ -4839,7 +4875,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   document.querySelectorAll('input[name="level"]').forEach(function (r) { r.addEventListener("change", function () { if (r.checked) setLevel(r.value, true); }); });
   document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }); });
   window.addEventListener("hashchange", function () { const h = location.hash.slice(1); if (LEVEL_RANK[h] && h !== level) setLevel(h, false); });
-  $("btn-reset").addEventListener("click", function () { const keep = level === "researcher" ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); constrain(); syncControls(); drawFov(); schedule(); });
+  $("btn-reset").addEventListener("click", function () { const keep = level === "researcher" ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
   $("btn-seed").addEventListener("click", function () { state.seed = (state.seed * 1103515245 + 12345) % 2147483647; schedule(); });
   $("btn-play").addEventListener("click", function () { playing = !playing; $("btn-play").textContent = playing ? "Pause" : "Play"; });
   $("btn-play").textContent = playing ? "Pause" : "Play";
@@ -4876,7 +4912,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       return { key: c.key, kind: c.kind, lvl: c.lvl, min: c.min, max: c.max, options: opts };
     }); },
     truth: function () { return cache && cache.movie ? cache.movie.truth : null; },
-    result: function () { return cache && cache.res ? { D: cache.res.D ? cache.res.D.D_um2_s : null, d: cache.res.diameter_um, rot: cache.res.rot && cache.res.rot.D_r_s ? cache.res.rot.D_r_s : null } : null; }
+    result: function () { return cache && cache.res ? { D: cache.res.D ? cache.res.D.D_um2_s : null, d: cache.res.diameter_um, rot: cache.res.rot && cache.res.rot.D_r_s ? cache.res.rot.D_r_s : null, reasons: cache.res.fits.map(function (f) { return f.reason; }) } : null; }
   };
 })();
 

@@ -106,6 +106,8 @@ html[data-level="curious"] details.math { display: none; }
 .chip.warn { color: var(--warn); background: var(--warn-bg); }
 .chip.bad { color: var(--bad); background: var(--bad-bg); }
 .chip.info { color: var(--muted); background: var(--tint); }
+.tscroll { overflow-x: auto; min-width: 0; }
+.result, .result > *, .predict, .step-body > *, .steps > * { min-width: 0; }
 table.sizing { width: 100%; border-collapse: collapse; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
 table.sizing td { white-space: nowrap; }
 table.sizing th, table.sizing td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--rule); text-align: right; vertical-align: top; }
@@ -113,7 +115,7 @@ table.sizing th[scope="row"], table.sizing thead th:first-child { text-align: le
 table.sizing thead th { color: var(--muted); font-weight: 500; font-size: 0.8rem; }
 table.sizing tr.main th, table.sizing tr.main td { font-weight: 700; }
 table.sizing tr.truth th, table.sizing tr.truth td { color: var(--accent-2); }
-table.sizing .note { display: block; font-size: 0.76rem; font-weight: 400; color: var(--muted); }
+table.sizing .note { white-space: normal; display: block; font-size: 0.76rem; font-weight: 400; color: var(--muted); }
 .checks ul { list-style: none; margin: 0.3rem 0 0; padding: 0; display: grid; gap: 0.45rem; }
 .checks li { display: grid; grid-template-columns: 4.2rem 1fr; gap: 0.6rem; align-items: start; font-size: 0.86rem; line-height: 1.45; }
 .checks li .chip { justify-self: stretch; text-align: center; }
@@ -187,7 +189,7 @@ figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(
 .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .reasons { font-family: var(--sans); font-size: 0.82rem; color: var(--muted); margin: 0; padding-left: 1.1rem; }
 
-details.math { font-family: var(--sans); font-size: 0.92rem; border-left: 2px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; padding: 0.55rem 0.9rem; max-width: var(--measure); }
+details.math { min-width: 0; font-family: var(--sans); font-size: 0.92rem; border-left: 2px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; padding: 0.55rem 0.9rem; max-width: var(--measure); }
 details.math summary { cursor: pointer; font-weight: 600; color: var(--accent); }
 details.math .eq { font-family: var(--serif); font-size: 1.05rem; margin: 0.6rem 0; overflow-x: auto; white-space: nowrap; }
 details.math p { margin: 0.5rem 0; }
@@ -197,6 +199,9 @@ pre.code { font-family: var(--mono); font-size: 0.8rem; background: var(--paper)
 .predict { font-family: var(--sans); font-size: 0.92rem; border: 1px dashed var(--accent); border-radius: 6px; padding: 0.7rem 0.9rem; display: grid; gap: 0.5rem; max-width: var(--measure); }
 .predict .q { font-weight: 600; }
 .predict .a { color: var(--ink); }
+.predict .verdict { font-weight: 600; }
+.predict button:disabled { cursor: default; opacity: 0.55; }
+.predict button[aria-pressed="true"] { opacity: 1; border-color: var(--accent); font-weight: 600; }
 
 /* what matters */
 .matters { border-top: 1px solid var(--rule); padding-block: 2.5rem 1rem; }
@@ -242,7 +247,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
     <div>
       <p class="eyebrow">Differential dynamic microscopy</p>
       <h1>Sizing particles from how they move</h1>
-      <p class="lede">Particles in a liquid jiggle because the molecules around them keep kicking them, and small particles jiggle faster than large ones. Differential dynamic microscopy (DDM) measures this motion from an ordinary microscope movie without following any single particle, so it works for particles too small to be seen as well as for large ones. From how fast they wander follows their size: the same principle as dynamic light scattering (DLS), but with a microscope, many scattering angles at once, and in samples where DLS struggles (turbid, fluorescent or tiny ones). Particle sizing is one use of DDM among many (see "Beyond sizing" below). Here a simulated microscope lets you run the whole analysis yourself, from the raw movie to a particle size.</p>
+      <p class="lede">Particles in a liquid jiggle because the molecules around them keep kicking them, and small particles jiggle faster than large ones. Differential dynamic microscopy (DDM) measures this motion from an ordinary microscope movie without following any single particle, so it works even when the particles are too small, too faint or too crowded to be followed one by one. From how fast they wander follows their size: the same principle as dynamic light scattering (DLS), but with a microscope, many scattering angles at once, and in samples where DLS struggles (turbid or fluorescent ones, or a drop too small for a cuvette). Particle sizing is one use of DDM among many (see "Beyond sizing" below). Here a simulated microscope lets you run the whole analysis yourself, from the raw movie to a particle size.</p>
       <fieldset class="levels">
         <legend>How deep do you want to go?</legend>
         <div class="level-opts" role="radiogroup">
@@ -264,7 +269,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap bench-head" aria-labelledby="bench-title">
     <p class="eyebrow">Hands on</p>
     <h2 id="bench-title">The bench</h2>
-    <p class="prose">Change the sample, the microscope or the camera on the left. The movie is recorded again and every step below updates. A run takes a few seconds, because every particle is imaged with the real optics of the microscope.</p>
+    <p class="prose">Change the sample, the microscope or the camera with the controls (on the left, or just below on a phone). The movie is recorded again and every step below updates. A run takes from a few seconds to about a minute, because every particle is imaged through a detailed model of the microscope's optics.</p>
   </section>
 
   <div class="wrap bench">
@@ -301,8 +306,8 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <p><b>Bright field.</b> The condenser fills its aperture with mutually incoherent plane waves (spatial coherence) at the wavelengths of the lamp spectrum (temporal coherence). For each of them, the light scattered by the sphere, computed exactly with Mie theory from the particle and liquid refractive indices, interferes with the transmitted light after passing the objective pupil. The intensities are then added. The same formula covers the other transmitted-light methods by changing the illumination and the pupil: <b>phase contrast</b> lights the sample through a thin annulus and gives the objective pupil a ring that dims the direct light and shifts its phase by a quarter wave; <b>dark field</b> uses illumination steeper than the objective can collect, so only the |<i>E</i><sub>s</sub>|<sup>2</sup> term is left; <b>DIC</b> multiplies the pupil by <i>i</i> sin((<b>&kappa;</b>&middot;<b>s</b> + &phi;)/2), with <b>s</b> the shear and &phi; the bias, so the image depends on the direction of <b>q</b>. For a particle at distance <i>z</i> from focus, the Fourier transform of its image is</p>
           <div class="eq"><i>K</i>(<b>q</b>, <i>z</i>) = &lang; &minus;(2&pi;/<i>k</i>) <i>P</i>(<b>&kappa;</b>)<i>P</i>(<b>&kappa;</b>+<b>q</b>) <i>S</i>(&theta;) e<sup><i>i</i>(<i>k<sub>z</sub></i>(<b>&kappa;</b>) &minus; <i>k<sub>z</sub></i>(<b>&kappa;</b>+<b>q</b>))<i>z</i></sup> / <i>k<sub>z</sub></i> + c.c.(&minus;<b>q</b>) &rang;<sub>source, &lambda;</sub> + |<i>E</i><sub>s</sub>|<sup>2</sup> term</div>
           <p>with <i>S</i> = (<i>S</i><sub>1</sub> + <i>S</i><sub>2</sub>)/2 the Mie amplitude at the scattering angle &theta; and <i>P</i> the pupil with aplanatic apodization. At <i>q</i> = 0 the interference term equals minus the extinction cross-section (optical theorem), which the code checks.</p>
-          <p><b>Fluorescence.</b> Emission is incoherent: the image is the dyed sphere convolved with the scalar Debye point spread function. <b>Confocal</b> (spinning disk or point scanning): excitation spread times emission spread convolved with the pinhole projected on the sample; cross-talk between the disk pinholes is neglected.</p>
-          <p><b>Movie.</b> Dilute particles diffuse in 3D (Stokes-Einstein, reflecting walls); each frame is the sum of their images, recorded with the detector's pixel size, quantum efficiency, shot noise, read noise and full well. Each particle is imaged when its row is exposed (rolling shutters) or scanned (point scanners). Neglected: multiple scattering, interference between light scattered by different particles, aberrations of immersion objectives focusing into water, polarization effects of high-NA optics (paraxial polarizers; the DIC prisms are treated as ideal), stray light in dark field other than a fixed share of the illumination, hydrodynamic hindrance near the walls.</p>
+          <p><b>Fluorescence.</b> Emission is incoherent: the image is the dyed sphere convolved with the Debye point spread function (scalar, or vector at high NA). <b>Confocal</b> (spinning disk or point scanning): excitation spread times emission spread convolved with the pinhole projected on the sample; cross-talk between the disk pinholes is neglected.</p>
+          <p><b>Movie.</b> Dilute particles diffuse in 3D (Stokes-Einstein, reflecting walls); each frame is the sum of their images, recorded with the detector's pixel size, quantum efficiency, shot noise, read noise and full well. Each particle is imaged when its row is exposed (rolling shutters) or scanned (point scanners). Included: spherical aberration from focusing into the liquid; optionally vector (high-NA) optics, settling under gravity and slower translation near the glass. Neglected: multiple scattering, interference between light scattered by different particles, other aberrations (for example a wrong cover-glass thickness), polarizers acting on rods and ellipsoids beyond the paraxial approximation, imperfect DIC prisms, stray light in dark field other than a fixed share of the illumination, slower rotation near the glass.</p>
           <p><b>Particles that turn.</b> Each particle carries an axis <b>u</b> that diffuses on the sphere (rotational diffusion D<sub>R</sub>), and moves with D<sub>&#8741;</sub> along it and D<sub>&#8869;</sub> across it in its own frame (Perrin's formulas for ellipsoids, Tirado and Garcia de la Torre for rods). Its polarizability is a tensor &alpha; = &alpha;<sub>&#8869;</sub> I + (&alpha;<sub>&#8741;</sub> &minus; &alpha;<sub>&#8869;</sub>) <b>u u</b>, from the material's birefringence and from the shape. With a polarizer along <b>e</b><sub>P</sub> and an analyzer along <b>e</b><sub>A</sub>, the interference term is weighted by (<b>e</b><sub>A</sub>&middot;<b>e</b><sub>P</sub>)(<b>e</b><sub>A</sub>&middot;&alpha;&middot;<b>e</b><sub>P</sub>) and the scattered intensity by |<b>e</b><sub>A</sub>&middot;&alpha;&middot;<b>e</b><sub>P</sub>|<sup>2</sup>. Spheres keep their exact Mie field, scaled by these weights. Rods and ellipsoids are filled with small scatterers (Rayleigh-Gans), which also gives their shape in the image; in the scattered intensity the shape sets a tilt-dependent brightness &lang;|F(<b>Q</b>)|<sup>2</sup>&rang; over the illumination and collection angles.</p>
           <p class="small">Checked against miepython (amplitudes to 1e-10), the optical theorem, a brute-force sum over 3000 source points, and the amplitude formula of fastDDM tutorial 6 in its range of validity.</p>
         </details>
@@ -338,7 +343,7 @@ img_seq = fd.read_images(file_names)</pre>
             <div class="toolbar"><label for="lag">Delay</label><input type="range" id="lag" min="0" max="10" value="5"><output id="lag-out" class="readout"></output></div>
           </figure>
           <div class="text">
-            <p>Subtract a frame from one taken a little later. Everything that stays still, such as dust or uneven light, cancels out. What is left is only what moved.</p>
+            <p>Subtract a frame from one taken a little later. Everything that stays still, such as dust or uneven light, cancels out. What is left is what moved, plus the camera noise.</p>
             <p>Move the delay slider. With a short delay the difference is faint. With a longer one it grows, until the two frames have nothing left in common.</p>
             <p id="diff-note"></p>
           </div>
@@ -364,7 +369,7 @@ img_seq = fd.read_images(file_names)</pre>
           <div class="text">
             <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie.</p>
             <p>The centre of the map holds wide stripes, the edge holds fine ones. Click the map to see which pattern a point stands for. The map uses the same delay as step 3.</p>
-            <p class="lvl-2">Distance from the centre is the wave vector <i>q</i> = 2&pi; / spacing. The particles have no preferred direction, so the map is round, and we average it along circles to get one value for each <i>q</i>. The dashed circle marks the finest pattern the objective can resolve.</p>
+            <p class="lvl-2">Distance from the centre is the size of the wave vector, <i>q</i> = 2&pi; / spacing. The particles have no preferred direction, so the map is round (DIC and drift are exceptions), and we average it along circles to get one value for each <i>q</i>. The dashed circle marks the finest pattern the objective can resolve.</p>
           </div>
         </div>
         <details class="math" data-open-at="researcher">
@@ -394,17 +399,17 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
             <div class="chart"><canvas id="chart-curves" aria-label="Curves for several wave vectors"></canvas></div>
             <div class="legend" id="curves-legend"></div>
           </figure>
-          <div class="predict lvl-2" data-predict="size">
+          <div class="predict" data-predict="size" data-right="right">
             <div class="q">Predict first: the particles become twice as large. Do the curves move to the left or to the right?</div>
             <div class="btns"><button type="button" data-guess="left">Left, faster</button><button type="button" data-guess="right">Right, slower</button></div>
-            <div class="a" hidden>Right. A particle twice as large has half the diffusion coefficient, so every pattern takes twice as long to change. The bench now runs with the larger particles so you can check.</div>
+            <div class="a" hidden><span class="verdict"></span> To the right. A particle twice as large has half the diffusion coefficient, so every pattern takes twice as long to change. The bench now runs with the larger particles so you can check.</div>
           </div>
         </div>
         <details class="math" data-open-at="researcher">
           <summary>The math: fitting the curves</summary>
           <div class="eq"><i>d</i>(<i>q</i>, &Delta;<i>t</i>) = <i>A</i>(<i>q</i>) [1 &minus; <i>f</i>(<i>q</i>, &Delta;<i>t</i>)] + <i>B</i>(<i>q</i>)</div>
           <p><i>A</i>(<i>q</i>) holds the sample's signal seen through the microscope, <i>B</i>(<i>q</i>) the camera noise. For particles in Brownian motion the intermediate scattering function is a simple exponential, <i>f</i> = exp(&minus;&Gamma;&Delta;<i>t</i>). For a mixture of sizes a stretched exponential, <i>f</i> = exp[&minus;(&Gamma;&Delta;<i>t</i>)<sup>&beta;</sup>] with &beta; &lt; 1, describes the data better.</p>
-          <p>First guesses as in fastDDM: <i>B</i> from the flat noise floor beyond the optical cut-off, <i>A</i> + <i>B</i> from twice the temporal variance of each Fourier mode, &Gamma; from the delay where <i>f</i> falls to 1/e. Then a least-squares fit for every <i>q</i>.</p>
+          <p>First guesses as in fastDDM: <i>B</i> from the flat noise floor beyond the optical cut-off when the image reaches it, otherwise from the zero-delay intercept of a quadratic fit to the first five delays, <i>A</i> + <i>B</i> from twice the temporal variance of each Fourier mode, &Gamma; from the delay where <i>f</i> falls to 1/e. Then a least-squares fit for every <i>q</i>.</p>
           <div class="lvl-3"><pre class="code">B_est, _ = fd.noise_est.estimate_camera_noise(aa, mode='polyfit', num_points=5)
 A_est = 2 * aa.var - B_est
 from fastddm.fit import fit_multik
@@ -421,9 +426,9 @@ fit_res, model_res = fit_multik(aa, model, k_ref, use_err=True,
           <div class="text">
             <p>Now plot how fast each pattern changes against how fine it is. For particles that wander at random, halving the stripe spacing makes the change four times faster. On these logarithmic axes the points fall on a straight line of slope 2.</p>
             <p>The height of that line gives the diffusion coefficient. The Stokes-Einstein relation turns it into a size, using the temperature and the viscosity of the liquid.</p>
-            <p>Hollow grey points are outside what this movie can measure: patterns as large as the image or finer than the microscope resolves, changes faster than one frame or slower than half the movie. They are left out of the result.</p>
+            <p>Hollow grey points are outside what this movie can measure: patterns as large as the image or finer than the microscope resolves, changes faster than one frame or slower than half the movie, signal lost in the camera noise. They are left out of the result.</p>
             <p class="lvl-2">Below the plot the result compares the size from several ways of fitting, and checks it against the quality criteria of the standard for dynamic light scattering, ISO 22412. "Repeat 5 times" records five new movies with the same settings, as the standard asks for repeatability.</p>
-            <p>Particles that turn add a second, faster step to each curve. Its rate is the translation rate plus a constant, 6 D<sub>R</sub>, so on this plot it lies above the line and flattens out at small q. The squares show it when the fit finds it.</p>
+            <p id="turn-note">Particles that turn add a second, faster step to each curve. Its rate is the translation rate plus a constant, 6 D<sub>R</sub>, so on this plot it lies above the line and flattens out at small q. The squares show it when the fit finds it.</p>
           </div>
           <figure class="viz">
             <div class="chart"><canvas id="chart-rates" aria-label="Relaxation rate against wave vector"></canvas></div>
@@ -431,10 +436,10 @@ fit_res, model_res = fit_multik(aa, model, k_ref, use_err=True,
           </figure>
           <div class="step-body">
             <div class="result" id="result" aria-live="polite"></div>
-            <div class="predict lvl-2" data-predict="warm">
+            <div class="predict" data-predict="warm" data-right="no">
               <div class="q">Predict first: you warm the water from 22 to 45 &deg;C. Does the measured size change?</div>
               <div class="btns"><button type="button" data-guess="yes">Yes</button><button type="button" data-guess="no">No</button></div>
-              <div class="a" hidden>No. The particles move faster because warm water is thinner and the thermal kicks are stronger, but Stokes-Einstein uses the new temperature and viscosity, so the size comes out the same. The bench now runs at 45 &deg;C.</div>
+              <div class="a" hidden><span class="verdict"></span> No. The particles move faster because warm water is less viscous and the thermal kicks are stronger, but Stokes-Einstein uses the new temperature and viscosity, so the size comes out the same. The bench now runs at 45 &deg;C.</div>
             </div>
           </div>
           <figure class="viz lvl-2">
@@ -469,8 +474,8 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
           <div class="eq">ln <i>f</i>(<i>q</i>, &Delta;<i>t</i>) &asymp; &minus;&Gamma;&#772; &Delta;<i>t</i> + &mu;<sub>2</sub> &Delta;<i>t</i><sup>2</sup> / 2, &nbsp;&nbsp; PI = &mu;<sub>2</sub> / &Gamma;&#772;<sup>2</sup></div>
           <p>with <i>f</i> = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i>, fitted by weighted least squares (weights <i>f</i><sup>2</sup>) from the first delay down to a tenth of the first value, as ISO 22412:2025 (annex A.1.2) prescribes for DLS, here for the first-order function. The mean size follows from &Gamma;&#772;/<i>q</i><sup>2</sup>, the polydispersity index PI is averaged over <i>q</i>. If the rates follow a <b>Schulz</b> (gamma) distribution, the average is exact:</p>
           <div class="eq"><i>f</i>(<i>q</i>, &Delta;<i>t</i>) = (1 + PI &Gamma;&#772; &Delta;<i>t</i>)<sup>&minus;1/PI</sup></div>
-          <p>which becomes the simple exponential as PI &rarr; 0. The table fits it to all <i>q</i> at once with <b>one PI shared by all</b> (each <i>q</i> keeps its own amplitude, noise and mean rate), which is much less noisy than a PI fitted at each <i>q</i> separately. Both PIs may come out below zero: the same formula is continued there so that noise is not pushed up against a bound at zero (which made identical particles read 0.01-0.1); only a PI clearly above zero means a spread of sizes. Its uncertainty comes from repeating the shared fit on four interleaved groups of <i>q</i>. For broad distributions the second-order cumulants read low, as in DLS (0.14 for a true PI of 0.2, from the third cumulant); third-order cumulants are less biased but noisier (researcher level, under Details).</p>
-          <p><b>What a spread of sizes means for PI.</b> PI is the relative variance of the decay rates, not of the sizes. For a narrow distribution PI &asymp; (relative spread)<sup>2</sup>; for small particles, whose signal grows as <i>d</i><sup>6</sup>, a Schulz spread <i>s</i> gives PI = <i>s</i><sup>2</sup>/(1 + 4<i>s</i><sup>2</sup>): 0.0025 for 5 %, 0.035 for 20 %, 0.066 for 30 %, 0.125 for 50 % (a little less in practice, as the optics weighs large particles down at high <i>q</i>). The width shown next to each PI is &radic;PI. With the movies simulated here (256 frames, a few thousand particles) one movie fixes PI to about &plusmn; 0.02-0.04, so spreads below about 20 % cannot be told from identical particles, and broad distributions read low (about 0.03-0.08 for a true 0.1). A DLS run averages over far more particles and time; averaging five repeated movies helps. In the simulation a Schulz size distribution of mean <i>d</i>&#772; and relative standard deviation &sigma; is <i>p</i>(<i>d</i>) &prop; <i>d</i><sup><i>z</i></sup> exp[&minus;(<i>z</i>+1)<i>d</i>/<i>d</i>&#772;] with <i>z</i> = 1/&sigma;<sup>2</sup> &minus; 1, represented by five sizes (generalised Gauss-Laguerre quadrature, exact moments up to the ninth). The true PI shown is computed from the simulated particles and their actual brightness at each <i>q</i>.</p>
+          <p>which becomes the simple exponential as PI &rarr; 0. The table fits it to all <i>q</i> at once with <b>one PI shared by all</b> (each <i>q</i> keeps its own amplitude, noise and mean rate), which is much less noisy than a PI fitted at each <i>q</i> separately. Both PIs may come out below zero: the same formula is continued there so that noise is not pushed up against a bound at zero; only a PI clearly above zero means a spread of sizes. Its uncertainty comes from repeating the shared fit on four interleaved groups of <i>q</i>. For broad distributions the second-order cumulants read low, as in DLS (for example 0.14 for a true PI of 0.2, because the third cumulant is left out); third-order cumulants are less biased but noisier (researcher level, under Details).</p>
+          <p><b>What a spread of sizes means for PI.</b> PI is the relative variance of the decay rates, not of the sizes. For a narrow distribution PI &asymp; (relative spread)<sup>2</sup>; for small particles, whose signal grows as <i>d</i><sup>6</sup>, a Schulz spread <i>s</i> gives PI = <i>s</i><sup>2</sup>/(1 + 4<i>s</i><sup>2</sup>): 0.0025 for 5 %, 0.035 for 20 %, 0.066 for 30 %, 0.125 for 50 % (a little less in practice, as the optics weighs large particles down at high <i>q</i>). The width shown next to each PI is &radic;PI. With the movies simulated here (256 frames, a few thousand particles) one movie fixes PI to about &plusmn; 0.02-0.04, so spreads below about 20-35 % cannot be told from identical particles (the PI check gives the limit for each run), and broad distributions read low (about 0.03-0.08 for a true 0.1). A DLS run averages over far more particles and time; averaging five repeated movies helps. In the simulation a Schulz size distribution of mean <i>d</i>&#772; and relative standard deviation &sigma; is <i>p</i>(<i>d</i>) &prop; <i>d</i><sup><i>z</i></sup> exp[&minus;(<i>z</i>+1)<i>d</i>/<i>d</i>&#772;] with <i>z</i> = 1/&sigma;<sup>2</sup> &minus; 1, represented by five sizes (generalised Gauss-Laguerre quadrature, exact moments up to the ninth). The true PI shown is computed from the simulated particles and their actual brightness at each <i>q</i>.</p>
           <p><b>Repeatability and bias.</b> Everything below uses the fit chosen under Analysis (the headline). A quick estimate cuts the movie into 4 parts (2 below 256 frames), analyses each at the same <i>q</i> and takes their spread divided by &radic;<i>N</i>; it is a lower bound, because the parts share the same particles. "Repeat 5 times" does what ISO 22412 (10.3) asks: five new movies with the same settings and new particles; their relative standard deviation should be below 2 % for monodisperse particles of 50-200 nm. The mean of the five is then compared with the true size as in the reference-material test of ISO 10.1: the difference must stay within the expanded uncertainty, 2 &times; 1.5 % = 3 % here (the simulation's true value has no uncertainty of its own). The uncertainty quoted with the headline is the larger of the scatter between <i>q</i> and the quick estimate.</p>
           <p><b>Other checks.</b> The size from the lower and the upper half of the <i>q</i> used must agree (ISO 10.2: the result must not depend on the range analysed); a free power law must give an exponent near 2; cumulants and the fit at each <i>q</i> must agree.</p>
         </details>
@@ -502,7 +507,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       <li><b>Microrheology.</b> The motion of tracer particles tells how viscous and how elastic the surrounding material is, frequency by frequency, without tracking a single tracer: P. Edera, D. Bergamini, V. Trappe, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1103/PhysRevMaterials.1.073804">Differential dynamic microscopy microrheology of soft materials: a tracking-free determination of the frequency-dependent loss and storage moduli</a>, Phys. Rev. Materials 1, 073804 (2017).</li>
       <li><b>Proteins.</b> Single proteins and small aggregates sized in bright field at a few milligrams per millilitre, with first results on virial coefficients from how the motion changes with concentration: C. Guidolin, C. Heim, N. B. P. Adams, P. Baaske, V. Rondelli, R. Cerbino and F. Giavazzi, <a href="https://doi.org/10.1021/acs.macromol.3c00782">Protein sizing with differential dynamic microscopy</a>, Macromolecules 56, 8290 (2023).</li>
       <li><b>Concentrated suspensions.</b> When particles crowd, how they are arranged (the structure factor) and how the liquid couples their motion (the hydrodynamic function) both show up in the measured rates; confocal DDM measures them even in turbid samples: P. J. Lu, F. Giavazzi, T. E. Angelini, E. Zaccarelli, F. Jargstorff, A. B. Schofield, J. N. Wilking, M. B. Romanowsky, D. A. Weitz and R. Cerbino, <a href="https://doi.org/10.1103/PhysRevLett.108.218103">Characterizing concentrated, multiply scattering, and actively driven fluorescent systems with confocal differential dynamic microscopy</a>, Phys. Rev. Lett. 108, 218103 (2012).</li>
-      <li><b>Particles that turn.</b> Rotations as well as translations, from anisotropic particles; this page simulates them (choose a shape other than a sphere).</li>
+      <li><b>Particles that turn.</b> Rotations as well as translations, from anisotropic particles; this page simulates them (choose birefringent spheres or a shape other than a sphere).</li>
     </ul>
     <p class="prose">The first three are not simulated here: they need particles that interact with each other or with a surrounding material, and the particles on this page do not.</p>
   </section>
@@ -510,7 +515,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   <section class="wrap further" aria-labelledby="h-about">
     <h2 id="h-about">About this tool</h2>
     <p class="prose">This page is a simple tool, generated with Claude Opus 5.5, that simulates a realistic microscopy experiment in which DDM is used to study the roto-translational Brownian motion of colloidal particles. The microscope, light sources, cameras, spinning disk and point scanner are modelled mostly on the instruments of our SoMeX lab. The particles do not interact with each other: each one diffuses and turns on its own (if you choose, it also settles under gravity and slows down near the glass), so every sample is a dilute suspension. The aim is not to produce accurate, research-quality data, but to give anyone thinking of using DDM an idea of the many options and of how each one affects a DDM experiment.</p>
-    <p class="prose">If you find something that looks wrong or does not work, please let me know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
+    <p class="prose">If you find something that looks wrong or does not work, please let us know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
   </section>
 
   <section class="wrap further" aria-labelledby="h-further">

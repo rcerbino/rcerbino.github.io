@@ -109,13 +109,12 @@
   function objIndexByName(name) { for (let i = 0; i < OBJECTIVES.length; i++) if (OBJECTIVES[i].n === name) return i; throw new Error("objective not found: " + name); }
 
   // the standard sample: 200 nm polystyrene beads in water, 20x / 0.5, ELWD condenser fully open, green filter
-  const narrow = window.matchMedia("(max-width: 40rem)").matches;
   const BASE = {
     mode: "brightfield", particle: "ps", n_custom: 1.59, diameter_um: 0.2, size_spread: 0, size_dist: "schulz", phi: 2e-4,
     liquid: "water", glycerol_w: 0.5, n_liquid: 1.333, visc_mPa_s: 1.0, T_C: 22, cell_um: 20, focus_frac: 0.5, drift_um_s: 0, settle: "off", rho_custom: 1.05, rho_liquid: 1.0, optics: "auto",
     objective: objIndexByName("CFI Plan Fluor 20X"), condenser: "elwd", na_c: 0.3, source: "green",
     dye: "green", rate_ph_ms: 200, bg_e_ms: 2, light_frac: 0.5,
-    camera: "orca", cam_mode: "standard", iface: "cameralink", binning: 1, roi: 512, sim_px: narrow ? 64 : 128, n_frames: 256,
+    camera: "orca", cam_mode: "standard", iface: "cameralink", binning: 1, roi: 512, sim_px: 128, n_frames: 256,
     annulus: "Ph2", ring_T: 0.25, df_kind: "dry", df_light_e: 1e7, stray_frac: 1e-4, dic_shear_um: 0.24, dic_bias_deg: 90, dic_angle_deg: 45,
     scanner: "resonant", scan_px: 512, zoom: 1, line_avg: 2, pinhole_au: 1, scan_rate: 2e7,
     frame_rate_hz: 100, exposure_ms: 0.2,
@@ -308,7 +307,7 @@
     { key: "df_light_e", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Lamp power (electrons per pixel if all the light reached the camera)", kind: "log", min: 1e4, max: 1e10, fmt: function (v) { return fmtPhi(v); }, when: function () { return state.mode === "darkfield" || (TRANS() && state.mode !== "dic" && state.analyzer === "on"); }, hint: function () { return state.mode === "darkfield" ? "" : "With an analyzer the lamp is turned up to fill the camera, up to this limit."; } },
     { key: "stray_frac", group: "Microscope (Nikon Ti2-E)", lvl: 3, label: "Stray light (share of the illumination)", kind: "log", min: 1e-6, max: 1e-2, fmt: function (v) { return fmtPhi(v); }, when: function () { return state.mode === "darkfield"; }, hint: "Light scattered by dust, cover-glass defects and the optics; it sets the dark-field background." },
     { key: "dye", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Dye", kind: "select", options: Object.keys(DYES).map(function (k) { return [k, DYES[k].label]; }), when: FL },
-    { key: "rate_ph_ms", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Excitation: photons per particle per ms at the camera", kind: "log", min: 1, max: 20000, fmt: function (v) { return fmtSig(v, 2); }, when: function () { return state.mode === "fluorescence" || state.mode === "spinning"; }, hint: "Photons reaching the camera; the camera's quantum efficiency is applied on top." },
+    { key: "rate_ph_ms", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Brightness: photons per particle per ms reaching the camera", kind: "log", min: 1, max: 20000, fmt: function (v) { return fmtSig(v, 2); }, when: function () { return state.mode === "fluorescence" || state.mode === "spinning"; }, hint: "Photons reaching the camera; the camera's quantum efficiency is applied on top." },
     { key: "bg_e_ms", group: "Microscope (Nikon Ti2-E)", lvl: 3, label: "Background light (photons per pixel per ms)", kind: "log", min: 0.01, max: 100, fmt: function (v) { return fmtSig(v, 2); }, when: function () { return state.mode === "fluorescence" || state.mode === "spinning"; } },
 
     { key: "scanner", group: "Scanner (Nikon AX R)", lvl: 1, label: "Scanner", kind: "select", options: Object.keys(SCANNERS).map(function (k) { return [k, SCANNERS[k].label]; }), when: SCANNING },
@@ -324,7 +323,7 @@
     { key: "roi", group: "Camera and recording", lvl: 2, label: "Region of interest on the sensor", kind: "select", num: true, options: function () { const c = cam(); return c.rois.map(function (r) { return [r, r + " x " + r + (r === c.rows ? " (full height)" : "")]; }); }, when: function () { return !SCANNING(); } },
     { key: "binning", group: "Camera and recording", lvl: 2, label: "Binning", kind: "select", num: true, options: function () { return allowedBins().map(function (b) { return [b, b + " x " + b + (cam().bin_charge && b > 1 ? " (on chip)" : "")]; }); }, when: function () { return !SCANNING(); }, hint: binHint },
     { key: "frame_rate_hz", group: "Camera and recording", lvl: 1, label: "Frame rate", kind: "log", min: 0.5, max: 30000, fmt: function (v) { return fmtNum(v) + " frames/s"; }, hint: function () { return "Up to " + fmtNum(maxFps()) + " frames/s with these settings."; } },
-    { key: "exposure_ms", group: "Camera and recording", lvl: 2, label: "Exposure time", kind: "log", min: 0.01, max: 2000, fmt: function (v) { return fmtSig(v, 2) + " ms"; }, when: function () { return !SCANNING(); }, hint: function () { const t = minExposureMs(); return t > 0 ? "At least " + fmtSig(t, 2) + " ms here" + (state.mode === "spinning" ? " (the disk must sweep the field at least once, over 1000 sweeps per second)" : "") + "." : ""; } },
+    { key: "exposure_ms", group: "Camera and recording", lvl: 2, label: "Exposure time", kind: "log", min: 0.01, max: 2000, fmt: function (v) { return fmtSig(v, 2) + " ms"; }, when: function () { return !SCANNING(); }, hint: function () { const t = minExposureMs(); return t > 0 ? "At least " + fmtSig(t, 2) + " ms here" + (state.mode === "spinning" ? " (the disk sweeps the field about 1000 times a second, and each exposure must last at least one sweep)" : "") + "." : ""; } },
     { key: "light_frac", group: "Camera and recording", lvl: 2, label: "Lamp brightness (background as a share of the full well)", kind: "log", min: 0.002, max: 0.9, fmt: function (v) { return fmtSig(100 * v, 2) + " %"; }, when: function () { return TRANS() && state.mode !== "darkfield"; }, hint: function () { const fw = detFullWell(); return "Background " + Math.round(state.light_frac * fw) + " electrons per pixel; shot noise " + fmtSig(100 / Math.sqrt(state.light_frac * fw), 2) + " %."; } },
     { key: "n_frames", group: "Camera and recording", lvl: 2, label: "Number of frames", kind: "select", num: true, options: [[128, "128"], [256, "256"], [512, "512"], [1024, "1024"], [2048, "2048"]],
       hint: function () { return "The browser holds up to " + maxFrames(simPx()) + " frames at " + simPx() + " x " + simPx() + " pixels; asking for more makes the simulated image smaller."; } },
@@ -519,6 +518,13 @@
   let lastKey = null;
   function onChange(key) {
     lastKey = key;
+    // switching to phase contrast with an objective that has no phase ring: take the phase objective of the same
+    // magnification with the closest NA (Plan Fluor 20X -> Plan Fluor DLL 20X Ph1), so phase contrast is really on
+    if (key === "mode" && state.mode === "phase" && !objRing()) {
+      const o0 = objective(); let best = -1, bd = Infinity;
+      OBJECTIVES.forEach(function (o, i) { if (!o.ph || o.m !== o0.m) return; const k = o.ph.replace(/^Ext\s*/i, "").replace(/^PH/i, "Ph"); if (!ANNULI[k]) return; const dd = Math.abs(o.na - o0.na) + (o.n.split(" ")[1] === o0.n.split(" ")[1] ? 0 : 0.05); if (dd < bd) { bd = dd; best = i; } });
+      if (best >= 0) state.objective = best;
+    }
     if ((key === "mode" || key === "objective") && state.mode === "phase" && objRing()) state.annulus = objRing();
     if (key === "shape" && SHAPE_MATERIALS[state.shape].indexOf(state.particle) < 0) state.particle = SHAPE_MATERIALS[state.shape][0];
     // typical particles of each birefringent material (MFA: radius 90 nm; birefringence not published, value assumed)
@@ -933,7 +939,7 @@
     const f = cache.res.fits.find(function (ff) { return ff.bin === selBin(); });
     let txt = "Stripe spacing <b>" + fmtSig(spacing, 2) + " " + MU + "m</b>";
     if (level !== "curious") txt += ", q = <b>" + q.toFixed(2) + " " + MU + "m<sup>-1</sup></b>, direction " + ang + "&deg;";
-    if (f && f.reason === null) txt += ". This pattern renews in about <b>" + fmtTime(1 / f.gamma_hz) + "</b>; it is the thick curve in step 5.";
+    if (f && f.reason === null) txt += ". This pattern renews in about <b>" + fmtTime(1 / f.gamma_hz) + "</b>; it is the thick curve in step 5" + (level !== "curious" ? ", the ring at q = " + f.q_per_um.toFixed(2) + " that contains it" : "") + ".";
     else if (f) txt += ". Not used: " + f.reason + ".";
     $("pick-out").innerHTML = txt;
   }
@@ -1173,7 +1179,7 @@
     }
     const fw = wallFactor(tr), target = (cache.cfg.size_spread > 0 ? seenDiameter(tr, res) : tr.diameter_um) / fw;
     const dev = res.diameter_um / target - 1, err = res.diameter_rel_err;
-    if (Math.abs(dev) <= Math.max(0.05, 2 * err)) return { cls: "good", text: fw < 0.97 ? "As expected near the glass (" + Math.round(100 * (1 / fw - 1)) + " % larger)" : "Matches the true size (within " + Math.round(100 * Math.max(0.05, 2 * err)) + " %)", dev: dev };
+    if (Math.abs(dev) <= Math.max(0.05, 2 * err)) return { cls: "good", text: fw < 0.97 ? "As expected near the glass (" + Math.round(100 * (1 / fw - 1)) + " % larger)" : Math.abs(dev) <= 0.05 ? "Matches the true size (within 5 %)" : "Off by " + Math.round(100 * Math.abs(dev)) + " %, within the uncertainty of this movie", dev: dev };
     if (Math.abs(dev) <= 0.15) return { cls: "warn", text: "Off by " + Math.round(100 * Math.abs(dev)) + " %", dev: dev };
     return { cls: "bad", text: "Wrong by " + Math.round(100 * Math.abs(dev)) + " %", dev: dev };
   }
@@ -1203,9 +1209,12 @@
     if (level === "researcher" && r && r.gain !== undefined) h += '<dt>Second mode</dt><dd>removes ' + Math.round(100 * r.gain) + ' % of the one-mode misfit; ' + Math.round(100 * (r.fast_share || 0)) + ' % of the signal' + (r.D_r_s ? '; rate from the ' + (r.from || 'joint fit') + (r.joint_rate_s && r.from !== 'joint fit' ? ' (joint fit: ' + fmtRate(r.joint_rate_s) + ')' : '') : '') + '</dd>';
     h += '</dl>';
     $("result").innerHTML = h;
-    $("hero-result").innerHTML = '<span>Turning ' + fmtRate(6 * tr.D_r_s) + '</span><span class="n">' + (r && r.D_r_s ? fmtRate(6 * r.D_r_s) : "?") + '</span><span>measured</span><span class="chip ' + rv.cls + '">' + rv.text + '</span>';
-    $("hero-cap").textContent = "Simulated " + ($("c-mode").selectedOptions[0].textContent).toLowerCase() + " movie" + (cache.cfg.polarization ? " between polarizers" : "") + ", " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
+    $("hero-result").innerHTML = '<span>True turning rate</span><span class="n">' + fmtRate(6 * tr.D_r_s) + '</span><span>Measured by DDM</span><span class="n">' + (r && r.D_r_s ? fmtRate(6 * r.D_r_s) : "not seen") + '</span><span class="chip ' + rv.cls + '">' + rv.text + '</span>';
+    $("hero-cap").textContent = "Simulated " + MODE_SHORT[state.mode] + " movie" + (cache.cfg.polarization ? " between polarizers" : "") + ", " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
   }
+  const MODE_SHORT = { brightfield: "bright-field", phase: "phase-contrast", darkfield: "dark-field", dic: "DIC", fluorescence: "widefield fluorescence", spinning: "spinning-disk confocal (X-Light V3)", scanning: "point-scanning confocal (AX R)" };
+  // width of the image of a point (Rayleigh distance, 0.61 lambda / NA): the smallest spot the optics can make
+  function spotWidth() { return 0.61 * centralWavelength() / Math.min(objective().na, nLiquid(centralWavelength())); }
   const MODEL_NAME = { simple: "simple exponential", stretched: "stretched exponential", schulz: "Schulz distribution of rates", two: "two-mode model", three: "three-mode model" };
   function pctTxt(x) { return x === null || x === undefined || !isFinite(x) ? "-" : (x < 0.0995 ? (100 * x).toFixed(1) : Math.round(100 * x)) + " %"; }
   // ISO 22412 applies its repeatability figure to monodisperse particles of 50-200 nm
@@ -1273,18 +1282,18 @@
         if (pi === null || pi === undefined) return "-";
         let t = pi.toFixed(3) + (pe !== null && pe !== undefined ? " \u00b1 " + pe.toFixed(3) : "");
         if (pi > 0 && (pe === null || pe === undefined || pi > 2 * pe)) t += '<span class="note">width about ' + Math.round(100 * Math.sqrt(pi)) + ' %</span>';
-        else if (pe !== null && pe !== undefined) t += '<span class="note">not above zero</span>';
+        else if (pe !== null && pe !== undefined) t += '<span class="note">consistent with 0</span>';
         return t;
       };
       const row = function (cls, name, d, pi, pe, err, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + (d ? fmtSize(d) : "-") + '</td><td>' + piCell(pi, pe) + '</td><td>' + (err === null || err === undefined ? "-" : "\u00b1 " + pctTxt(err)) + '</td></tr>'; };
-      let t = '<table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">Size</th><th scope="col">PI</th><th scope="col">Uncertainty</th></tr></thead><tbody>';
+      let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">Size</th><th scope="col">PI</th><th scope="col">Uncertainty</th></tr></thead><tbody>';
       t += row("main", "Fit at each q: " + MODEL_NAME[res.fit_model], res.diameter_um, null, null, res.diameter_rel_err, "the headline");
       if (cu && cu.D_um2_s) t += row("", "Cumulants, 2nd order", sizeFromD(cu.D_um2_s), cu.pi, cu.pi_err, cu.rel_err, "as in ISO 22412, " + cu.n_points + " q");
       if (sch) t += row("", "Schulz, one PI for all q", sizeFromD(sch.D_um2_s), sch.pi, sch.pi_err, sch.rel_err, sch.n_points + " q");
       const qs = cu && cu.per_q.length ? cu.per_q.map(function (e) { return e.q_per_um; }) : res.used.map(function (f) { return f.q_per_um; }), tt = seenOver(tr, qs);
       const sg = cfg.size_spread;
       t += row("truth", "True (simulation)", sg > 0 ? seenDiameter(tr, res) : tr.diameter_um / fw, sg > 0 ? tt.pi : 0, null, null, sg > 0 ? "weighted by the signal; a " + Math.round(100 * sg) + " % spread of sizes gives PI about s\u00b2/(1 + 4s\u00b2) = " + (sg * sg / (1 + 4 * sg * sg)).toFixed(4) : (fw < 0.97 ? "in-plane, near the glass" : ""));
-      t += '</tbody></table>';
+      t += '</tbody></table></div>';
       h += t;
       // quality checks
       const ch = qualityChecks();
@@ -1308,12 +1317,14 @@
     const br = $("btn-repeat"); if (br) br.addEventListener("click", startRepeat);
     $("hero-result").innerHTML = res.diameter_um === null
       ? '<span>Particles of ' + fmtSize(tr.diameter_um) + '. With these settings DDM cannot size them.</span><span class="chip bad">Not measurable</span>'
-      : '<span>True size</span><span class="n">' + fmtSize(tr.diameter_um) + '</span><span>Measured by DDM</span><span class="n">' + fmtSize(res.diameter_um) + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
-    $("hero-cap").textContent = "Simulated " + ($("c-mode").selectedOptions[0].textContent).toLowerCase() + " movie, " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m." + (tr.diameter_um < 0.3 ? " The particles are too small to see one by one." : "");
+      : (cache.cfg.size_spread > 0
+        ? '<span>True mean size</span><span class="n">' + fmtSize(tr.diameter_um) + '</span><span>weighted as DDM sees them</span><span class="n">' + fmtSize(seenDiameter(tr, res)) + '</span>'
+        : '<span>True size</span><span class="n">' + fmtSize(tr.diameter_um) + '</span>') + '<span>Measured by DDM</span><span class="n">' + fmtSize(res.diameter_um) + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
+    $("hero-cap").textContent = "Simulated " + MODE_SHORT[state.mode] + " movie, " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m." + (tr.diameter_um < spotWidth() ? " Each spot is one particle, blurred by the optics to more than its true size." : "");
   }
   function renderRepeatTable() {
     const rp = repeat, rows = rp.runs;
-    let t = '<table class="sizing"><thead><tr><th scope="col">Movie</th><th scope="col">Fit at each q</th><th scope="col">Cumulants</th><th scope="col">PI cumulants</th><th scope="col">PI Schulz</th></tr></thead><tbody>';
+    let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Movie</th><th scope="col">Fit at each q</th><th scope="col">Cumulants</th><th scope="col">PI cumulants</th><th scope="col">PI Schulz</th></tr></thead><tbody>';
     rows.forEach(function (r, k) { t += '<tr><th scope="row">' + (k + 1) + '</th><td>' + fmtSize(r.main_d) + '</td><td>' + (r.cum_d ? fmtSize(r.cum_d) : "-") + '</td><td>' + (r.cum_pi === null ? "-" : r.cum_pi.toFixed(3)) + '</td><td>' + (r.sch_pi === null || r.sch_pi === undefined ? "-" : r.sch_pi.toFixed(3)) + '</td></tr>'; });
     if (rows.length >= 2) {
       const a = repeatStats(rows.map(function (r) { return r.main_d; })), cs = rows.filter(function (r) { return r.cum_d; }), b = cs.length >= 2 ? repeatStats(cs.map(function (r) { return r.cum_d; })) : null;
@@ -1323,17 +1334,29 @@
       t += '<tr><th scope="row">Spread</th><td>' + pctTxt(a.rsd) + '</td><td>' + (b ? pctTxt(b.rsd) : "-") + '</td><td>' + (c ? "\u00b1 " + (c.sd / Math.sqrt(ps.length)).toFixed(3) : "-") + '</td><td>' + (e ? "\u00b1 " + (e.sd / Math.sqrt(zs.length)).toFixed(3) : "-") + '</td></tr>';
       t += '<tr><td colspan="5" class="small" style="text-align:left; white-space: normal;">Sizes: relative standard deviation of the five. PI: uncertainty of the mean of five (standard deviation / &radic;5).</td></tr>';
     }
-    return t + '</tbody></table>';
+    return t + '</tbody></table></div>';
+  }
+  // what the reader can expect to see in the movie: resolved particles, or spots set by the optics
+  function visibilityText(cfg, m) {
+    const w = spotWidth(), d = cfg.diameter_um;
+    if (d >= w) return "These particles are larger than the smallest detail the microscope resolves, so you see each one " + (TURNS() ? "with its shape" : "as a small disc or ring") + "; DDM still never needs to find them.";
+    let t = "Each particle is smaller than the smallest detail the microscope resolves (about " + fmtSig(w, 2) + " " + MU + "m here), so it shows as a blurred spot of about that width, whatever its true size: you can follow the spots, but not measure the particles from them.";
+    // spots in the in-focus layer (depth of field about n lambda / NA^2) and their mean distance
+    const lam = centralWavelength(), na = Math.min(objective().na, nLiquid(lam)), dof = Math.min(cfg.cell_um, nLiquid(lam) * lam / (na * na) + w);
+    const nIn = (m.info.n_particles || 0) * dof / cfg.cell_um, gap = nIn > 0 ? m.L_um / Math.sqrt(nIn) : Infinity;
+    if (gap < 1.5 * w) t += " There are so many of them that the spots overlap into a shifting grain.";
+    else if (d < 0.1 && TRANS()) t += " Particles this small give faint spots that can drown in the camera noise.";
+    return t;
   }
   function renderText() {
-    const m = cache.movie, cfg = cache.cfg, small = cfg.diameter_um < 0.3;
+    const m = cache.movie, cfg = cache.cfg;
     const modeTxt = { brightfield: "a bright-field microscope", phase: "a phase-contrast microscope", darkfield: "a dark-field microscope", dic: "a DIC microscope", fluorescence: "a widefield fluorescence microscope", spinning: "a spinning-disk confocal microscope", scanning: "a point-scanning confocal microscope" }[state.mode];
     const shapeTxt = state.shape === "sphere" ? "" : { bisphere: "birefringent spherical ", prolate: "cigar-shaped ", oblate: "disc-shaped ", rod: "rod-shaped " }[state.shape];
     $("movie-text").textContent = "The movie shows " + fmtSize(cfg.diameter_um) + " " + shapeTxt + MATERIALS[state.particle].toLowerCase().replace(" (set the index)", "") + " particles in " + (LIQUIDS[state.liquid].toLowerCase()) + ", filmed through " + modeTxt + " " + fmtNum(cfg.frame_rate_hz) + " times a second. " +
-      (small ? "Each particle is smaller than the blur of the optics, so you see a faint, shifting grain rather than dots." : "These particles are large enough to see one by one, but DDM never needs to find them.") +
-      " Particles above and below the focal plane add their blurred images too." + (TURNS() ? " They also turn, which changes how they look" + (cfg.polarization ? " between the polarizers." : state.mode === "darkfield" ? " in dark field." : ".") : "");
+      visibilityText(cfg, m) + " Particles above and below the focal plane add wider, fainter blurs." + (TURNS() ? " They also turn, which changes how they look" + (cfg.polarization ? " between the polarizers." : state.mode === "darkfield" ? " in dark field." : ".") : "");
     $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s = " + fmtSig(m.T / m.frame_rate_hz, 3) + " s. Cell " + cfg.cell_um + " " + MU + "m thick, focus " + fmtSig(cfg.focus_um, 2) + " " + MU + "m above the bottom, " + m.info.n_particles + " particles.";
-    $("diff-note").textContent = small && TRANS() ? "With particles this small the difference looks like plain noise to the eye. The order hidden in it appears in the next step." : "";
+    if ($("turn-note")) $("turn-note").hidden = !TURNS();
+    $("diff-note").textContent = "A particle that moved leaves a pair of spots, one darker and one brighter, at its old and its new place. Their arrangement looks random; the order hidden in it appears in the next step.";
     const sb = $("movie-scale"), target = m.L_um / 4, nice = niceStep(target) > target ? niceStep(target) / 2 : niceStep(target);
     sb.querySelector("i").style.width = (100 * nice / m.L_um).toFixed(1) + "%"; sb.querySelector("span").textContent = fmtSig(nice, 2) + " " + MU + "m"; sb.style.width = "100%";
   }
@@ -1363,7 +1386,7 @@
     } else L.push("  No result: too few usable wave vectors.");
     L.push("");
     L.push("Evaluation");
-    L.push("  Algorithm: differential dynamic microscopy; structure function azimuthally averaged (central cross masked); noise B from the zero-delay intercept, A + B = 2 var; " + MODEL_NAME[r.fit_model] + " fit at each q; D as the weighted mean of Gamma / q^2 (geometric mean, logarithmic scale); cumulants to second order on f(q, dt) from f = 1 down to f1/10.");
+    L.push("  Algorithm: differential dynamic microscopy; structure function azimuthally averaged (central cross masked); " + (r.B_floor !== null && r.B_floor !== undefined ? "noise B from the flat floor beyond the optical cut-off" : "noise B from the zero-delay intercept of the first five delays") + ", A + B = 2 var; " + MODEL_NAME[r.fit_model] + " fit at each q; D as the weighted mean of Gamma / q^2 (geometric mean, logarithmic scale); cumulants to second order on f(q, dt) from f = 1 down to f1/10.");
     L.push("  Wave vectors used: " + (r.used.length ? r.used[0].q_per_um.toFixed(2) + " to " + r.used[r.used.length - 1].q_per_um.toFixed(2) + " um^-1" : "none") + "; delays " + fmtTime(r.taus_s[0]) + " to " + fmtTime(r.taus_s[r.taus_s.length - 1]) + ".");
     L.push("  Results are weighted by the signal of each particle in the images (the counterpart of intensity weighting in DLS); no conversion to volume or number distributions.");
     L.push("");
@@ -1392,18 +1415,18 @@
   function ECOLI(mode) { return { sim_px: BASE.sim_px, shape: "rod", particle: "bacterium", diameter_um: 2, aspect: 2.5, liquid: "custom", n_liquid: 1.345, visc_mPa_s: 1.87, T_C: 24, mode: mode, df_kind: "annulus", annulus: "Ph3", condenser: "lwd", na_c: 0.3, objective: objIndexByName("CFI Achromat 10X"), binning: 2, frame_rate_hz: 20, exposure_ms: 5, n_frames: 512, phi: 4e-4, cell_um: 50, source: "halogen", settle: "on", rho_liquid: 1.10 }; }
   function PEANUT(images) { return { sim_px: BASE.sim_px, shape: "prolate", particle: "silica", diameter_um: 1.72, aspect: 2.3, objective: objIndexByName("CFI S Plan Fluor ELWD 40XC"), condenser: "lwd", na_c: 0.52, binning: 2, frame_rate_hz: 25, exposure_ms: 2, n_frames: 512, phi: 5e-3, cell_um: 5, focus_frac: 0.12, settle: "on", images: images }; }
   const CARDS = [
-    { lvl: 1, title: "A camera that is too slow", text: "If a pattern renews completely between two frames, its rate cannot be read. Fine patterns are lost first. Use a faster frame rate (a smaller region of interest on the camera allows it) or a lower magnification.",
+    { lvl: 1, title: "A camera that is too slow", text: "If a pattern renews completely between two frames, its rate cannot be read. Fine patterns are lost first. Use a faster frame rate (a smaller region of interest on the camera allows it), or a lower magnification, which looks at wider and slower patterns.",
       shows: [{ label: "Show me", set: { frame_rate_hz: 8, exposure_ms: 1 }, go: "step-rates" }] },
     { lvl: 1, title: "A movie that is too short", text: "Wide patterns change slowly. If the movie ends before they have renewed, their curves never reach the top. Large particles need long movies.",
       shows: [{ label: "Show me", set: { diameter_um: 1, phi: 1e-3, frame_rate_hz: 100, n_frames: 128 }, go: "step-curves" }] },
-    { lvl: 1, title: "Too little light", text: "Shot noise adds a flat floor to every curve and hides the patterns whose signal is weakest. More light, more frames or binning help.",
-      shows: [{ label: "Dim light", set: { light_frac: 0.005 }, go: "step-rates", lvl: 2 }, { label: "Dim light, 2 x 2 binning", set: { light_frac: 0.005, binning: 2, phi: 2.5e-5 }, go: "step-rates", lvl: 2 }] },
+    { lvl: 1, title: "Too little light", text: "Shot noise adds a flat floor to every curve and hides the patterns whose signal is weakest. More light helps most; binning (a wider field with coarser pixels) and more frames help a little.",
+      shows: [{ label: "Dim light", set: { light_frac: 0.005 }, go: "step-rates" }, { label: "Dim light, 2 x 2 binning", set: { light_frac: 0.005, binning: 2 }, go: "step-rates" }, { label: "Four times more light", set: { light_frac: 0.02 }, go: "step-rates" }] },
     { lvl: 2, title: "Matching refractive indices", text: "A particle is visible in bright field only because its refractive index differs from the liquid's. PMMA (1.49) in water with 90 % glycerol (1.46) almost disappears, and so does the signal.",
       shows: [{ label: "PMMA in water", set: { particle: "pmma", diameter_um: 0.3, phi: 2e-4, frame_rate_hz: 100 }, go: "step-setup" }, { label: "PMMA in 90 % glycerol", set: { particle: "pmma", diameter_um: 0.3, phi: 2e-4, liquid: "glycerol", glycerol_w: 0.9, frame_rate_hz: 2 , exposure_ms: 1 }, go: "step-setup" }] },
     { lvl: 2, title: "The condenser aperture", text: "Closing the aperture diaphragm makes the light more coherent: particles show stronger, ringed images and stay visible further from focus. Opening it gives sharper optical sections and less contrast.",
       shows: [{ label: "Nearly closed (NA 0.05)", set: { na_c: 0.05 }, go: "step-setup" }, { label: "LWD fully open (NA 0.52)", set: { condenser: "lwd", na_c: 0.52 }, go: "step-setup" }] },
     { lvl: 2, title: "Magnification and aperture", text: "The objective sets which patterns you can see. Low magnification gives a wide field and reaches large spacings; a high numerical aperture resolves finer ones. The dashed circle in step 4 moves with it.",
-      shows: [{ label: "10x, NA 0.3", set: { objective: objIndexByName("CFI Plan Fluor 10X"), frame_rate_hz: 30, phi: 2.5e-5 }, go: "step-map" }, { label: "40x, NA 0.75", set: { objective: objIndexByName("CFI Plan Fluor 40X"), frame_rate_hz: 300, exposure_ms: 1, phi: 4e-4 }, go: "step-map" }] },
+      shows: [{ label: "10x, NA 0.3", set: { objective: objIndexByName("CFI Plan Fluor 10X"), frame_rate_hz: 30 }, go: "step-map" }, { label: "40x, NA 0.75", set: { objective: objIndexByName("CFI Plan Fluor 40X"), frame_rate_hz: 300, exposure_ms: 1, phi: 4e-4 }, go: "step-map" }] },
     { lvl: 2, title: "Confocal sectioning", text: "A confocal microscope sees a thin slice. Particles that wander out of the slice look as if they had renewed the pattern, so at small q the rate stops falling and levels off at about one over the time needed to diffuse out of the slice. Compare the points with the dashed line of pure diffusion; the size comes out too small.",
       shows: [{ label: "Spinning disk, Kinetix", set: { mode: "spinning", camera: "kinetix", cam_mode: "dynamic", iface: "pcie", binning: 2, n_frames: 512, objective: objIndexByName("CFI Plan Apochromat IR 60XC WI"), diameter_um: 0.2, phi: 1e-4, cell_um: 10, focus_frac: 0.5, frame_rate_hz: 100, exposure_ms: 4 }, go: "step-rates" },
               { label: "Point scanning, AX R", set: { mode: "scanning", objective: objIndexByName("CFI Plan Apochromat IR 60XC WI"), diameter_um: 0.5, phi: 1e-3, cell_um: 10, focus_frac: 0.5, scan_px: 512, line_avg: 2, frame_rate_hz: 14, scan_rate: 1e8 }, go: "step-rates", lvl: 3 }] },
@@ -1411,7 +1434,7 @@
       shows: [{ label: "Phase contrast, 40x Ph2", set: { mode: "phase", objective: objIndexByName("CFI Plan Fluor DLL 40X"), annulus: "Ph2", diameter_um: 0.3, phi: 2e-4, frame_rate_hz: 200, exposure_ms: 0.2 }, go: "step-setup" },
               { label: "Poor man's dark field: Ph3 annulus, 10x", set: { mode: "darkfield", df_kind: "annulus", annulus: "Ph3", objective: objIndexByName("CFI Plan Fluor 10X"), diameter_um: 0.3, phi: 5e-5, frame_rate_hz: 30 }, go: "step-setup" },
               { label: "Rich man's dark field: dry condenser, 20x", set: { mode: "darkfield", df_kind: "dry", diameter_um: 0.3, phi: 2e-4, frame_rate_hz: 100 }, go: "step-setup" }] },
-    { lvl: 2, title: "DIC sees a direction", text: "DIC compares the image with a copy shifted by a fraction of a micrometre. Patterns across the shear barely show for particles near focus, so the map in step 4 gets squashed along one direction; particles far from focus look the same in every direction and round it again. The radial average still gives the right dynamics.",
+    { lvl: 2, title: "DIC sees a direction", text: "DIC compares the image with a copy shifted by a fraction of a micrometre. Stripes that run along the shear barely show for particles near focus, so the map in step 4 gets squashed along one direction; particles far from focus look the same in every direction and round it again. The radial average still gives the right dynamics.",
       shows: [{ label: "DIC, 60x water", set: { mode: "dic", objective: objIndexByName("CFI Plan Apochromat IR 60XC WI"), condenser: "lwd", na_c: 0.5, diameter_um: 0.3, phi: 4e-4, cell_um: 10, focus_frac: 0.5, frame_rate_hz: 200, exposure_ms: 0.2 }, go: "step-map" }] },
     { lvl: 3, title: "When each row is recorded", text: "A rolling-shutter camera exposes its rows one after the other and a point scanner records them line by line, so the top and bottom of a frame are not taken at the same moment. For fast dynamics this mixes time into the vertical direction. A global shutter avoids it.",
       shows: [{ label: "ORCA, full chip at 100 frames/s", set: { camera: "orca", roi: 2048, binning: 4, diameter_um: 0.1, phi: 2e-5, frame_rate_hz: 100 }, go: "step-map" }, { label: "CB2, global shutter", set: { camera: "cb2", cam_mode: "b12", iface: "cxp", roi: 512, binning: 1, frame_rate_hz: 100, exposure_ms: 5.3 }, go: "step-map" }] },
@@ -1462,6 +1485,10 @@
     document.querySelectorAll(".predict").forEach(function (box) {
       box.querySelectorAll("button[data-guess]").forEach(function (btn) {
         btn.addEventListener("click", function () {
+          if (box.classList.contains("answered")) return;
+          box.classList.add("answered");
+          box.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = true; b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+          box.querySelector(".verdict").textContent = btn.getAttribute("data-guess") === box.getAttribute("data-right") ? "Well guessed." : "Not quite.";
           box.querySelector(".a").hidden = false;
           const kind = box.getAttribute("data-predict");
           if (kind === "size") state.diameter_um = Math.min(5, state.diameter_um * 2);
@@ -1477,7 +1504,7 @@
   document.querySelectorAll('input[name="level"]').forEach(function (r) { r.addEventListener("change", function () { if (r.checked) setLevel(r.value, true); }); });
   document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }); });
   window.addEventListener("hashchange", function () { const h = location.hash.slice(1); if (LEVEL_RANK[h] && h !== level) setLevel(h, false); });
-  $("btn-reset").addEventListener("click", function () { const keep = level === "researcher" ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); constrain(); syncControls(); drawFov(); schedule(); });
+  $("btn-reset").addEventListener("click", function () { const keep = level === "researcher" ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
   $("btn-seed").addEventListener("click", function () { state.seed = (state.seed * 1103515245 + 12345) % 2147483647; schedule(); });
   $("btn-play").addEventListener("click", function () { playing = !playing; $("btn-play").textContent = playing ? "Pause" : "Play"; });
   $("btn-play").textContent = playing ? "Pause" : "Play";
@@ -1514,6 +1541,6 @@
       return { key: c.key, kind: c.kind, lvl: c.lvl, min: c.min, max: c.max, options: opts };
     }); },
     truth: function () { return cache && cache.movie ? cache.movie.truth : null; },
-    result: function () { return cache && cache.res ? { D: cache.res.D ? cache.res.D.D_um2_s : null, d: cache.res.diameter_um, rot: cache.res.rot && cache.res.rot.D_r_s ? cache.res.rot.D_r_s : null } : null; }
+    result: function () { return cache && cache.res ? { D: cache.res.D ? cache.res.D.D_um2_s : null, d: cache.res.diameter_um, rot: cache.res.rot && cache.res.rot.D_r_s ? cache.res.rot.D_r_s : null, reasons: cache.res.fits.map(function (f) { return f.reason; }) } : null; }
   };
 })();
