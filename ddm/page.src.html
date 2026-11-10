@@ -125,7 +125,7 @@ details.more dl { margin-top: 0.4rem; }
 /* bench */
 .bench-head { padding-block: 2rem 1rem; border-top: 1px solid var(--rule); }
 .bench { display: grid; gap: 2rem; padding-bottom: 3rem; }
-@media (min-width: 64rem) { .bench { grid-template-columns: 17.5rem minmax(0, 1fr); gap: 2.5rem; align-items: start; } .controls { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); max-height: calc(100vh - 2rem); overflow: auto; } }
+@media (min-width: 64rem) { .bench { grid-template-columns: 17.5rem minmax(0, 1fr); gap: 2.5rem; align-items: start; } .controls { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); max-height: calc(100vh - 5rem); overflow: auto; } }
 .controls { font-family: var(--sans); font-size: 0.9rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 1rem; display: grid; gap: 1rem; }
 .controls h3 { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
 .cgroup { display: grid; gap: 0.7rem; }
@@ -142,6 +142,14 @@ button { font: 500 0.88rem var(--sans); padding: 0.45rem 0.8rem; border-radius: 
 button:hover { border-color: var(--accent); }
 button.primary { background: var(--accent); border-color: var(--accent); color: var(--paper); }
 .status { font-size: 0.82rem; color: var(--muted); min-height: 1.3em; }
+.runbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--panel); border-top: 1px solid var(--rule); box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06); font-family: var(--sans); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.runbar-inner { display: flex; align-items: center; gap: 0.9rem; padding-block: 0.5rem; }
+.runbar .bar { flex: 0 0 min(16rem, 38%); height: 6px; border-radius: 3px; }
+.runbar .status { flex: 1 1 auto; min-width: 0; min-height: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.runbar.busy .status { color: var(--ink); font-weight: 500; }
+.runbar.busy .bar span { background: var(--accent); }
+.runbar:not(.busy) .bar span { background: var(--good); }
+body { padding-bottom: 3.2rem; }
 .bar { height: 4px; background: var(--rule); border-radius: 2px; overflow: hidden; }
 .bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.1s linear; }
 .error { color: var(--bad); background: var(--bad-bg); border-radius: 6px; padding: 0.6rem 0.8rem; font-family: var(--sans); font-size: 0.9rem; }
@@ -265,10 +273,6 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
       <div class="btns">
         <button type="button" id="btn-reset">Back to the standard sample</button>
         <button type="button" id="btn-seed" class="lvl-3">New random sample</button>
-      </div>
-      <div>
-        <div class="bar" aria-hidden="true"><span id="bar"></span></div>
-        <div class="status" id="status" aria-live="polite"></div>
       </div>
       <div class="error" id="error" hidden></div>
     </aside>
@@ -530,6 +534,13 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     </ul>
   </section>
 </main>
+<!-- progress of the simulation, pinned to the bottom of the window so it is always in view -->
+<div class="runbar" id="runbar">
+  <div class="wrap runbar-inner">
+    <div class="bar" aria-hidden="true"><span id="bar"></span></div>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+  </div>
+</div>
 <footer class="site"><div class="wrap">Roberto Cerbino, University of Vienna. The simulation and the analysis run entirely in your browser; nothing is uploaded.</div></footer>
 
 <script type="application/json" id="objectives-data">/*OBJECTIVES*/</script>

@@ -565,8 +565,10 @@
   }
   function schedule() { clearTimeout(timer); timer = setTimeout(function () { start("simulate"); }, 150); }
   function scheduleAnalysis() { clearTimeout(timer); timer = setTimeout(function () { start(cache.movie ? "analyse" : "simulate"); }, 150); }
-  function progress(frac, stage) { $("bar").style.width = (100 * frac).toFixed(1) + "%"; $("status").textContent = stage + "..."; }
-  function showError(msg) { const el = $("error"); el.hidden = false; el.textContent = "The run stopped: " + msg; $("status").textContent = ""; $("bar").style.width = "0"; }
+  // the progress bar is pinned to the bottom of the window; "busy" while a run is going
+  function progress(frac, stage) { $("bar").style.width = (100 * frac).toFixed(1) + "%"; $("status").textContent = stage + "..."; $("runbar").classList.add("busy"); }
+  function idle() { $("runbar").classList.remove("busy"); }
+  function showError(msg) { const el = $("error"); el.hidden = false; el.textContent = "The run stopped: " + msg; $("status").textContent = "The run stopped: see the message under the settings."; $("bar").style.width = "0"; idle(); }
   let inflight = null;
   // repeated measurements (five new movies with the same settings), kept until the next run
   let repeat = null, lastRunS = null, runStart = 0;
@@ -582,7 +584,7 @@
     repeat = { runs: [], done: false, token: token };
     renderResult(); progress(0, "Repeating: movie 1 of 5");
     const got = function (sm) { if (token !== runToken || !repeat || repeat.token !== token) return; const r = repeatRun(sm); if (r) repeat.runs.push(r); renderResult(); };
-    const end = function () { if (token !== runToken || !repeat) return; repeat.done = true; $("bar").style.width = "100%"; $("status").textContent = "Done. Five repeated movies analysed."; renderResult(); };
+    const end = function () { if (token !== runToken || !repeat) return; repeat.done = true; $("bar").style.width = "100%"; $("status").textContent = "Done. Five repeated movies analysed."; idle(); renderResult(); };
     if (worker) {
       worker.onmessage = function (ev) {
         const m = ev.data; if (m.token !== runToken) return;
@@ -652,7 +654,7 @@
     res.used = res.fits.filter(function (f) { return f.reason === null; });
     pickDefaultSelection();
     $("bar").style.width = "100%";
-    $("status").textContent = "Done. " + movie.T + " frames of " + movie.n + " x " + movie.n + " pixels, " + movie.info.n_particles + " particles.";
+    $("status").textContent = "Done. " + movie.T + " frames of " + movie.n + " x " + movie.n + " pixels, " + movie.info.n_particles + " particles."; idle();
     frameIdx = 0;
     renderAll();
   }
