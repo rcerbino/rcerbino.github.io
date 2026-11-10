@@ -6,6 +6,12 @@ intro: >-
 # Group news is pulled automatically from the SoMeX website and does not need
 # to be repeated here.
 news:
+  - date: 2026-11
+    text: >-
+      New on this site: DDM, hands on, a page that simulates Differential
+      Dynamic Microscopy experiments in the browser and shows each step of the
+      analysis.
+    url: https://rcerbino.github.io/ddm/
   - date: 2026-04
     text: >-
       The FFG project NEFCoEG starts. It supports the ground programme of the

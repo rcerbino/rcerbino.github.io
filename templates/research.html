@@ -15,7 +15,7 @@
   <h2>{{ t.title }}</h2>
   <div class="theme-body">
     <div class="theme-text">
-      <p>{{ t.text }}</p>
+      <p>{{ t.text | linkify(root) }}</p>
       {{ plate(visuals.themes[t.id], root) }}
     </div>
     {% if t.papers %}

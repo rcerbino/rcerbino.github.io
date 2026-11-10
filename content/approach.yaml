@@ -101,6 +101,8 @@ sections:
     links:
       - label: fastddm on GitHub
         href: https://github.com/somexlab/fastddm
+      - label: DDM, hands on
+        href: ddm/
       - label: Publications
         href: publications/
 
