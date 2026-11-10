@@ -1,0 +1,550 @@
+<title>DDM, hands on</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  [hidden] { display: none !important; }
+/* Layout: the site's own page frame (header, measure, fluorescence palette); a two-column
+   "bench" where the controls stay in view and the analysis runs down as numbered steps. */
+:root {
+  --paper: #fafbfc;
+  --ink: #18202b;
+  --muted: #5a6472;
+  --rule: #dde2e8;
+  --accent: #2f45c5;      /* nuclei (DAPI) blue */
+  --accent-2: #b8233f;    /* actin red */
+  --tint: #eef1fb;
+  --panel: #ffffff;
+  --good: #1f7a4d; --good-bg: #dff3e8;
+  --warn: #8a5a00; --warn-bg: #fcefd6;
+  --bad: #a8322d;  --bad-bg: #f9e3e1;
+  --serif: "Spectral", Georgia, "Times New Roman", serif;
+  --sans: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --measure: 40rem;
+  --wide: 76rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0d1119; --ink: #e4e8ee; --muted: #98a2b3; --rule: #283040;
+    --accent: #93a1ff; --accent-2: #ff7a90; --tint: #161c2a; --panel: #121826;
+    --good: #6fd39a; --good-bg: #12301f; --warn: #f2b75c; --warn-bg: #3a2a10; --bad: #ff8f86; --bad-bg: #3a1714;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0d1119; --ink: #e4e8ee; --muted: #98a2b3; --rule: #283040;
+  --accent: #93a1ff; --accent-2: #ff7a90; --tint: #161c2a; --panel: #121826;
+  --good: #6fd39a; --good-bg: #12301f; --warn: #f2b75c; --warn-bg: #3a2a10; --bad: #ff8f86; --bad-bg: #3a1714;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--serif); font-size: 1.125rem; line-height: 1.65;
+}
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+.wrap { max-width: var(--wide); margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+@media (min-width: 40rem) { .wrap { padding-left: max(2rem, env(safe-area-inset-left, 0px)); padding-right: max(2rem, env(safe-area-inset-right, 0px)); } }
+
+/* site header (as on rcerbino.github.io) */
+.site-header { border-bottom: 1px solid var(--rule); }
+.header-inner { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 2rem; padding-block: 1.1rem 1rem; }
+.site-name { font-size: 1.35rem; font-weight: 500; color: var(--ink); text-decoration: none; }
+.site-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.2rem 1.25rem; }
+.site-nav a { font-family: var(--sans); font-size: 0.95rem; color: var(--muted); text-decoration: none; padding: 0.2rem 0; border-bottom: 2px solid transparent; }
+.site-nav a:hover { color: var(--ink); }
+.site-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+.proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
+
+h1, h2, h3 { font-weight: 500; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem); margin: 0 0 1rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; margin: 0 0 0.75rem; }
+h3 { font-size: 1.2rem; margin: 0 0 0.5rem; }
+p { margin: 0 0 1rem; }
+.lede { font-size: 1.25rem; line-height: 1.6; max-width: var(--measure); }
+.prose { max-width: var(--measure); }
+.small { font-family: var(--sans); font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
+.eyebrow { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 0.35rem; }
+
+/* reader levels: what each reader sees */
+html[data-level="curious"] .lvl-2, html[data-level="curious"] .lvl-3, html[data-level="student"] .lvl-3 { display: none !important; }
+html[data-level="student"] .only-1, html[data-level="researcher"] .only-1 { display: none !important; }
+html[data-level="curious"] details.math { display: none; }
+
+/* opening */
+.intro { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; padding-block: 2.5rem 1.5rem; align-items: center; }
+.intro > * { min-width: 0; }
+@media (min-width: 56rem) { .intro { grid-template-columns: minmax(0, 1fr) 19rem; gap: 3.5rem; } }
+.porthole { margin: 0; justify-self: center; display: grid; gap: 0.75rem; justify-items: center; }
+.porthole .lens { width: min(19rem, 78vw); aspect-ratio: 1; border-radius: 50%; overflow: hidden; border: 1px solid var(--rule); box-shadow: 0 0 0 10px var(--tint); background: #000; max-width: 100%; }
+.porthole canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+.porthole figcaption { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); text-align: center; max-width: 18rem; }
+
+.levels { margin: 1.5rem 0 0; border: 0; padding: 0; min-width: 0; }
+.levels legend { font-family: var(--sans); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; padding: 0; }
+.level-opts { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); max-width: 44rem; }
+.level-opts label { display: grid; gap: 0.1rem; padding: 0.6rem 0.8rem; border: 1px solid var(--rule); border-radius: 6px; cursor: pointer; font-family: var(--sans); background: var(--panel); }
+.level-opts input { position: absolute; opacity: 0; pointer-events: none; }
+.level-opts .t { font-weight: 600; font-size: 0.98rem; }
+.level-opts .d { font-size: 0.82rem; color: var(--muted); line-height: 1.35; }
+.level-opts label:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--tint); }
+.level-opts label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* result card */
+.result { font-family: var(--sans); border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); padding: 1rem 1.1rem; display: grid; gap: 0.5rem; }
+.result .big { font-family: var(--serif); font-size: 2.1rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.result .big small { font-size: 1rem; color: var(--muted); }
+.result dl { display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 1rem; margin: 0; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.result dt { color: var(--muted); }
+.result dd { margin: 0; }
+.chip { display: inline-block; font-family: var(--sans); font-size: 0.8rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 999px; justify-self: start; }
+.chip.good { color: var(--good); background: var(--good-bg); }
+.chip.warn { color: var(--warn); background: var(--warn-bg); }
+.chip.bad { color: var(--bad); background: var(--bad-bg); }
+.chip.info { color: var(--muted); background: var(--tint); }
+table.sizing { width: 100%; border-collapse: collapse; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+table.sizing td { white-space: nowrap; }
+table.sizing th, table.sizing td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--rule); text-align: right; vertical-align: top; }
+table.sizing th[scope="row"], table.sizing thead th:first-child { text-align: left; font-weight: 500; }
+table.sizing thead th { color: var(--muted); font-weight: 500; font-size: 0.8rem; }
+table.sizing tr.main th, table.sizing tr.main td { font-weight: 700; }
+table.sizing tr.truth th, table.sizing tr.truth td { color: var(--accent-2); }
+table.sizing .note { display: block; font-size: 0.76rem; font-weight: 400; color: var(--muted); }
+.checks ul { list-style: none; margin: 0.3rem 0 0; padding: 0; display: grid; gap: 0.45rem; }
+.checks li { display: grid; grid-template-columns: 4.2rem 1fr; gap: 0.6rem; align-items: start; font-size: 0.86rem; line-height: 1.45; }
+.checks li .chip { justify-self: stretch; text-align: center; }
+details.more summary { cursor: pointer; font-size: 0.85rem; color: var(--muted); }
+details.more dl { margin-top: 0.4rem; }
+.hero-result { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1rem; font-family: var(--sans); margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--rule); max-width: 44rem; }
+.hero-result .n { font-family: var(--serif); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+
+/* bench */
+.bench-head { padding-block: 2rem 1rem; border-top: 1px solid var(--rule); }
+.bench { display: grid; gap: 2rem; padding-bottom: 3rem; }
+@media (min-width: 64rem) { .bench { grid-template-columns: 17.5rem minmax(0, 1fr); gap: 2.5rem; align-items: start; } .controls { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); max-height: calc(100vh - 2rem); overflow: auto; } }
+.controls { font-family: var(--sans); font-size: 0.9rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 1rem; display: grid; gap: 1rem; }
+.controls h3 { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.cgroup { display: grid; gap: 0.7rem; }
+.ctl { display: grid; gap: 0.2rem; }
+.ctl .row { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
+.ctl label { font-weight: 500; }
+.ctl output { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; white-space: nowrap; }
+.ctl input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
+.ctl select, .ctl input[type="number"] { font: inherit; padding: 0.3rem 0.4rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink); width: 100%; }
+.ctl .hint { font-size: 0.78rem; color: var(--muted); line-height: 1.35; }
+.qrange { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+.btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+button { font: 500 0.88rem var(--sans); padding: 0.45rem 0.8rem; border-radius: 5px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.status { font-size: 0.82rem; color: var(--muted); min-height: 1.3em; }
+.bar { height: 4px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.1s linear; }
+.error { color: var(--bad); background: var(--bad-bg); border-radius: 6px; padding: 0.6rem 0.8rem; font-family: var(--sans); font-size: 0.9rem; }
+
+.steps { display: grid; gap: 3rem; min-width: 0; }
+.step { display: grid; gap: 1rem; min-width: 0; scroll-margin-top: 1rem; }
+.step-title { display: flex; gap: 0.75rem; align-items: baseline; }
+.step-title .num { font-family: var(--sans); font-size: 0.85rem; font-weight: 600; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; min-width: 1.7rem; height: 1.7rem; display: inline-grid; place-items: center; flex: none; }
+.step-title h2 { margin: 0; }
+.step-body { display: grid; gap: 1.25rem; min-width: 0; }
+@media (min-width: 48rem) { .step-body.split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+.text { min-width: 0; max-width: var(--measure); }
+.text p:last-child { margin-bottom: 0; }
+
+figure.viz { margin: 0; display: grid; gap: 0.5rem; min-width: 0; }
+.imgbox { position: relative; background: #000; border-radius: 4px; overflow: hidden; aspect-ratio: 1; max-width: 100%; }
+.imgbox canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.imgbox canvas.overlay { image-rendering: auto; }
+.imgbox .scale { position: absolute; left: 8px; bottom: 8px; font: 600 0.75rem var(--sans); color: #fff; text-shadow: 0 0 3px #000; }
+.imgbox .scale i { display: block; height: 3px; background: #fff; margin-bottom: 3px; box-shadow: 0 0 2px #000; }
+.pair { display: grid; gap: 0.75rem; grid-template-columns: 1fr 1fr; }
+.pair .cap { font-family: var(--sans); font-size: 0.8rem; color: var(--muted); }
+figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); line-height: 1.45; font-variant-numeric: tabular-nums; }
+.readout b { color: var(--ink); font-weight: 600; }
+.chart { position: relative; width: 100%; height: 300px; }
+.chart canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.chart.short { height: 220px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-family: var(--sans); font-size: 0.88rem; }
+.toolbar input[type="range"] { flex: 1 1 10rem; accent-color: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 0.3rem 0.7rem; background: var(--panel); }
+.seg button[aria-pressed="true"] { background: var(--tint); color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-family: var(--sans); font-size: 0.8rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.reasons { font-family: var(--sans); font-size: 0.82rem; color: var(--muted); margin: 0; padding-left: 1.1rem; }
+
+details.math { font-family: var(--sans); font-size: 0.92rem; border-left: 2px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; padding: 0.55rem 0.9rem; max-width: var(--measure); }
+details.math summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+details.math .eq { font-family: var(--serif); font-size: 1.05rem; margin: 0.6rem 0; overflow-x: auto; white-space: nowrap; }
+details.math p { margin: 0.5rem 0; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--paper); border: 1px solid var(--rule); border-radius: 3px; padding: 0.05em 0.3em; }
+pre.code { font-family: var(--mono); font-size: 0.8rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 0.6rem; overflow-x: auto; margin: 0.5rem 0; line-height: 1.45; }
+
+.predict { font-family: var(--sans); font-size: 0.92rem; border: 1px dashed var(--accent); border-radius: 6px; padding: 0.7rem 0.9rem; display: grid; gap: 0.5rem; max-width: var(--measure); }
+.predict .q { font-weight: 600; }
+.predict .a { color: var(--ink); }
+
+/* what matters */
+.matters { border-top: 1px solid var(--rule); padding-block: 2.5rem 1rem; }
+.cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); margin-top: 1.25rem; }
+.card { border: 1px solid var(--rule); border-radius: 8px; padding: 1rem; display: grid; gap: 0.5rem; align-content: start; background: var(--panel); }
+.card h3 { margin: 0; font-size: 1.1rem; }
+.card p { font-size: 0.98rem; margin: 0; }
+.card .btns { margin-top: 0.25rem; }
+.further { border-top: 1px solid var(--rule); padding-block: 2.5rem 3rem; }
+.further ul { padding-left: 1.2rem; max-width: var(--measure); }
+.further li { margin-bottom: 0.5rem; }
+footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-size: 0.85rem; color: var(--muted); padding-block: 1.2rem 2rem; }
+
+.fovbox { height: 300px; }
+.pstrip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.5rem; max-width: 34rem; }
+.pstrip figure { margin: 0; display: grid; gap: 0.25rem; }
+.pstrip canvas { width: 100%; aspect-ratio: 1; image-rendering: pixelated; border-radius: 3px; background: #000; max-width: 100%; }
+.pstrip figcaption { font-family: var(--sans); font-size: 0.75rem; color: var(--muted); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+</style>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="site-name" href="https://rcerbino.github.io/">Roberto Cerbino</a>
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="https://rcerbino.github.io/">Home</a></li>
+        <li><a href="https://rcerbino.github.io/about/">About</a></li>
+        <li><a href="https://rcerbino.github.io/research/">Research</a></li>
+        <li><a href="#" aria-current="page">DDM</a></li>
+        <li><a href="https://rcerbino.github.io/publications/">Publications</a></li>
+        <li><a href="https://rcerbino.github.io/talks/">Talks</a></li>
+        <li><a href="https://rcerbino.github.io/teaching/">Teaching</a></li>
+        <li><a href="https://rcerbino.github.io/contact/">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<div class="proto-note"><div class="wrap">This web page is a divertissement. For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the particles do not interact) and rely on many approximations. Found something wrong or not working? Please let us know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</div></div>
+
+<main>
+  <section class="wrap intro">
+    <div>
+      <p class="eyebrow">Differential dynamic microscopy</p>
+      <h1>Sizing particles from how they move</h1>
+      <p class="lede">Particles in a liquid jiggle because the molecules around them keep kicking them, and small particles jiggle faster than large ones. Differential dynamic microscopy (DDM) measures this motion from an ordinary microscope movie without following any single particle, so it works for particles too small to be seen as well as for large ones. From how fast they wander follows their size: the same principle as dynamic light scattering (DLS), but with a microscope, many scattering angles at once, and in samples where DLS struggles (turbid, fluorescent or tiny ones). Particle sizing is one use of DDM among many (see "Beyond sizing" below). Here a simulated microscope lets you run the whole analysis yourself, from the raw movie to a particle size.</p>
+      <fieldset class="levels">
+        <legend>How deep do you want to go?</legend>
+        <div class="level-opts" role="radiogroup">
+          <label><input type="radio" name="level" id="lv-curious" value="curious"><span class="t">Curious</span><span class="d">The idea in words and pictures, no equations.</span></label>
+          <label><input type="radio" name="level" id="lv-student" value="student"><span class="t">Student</span><span class="d">The method step by step, equations folded away.</span></label>
+          <label><input type="radio" name="level" id="lv-researcher" value="researcher"><span class="t">Researcher</span><span class="d">All controls, equations open, and the matching fastDDM calls.</span></label>
+        </div>
+      </fieldset>
+      <div class="hero-result" id="hero-result" aria-live="polite">
+        <span>Simulating the movie...</span>
+      </div>
+    </div>
+    <figure class="porthole">
+      <div class="lens"><canvas id="hero-canvas" width="128" height="128" aria-label="Simulated microscope movie"></canvas></div>
+      <figcaption id="hero-cap">Live simulated bright-field movie</figcaption>
+    </figure>
+  </section>
+
+  <section class="wrap bench-head" aria-labelledby="bench-title">
+    <p class="eyebrow">Hands on</p>
+    <h2 id="bench-title">The bench</h2>
+    <p class="prose">Change the sample, the microscope or the camera on the left. The movie is recorded again and every step below updates. A run takes a few seconds, because every particle is imaged with the real optics of the microscope.</p>
+  </section>
+
+  <div class="wrap bench">
+    <aside class="controls" id="controls" aria-label="Experiment settings">
+      <div id="ctl-groups" class="cgroup" style="gap:1.1rem"></div>
+      <div class="btns">
+        <button type="button" id="btn-reset">Back to the standard sample</button>
+        <button type="button" id="btn-seed" class="lvl-3">New random sample</button>
+      </div>
+      <div>
+        <div class="bar" aria-hidden="true"><span id="bar"></span></div>
+        <div class="status" id="status" aria-live="polite"></div>
+      </div>
+      <div class="error" id="error" hidden></div>
+    </aside>
+
+    <div class="steps">
+      <!-- 1 -->
+      <section class="step" id="step-setup" aria-labelledby="h-setup">
+        <div class="step-title"><span class="num">1</span><h2 id="h-setup">Set up the microscope</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="chart fovbox"><canvas id="fov" aria-label="Field of view of the microscope, camera sensor and region of interest"></canvas></div>
+            <div class="legend" id="fov-legend"></div>
+          </figure>
+          <div class="text">
+            <p>The microscope sees a round field 25 mm across in its image plane. A camera chip covers a rectangle in it, and you choose which part of the chip to read out: a smaller region can be read faster. A point-scanning confocal instead sweeps a laser spot over a square, line by line.</p>
+            <p class="readout" id="fov-specs"></p>
+          </div>
+        </div>
+        <div class="text lvl-2"><h3>How one particle looks</h3></div>
+        <figure class="viz lvl-2">
+          <div class="pstrip" id="particle-strip"></div>
+          <figcaption id="particle-text"></figcaption>
+        </figure>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: how each image is computed</summary>
+          <p><b>Bright field.</b> The condenser fills its aperture with mutually incoherent plane waves (spatial coherence) at the wavelengths of the lamp spectrum (temporal coherence). For each of them, the light scattered by the sphere, computed exactly with Mie theory from the particle and liquid refractive indices, interferes with the transmitted light after passing the objective pupil. The intensities are then added. The same formula covers the other transmitted-light methods by changing the illumination and the pupil: <b>phase contrast</b> lights the sample through a thin annulus and gives the objective pupil a ring that dims the direct light and shifts its phase by a quarter wave; <b>dark field</b> uses illumination steeper than the objective can collect, so only the |<i>E</i><sub>s</sub>|<sup>2</sup> term is left; <b>DIC</b> multiplies the pupil by <i>i</i> sin((<b>&kappa;</b>&middot;<b>s</b> + &phi;)/2), with <b>s</b> the shear and &phi; the bias, so the image depends on the direction of <b>q</b>. For a particle at distance <i>z</i> from focus, the Fourier transform of its image is</p>
+          <div class="eq"><i>K</i>(<b>q</b>, <i>z</i>) = &lang; &minus;(2&pi;/<i>k</i>) <i>P</i>(<b>&kappa;</b>)<i>P</i>(<b>&kappa;</b>+<b>q</b>) <i>S</i>(&theta;) e<sup><i>i</i>(<i>k<sub>z</sub></i>(<b>&kappa;</b>) &minus; <i>k<sub>z</sub></i>(<b>&kappa;</b>+<b>q</b>))<i>z</i></sup> / <i>k<sub>z</sub></i> + c.c.(&minus;<b>q</b>) &rang;<sub>source, &lambda;</sub> + |<i>E</i><sub>s</sub>|<sup>2</sup> term</div>
+          <p>with <i>S</i> = (<i>S</i><sub>1</sub> + <i>S</i><sub>2</sub>)/2 the Mie amplitude at the scattering angle &theta; and <i>P</i> the pupil with aplanatic apodization. At <i>q</i> = 0 the interference term equals minus the extinction cross-section (optical theorem), which the code checks.</p>
+          <p><b>Fluorescence.</b> Emission is incoherent: the image is the dyed sphere convolved with the scalar Debye point spread function. <b>Confocal</b> (spinning disk or point scanning): excitation spread times emission spread convolved with the pinhole projected on the sample; cross-talk between the disk pinholes is neglected.</p>
+          <p><b>Movie.</b> Dilute particles diffuse in 3D (Stokes-Einstein, reflecting walls); each frame is the sum of their images, recorded with the detector's pixel size, quantum efficiency, shot noise, read noise and full well. Each particle is imaged when its row is exposed (rolling shutters) or scanned (point scanners). Neglected: multiple scattering, interference between light scattered by different particles, aberrations of immersion objectives focusing into water, polarization effects of high-NA optics (paraxial polarizers; the DIC prisms are treated as ideal), stray light in dark field other than a fixed share of the illumination, hydrodynamic hindrance near the walls.</p>
+          <p><b>Particles that turn.</b> Each particle carries an axis <b>u</b> that diffuses on the sphere (rotational diffusion D<sub>R</sub>), and moves with D<sub>&#8741;</sub> along it and D<sub>&#8869;</sub> across it in its own frame (Perrin's formulas for ellipsoids, Tirado and Garcia de la Torre for rods). Its polarizability is a tensor &alpha; = &alpha;<sub>&#8869;</sub> I + (&alpha;<sub>&#8741;</sub> &minus; &alpha;<sub>&#8869;</sub>) <b>u u</b>, from the material's birefringence and from the shape. With a polarizer along <b>e</b><sub>P</sub> and an analyzer along <b>e</b><sub>A</sub>, the interference term is weighted by (<b>e</b><sub>A</sub>&middot;<b>e</b><sub>P</sub>)(<b>e</b><sub>A</sub>&middot;&alpha;&middot;<b>e</b><sub>P</sub>) and the scattered intensity by |<b>e</b><sub>A</sub>&middot;&alpha;&middot;<b>e</b><sub>P</sub>|<sup>2</sup>. Spheres keep their exact Mie field, scaled by these weights. Rods and ellipsoids are filled with small scatterers (Rayleigh-Gans), which also gives their shape in the image; in the scattered intensity the shape sets a tilt-dependent brightness &lang;|F(<b>Q</b>)|<sup>2</sup>&rang; over the illumination and collection angles.</p>
+          <p class="small">Checked against miepython (amplitudes to 1e-10), the optical theorem, a brute-force sum over 3000 source points, and the amplitude formula of fastDDM tutorial 6 in its range of validity.</p>
+        </details>
+      </section>
+
+      <!-- 2 -->
+      <section class="step" id="step-movie" aria-labelledby="h-movie">
+        <div class="step-title"><span class="num">2</span><h2 id="h-movie">Record a movie</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="imgbox"><canvas id="movie" width="128" height="128" aria-label="Microscope movie"></canvas><div class="scale" id="movie-scale"><i></i><span></span></div></div>
+            <div class="toolbar"><button type="button" id="btn-play">Pause</button><span class="readout" id="movie-time"></span></div>
+          </figure>
+          <div class="text">
+            <p id="movie-text"></p>
+            <p class="readout lvl-2" id="movie-specs"></p>
+          </div>
+        </div>
+        <details class="math" data-open-at="researcher">
+          <summary>In fastDDM</summary>
+          <p>The analysis below uses the same steps as fastDDM. With your own movie you would start from the image files:</p>
+          <pre class="code">import fastddm as fd
+img_seq = fd.read_images(file_names)</pre>
+        </details>
+      </section>
+
+      <!-- 2 -->
+      <section class="step" id="step-diff" aria-labelledby="h-diff">
+        <div class="step-title"><span class="num">3</span><h2 id="h-diff">Subtract two frames</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="imgbox"><canvas id="diff" width="128" height="128" aria-label="Difference between two frames"></canvas></div>
+            <div class="toolbar"><label for="lag">Delay</label><input type="range" id="lag" min="0" max="10" value="5"><output id="lag-out" class="readout"></output></div>
+          </figure>
+          <div class="text">
+            <p>Subtract a frame from one taken a little later. Everything that stays still, such as dust or uneven light, cancels out. What is left is only what moved.</p>
+            <p>Move the delay slider. With a short delay the difference is faint. With a longer one it grows, until the two frames have nothing left in common.</p>
+            <p id="diff-note"></p>
+          </div>
+        </div>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: the difference image</summary>
+          <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
+          <p>Anything that does not change in time disappears from &Delta;<i>I</i>. This is why DDM tolerates dirty optics and uneven illumination.</p>
+        </details>
+      </section>
+
+      <!-- 3 -->
+      <section class="step" id="step-map" aria-labelledby="h-map">
+        <div class="step-title"><span class="num">4</span><h2 id="h-map">Split it into stripe patterns</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="pair">
+              <div><div class="imgbox"><canvas id="map" width="128" height="128" aria-label="Power spectrum of the differences; click to choose a pattern"></canvas><canvas id="map-ov" class="overlay" width="512" height="512" style="cursor:crosshair"></canvas></div><div class="cap">Strength of each pattern (click it)</div></div>
+              <div><div class="imgbox"><canvas id="stripes" width="128" height="128" aria-label="The stripe pattern you selected"></canvas></div><div class="cap">The pattern you picked</div></div>
+            </div>
+            <div class="readout" id="pick-out"></div>
+          </figure>
+          <div class="text">
+            <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie.</p>
+            <p>The centre of the map holds wide stripes, the edge holds fine ones. Click the map to see which pattern a point stands for. The map uses the same delay as step 3.</p>
+            <p class="lvl-2">Distance from the centre is the wave vector <i>q</i> = 2&pi; / spacing. The particles have no preferred direction, so the map is round, and we average it along circles to get one value for each <i>q</i>. The dashed circle marks the finest pattern the objective can resolve.</p>
+          </div>
+        </div>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: image structure function</summary>
+          <div class="eq"><i>d</i>(<b>q</b>, &Delta;<i>t</i>) = &lang; |<i>F</i>[&Delta;<i>I</i>](<b>q</b>; <i>t</i>, &Delta;<i>t</i>)|<sup>2</sup> &rang;<sub><i>t</i></sub></div>
+          <p>Here <i>F</i> is the two-dimensional Fourier transform and the average runs over all start times <i>t</i>. For motion with no preferred direction, <i>d</i> depends only on <i>q</i> = |<b>q</b>|, and the azimuthal average gives <i>d</i>(<i>q</i>, &Delta;<i>t</i>). The cross <i>q<sub>x</sub></i> = 0 or <i>q<sub>y</sub></i> = 0 is left out because image edges add artefacts there.</p>
+          <div class="lvl-3"><pre class="code">dqt = fd.ddm(img_seq, range(1, len(img_seq) // 2))
+dqt.pixel_size = pixel_size        # um
+dqt.set_frame_rate(frame_rate)     # frames per second
+ccm = fd.mask.central_cross_mask(dqt.shape[1:])
+aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
+                          range=(0, dqt.ky[-1]), mask=ccm)</pre></div>
+        </details>
+      </section>
+
+      <!-- 4 -->
+      <section class="step" id="step-curves" aria-labelledby="h-curves">
+        <div class="step-title"><span class="num">5</span><h2 id="h-curves">Watch each pattern change</h2></div>
+        <div class="step-body">
+          <div class="text">
+            <p>For each stripe spacing, ask how different the movie looks after a given delay. Fine stripes (red) change quickly, because a particle only has to move a little to shift them. Wide stripes (blue) take longer.</p>
+            <p class="only-1">Each curve rises from 0, nothing has changed, to 1, the pattern is completely renewed. The points are the measurement, the lines a fit.</p>
+            <p class="lvl-2">Each curve is the structure function <i>d</i>(<i>q</i>, &Delta;<i>t</i>) for one <i>q</i>. It rises from the camera noise level <i>B</i>(<i>q</i>) to <i>A</i>(<i>q</i>) + <i>B</i>(<i>q</i>). The delay where it is about two thirds of the way up is the relaxation time &tau;(<i>q</i>) = 1/&Gamma;(<i>q</i>). The "Change" view removes <i>A</i> and <i>B</i> so all curves share one scale.</p>
+          </div>
+          <figure class="viz">
+            <div class="toolbar lvl-2"><span>Show</span><div class="seg" role="group" aria-label="Curve view"><button type="button" id="view-change" aria-pressed="true">Change, 0 to 1</button><button type="button" id="view-d" aria-pressed="false">Structure function</button></div></div>
+            <div class="chart"><canvas id="chart-curves" aria-label="Curves for several wave vectors"></canvas></div>
+            <div class="legend" id="curves-legend"></div>
+          </figure>
+          <div class="predict lvl-2" data-predict="size">
+            <div class="q">Predict first: the particles become twice as large. Do the curves move to the left or to the right?</div>
+            <div class="btns"><button type="button" data-guess="left">Left, faster</button><button type="button" data-guess="right">Right, slower</button></div>
+            <div class="a" hidden>Right. A particle twice as large has half the diffusion coefficient, so every pattern takes twice as long to change. The bench now runs with the larger particles so you can check.</div>
+          </div>
+        </div>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: fitting the curves</summary>
+          <div class="eq"><i>d</i>(<i>q</i>, &Delta;<i>t</i>) = <i>A</i>(<i>q</i>) [1 &minus; <i>f</i>(<i>q</i>, &Delta;<i>t</i>)] + <i>B</i>(<i>q</i>)</div>
+          <p><i>A</i>(<i>q</i>) holds the sample's signal seen through the microscope, <i>B</i>(<i>q</i>) the camera noise. For particles in Brownian motion the intermediate scattering function is a simple exponential, <i>f</i> = exp(&minus;&Gamma;&Delta;<i>t</i>). For a mixture of sizes a stretched exponential, <i>f</i> = exp[&minus;(&Gamma;&Delta;<i>t</i>)<sup>&beta;</sup>] with &beta; &lt; 1, describes the data better.</p>
+          <p>First guesses as in fastDDM: <i>B</i> from the flat noise floor beyond the optical cut-off, <i>A</i> + <i>B</i> from twice the temporal variance of each Fourier mode, &Gamma; from the delay where <i>f</i> falls to 1/e. Then a least-squares fit for every <i>q</i>.</p>
+          <div class="lvl-3"><pre class="code">B_est, _ = fd.noise_est.estimate_camera_noise(aa, mode='polyfit', num_points=5)
+A_est = 2 * aa.var - B_est
+from fastddm.fit import fit_multik
+from fastddm.fit_models import simple_exponential_model as model
+fit_res, model_res = fit_multik(aa, model, k_ref, use_err=True,
+                                return_model_results=True)</pre></div>
+        </details>
+      </section>
+
+      <!-- 5 -->
+      <section class="step" id="step-rates" aria-labelledby="h-rates">
+        <div class="step-title"><span class="num">6</span><h2 id="h-rates">From speed of change to particle size</h2></div>
+        <div class="step-body">
+          <div class="text">
+            <p>Now plot how fast each pattern changes against how fine it is. For particles that wander at random, halving the stripe spacing makes the change four times faster. On these logarithmic axes the points fall on a straight line of slope 2.</p>
+            <p>The height of that line gives the diffusion coefficient. The Stokes-Einstein relation turns it into a size, using the temperature and the viscosity of the liquid.</p>
+            <p>Hollow grey points are outside what this movie can measure: patterns as large as the image or finer than the microscope resolves, changes faster than one frame or slower than half the movie. They are left out of the result.</p>
+            <p class="lvl-2">Below the plot the result compares the size from several ways of fitting, and checks it against the quality criteria of the standard for dynamic light scattering, ISO 22412. "Repeat 5 times" records five new movies with the same settings, as the standard asks for repeatability.</p>
+            <p>Particles that turn add a second, faster step to each curve. Its rate is the translation rate plus a constant, 6 D<sub>R</sub>, so on this plot it lies above the line and flattens out at small q. The squares show it when the fit finds it.</p>
+          </div>
+          <figure class="viz">
+            <div class="chart"><canvas id="chart-rates" aria-label="Relaxation rate against wave vector"></canvas></div>
+            <ul class="reasons" id="reasons"></ul>
+          </figure>
+          <div class="step-body">
+            <div class="result" id="result" aria-live="polite"></div>
+            <div class="predict lvl-2" data-predict="warm">
+              <div class="q">Predict first: you warm the water from 22 to 45 &deg;C. Does the measured size change?</div>
+              <div class="btns"><button type="button" data-guess="yes">Yes</button><button type="button" data-guess="no">No</button></div>
+              <div class="a" hidden>No. The particles move faster because warm water is thinner and the thermal kicks are stronger, but Stokes-Einstein uses the new temperature and viscosity, so the size comes out the same. The bench now runs at 45 &deg;C.</div>
+            </div>
+          </div>
+          <figure class="viz lvl-2">
+            <figcaption>Apparent size at each <i>q</i>: what Stokes-Einstein gives from that pattern alone (dots, with their uncertainty; squares: cumulant fits). For identical particles the dots scatter around a flat line. With a spread of sizes they change with <i>q</i>, because each size shows with a different weight at each <i>q</i> (dashed red line: what the simulated particles give); at small <i>q</i> particles leaving the focal plane can pull them down. The black line is the measured size. This is the microscope's counterpart of measuring DLS at several angles.</figcaption>
+            <div class="chart short"><canvas id="chart-size" aria-label="Apparent size against wave vector"></canvas></div>
+          </figure>
+          <figure class="viz lvl-3">
+            <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>). <i>A</i> falls at high <i>q</i> because the optics blur fine patterns; where it sinks into <i>B</i> the rates can no longer be read.</figcaption>
+            <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
+            <div class="legend" id="amp-legend"></div>
+          </figure>
+        </div>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: from rates to size</summary>
+          <div class="eq">&Gamma;(<i>q</i>) = <i>D</i> <i>q</i><sup>2</sup> &nbsp;&nbsp;&rArr;&nbsp;&nbsp; <i>d</i><sub>h</sub> = <i>k</i><sub>B</sub><i>T</i> / (3&pi;<i>&eta;D</i>)</div>
+          <p>Only points inside the measurable window count:</p>
+          <div class="eq">2&pi;/<i>L</i> &lt; <i>q</i> &lt; 2&pi; NA/&lambda;, &nbsp;&nbsp; 1/&Delta;<i>t</i><sub>max</sub> &lt; &Gamma; &lt; 1/&Delta;<i>t</i><sub>min</sub></div>
+          <p>with <i>L</i> the field of view. <i>D</i> is the weighted mean of &Gamma;/<i>q</i><sup>2</sup> over those points; its uncertainty comes from their scatter. A free power-law fit should give an exponent close to 2; other values point to drift, swimming or crowding.</p>
+          <div class="lvl-3"><pre class="code">def log_Dq2(x, D):
+    return np.log(D * x**2)
+model_Gamma = lmfit.Model(log_Dq2)
+res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
+          weights=fr['Gamma'] / fr['Gamma_stderr'])</pre>
+          <p class="small">As in fastDDM tutorial 1, sections 2.C to 2.E.</p></div>
+          <p><b>Particles that turn.</b> In the decoupling approximation the intermediate scattering function is a product of a translational and an orientational part. Keeping the first orientational mode (spherical harmonics of order 2):</p>
+          <div class="eq"><i>f</i>(<i>q</i>, &Delta;<i>t</i>) = <i>a</i>(<i>q</i>) e<sup>&minus;<i>D</i><sub>T</sub><i>q</i><sup>2</sup>&Delta;<i>t</i></sup> + [1 &minus; <i>a</i>(<i>q</i>)] e<sup>&minus;(<i>D</i><sub>T</sub><i>q</i><sup>2</sup> + 6<i>D</i><sub>R</sub>)&Delta;<i>t</i></sup></div>
+          <p>The page fits all q at once with shared <i>D</i><sub>T</sub> and <i>D</i><sub>R</sub> and free amplitudes at each q. A second mode is kept only if it removes most (60 %) of the misfit of a single shared diffusion mode. For a sphere <i>D</i><sub>R</sub> = <i>k</i><sub>B</sub><i>T</i> / (8&pi;<i>&eta;R</i><sup>3</sup>). Between exactly crossed polarizers and in dark field the measured intensity also carries the next mode, 20 <i>D</i><sub>R</sub>, which a two-mode fit absorbs into a rate that is too high; slightly uncrossed polarizers avoid this (Giavazzi et al. 2016). Between crossed polarizers the page therefore fits a third term, [1 &minus; <i>a</i> &minus; <i>b</i>] e<sup>&minus;(<i>D</i><sub>T</sub><i>q</i><sup>2</sup> + 20<i>D</i><sub>R</sub>)&Delta;<i>t</i></sup>, with the same <i>D</i><sub>R</sub>. It is not used automatically elsewhere: left free, it can lock onto a slower spurious mode at about 0.3 of the true rate.</p>
+        </details>
+        <details class="math lvl-2" data-open-at="researcher">
+          <summary>The math: mean size, polydispersity and repeatability, as in DLS</summary>
+          <p>With a spread of sizes the intermediate scattering function at each <i>q</i> is an average over the decay rates of all particles, weighted by how strongly each shows in the images (in DLS: by the scattered intensity). The <b>cumulant</b> expansion keeps its first two moments:</p>
+          <div class="eq">ln <i>f</i>(<i>q</i>, &Delta;<i>t</i>) &asymp; &minus;&Gamma;&#772; &Delta;<i>t</i> + &mu;<sub>2</sub> &Delta;<i>t</i><sup>2</sup> / 2, &nbsp;&nbsp; PI = &mu;<sub>2</sub> / &Gamma;&#772;<sup>2</sup></div>
+          <p>with <i>f</i> = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i>, fitted by weighted least squares (weights <i>f</i><sup>2</sup>) from the first delay down to a tenth of the first value, as ISO 22412:2025 (annex A.1.2) prescribes for DLS, here for the first-order function. The mean size follows from &Gamma;&#772;/<i>q</i><sup>2</sup>, the polydispersity index PI is averaged over <i>q</i>. If the rates follow a <b>Schulz</b> (gamma) distribution, the average is exact:</p>
+          <div class="eq"><i>f</i>(<i>q</i>, &Delta;<i>t</i>) = (1 + PI &Gamma;&#772; &Delta;<i>t</i>)<sup>&minus;1/PI</sup></div>
+          <p>which becomes the simple exponential as PI &rarr; 0. The table fits it to all <i>q</i> at once with <b>one PI shared by all</b> (each <i>q</i> keeps its own amplitude, noise and mean rate), which is much less noisy than a PI fitted at each <i>q</i> separately. Both PIs may come out below zero: the same formula is continued there so that noise is not pushed up against a bound at zero (which made identical particles read 0.01-0.1); only a PI clearly above zero means a spread of sizes. Its uncertainty comes from repeating the shared fit on four interleaved groups of <i>q</i>. For broad distributions the second-order cumulants read low, as in DLS (0.14 for a true PI of 0.2, from the third cumulant); third-order cumulants are less biased but noisier (researcher level, under Details).</p>
+          <p><b>What a spread of sizes means for PI.</b> PI is the relative variance of the decay rates, not of the sizes. For a narrow distribution PI &asymp; (relative spread)<sup>2</sup>; for small particles, whose signal grows as <i>d</i><sup>6</sup>, a Schulz spread <i>s</i> gives PI = <i>s</i><sup>2</sup>/(1 + 4<i>s</i><sup>2</sup>): 0.0025 for 5 %, 0.035 for 20 %, 0.066 for 30 %, 0.125 for 50 % (a little less in practice, as the optics weighs large particles down at high <i>q</i>). The width shown next to each PI is &radic;PI. With the movies simulated here (256 frames, a few thousand particles) one movie fixes PI to about &plusmn; 0.02-0.04, so spreads below about 20 % cannot be told from identical particles, and broad distributions read low (about 0.03-0.08 for a true 0.1). A DLS run averages over far more particles and time; averaging five repeated movies helps. In the simulation a Schulz size distribution of mean <i>d</i>&#772; and relative standard deviation &sigma; is <i>p</i>(<i>d</i>) &prop; <i>d</i><sup><i>z</i></sup> exp[&minus;(<i>z</i>+1)<i>d</i>/<i>d</i>&#772;] with <i>z</i> = 1/&sigma;<sup>2</sup> &minus; 1, represented by five sizes (generalised Gauss-Laguerre quadrature, exact moments up to the ninth). The true PI shown is computed from the simulated particles and their actual brightness at each <i>q</i>.</p>
+          <p><b>Repeatability and bias.</b> Everything below uses the fit chosen under Analysis (the headline). A quick estimate cuts the movie into 4 parts (2 below 256 frames), analyses each at the same <i>q</i> and takes their spread divided by &radic;<i>N</i>; it is a lower bound, because the parts share the same particles. "Repeat 5 times" does what ISO 22412 (10.3) asks: five new movies with the same settings and new particles; their relative standard deviation should be below 2 % for monodisperse particles of 50-200 nm. The mean of the five is then compared with the true size as in the reference-material test of ISO 10.1: the difference must stay within the expanded uncertainty, 2 &times; 1.5 % = 3 % here (the simulation's true value has no uncertainty of its own). The uncertainty quoted with the headline is the larger of the scatter between <i>q</i> and the quick estimate.</p>
+          <p><b>Other checks.</b> The size from the lower and the upper half of the <i>q</i> used must agree (ISO 10.2: the result must not depend on the range analysed); a free power law must give an exponent near 2; cumulants and the fit at each <i>q</i> must agree.</p>
+        </details>
+        <details class="lvl-2 math">
+          <summary>Test report, in the style of ISO 22412</summary>
+          <pre class="code" id="iso-report" style="white-space: pre-wrap; overflow-wrap: anywhere;"></pre>
+          <div class="btns"><button type="button" id="btn-copy-report">Copy report</button></div>
+        </details>
+        <details class="lvl-3 math" open>
+          <summary>Settings used for this run</summary>
+          <pre class="code" id="settings-json"></pre>
+          <div class="btns"><button type="button" id="btn-copy">Copy settings</button></div>
+        </details>
+      </section>
+    </div>
+  </div>
+
+  <section class="wrap matters" aria-labelledby="h-matters">
+    <p class="eyebrow">In a real experiment</p>
+    <h2 id="h-matters">What matters</h2>
+    <p class="prose">Each card sets the bench to a typical problem and shows where to look. Use "Back to the standard sample" to start again.</p>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-beyond">
+    <h2 id="h-beyond">Beyond sizing</h2>
+    <p class="prose">Sizing dilute particles is only one application. Staying with colloids, the same kind of movie also gives:</p>
+    <ul>
+      <li><b>Microrheology.</b> The motion of tracer particles tells how viscous and how elastic the surrounding material is, frequency by frequency, without tracking a single tracer: P. Edera, D. Bergamini, V. Trappe, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1103/PhysRevMaterials.1.073804">Differential dynamic microscopy microrheology of soft materials: a tracking-free determination of the frequency-dependent loss and storage moduli</a>, Phys. Rev. Materials 1, 073804 (2017).</li>
+      <li><b>Proteins.</b> Single proteins and small aggregates sized in bright field at a few milligrams per millilitre, with first results on virial coefficients from how the motion changes with concentration: C. Guidolin, C. Heim, N. B. P. Adams, P. Baaske, V. Rondelli, R. Cerbino and F. Giavazzi, <a href="https://doi.org/10.1021/acs.macromol.3c00782">Protein sizing with differential dynamic microscopy</a>, Macromolecules 56, 8290 (2023).</li>
+      <li><b>Concentrated suspensions.</b> When particles crowd, how they are arranged (the structure factor) and how the liquid couples their motion (the hydrodynamic function) both show up in the measured rates; confocal DDM measures them even in turbid samples: P. J. Lu, F. Giavazzi, T. E. Angelini, E. Zaccarelli, F. Jargstorff, A. B. Schofield, J. N. Wilking, M. B. Romanowsky, D. A. Weitz and R. Cerbino, <a href="https://doi.org/10.1103/PhysRevLett.108.218103">Characterizing concentrated, multiply scattering, and actively driven fluorescent systems with confocal differential dynamic microscopy</a>, Phys. Rev. Lett. 108, 218103 (2012).</li>
+      <li><b>Particles that turn.</b> Rotations as well as translations, from anisotropic particles; this page simulates them (choose a shape other than a sphere).</li>
+    </ul>
+    <p class="prose">The first three are not simulated here: they need particles that interact with each other or with a surrounding material, and the particles on this page do not.</p>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-about">
+    <h2 id="h-about">About this tool</h2>
+    <p class="prose">This page is a simple tool, generated with Claude Opus 5.5, that simulates a realistic microscopy experiment in which DDM is used to study the roto-translational Brownian motion of colloidal particles. The microscope, light sources, cameras, spinning disk and point scanner are modelled mostly on the instruments of our SoMeX lab. The particles do not interact with each other: each one diffuses and turns on its own (if you choose, it also settles under gravity and slows down near the glass), so every sample is a dilute suspension. The aim is not to produce accurate, research-quality data, but to give anyone thinking of using DDM an idea of the many options and of how each one affects a DDM experiment.</p>
+    <p class="prose">If you find something that looks wrong or does not work, please let me know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-further">
+    <h2 id="h-further">Go further</h2>
+    <ul class="only-1">
+      <li><a href="https://rcerbino.github.io/research/">Research</a>: what the SoMeX group measures with DDM, from colloids to living cells and experiments in space.</li>
+      <li><a href="https://rcerbino.github.io/talks/">Talks</a>, including public lectures.</li>
+      <li>Switch to <a href="#student" data-level-link="student">Student</a> above for the equations behind each step.</li>
+    </ul>
+    <ul class="lvl-2">
+      <li>R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope</a>, Phys. Rev. Lett. 100, 188102 (2008). The paper that introduced the method.</li>
+      <li>E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a>, J. Chem. Phys. 163, 161501 (2025). A practical guide with the notation used here.</li>
+      <li>DDM, DLS and X-ray photon correlation spectroscopy compared on the same anisotropic colloids: M. A. Kamal, M. Brizioli, T. Zinn, T. Narayanan, R. Cerbino, F. Giavazzi and A. Pal, <a href="https://doi.org/10.1016/j.jcis.2023.12.163">Dynamics of anisotropic colloidal systems: what to choose, DLS, DDM or XPCS?</a>, J. Colloid Interface Sci. 660, 314 (2024). For DLS sizing practice, the standard ISO 22412:2025 (Particle size analysis: dynamic light scattering).</li>
+      <li><a href="https://github.com/somexlab/fastddm-tutorials">fastDDM tutorials</a>: Jupyter notebooks that run this same analysis on real movies, from particle sizing to bacteria and cell sheets.</li>
+      <li>Particles that turn: F. Giavazzi, C. Haro-Perez and R. Cerbino, <a href="https://doi.org/10.1088/0953-8984/28/19/195201">Simultaneous characterization of rotational and translational diffusion of optically anisotropic particles by optical microscopy</a>, J. Phys.: Condens. Matter 28, 195201 (2016); R. Cerbino, D. Piotti, M. Buscaglia and F. Giavazzi, <a href="https://doi.org/10.1088/1361-648X/aa9bc5">Dark field differential dynamic microscopy enables accurate characterization of the roto-translational dynamics of bacteria and colloidal clusters</a>, J. Phys.: Condens. Matter 30, 025901 (2018); F. Giavazzi, A. Pal and R. Cerbino, <a href="https://doi.org/10.1140/epje/s10189-021-00063-4">Probing roto-translational diffusion of small anisotropic colloidal particles with a bright-field microscope</a>, Eur. Phys. J. E 44, 61 (2021).</li>
+    </ul>
+    <ul class="lvl-3">
+      <li><a href="https://github.com/somexlab/fastddm">fastDDM</a> (Python, CPU and GPU, GPL 3.0): <code>pip install fastddm</code>. <a href="https://fastddm.readthedocs.io/">Documentation</a>.</li>
+      <li>Planned for this page: load your own movie and analyse it here, on your computer, with nothing uploaded.</li>
+      <li>For collaborations or questions about applying DDM to your samples, see <a href="https://rcerbino.github.io/contact/">Contact</a>.</li>
+    </ul>
+  </section>
+</main>
+<footer class="site"><div class="wrap">Roberto Cerbino, University of Vienna. The simulation and the analysis run entirely in your browser; nothing is uploaded.</div></footer>
+
+<script type="application/json" id="objectives-data">/*OBJECTIVES*/</script>
+<script id="optics-src">
+/*OPTICS*/
+</script>
+<script id="movie-src">
+/*MOVIE*/
+</script>
+<script id="engine-src">
+/*ENGINE*/
+</script>
+<script type="text/plain" id="worker-src">
+/*WORKER*/
+</script>
+<script>
+/*APP*/
+</script>

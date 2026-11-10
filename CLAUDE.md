@@ -189,6 +189,7 @@ approves them.
 | Courses, teaching innovation, mentoring | `content/teaching.yaml` |
 | News | `content/news.yaml` |
 | Talks (all of them, newest first; the Talks page shows them all, the News page the six most recent). Each has `date`, `title`, `event`, `place` and a `kind`: plenary, keynote, invited, contributed, seminar, colloquium, lecture, public or teaching. Proper names keep their accents (Düsseldorf, Cargèse). Talks given by co-authors are not listed. | `content/talks.yaml` |
+| DDM page sources (built into `static/ddm/index.html` by `python3 ddm/build.py`) | `ddm/` |
 | Publication tags (selected, review, cover), hidden items, fixes, preprint pairings | `data/publications_overrides.yaml` |
 | Preprint links (generated) | `data/preprints.json` |
 | Per-paper citations, free full text (generated) | `data/metrics.json` |
@@ -197,6 +198,20 @@ approves them.
 | Group news (generated) | `data/group_news.json` |
 | Supervised and hosted people, read from the SoMeX people page (generated; corrections in `content/teaching.yaml > mentoring`) | `data/people.json` |
 | Visiting senior scientists (collaborators, shown on the Research page under The lab): `group: scientists` in `content/teaching.yaml > mentoring > extra` | `data/people.json` |
+
+## DDM page (/ddm/)
+
+"DDM, hands on" is a self-contained page that simulates DDM experiments and analyses them in the
+visitor's browser (nothing is uploaded, no outside service is contacted). Its sources are in `ddm/`
+(`page.src.html` with the styles and text, `app.js` the page logic, `optics.js` image formation,
+`movie.js` the simulated movie, `ddm-engine.js` the analysis, `worker.js`, `data/` Nikon objectives).
+`python3 ddm/build.py` assembles them into `static/ddm/index.html`, which is committed and copied to the
+site; `build.py` then writes the main menu into it (marker `<!--SITE-NAV-->`, entry in `EXTRA_PAGES`).
+After any change to the sources: run `python3 ddm/build.py`, then `python3 build.py --check`, and commit
+both. Checks: `cd ddm && node test-optics.js data/mie_ref.json && node test-engine.js && node test-movie.js`
+(the last takes several minutes). `python3 ddm/build.py --preview` writes a stand-alone copy with Google
+Fonts for previews outside the site; do not commit it. The page text follows the writing style below; it
+must stay ASCII (the build refuses other characters).
 
 ## Analytics
 

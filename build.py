@@ -40,6 +40,10 @@ PAGES = [
 ]
 # Pages reached from the footer only, not from the main menu
 FOOTER_ONLY = {"Legal notice and privacy"}
+# Pages built outside the templates (copied from static/) that still get a place in the main menu:
+# (output path, menu label, put after this label). The DDM page is assembled by ddm/build.py into
+# static/ddm/index.html; this build writes the main menu into it.
+EXTRA_PAGES = [("ddm/index.html", "DDM", "Research")]
 
 TYPE_LABELS = {
     "preprint": "Preprints",
@@ -417,6 +421,9 @@ def main(check=False, preview=False):
 
     env.globals["link"] = link
     nav = [(link(path), label) for path, _, label in PAGES if label not in FOOTER_ONLY]
+    for path, label, after in EXTRA_PAGES:
+        i = next(k for k, (_, l) in enumerate(nav) if l == after)
+        nav.insert(i + 1, (link(path), label))
     ctx = dict(profile=profile, about=about, research=research, teaching=teaching,
                news=news, pubs=pubs, pub_groups=pub_groups, selected=selected,
                years=years, stats=stats, current_roles=current_roles, people_groups=people_groups, visiting_scientists=visiting_scientists,
@@ -434,12 +441,27 @@ def main(check=False, preview=False):
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(html, encoding="utf-8")
 
+    # main menu inside the pages built outside the templates
+    for path, label, _ in EXTRA_PAGES:
+        f = OUT / path
+        if not f.exists():
+            problems.append(f"{path} missing: run python3 ddm/build.py")
+            continue
+        html = f.read_text(encoding="utf-8")
+        if "<!--SITE-NAV-->" not in html:
+            problems.append(f"{path} has no menu marker")
+            continue
+        root = "../" * path.count("/")
+        items = "\n".join(f'        <li><a href="{root}{href}"' + (' aria-current="page"' if lab == label else "") + f">{lab}</a></li>"
+                          for href, lab in nav if lab != "Home")
+        f.write_text(html.replace("<!--SITE-NAV-->", items), encoding="utf-8")
+
     (OUT / "404.html").write_text(env.get_template("404.html").render(
         **ctx, page="Not found", root="/", path="404"), encoding="utf-8")
     (OUT / ".nojekyll").write_text("")
     (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n")
     urls = "".join(f"<url><loc>{SITE_URL}/{p.replace('index.html', '')}</loc>"
-                   f"<lastmod>{today.isoformat()}</lastmod></url>" for p, _, _ in PAGES)
+                   f"<lastmod>{today.isoformat()}</lastmod></url>" for p in [p for p, _, _ in PAGES] + [p for p, _, _ in EXTRA_PAGES])
     (OUT / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>'
         f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n')
