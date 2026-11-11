@@ -77,6 +77,13 @@ function unwrap(tr, i, T) {   // unwrapped positions of tracked particle i
   for (let k = 0; k < tr.H.length; k++) { lo = Math.min(lo, tr.H[k]); hi = Math.max(hi, tr.H[k]); }
   check("walls: swimmers stay between the walls (keeping their radius)", lo >= 0.5 - 1e-9 && hi <= 4.5 + 1e-9, "heights " + lo.toFixed(3) + " to " + hi.toFixed(3) + " um");
 }
+// 4b. walls turn swimmers back: after many crossings the heights stay evenly spread (no pile-up at the walls)
+{
+  const m = DDM.runToEnd(MOVIE.simulate(base({ swim: { fraction: 1, v_um_s: 30, v_spread: 0.2, rot_diff_s: 0 }, cell_um: 20, focus_um: 10, walls: true, n_frames: 400, frame_rate_hz: 20 })));
+  const tr = m.test_track, T = m.T; let mid = 0, n = 0;
+  for (let t = T - 100; t < T; t++) for (let i = 0; i < tr.n; i++) { const h = tr.H[t * tr.n + i]; if (h > 5 && h < 15) mid++; n++; }
+  check("walls: after many crossings half of the swimmers are in the middle half of the cell", Math.abs(mid / n - 0.5) < 0.06, (100 * mid / n).toFixed(1) + " % in the middle half");
+}
 // 5. fraction 0
 {
   const a = DDM.runToEnd(MOVIE.simulate(base({ test_track: false, n_frames: 20 })));

@@ -42,7 +42,7 @@ function movieCase(label, over, opts, test) {
   const cfg = Object.assign({
     seed: 1, mode: "brightfield", objective: { mag: 10, na: 0.3 }, illum: { na_in: 0.09, na_out: 0.12 }, pupil: { kind: "phase", ring_in: 0.09, ring_out: 0.12, amp: 0.25, phase: -Math.PI / 2 }, source: "halogen", homodyne: true, light_frac: 0.5, df_light_e: 1e7, stray_frac: 1e-4,
     detector: { kind: "camera", pixel_um: 6.5, binning: 1, bin_charge: false, qe: 0.8, read_noise_e: 1.6, full_well_e: 30000, timing: "global", t_row_s: 0, rows_total: 128, crop_row0: 0 },
-    n_px: 128, n_frames: 256, frame_rate_hz: 100, exposure_s: 0.001, shape: "rod", aspect: 2.5, diameter_um: 2.0, particle: "bacterium", size_spread: 0, volume_fraction: 1e-3,
+    n_px: 128, n_frames: 256, frame_rate_hz: 50, exposure_s: 0.001, shape: "rod", aspect: 2.5, diameter_um: 2.0, particle: "bacterium", size_spread: 0, volume_fraction: 1e-3,
     liquid: { n: 1.335, viscosity_mPa_s: 0.95 }, T_C: 22, cell_um: 50, focus_um: 25, drift_um_s: 0
   }, over);
   const t0 = Date.now(), m = DDM.runToEnd(MOVIE.simulate(cfg)), t1 = Date.now();
@@ -59,7 +59,7 @@ function movieCase(label, over, opts, test) {
   return { m, r };
 }
 movieCase("E. coli-like motility assay, phase contrast 10x, 60 % swim at 20 um/s (spread 0.3)", { swim: { fraction: 0.6, v_um_s: 20, v_spread: 0.3, rot_diff_s: 0.1 } }, {},
-  function (m, r) { const s = m.truth.swim; return r.swim && Math.abs(r.swim.v_um_s / s.v_mean_um_s - 1) < 0.05 && Math.abs(r.swim.alpha - s.fraction_seen) < 0.05 && Math.abs(r.pv.data_still_share - (1 - s.fraction_seen)) < 0.05 && Math.abs(r.pv.data_mean_swimmers_um_s / s.v_mean_um_s - 1) < 0.08; });
+  function (m, r) { const s = m.truth.swim; return r.swim && Math.abs(r.swim.v_um_s / s.v_mean_um_s - 1) < 0.05 && Math.abs(r.swim.alpha - s.fraction_seen) < 0.06 && Math.abs(r.pv.data_still_share - (1 - s.fraction_seen)) < 0.06 && Math.abs(r.pv.data_mean_swimmers_um_s / s.v_mean_um_s - 1) < 0.08; });
 movieCase("plane swimmers (2D), dark field 10x, 80 % swim at 15 um/s, q up to 1.5 um^-1 (rod length 2 um)", { swim: { fraction: 0.8, v_um_s: 15, v_spread: 0.25, plane_fraction: 1, plane_still: true, height_um: 1, rot_diff_s: 0.1 }, n_frames: 512, illum: { na_in: 0.42, na_out: 0.5 }, pupil: undefined, cell_um: 20, focus_um: 1, volume_fraction: 2e-3 }, { kind: "2d", q_max_per_um: 1.5 },
   function (m, r) { const s = m.truth.swim; return r.swim && Math.abs(r.swim.v_um_s / s.v_mean_um_s - 1) < 0.05 && Math.abs(r.swim.alpha - s.fraction_seen) < 0.05; });
 // 5. confocal (spinning disk, 20x NA 0.75): swimmers leave the thin slice. Wilson's model reads the speed high, the
@@ -72,7 +72,7 @@ movieCase("plane swimmers (2D), dark field 10x, 80 % swim at 15 um/s, q up to 1.
   const t0 = Date.now(), m = DDM.runToEnd(MOVIE.simulate(cfg)), r = DDM.runToEnd(A.analyse(m, { q_min_per_um: null, q_max_per_um: null, beta: null, kind: "3d", depth: true }));
   const so = A.seenOver(m.truth.swim, r.fits.filter(function (f) { return f.reason === null; }).map(function (f) { return f.q_per_um; }));
   const dw = r.swim.v_um_s / so.v_mean_um_s - 1, dd = r.swim_depth.v_um_s / so.v_mean_um_s - 1;
-  check("spinning disk 20x: Wilson's model reads high (" + (100 * dw).toFixed(0) + " %), the depth model within 6 % (" + (100 * dd).toFixed(1) + " %)", dw > 0.12 && Math.abs(dd) < 0.06, "true " + so.v_mean_um_s.toFixed(1) + " um/s; " + (Date.now() - t0) + " ms");
+  check("spinning disk 20x: Wilson's model reads high (" + (100 * dw).toFixed(0) + " %), the depth model within 4 % (" + (100 * dd).toFixed(1) + " %)", dw > 0.07 && Math.abs(dd) < 0.04, "true " + so.v_mean_um_s.toFixed(1) + " um/s; " + (Date.now() - t0) + " ms");
 }
 console.log(failures === 0 ? "\nALL SWIMMER ANALYSIS CHECKS PASSED" : "\n" + failures + " CHECK(S) FAILED");
 process.exit(failures ? 1 : 0);

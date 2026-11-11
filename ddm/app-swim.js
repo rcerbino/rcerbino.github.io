@@ -109,7 +109,8 @@
   function objIndexByName(name) { for (let i = 0; i < OBJECTIVES.length; i++) if (OBJECTIVES[i].n === name) return i; throw new Error("objective not found: " + name); }
 
   // the standard sample: a motility assay of E. coli-like rods (2 um x 0.8 um) in motility buffer, 60 % swimming at
-  // 20 um/s (Schulz spread 30 %), phase contrast with a 10x Ph1 objective, 100 frames/s (after Wilson et al. 2011)
+  // 20 um/s (Schulz spread 30 %), phase contrast with a 10x Ph1 objective, 256 frames at 50 frames/s (after Wilson et al. 2011; 5 s of movie
+  // let the cells that do not swim diffuse far enough to tell them apart from the swimmers)
   const BASE = {
     mode: "phase", particle: "bacterium", n_custom: 1.39, diameter_um: 2, size_spread: 0, size_dist: "schulz", phi: 1e-3,
     liquid: "water", glycerol_w: 0.5, n_liquid: 1.333, visc_mPa_s: 1.0, T_C: 22, cell_um: 50, focus_frac: 0.5, drift_um_s: 0, settle: "off", rho_custom: 1.05, rho_liquid: 1.0, optics: "auto",
@@ -118,7 +119,7 @@
     camera: "orca", cam_mode: "standard", iface: "cameralink", binning: 1, roi: 512, sim_px: 128, n_frames: 256,
     annulus: "Ph1", ring_T: 0.25, df_kind: "annulus", df_light_e: 1e7, stray_frac: 1e-4, dic_shear_um: 0.24, dic_bias_deg: 90, dic_angle_deg: 45,
     scanner: "resonant", scan_px: 512, zoom: 1, line_avg: 1, pinhole_au: 1, scan_rate: 2e8,
-    frame_rate_hz: 100, exposure_ms: 1,
+    frame_rate_hz: 50, exposure_ms: 1,
     shape: "rod", aspect: 2.5, dn: 0, dn_body: 0, polarizer: "off", analyzer: "off", pol_angle_deg: 90, extinction: 1e-4,
     swim_frac: 0.6, swim_v: 20, swim_spread: 0.3, swim_geom: "3d", swim_rot: 0.1, swim_tumble: 0,
     swim_model: "auto", q_min: null, q_max: null, seed: 1
@@ -293,7 +294,7 @@
     { key: "n_custom", group: "Sample", lvl: 1, label: function () { return state.shape === "bisphere" ? "Ordinary refractive index (n_o)" : "Particle refractive index"; }, kind: "lin", min: 1.3, max: 2.6, step: 0.01, fmt: function (v) { return v.toFixed(2); }, when: function () { return state.particle === "custom"; } },
     { key: "diameter_um", group: "Sample", lvl: 2, label: function () { return SIZE_LABEL[state.shape]; }, kind: "log", min: 0.3, max: 8, fmt: fmtSize },
     { key: "aspect", group: "Sample", lvl: 2, label: function () { return ASPECT_LABEL[state.shape] || "Aspect ratio"; }, kind: "log", min: 1.2, max: 20, fmt: function (v) { return fmtSig(Math.max(state.shape === "rod" ? 2 : 1, v), 2); }, when: BODY, hint: function () { return state.shape === "rod" && state.aspect < 2 ? "Rods are simulated from aspect ratio 2 (the friction formulas hold from there)." : ""; } },
-    { key: "phi", group: "Sample", lvl: 2, label: "Concentration (volume fraction)", kind: "log", min: 1e-6, max: 1e-2, fmt: fmtPhi, hint: function () { return particleCount() + " particles in the simulated volume." + (phiCapped ? " Lowered to fit what the browser can follow (" + MAX_PARTICLES + " particles even in the smallest simulated field)." : "") + (phiRaised ? " Raised so that a few particles are in the simulated field." : ""); } },
+    { key: "phi", group: "Sample", lvl: 2, label: "Concentration (volume fraction)", kind: "log", min: 1e-6, max: 1e-2, fmt: fmtPhi, hint: function () { return particleCount() + " cells in the simulated volume." + (phiCapped ? " Lowered to fit what the browser can follow (" + MAX_PARTICLES + " cells even in the smallest simulated field)." : "") + (phiRaised ? " Raised so that a few cells are in the simulated field." : ""); } },
     { key: "liquid", group: "Sample", lvl: 2, label: "Liquid", kind: "select", options: Object.keys(LIQUIDS).map(function (k) { return [k, LIQUIDS[k]]; }) },
     { key: "glycerol_w", group: "Sample", lvl: 2, label: "Glycerol (by mass)", kind: "lin", min: 0, max: 0.95, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, when: function () { return state.liquid === "glycerol"; } },
     { key: "n_liquid", group: "Sample", lvl: 3, label: "Liquid refractive index", kind: "lin", min: 1.30, max: 1.60, step: 0.005, fmt: function (v) { return v.toFixed(3); }, when: function () { return state.liquid === "custom"; } },
@@ -1188,6 +1189,11 @@
       const ml = lo.reduce(function (a, b) { return a + b; }, 0) / lo.length, mh = hi.reduce(function (a, b) { return a + b; }, 0) / hi.length, tilt = Math.abs(ml / mh - 1);
       out.push({ cls: tilt < 0.08 ? "good" : tilt < 0.2 ? "warn" : "bad", title: "Same speed at every q", text: "Speed from the smallest third of the q: " + fmtV(ml) + "; from the largest third: " + fmtV(mh) + "." + (tilt < 0.08 ? "" : ml > mh ? " Slower at large q: long cells, whose image changes mostly where their ends pass for patterns finer than the cell; or, at small q, cells moving up and down through the focus, which renews the wide patterns faster (try the model with the depth of field), or drift." : " Slower at small q: tumbles bend the runs, so over long distances the cells get less far than on straight runs.") });
     }
+    if (h && res.used.length) {
+      // the share of swimmers shows only where the cells that do not swim wander off during the movie
+      const qm = res.used[res.used.length - 1].q_per_um, tm = res.taus_s[res.taus_s.length - 1], x = h.D_um2_s * qm * qm * tm;
+      if (x < 1) out.push({ cls: "warn", title: "Share of swimmers", text: "The cells that do not swim barely move during this movie, even at the finest patterns used (D q\u00b2 \u0394t = " + x.toFixed(2) + " at the longest delay), so the curves cannot tell them apart from a larger or smaller share of swimmers. A longer movie or finer patterns help." });
+    }
     if (res.pv && h) {
       const d = Math.abs(res.pv.data_still_share - (1 - h.alpha));
       out.push({ cls: d < 0.07 ? "good" : "warn", title: "Model and shape-free distribution agree", text: "Share that does not swim: " + Math.round(100 * (1 - h.alpha)) + " % from the model, " + Math.round(100 * res.pv.data_still_share) + " % from the distribution found without a shape; mean speed " + fmtV(h.v_um_s) + " and " + fmtV(res.pv.data_mean_swimmers_um_s) + "." });
@@ -1228,7 +1234,7 @@
     $("result").innerHTML = html;
     const br = $("btn-repeat"); if (br) br.addEventListener("click", startRepeat);
     $("hero-result").innerHTML = '<span>True mean speed</span><span class="n">' + fmtV(swt.v_mean_um_s) + '</span><span>Measured by DDM</span><span class="n">' + (h ? fmtV(h.v_um_s) : "-") + '</span>' +
-      '<span>Cells that swim</span><span class="n">' + Math.round(100 * swt.fraction) + ' % / ' + (h ? Math.round(100 * h.alpha) + ' %' : '-') + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
+      '<span>Cells that swim: ' + Math.round(100 * swt.fraction) + ' % true, ' + (h ? Math.round(100 * h.alpha) + ' %' : '-') + ' measured</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
     $("hero-cap").textContent = "Simulated " + MODE_SHORT[state.mode] + " movie, " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
   }
   function renderRepeatTable() {
@@ -1299,13 +1305,13 @@
   const CARDS = [
     { lvl: 1, title: "How many swim", text: "Each curve falls in two steps: a fast one from the swimmers and a slow one from the cells that only jiggle. The height of the fast step gives the share of swimmers, the speed of the slow step how fast the others diffuse. A motility assay reads both from one movie of thousands of cells.",
       shows: [{ label: "None swims", set: { swim_frac: 0 }, go: "step-curves" }, { label: "A third swims", set: { swim_frac: 0.3 }, go: "step-curves" }, { label: "All swim", set: { swim_frac: 1 }, go: "step-curves" }] },
-    { lvl: 1, title: "A camera that is too slow", text: "A swimmer at 20 " + MU + "m/s crosses a fine stripe pattern in a few hundredths of a second. If the pattern has renewed between two frames, its rate cannot be read, and only the widest patterns are left. Bacteria need about 100 frames per second.",
+    { lvl: 1, title: "A camera that is too slow", text: "A swimmer at 20 " + MU + "m/s crosses a fine stripe pattern in a few hundredths of a second. If the pattern has renewed between two frames, its rate cannot be read, and only the widest patterns are left. Bacteria at 20 " + MU + "m/s need about 50 frames per second or more.",
       shows: [{ label: "10 frames/s", set: { frame_rate_hz: 10, exposure_ms: 1 }, go: "step-rates" }] },
     { lvl: 1, title: "Drift looks like swimming", text: "A slow flow carries every cell the same way. Averaged over all directions, a drift gives curves very much like those of cells swimming in the plane, so a careless analysis reports swimmers that are not there. Check the movie, or measure the drift on its own: it makes the map in step 4 lopsided.",
       shows: [{ label: "No swimmers, drift 10 " + MU + "m/s", set: { swim_frac: 0, drift_um_s: 10 }, go: "step-rates" }] },
     { lvl: 2, title: "Swimming along the glass", text: "Near a surface many bacteria swim parallel to it. Then each pattern renews faster for the same speed (in 3D most cells swim at an angle to the stripes), and the model must be the one for the plane: analysed as 3D swimmers, the speed comes out about 30 % too high.",
       shows: [{ label: "Along the glass, plane model", set: { swim_geom: "glass", swim_model: "auto" }, go: "step-rates" }, { label: "The same, 3D model", set: { swim_geom: "glass", swim_model: "wilson" }, go: "step-rates" }] },
-    { lvl: 2, title: "Confocal: swimmers leave the slice", text: "A confocal microscope sees a slice about a micrometre thick. A swimmer crosses it in a fraction of a second, and a pattern fades as soon as its cells leave the slice, before they have swum across it. Wilson's 3D model knows only sideways motion, so the speed comes out too high: in these simulations by about 20 % with a 20x objective and by about 60 % with a 60x water objective. The model that also uses how each pattern fades as a cell moves up or down through the focus, computed from the optics of the microscope, gives the speed within a few percent. The same, weaker, happens in widefield fluorescence. As far as we know, this has not been published.",
+    { lvl: 2, title: "Confocal: swimmers leave the slice", text: "A confocal microscope sees a slice one or a few micrometres thick. A swimmer crosses it in a fraction of a second, and a pattern fades as soon as its cells leave the slice, before they have swum across it. Wilson's 3D model knows only sideways motion, so the speed comes out too high. In our simulations of round cells 1 " + MU + "m across: about 10 % with a spinning disk and 20 % with a point scanner at 20x, and 60-80 % with both at 60x (water immersion). The model that also uses how each pattern fades as a cell moves up or down through the focus, computed from the optics of the microscope, brings the speed within a few % at 20x. At 60x the slice is about as thin as a cell, and it still reads 10-25 % high or low: it treats each cell as a point, and rods longer than the slice come out too slow with it. Widefield fluorescence shows the same effect, weaker (up to about 10 % at 20x and 25 % at 60x). As far as we know, this has not been published.",
       shows: [{ label: "Spinning disk 20x, Wilson's model", set: SPIN20("wilson"), go: "step-rates" }, { label: "Spinning disk 20x, with the depth of field", set: SPIN20("depth"), go: "step-rates" }, { label: "Spinning disk 60x water, Wilson's model", set: SPIN60("wilson"), go: "step-rates", lvl: 2 }, { label: "Spinning disk 60x water, with the depth of field", set: SPIN60("depth"), go: "step-rates", lvl: 2 }] },
     { lvl: 2, title: "Tumbles", text: "E. coli runs for about a second, then tumbles and swims off in a new direction. Over distances longer than a run the cells get less far than on a straight line, so the widest patterns renew more slowly and the speed from them comes out low. The models here assume straight runs; use the finer patterns, or a model with tumbles (Kurzthaler et al. 2024).",
       shows: [{ label: "One tumble per second", set: { swim_tumble: 1 }, go: "step-rates" }, { label: "Three per second", set: { swim_tumble: 3 }, go: "step-rates" }] },

@@ -609,8 +609,9 @@
         Y[i] += g0 * uy + g1 * e1[1] + g2 * e2[1] + v * uy * hh;
         if (!pl && !freezeZ) {
           H[i] -= g0 * uz + g1 * e1[2] + g2 * e2[2] + v * uz * hh;      // z points down: height decreases with uz
-          if (H[i] < lo) { H[i] = 2 * lo - H[i]; uz = Math.abs(uz); }      // moving down (uz > 0) turns into moving up
-          if (H[i] > hi) { H[i] = 2 * hi - H[i]; uz = -Math.abs(uz); }
+          // the height falls when uz > 0: at the bottom the swimmer turns to uz < 0 (up), at the top to uz > 0 (down)
+          if (H[i] < lo) { H[i] = 2 * lo - H[i]; uz = -Math.abs(uz); }
+          if (H[i] > hi) { H[i] = 2 * hi - H[i]; uz = Math.abs(uz); }
           if (H[i] < lo || H[i] > hi) H[i] = Math.min(hi, Math.max(lo, H[i]));
         }
         if (swTumble > 0 && rng.u() < swTumble * hh) {
