@@ -63,6 +63,85 @@
     return Math.exp(-p.D * q * q * t) * ((1 - p.alpha) + p.alpha * S);
   }
 
+  /* Depth response. A particle at depth z contributes K(q, z) exp(-i q.x) to the image (K from the optics). For a particle
+   * that moves by a laterally and by dz along the light, the self part of f is <exp(-i q.a) K(q, z) K*(q, z + dz)> / <|K|^2>.
+   * C_q(dz) = sum_z K(q, z) K*(q, z') / sum_z |K(q, z)|^2 over the cell (z' = z + dz mirrored at the walls, as the particles
+   * bounce), real part (both directions of dz are equally likely). Straight swimmers in random 3D directions moving
+   * s = v t: lateral s sqrt(1 - mu^2), axial s mu, so
+   *   h_q(s) = int_0^1 dmu J0(q s sqrt(1 - mu^2)) Re C_q(s mu) = (1/s) int_0^s da J0(q sqrt(s^2 - a^2)) Re C_q(a),
+   * and the swimmers give int dv P(v) h_q(v t) exp(-D q^2 t). Particles that do not swim: exp(-D q^2 t) times the
+   * average of Re C_q over a Gaussian axial step of variance 2 D t. Without the depth response (C = 1) this is Wilson's model. */
+  function kernelAt(info, q) {
+    const K = info.kernel, qk = info.kernel_q, nq = qk.length, nz = K.z_um.length;
+    const tq = Math.min(nq - 2, Math.max(0, q / qk[nq - 2] * (nq - 2))), i = Math.floor(tq), f = tq - i;
+    const re = new Float64Array(nz), im = new Float64Array(nz);
+    for (let j = 0; j < nz; j++) {
+      re[j] = K.Kr[i * nz + j] + f * (K.Kr[(i + 1) * nz + j] - K.Kr[i * nz + j]);
+      im[j] = K.Ki ? K.Ki[i * nz + j] + f * (K.Ki[(i + 1) * nz + j] - K.Ki[i * nz + j]) : 0;
+    }
+    return { z: K.z_um, re: re, im: im };
+  }
+  function depthTable(info, q) {
+    need(info && info.kernel && info.cell_z_um, "the movie lacks its optical kernel");
+    const zlo = info.cell_z_um[0], zhi = info.cell_z_um[1], Lz = zhi - zlo;
+    const Kq = kernelAt(info, q), zg = Kq.z, nzg = zg.length;
+    const nz = Math.min(1500, Math.max(200, Math.ceil(Lz / 0.05))), dz = Lz / nz;
+    const kr = new Float64Array(nz), ki = new Float64Array(nz);
+    let j = 0;
+    for (let k = 0; k < nz; k++) {
+      const z = zlo + (k + 0.5) * dz;
+      while (j < nzg - 2 && zg[j + 1] < z) j++;
+      const f = Math.max(0, Math.min(1, (z - zg[j]) / (zg[j + 1] - zg[j])));
+      kr[k] = Kq.re[j] + f * (Kq.re[j + 1] - Kq.re[j]); ki[k] = Kq.im[j] + f * (Kq.im[j + 1] - Kq.im[j]);
+    }
+    let n0 = 0; for (let k = 0; k < nz; k++) n0 += kr[k] * kr[k] + ki[k] * ki[k];
+    need(n0 > 0, "the optical kernel is zero at q = " + q.toFixed(3));
+    // Re C on dz steps over one period 2 Lz (mirror images of the cell)
+    const C = new Float64Array(2 * nz);
+    for (let d = 0; d < 2 * nz; d++) {
+      let sr = 0;
+      for (let k = 0; k < nz; k++) { let m = (k + d) % (2 * nz); if (m >= nz) m = 2 * nz - 1 - m; sr += kr[k] * kr[m] + ki[k] * ki[m]; }
+      C[d] = sr / n0;
+    }
+    const Cat = function (a) { a = Math.abs(a) / dz; a = a % (2 * nz); const i = Math.floor(a), f = a - i; return C[i] + f * (C[(i + 1) % (2 * nz)] - C[i]); };
+    // h_q(s) on steps q ds = 0.2 (linear interpolation error about 0.5 %), up to q s = 60
+    const ds = 0.2 / q, smax = 60 / q, ns = Math.ceil(smax / ds) + 1, h = new Float64Array(ns);
+    h[0] = 1;
+    for (let k = 1; k < ns; k++) {
+      const sv = k * ds, na = Math.max(16, Math.min(4000, Math.ceil(sv / Math.min(dz, 0.1)))), da = sv / na;
+      let acc = 0;
+      for (let m = 0; m <= na; m++) { const a = m * da, w = m === 0 || m === na ? 0.5 : 1; acc += w * besselJ0(q * Math.sqrt(Math.max(0, sv * sv - a * a))) * Cat(a); }
+      h[k] = acc * da / sv;
+    }
+    return { q: q, dz: dz, nz: nz, C: C, Cat: Cat, ds: ds, smax: smax, h: h };
+  }
+  const schulzGrid = new Map();
+  function speedGrid(spread) {        // nodes u = v / vmean and weights of a Schulz distribution of relative SD spread
+    const key = spread.toPrecision(5); if (schulzGrid.has(key)) return schulzGrid.get(key);
+    const Z = shapeOf(spread), n = 120, lo = Math.max(0, 1 - 8 * spread), hi = 1 + 10 * spread, du = (hi - lo) / (n - 1);
+    const u = new Float64Array(n), w = new Float64Array(n); let W = 0;
+    for (let i = 0; i < n; i++) u[i] = lo + i * du;
+    let mx = -Infinity; for (let i = 0; i < n; i++) if (u[i] > 0) mx = Math.max(mx, Z * Math.log(u[i]) - (Z + 1) * u[i]);
+    W = 0; for (let i = 0; i < n; i++) { w[i] = u[i] > 0 ? Math.exp(Z * Math.log(u[i]) - (Z + 1) * u[i] - mx) : 0; W += w[i]; }
+    for (let i = 0; i < n; i++) w[i] /= W;
+    const out = { u: u, w: w }; if (schulzGrid.size > 500) schulzGrid.clear(); schulzGrid.set(key, out); return out;
+  }
+  function depthF(tb, t, p) {
+    const g = speedGrid(p.spread), q = tb.q;
+    let sw = 0;
+    for (let i = 0; i < g.u.length; i++) {
+      if (g.w[i] === 0) continue;
+      const s = p.v * g.u[i] * t / tb.ds; if (s >= tb.h.length - 1) continue;
+      const k = Math.floor(s), f = s - k; sw += g.w[i] * (tb.h[k] + f * (tb.h[k + 1] - tb.h[k]));
+    }
+    // still particles: axial diffusion through the depth response (Gaussian step of variance 2 D t)
+    const sg = Math.sqrt(2 * p.D * t);
+    let still;
+    if (sg < 0.5 * tb.dz) still = 1;
+    else { const nn = Math.max(8, Math.ceil(4 * sg / tb.dz)), da = 4 * sg / nn; let acc = 0, wsum = 0; for (let m = -nn; m <= nn; m++) { const a = m * da, w = Math.exp(-0.5 * a * a / (sg * sg)); acc += w * tb.Cat(a); wsum += w; } still = acc / wsum; }
+    return Math.exp(-p.D * q * q * t) * ((1 - p.alpha) * still + p.alpha * sw);
+  }
+
   // best A, B for d = A (1 - f) + B (linear least squares, weights 1)
   function linAB(y, f) {
     let s0 = 0, s1 = 0, s11 = 0, sy = 0, s1y = 0; const L = y.length;
@@ -91,6 +170,9 @@
   // global swimmer fit over the q in the window: shared v, alpha, spread, D; A and B per q by linear least squares
   function fitSwimGlobal(kind, taus, rows, start, fixed) {
     const L = taus.length;
+    // kind: "3d" or "2d" (closed models), or "depth" (3D swimmers seen through the depth response of the microscope;
+    // every row then carries its table, see depthTable)
+    const fm = kind === "depth" ? function (r, t, p) { return depthF(r.depth, t, p); } : function (r, t, p) { return swimF(kind, r.q, t, p); };
     // parameters: ln v, alpha, spread, ln D; fixed ones are left out of the fit
     const names = ["v", "alpha", "spread", "D"], free = names.filter(function (k) { return fixed[k] === undefined; });
     const toP = { v: Math.log(start.v), alpha: start.alpha, spread: start.spread, D: Math.log(Math.max(start.D, 1e-4)) };
@@ -103,7 +185,7 @@
     const resid = function (p) {
       const par = unpack(p), out = new Float64Array(rows.length * L);
       rows.forEach(function (r, j) {
-        for (let i = 0; i < L; i++) fbuf[i] = swimF(kind, r.q, taus[i], par);
+        for (let i = 0; i < L; i++) fbuf[i] = fm(r, taus[i], par);
         const ab = linAB(r.y, fbuf) || { A: r.A, B: r.B };
         for (let i = 0; i < L; i++) out[j * L + i] = (ab.A * (1 - fbuf[i]) + ab.B - r.y[i]) / r.scale;
       });
@@ -120,7 +202,7 @@
     const r = DDM.lm(resid, free.map(function (k) { return toP[k]; }), clamp);
     const par = unpack(r.p);
     const se = function (k) { const i = free.indexOf(k); return i >= 0 && r.cov && r.cov[i][i] > 0 ? Math.sqrt(r.cov[i][i]) : null; };
-    const ab = rows.map(function (rw) { for (let i = 0; i < L; i++) fbuf[i] = swimF(kind, rw.q, taus[i], par); return linAB(rw.y, fbuf); });
+    const ab = rows.map(function (rw) { for (let i = 0; i < L; i++) fbuf[i] = fm(rw, taus[i], par); return linAB(rw.y, fbuf); });
     return { kind: kind, v_um_s: par.v, alpha: par.alpha, spread: par.spread, D_um2_s: par.D, cost: r.cost, n_points: rows.length * L,
              v_rel_err: se("v"), alpha_err: se("alpha"), spread_err: se("spread"), D_rel_err: se("D"), ab: ab };
   }
@@ -229,19 +311,36 @@
         return { q: r.q, v_um_s: g.v_um_s, alpha: g.alpha };
       });
     }
+    // 3D swimmers seen through the depth response of the microscope (when asked and the movie carries its optics)
+    let swimDepth = null;
+    if (swim && kind === "3d" && opts.depth === true && movie.info && movie.info.kernel) {
+      yield { stage: "Depth response of the microscope", frac: 0.95 };
+      used.forEach(function (r) { r.depth = depthTable(movie.info, r.q); });
+      let best = null;
+      for (const st of [{ v: swim.v_um_s, alpha: swim.alpha }, { v: 0.8 * swim.v_um_s, alpha: Math.min(1, swim.alpha + 0.1) }]) {
+        const g = fitSwimGlobal("depth", taus, used, { v: st.v, alpha: st.alpha, spread: swim.spread, D: swim.D_um2_s }, {});
+        if (best === null || g.cost < best.cost) best = g;
+      }
+      swimDepth = best;
+      swimDepth.perq = used.map(function (r) {
+        const g = fitSwimGlobal("depth", taus, [r], { v: best.v_um_s, alpha: best.alpha, spread: best.spread, D: best.D_um2_s }, { spread: best.spread, D: best.D_um2_s });
+        return { q: r.q, v_um_s: g.v_um_s, alpha: g.alpha };
+      });
+    }
     // amplitude and noise used to normalise f(q, dt): from the swimmer fit (it has the slow part of the particles that
     // do not swim), else from the compressed fits
-    used.forEach(function (r, j) { const ab = swim && swim.ab[j] && swim.ab[j].A > 0 ? swim.ab[j] : null; r.An = ab ? ab.A : r.A; r.Bn = ab ? ab.B : r.B; });
+    const head = swimDepth || swim;
+    used.forEach(function (r, j) { const ab = head && head.ab[j] && head.ab[j].A > 0 ? head.ab[j] : null; r.An = ab ? ab.A : r.A; r.Bn = ab ? ab.B : r.B; });
     // speed distributions
     yield { stage: "Speed distribution", frac: 0.97 };
     let pv = null;
     if (comp) {
-      const vref = swim ? swim.v_um_s : comp.v0_um_s, vmax = 3 * vref, nv = 60, dv = vmax / nv;
+      const vref = head ? head.v_um_s : comp.v0_um_s, vmax = 3 * vref, nv = 60, dv = vmax / nv;
       const vgrid = []; for (let k = 0; k <= nv; k++) vgrid.push(k * dv);
       const beta = betaFix !== null ? betaFix : comp.beta_free_mean, v0 = comp.v0_um_s;
       const fromCurve = invertCurve(function (x) { return Math.exp(-Math.pow(v0 * x, beta)); }, kind, vgrid);
       // from the data: columns = kernel of each speed bin (bin 0 = particles that do not swim)
-      const D = swim ? swim.D_um2_s : 0;
+      const D = head ? head.D_um2_s : 0;
       const pts = []; for (const r of used) for (let i = 0; i < L; i++) { const f = 1 - (r.y[i] - r.Bn) / r.An; if (f > -0.2 && f < 1.2) pts.push({ q: r.q, t: taus[i], f: f }); }
       const m = pts.length, cols = [];
       for (let k = 0; k <= nv; k++) {
@@ -262,12 +361,27 @@
     }
     // master curve: f against q dt for the used q
     const master = used.map(function (r) { const f = new Float64Array(L); for (let i = 0; i < L; i++) f[i] = 1 - (r.y[i] - r.Bn) / r.An; return { q: r.q, f: f, A: r.An, B: r.Bn }; });
-    return { kind: kind, taus_s: taus, q_per_um: S.q_per_um, dq: S.dq, d2d: S.d2d, varq: S.varq, B_floor: S.B_floor, B_est: S.B_est, A_est: S.A_est,
-             window: { q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, gamma_lo_hz: S.gamma_lo_hz, gamma_hi_hz: S.gamma_hi_hz },
+    // per q, for the page: amplitude and noise, the compressed rate, and the model curve d(dt) (the headline swimmer
+    // model where the q is used, the compressed exponential elsewhere)
+    const fits = rows.map(function (r) {
+      const curve = new Float64Array(L), u = r.reason === null && head;
+      if (u) { const par = { v: head.v_um_s, alpha: head.alpha, spread: head.spread, D: head.D_um2_s }; for (let i = 0; i < L; i++) curve[i] = r.An * (1 - (head === swimDepth ? depthF(r.depth, taus[i], par) : swimF(kind, r.q, taus[i], par))) + r.Bn; }
+      else for (let i = 0; i < L; i++) curve[i] = r.A * (1 - Math.exp(-Math.pow(r.gamma_hz * taus[i], r.fixed.beta))) + r.B;
+      return { bin: r.bin, q_per_um: r.q, ok: r.ok, reason: r.reason, A: u ? r.An : r.A, B: u ? r.Bn : r.B, gamma_hz: r.gamma_hz, beta: r.fixed.beta, beta_free: r.beta_free, lnGamma_se: r.lnGamma_se, curve: curve };
+    });
+    return { kind: kind, model: head === swimDepth && swimDepth ? "depth" : kind, lags: S.lags, taus_s: taus, q_per_um: S.q_per_um, dq: S.dq, d2d: S.d2d, varq: S.varq, B_floor: S.B_floor, B_est: S.B_est, A_est: S.A_est,
+             fits: fits, head: head ? { v_um_s: head.v_um_s, alpha: head.alpha, spread: head.spread, D_um2_s: head.D_um2_s, v_rel_err: head.v_rel_err, alpha_err: head.alpha_err, spread_err: head.spread_err, perq: head.perq } : null,
+             window: { q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, q_opt_per_um: S.q_opt_per_um, q_nyq_per_um: S.q_nyq_per_um, gamma_lo_hz: S.gamma_lo_hz, gamma_hi_hz: S.gamma_hi_hz },
              rows: rows.map(function (r) { return { bin: r.bin, q_per_um: r.q, A: r.A, B: r.B, gamma_hz: r.gamma_hz, beta_free: r.beta_free, gamma_free_hz: r.free.gamma_hz, lnGamma_se: r.lnGamma_se, reason: r.reason }; }),
-             compressed: comp, swim: swim, pv: pv, master: master };
+             compressed: comp, swim: strip(swim), swim_depth: strip(swimDepth), pv: pv, master: master };
   }
 
+  function strip(g) { if (!g) return null; const o = Object.assign({}, g); delete o.ab; return o; }
+  // compact result for repeated measurements
+  function summary(r, mv) {
+    const h = r.head, used = r.fits.filter(function (f) { return f.reason === null; }).map(function (f) { return f.q_per_um; });
+    return { v: h ? h.v_um_s : null, alpha: h ? h.alpha : null, spread: h ? h.spread : null, D: h ? h.D_um2_s : null, v0: r.compressed ? r.compressed.v0_um_s : null, qs: used, seen: seenOver(mv.truth.swim, used), truth_v: mv.truth.swim ? mv.truth.swim.v_mean_um_s : null };
+  }
   // truth as seen over the q used: share of the signal from swimmers and their mean speed, averaged over the used q
   function seenOver(truthSwim, qs) {
     const tab = truthSwim && truthSwim.seen_table; if (!tab || !qs.length) return null;
@@ -276,6 +390,6 @@
     return { fraction: fs / qs.length, v_mean_um_s: nv ? vs / nv : null };
   }
 
-  const api = { seenOver: seenOver, analyse: analyse, swimF: swimF, swim3: swim3, swim2: swim2, besselJ0: besselJ0, nnls: nnls, invertCurve: invertCurve, fitSwimGlobal: fitSwimGlobal, fitCompressed: fitCompressed, linAB: linAB };
+  const api = { summary: summary, depthTable: depthTable, depthF: depthF, seenOver: seenOver, analyse: analyse, swimF: swimF, swim3: swim3, swim2: swim2, besselJ0: besselJ0, nnls: nnls, invertCurve: invertCurve, fitSwimGlobal: fitSwimGlobal, fitCompressed: fitCompressed, linAB: linAB };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ACTIVE = api;
 })(this);

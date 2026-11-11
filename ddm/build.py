@@ -28,10 +28,25 @@ DOC_START = """<!doctype html>
 """
 
 
-def assemble():
-    src = (HERE / "page.src.html").read_text()
-    parts = {"/*OBJECTIVES*/": "data/objectives.min.json", "/*OPTICS*/": "optics.js", "/*MOVIE*/": "movie.js",
-             "/*ENGINE*/": "ddm-engine.js", "/*WORKER*/": "worker.js", "/*APP*/": "app.js"}
+# the two pages: sizing (/ddm/) and swimming bacteria (/ddm/swimmers/)
+PAGES = {
+    "sizing": {"src": "page.src.html", "out": "static/ddm/index.html", "preview": "ddm-hands-on.html", "title": "DDM, hands on",
+               "canonical": "https://rcerbino.github.io/ddm/", "up": "../",
+               "description": "Differential dynamic microscopy (DDM) hands on: simulate a microscopy experiment in your browser and size colloidal particles from how they move, step by step, from the raw movie to the result.",
+               "parts": {"/*OBJECTIVES*/": "data/objectives.min.json", "/*OPTICS*/": "optics.js", "/*MOVIE*/": "movie.js",
+                         "/*ENGINE*/": "ddm-engine.js", "/*WORKER*/": "worker.js", "/*APP*/": "app.js"}},
+    "swimmers": {"src": "swim.src.html", "out": "static/ddm/swimmers/index.html", "preview": "ddm-swimmers.html", "title": "DDM of swimming bacteria",
+                 "canonical": "https://rcerbino.github.io/ddm/swimmers/", "up": "../../",
+                 "description": "Differential dynamic microscopy (DDM) of swimming bacteria: simulate a motility assay in your browser and measure swimming speeds, step by step, from the raw movie to the distribution of speeds.",
+                 "parts": {"/*OBJECTIVES*/": "data/objectives.min.json", "/*OPTICS*/": "optics.js", "/*MOVIE*/": "movie.js",
+                           "/*ENGINE*/": "ddm-engine.js", "/*ACTIVE*/": "active-engine.js", "/*WORKER*/": "worker-swim.js", "/*APP*/": "app-swim.js"}},
+}
+
+
+def assemble(page="sizing"):
+    cfg = PAGES[page]
+    src = (HERE / cfg["src"]).read_text()
+    parts = cfg["parts"]
     out = src
     for k, f in parts.items():
         assert k in out, k
@@ -46,25 +61,29 @@ def assemble():
     return out
 
 
-def site_version(html):
+def site_version(html, page="sizing"):
+    cfg = PAGES[page]
     assert GOOGLE_FONTS in html, "font block not found"
-    html = html.replace(GOOGLE_FONTS, SITE_HEAD)
+    head = (SITE_HEAD.replace("https://rcerbino.github.io/ddm/", cfg["canonical"]).replace('href="../', 'href="' + cfg["up"])
+            .replace(PAGES["sizing"]["description"], cfg["description"]))
+    html = html.replace(GOOGLE_FONTS, head)
     html = html.replace('<meta name="claude:viewport-fit-sides" content="cover">\n', "")
-    html = html.replace("<title>DDM, hands on</title>", "<title>DDM, hands on | Roberto Cerbino</title>")
+    html = html.replace("<title>" + cfg["title"] + "</title>", "<title>" + cfg["title"] + " | Roberto Cerbino</title>")
     start = html.index('<nav class="site-nav" aria-label="Main">')
     a, b = html.index("<ul>", start), html.index("</ul>", start)
     html = html[:a] + "<ul>\n<!--SITE-NAV-->\n      </ul>" + html[b + len("</ul>"):]
-    html = html.replace('<a class="site-name" href="https://rcerbino.github.io/">', '<a class="site-name" href="../">')
+    html = html.replace('<a class="site-name" href="https://rcerbino.github.io/">', '<a class="site-name" href="' + cfg["up"] + '">')
     return html
 
 
 if __name__ == "__main__":
-    html = assemble()
-    if "--preview" in sys.argv:
-        (HERE / "ddm-hands-on.html").write_text(html)
-        print("written ddm/ddm-hands-on.html")
-    else:
-        out = ROOT / "static" / "ddm" / "index.html"
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(site_version(html))
-        print("written", out.relative_to(ROOT), len(out.read_text()), "bytes")
+    for page, cfg in PAGES.items():
+        html = assemble(page)
+        if "--preview" in sys.argv:
+            (HERE / cfg["preview"]).write_text(html)
+            print("written ddm/" + cfg["preview"])
+        else:
+            out = ROOT / cfg["out"]
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(site_version(html, page))
+            print("written", out.relative_to(ROOT), len(out.read_text()), "bytes")

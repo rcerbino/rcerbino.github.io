@@ -63,6 +63,9 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .site-nav a { font-family: var(--sans); font-size: 0.95rem; color: var(--muted); text-decoration: none; padding: 0.2rem 0; border-bottom: 2px solid transparent; }
 .site-nav a:hover { color: var(--ink); }
 .site-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+.ddm-switch { font-family: var(--sans); font-size: 0.9rem; margin: 0 0 0.6rem; color: var(--muted); }
+.ddm-switch a, .ddm-switch span { margin-right: 0.9rem; }
+.ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
 .proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
 
 h1, h2, h3 { font-weight: 500; line-height: 1.2; text-wrap: balance; }
@@ -244,6 +247,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap intro">
     <div>
       <p class="eyebrow">Differential dynamic microscopy</p>
+      <nav class="ddm-switch" aria-label="DDM pages"><span aria-current="page">Sizing particles</span><a href="swimmers/">Swimming bacteria</a></nav>
       <h1>Sizing particles from how they move</h1>
       <p class="lede">Particles in a liquid jiggle because the molecules around them keep kicking them, and small particles jiggle faster than large ones. Differential dynamic microscopy (DDM) measures this motion from an ordinary microscope movie without following any single particle, so it works even when the particles are too small, too faint or too crowded to be followed one by one. From how fast they wander follows their size: the same principle as dynamic light scattering (DLS), but with a microscope, many scattering angles at once, and in samples where DLS struggles (turbid or fluorescent ones, or a drop too small for a cuvette). Particle sizing is one use of DDM among many (see "Beyond sizing" below). Here a simulated microscope lets you run the whole analysis yourself, from the raw movie to a particle size.</p>
       <fieldset class="levels">
@@ -1671,6 +1675,18 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
    *  drift_um_s, homodyne (transmitted light),
    *  gravity (optional, default false): sedimentation with the material and liquid densities,
    *  walls (optional, default false): particles keep their size away from the walls and diffuse more slowly near them
+   *  swim (optional): self-propelled particles (swimming bacteria, active colloids)
+   *    { fraction (0..1, share that swims), v_um_s (mean speed), v_spread (0..1, relative SD of a Schulz distribution
+   *      of speeds), plane_fraction (0..1, share of the swimmers that swim along the bottom glass, axis parallel to it,
+   *      at centre height height_um, or spread uniformly within +- height_spread_um of it, each keeping its height; the
+   *      others swim in 3D), height_um (needed when plane_fraction > 0), height_spread_um (optional),
+   *      rot_diff_s (optional: rotational diffusion of swimmers; default the passive value of the body),
+   *      tumble_hz (optional: rate of tumbles, each a new random direction), circle_rad_s (optional: angular
+   *      velocity of plane swimmers, positive counter-clockwise seen from the objective), plane_still (optional: the
+   *      particles that do not swim also lie in the plane at height_um and move only within it) }
+   *    Swimmers move along their axis (spheres carry a direction that does not change their image), keep their
+   *    Brownian motion, are not slowed near the walls and bounce off them by mirroring the vertical part of their
+   *    direction. Plane swimmers keep their height and turn only within the plane.
    */
   const SHAPES = ["sphere", "bisphere", "prolate", "oblate", "rod"];
   const TINY_UM = 0.03, TINY_M = 1.1;          // reference dipole for non-spherical bodies
@@ -1701,6 +1717,17 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const phi = num(cfg, "volume_fraction", 1e-9, 0.05);
     const T_C = num(cfg, "T_C", 0, 90), Lz = num(cfg, "cell_um", 1, 2000), hf = num(cfg, "focus_um", -50, 2050);
     const drift = num(cfg, "drift_um_s", 0, 1000);
+    // swimmers (optional)
+    const sw = cfg.swim || null;
+    let swFrac = 0, swV = 0, swSpread = 0, swPlane = 0, swH = 0, swHs = 0, swDr = null, swTumble = 0, swOmega = 0;
+    if (sw) {
+      swFrac = num(sw, "fraction", 0, 1); swV = num(sw, "v_um_s", 0, 1000); swSpread = num(sw, "v_spread", 0, 1);
+      swPlane = sw.plane_fraction === undefined ? 0 : num(sw, "plane_fraction", 0, 1);
+      if (swPlane > 0) { swH = num(sw, "height_um", 0, 2000); swHs = sw.height_spread_um === undefined ? 0 : num(sw, "height_spread_um", 0, 2000); }
+      if (sw.rot_diff_s !== undefined) swDr = num(sw, "rot_diff_s", 0, 1000);
+      if (sw.tumble_hz !== undefined) swTumble = num(sw, "tumble_hz", 0, 1000);
+      if (sw.circle_rad_s !== undefined) swOmega = num(sw, "circle_rad_s", -100, 100);
+    }
     const a = det.kind === "camera" ? num(det, "pixel_um", 0.5, 30) * b / mag : num(det, "pixel_um", 0.005, 50);   // pixel at the sample (um)
     const L = N * a;                             // simulated field (um)
     const eta_mPa_s = cfg.liquid.viscosity_mPa_s !== undefined ? cfg.liquid.viscosity_mPa_s : O.viscosityWaterGlycerol_mPa_s(cfg.liquid.glycerol_w, T_C);
@@ -1915,10 +1942,38 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       if (oriented) randomAxis(i);
       fParMean += fWall(classes[c], H[i])[0] / nTot;
     }
+    // swimmers: speeds from a Schulz (gamma) distribution with mean swV and relative SD swSpread
+    const SP = new Float64Array(nTot), PL = new Uint8Array(nTot);
+    const gammaDraw = function (k) {      // Marsaglia and Tsang, mean k, for shape k >= 1 (k < 1 by the boost u^(1/k))
+      const kk = k < 1 ? k + 1 : k, d = kk - 1 / 3, c3 = 1 / Math.sqrt(9 * d);
+      let v;
+      for (;;) { let x, w; do { x = rng.g(); w = 1 + c3 * x; } while (w <= 0); w = w * w * w; const u = rng.u(); if (u < 1 - 0.0331 * x * x * x * x || Math.log(u) < 0.5 * x * x + d * (1 - w + Math.log(w))) { v = d * w; break; } }
+      return k < 1 ? v * Math.pow(rng.u(), 1 / k) : v;
+    };
+    const swList = [];
+    const SW = new Uint8Array(nTot);     // moved by swimAdvance (swimmers, and particles kept in the plane)
+    const stillPlane = sw && sw.plane_still === true;
+    if (stillPlane) need(swPlane > 0, "plane_still needs plane swimmers (plane_fraction > 0)");
+    if (sw) for (let i = 0; i < nTot; i++) {
+      if (rng.u() >= swFrac) {
+        if (stillPlane) { SW[i] = 1; PL[i] = 1; H[i] = Math.min(Lz - classes[cls[i]].aex, Math.max(classes[cls[i]].aex, swH)); const ph = TWO_PI * rng.u(); UX[i] = Math.cos(ph); UY[i] = Math.sin(ph); UZ[i] = 0; }
+        continue;
+      }
+      SW[i] = 1;
+      const k = swSpread > 0 ? 1 / (swSpread * swSpread) : 0;
+      SP[i] = swSpread > 0 ? swV * gammaDraw(k) / k : swV;
+      if (!(SP[i] > 0)) { SP[i] = 0; SW[i] = stillPlane ? 1 : 0; if (!stillPlane) continue; }
+      if (swPlane > 0 && rng.u() < swPlane) {
+        PL[i] = 1; H[i] = Math.min(Lz - classes[cls[i]].aex, Math.max(classes[cls[i]].aex, swH + swHs * (2 * rng.u() - 1)));
+        const ph = TWO_PI * rng.u(); UX[i] = Math.cos(ph); UY[i] = Math.sin(ph); UZ[i] = 0;
+      } else if (!oriented) randomAxis(i);
+      swList.push(SP[i]);
+    }
+    let vMax = 0; for (let i = 0; i < nTot; i++) vMax = Math.max(vMax, SP[i]);
     // exposure blur: sub-steps when particles move or turn noticeably during the exposure
     // (D q^2 t_exp at the finest pattern imaged, 6 D_r t_exp); otherwise the exposure is treated as instantaneous
     let Dmax = 0, Drmax = 0; classes.forEach(function (c) { Dmax = Math.max(Dmax, c.hyd.D_par, c.hyd.D_perp); Drmax = Math.max(Drmax, c.hyd.D_r); });
-    const blur = Math.max(Dmax * qcut * qcut * expo, oriented ? 6 * Drmax * expo : 0);
+    const blur = Math.max(Dmax * qcut * qcut * expo, oriented ? 6 * Drmax * expo : 0, Math.pow(vMax * qcut * expo, 2));
     const nsub = blur < 0.05 ? 1 : Math.min(8, Math.ceil(4 * Math.sqrt(blur)));
     const dtFrame = 1 / fr;
 
@@ -2096,6 +2151,50 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       X[i] += drift * dt;
       reflect(i);
     };
+    // swimmers: Brownian translation (in the body frame for particles with an axis), swimming along the axis,
+    // rotational diffusion (in 3D, or within the plane for plane swimmers, plus circling), tumbles; walls mirror the
+    // vertical part of the direction. Steps: D_r h <= 0.03, at most 0.5 um of swimming, tumble chance <= 5 %.
+    const swimAdvance = function (i, dt) {
+      if (dt <= 0) return;
+      const c = classes[cls[i]], hy = c.hyd, v = SP[i], pl = PL[i] === 1;
+      const Dr = swDr !== null ? swDr : hy.D_r;
+      const nst = Math.max(1, Math.min(4000, Math.ceil(Math.max(Dr * dt / 0.03, v * dt / 0.5, swTumble * dt / 0.05, Math.abs(swOmega) * dt / 0.1))));
+      const hh = dt / nst;
+      const Dpa = oriented ? hy.D_par : hy.D_t, Dpe = oriented ? hy.D_perp : hy.D_t;
+      const sPar = Math.sqrt(2 * Dpa * hh), sPer = Math.sqrt(2 * Dpe * hh), sRot = Math.sqrt(2 * Dr * hh);
+      const lo = c.aex, hi = Lz - c.aex;
+      let ux = UX[i], uy = UY[i], uz = UZ[i];
+      for (let k = 0; k < nst; k++) {
+        frame(ux, uy, uz);
+        const g0 = sPar * rng.g(), g1 = sPer * rng.g(), g2 = sPer * rng.g();
+        X[i] += g0 * ux + g1 * e1[0] + g2 * e2[0] + v * ux * hh + drift * hh;
+        Y[i] += g0 * uy + g1 * e1[1] + g2 * e2[1] + v * uy * hh;
+        if (!pl && !freezeZ) {
+          H[i] -= g0 * uz + g1 * e1[2] + g2 * e2[2] + v * uz * hh;      // z points down: height decreases with uz
+          if (H[i] < lo) { H[i] = 2 * lo - H[i]; uz = Math.abs(uz); }      // moving down (uz > 0) turns into moving up
+          if (H[i] > hi) { H[i] = 2 * hi - H[i]; uz = -Math.abs(uz); }
+          if (H[i] < lo || H[i] > hi) H[i] = Math.min(hi, Math.max(lo, H[i]));
+        }
+        if (swTumble > 0 && rng.u() < swTumble * hh) {
+          if (pl) { const ph = TWO_PI * rng.u(); ux = Math.cos(ph); uy = Math.sin(ph); uz = 0; }
+          else { const z = 2 * rng.u() - 1, ph = TWO_PI * rng.u(), r = Math.sqrt(1 - z * z); ux = r * Math.cos(ph); uy = r * Math.sin(ph); uz = z; }
+          continue;
+        }
+        if (pl) {
+          const th = Math.atan2(uy, ux) + sRot * rng.g() + swOmega * hh;
+          ux = Math.cos(th); uy = Math.sin(th); uz = 0;
+        } else if (sRot > 0) {
+          const w1 = sRot * rng.g(), w2 = sRot * rng.g(), om = Math.hypot(w1, w2);
+          if (om > 0) {
+            const cc = Math.cos(om), sn = Math.sin(om) / om;
+            ux = cc * ux + sn * (w1 * e1[0] + w2 * e2[0]); uy = cc * uy + sn * (w1 * e1[1] + w2 * e2[1]); uz = cc * uz + sn * (w1 * e1[2] + w2 * e2[2]);
+            const nn = Math.hypot(ux, uy, uz); ux /= nn; uy /= nn; uz /= nn;
+          }
+        }
+      }
+      UX[i] = ux; UY[i] = uy; UZ[i] = uz;
+      X[i] -= L * Math.floor(X[i] / L); Y[i] -= L * Math.floor(Y[i] / L);
+    };
     // depth interpolation in one kernel block
     const zw = { col: 0, f: 0 };
     const zLocate = function (B, zp) {
@@ -2127,8 +2226,12 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       if (c.Wtab) { const t = Math.acos(Math.min(1, Math.abs(uz))) / (Math.PI / 2) * (c.Wtab.length - 1), j = Math.min(c.Wtab.length - 2, Math.floor(t)); cw.hom *= c.Wtab[j] + (t - j) * (c.Wtab[j + 1] - c.Wtab[j]); }
     };
     const subDt = nsub > 1 ? expo / nsub : 0;
+    // test only: positions of the first particles at every frame
+    const nTrack = cfg.test_track === true ? Math.min(nTot, 400) : 0;
+    const track = nTrack ? { X: new Float64Array(nTrack * T), Y: new Float64Array(nTrack * T), H: new Float64Array(nTrack * T), SP: SP.slice(0, nTrack), PL: PL.slice(0, nTrack), n: nTrack, L: L } : null;
     const seenAcc = (!split && !body && classes.length > 1) ? classes.map(function () { return new Float64Array(nq); }) : null;
     const seenEvery = Math.max(1, Math.floor(T / 32));
+    const swSeen = { ws: new Float64Array(nq), wn: new Float64Array(nq), wv: new Float64Array(nq), wv2: new Float64Array(nq) };
     for (let t = 0; t < T; t++) {
       grid.fill(0);
       const t0 = t * dtFrame;
@@ -2136,7 +2239,8 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
         const del = delay(Y[i]), ci = cls[i], c = classes[ci], ch = chans[ci];
         for (let sub = 0; sub < nsub; sub++) {
           const when = t0 + del + (nsub > 1 ? (sub + 0.5) * subDt : 0);
-          advance(i, when - tp[i]); if (when > tp[i]) tp[i] = when;
+          if (SW[i]) swimAdvance(i, when - tp[i]); else advance(i, when - tp[i]);
+          if (when > tp[i]) tp[i] = when;
           let wHet = 0, wHom = 0;
           if (split) { channelWeights(c, UX[i], UY[i], UZ[i]); wHet = cw.het; wHom = cfg.test_no_hom === true ? 0 : cw.hom; }   // test_no_hom: test-only switch
           if (!body) {
@@ -2157,6 +2261,20 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
           }
         }
       }
+      // swimmers: share of the signal from swimmers and their mean speed as seen (weights |K|^2 at a mid wave vector,
+      // at each particle's depth), every few frames
+      if (sw && t % seenEvery === 0) {
+        for (let i = 0; i < nTot; i++) {
+          const ch = chans[cls[i]], bi = ch.all !== undefined ? ch.all : ch.het !== undefined ? ch.het : ch.hom; if (bi === undefined) continue;
+          const B = blocks[bi], nzb = B.z_um.length; zLocate(B, hf - H[i]);
+          const lo = zw.col - B.off, f = zw.f, sv = SP[i] > 0;
+          for (let iq = 0; iq < nq; iq++) {
+            const o = iq * nzb + lo, vr = B.Kr[o] + f * (B.Kr[o + 1] - B.Kr[o]), vi = B.Ki[o] + f * (B.Ki[o + 1] - B.Ki[o]), w = vr * vr + vi * vi;
+            if (sv) { swSeen.ws[iq] += w; swSeen.wv[iq] += w * SP[i]; swSeen.wv2[iq] += w * SP[i] * SP[i]; } else swSeen.wn[iq] += w;
+          }
+        }
+      }
+      if (track) for (let i = 0; i < nTrack; i++) { const o = t * nTrack + i; track.X[o] = X[i]; track.Y[o] = Y[i]; track.H[o] = H[i]; }
       // signal weight of each size class from where its particles actually are (every few frames)
       if (seenAcc && t % seenEvery === 0) {
         for (let i = 0; i < nTot; i++) {
@@ -2239,18 +2357,33 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const kInfo = function (bi) { if (bi === undefined) return null; const B = blocks[bi]; return { Kr: B.Kr, Ki: B.Ki, nd: B.nd, z_um: B.z_um }; };
     const h0 = classes[0].hyd, hd0 = O.hydrodynamics(O.shapeGeometry(shape, d0, pAsp), kT, eta);
     return {
+      test_track: track || undefined,
       test_heights: cfg.test_return_heights === true ? { H: Float64Array.from(H), lg: classes[0].lg, aex: classes[0].aex, ah: classes[0].ah } : undefined,   // test only
       n: N, T: T, frames: frames, fft: fft,
       pixel_um: a, L_um: L, frame_rate_hz: fr, T_C: T_C, viscosity_Pa_s: eta,
       q_opt_per_um: trans ? TWO_PI * Math.min(na, 1.34) / lamRef : 2 * TWO_PI * Math.min(na, 1.34) / lamRef,
       q_signal_max_per_um: qcut,
-      info: { mode: mode, dark: dark, directions: nd, n_particles: nTot, n_points: Math.round(ptsTotal), exposure_substeps: nsub, timing: timing, readout_s: readout, read_noise_e: readE, full_well_e: fullWell, oversampling: s, truncated_q_per_um: truncated ? qKmax : null, rank: M, rank_residual: LR.residual, Cext_um2: Cext, background_e: bgE, wavelength_um: lamRef, kernel_q: qk,
+      info: { mode: mode, cell_z_um: [zlo, zhi], dark: dark, directions: nd, n_particles: nTot, n_points: Math.round(ptsTotal), exposure_substeps: nsub, timing: timing, readout_s: readout, read_noise_e: readE, full_well_e: fullWell, oversampling: s, truncated_q_per_um: truncated ? qKmax : null, rank: M, rank_residual: LR.residual, Cext_um2: Cext, background_e: bgE, wavelength_um: lamRef, kernel_q: qk,
               kernel: chm.all !== undefined ? kInfo(chm.all) : (chm.het !== undefined ? kInfo(chm.het) : kInfo(chm.hom)), classes: classes.map(function (c) { return { d: c.d, w: c.w }; }),
               split: split, channels: split ? { het: kInfo(chm.het), hom: kInfo(chm.hom) } : null,
               particle: { shape: shape, oriented: oriented, body: body, aspect: pAsp, birefringence: dn, geometry: cm.geo, points: body ? { xyz: cm.pts.xyz, n: cm.pts.n, spacing: cm.pts.spacing } : null,
                           alpha_perp: cm.aPerp, dalpha: cm.dA, alpha_ref: cm.aRef, Wtab: cm.Wtab || null, polarization: pol, background_share: bgf } },
       truth: { diameter_um: d0, mean_diameter_um: dnum, D_um2_s: hd0.D_t, D_seen_um2_s: Dseen, seen_table: seenTable, diameter_seen_um: kT / (3 * Math.PI * eta * Dseen * 1e-12) * 1e6, drift_um_s: drift,
                D_plane_um2_s: hd0.D_t * fParFocus, D_plane_all_um2_s: hd0.D_t * fParMean, walls: walls, gravity: gravity, gravitational_length_um: isFinite(classes[0].lg) ? classes[0].lg : null,
+               swim: sw ? (function () {
+                 const n = swList.length, m = n ? swList.reduce(function (p, v) { return p + v; }, 0) / n : 0;
+                 const sd = n > 1 ? Math.sqrt(swList.reduce(function (p, v) { return p + (v - m) * (v - m); }, 0) / (n - 1)) : 0;
+                 let nPl = 0; for (let i = 0; i < nTot; i++) if (PL[i]) nPl++;
+                 // as seen by the microscope, per kernel wave vector (the signal of each particle at its depth); headline at
+                 // a mid wave vector, the reader can average over the q actually used with seen_table
+                 const iqm = Math.round(0.35 * (nq - 2)), tab = { q_per_um: Array.from(qk), fraction: [], v_mean_um_s: [] };
+                 for (let iq = 0; iq < nq; iq++) { const W = swSeen.ws[iq] + swSeen.wn[iq]; tab.fraction.push(W > 0 ? swSeen.ws[iq] / W : null); tab.v_mean_um_s.push(swSeen.ws[iq] > 0 ? swSeen.wv[iq] / swSeen.ws[iq] : null); }
+                 const vs = swSeen.ws[iqm] > 0 ? swSeen.wv[iqm] / swSeen.ws[iqm] : null;
+                 return { fraction: n / nTot, v_mean_um_s: m, v_sd_um_s: sd, seen_table: tab,
+                          fraction_seen: tab.fraction[iqm], v_mean_seen_um_s: vs,
+                          v_sd_seen_um_s: vs !== null ? Math.sqrt(Math.max(0, swSeen.wv2[iqm] / swSeen.ws[iqm] - vs * vs)) : null, v_list: Float32Array.from(swList), n_swimmers: n, n_plane: nPl,
+                          v_set_um_s: swV, v_spread_set: swSpread, fraction_set: swFrac, plane_fraction_set: swPlane, rot_diff_s: swDr !== null ? swDr : hd0.D_r, tumble_hz: swTumble, circle_rad_s: swOmega };
+               })() : null,
                shape: shape, oriented: oriented, D_r_s: oriented ? hd0.D_r : null, D_par_um2_s: hd0.D_par, D_perp_um2_s: hd0.D_perp, rot_rate_s: oriented ? 6 * hd0.D_r : null, first_class_D_um2_s: h0.D_t }
     };
   }
@@ -2592,10 +2725,9 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
    *   q_min_per_um, q_max_per_um (fit range chosen by the user; null = full measurable range),
    *   images (optional): "recorded" (default) or "squared_gradient"
    */
-  function* analyse(movie, opts) {
-    need(["simple", "stretched", "schulz", "two", "three"].indexOf(opts.fit_model) >= 0, "fit_model must be simple, stretched, schulz, two or three");
-    const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
-    need("q_min_per_um" in opts && "q_max_per_um" in opts, "q range missing (use null for the full range)");
+  /* Structure function d(q, dt) of a movie (2D per lag and azimuthally averaged), temporal variance, measurable
+   * window and noise estimate B(q) (A = 2 var - B). Shared by the sizing analysis and the swimmer analysis. */
+  function* structure(movie, opts) {
     const images = opts.images === undefined ? "recorded" : opts.images;
     need(images === "recorded" || images === "squared_gradient", "images must be recorded or squared_gradient");
     const sg = images === "squared_gradient";
@@ -2703,6 +2835,18 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       if (B_floor !== null) Bq = Math.min(B_floor, dq[0][b]);
       B_est[b] = Bq; A_est[b] = 2 * varq[b] - Bq;
     }
+    return { images: images, sg: sg, n: n, T: T, P: P, fft: fft, lags: lags, L: L, dt_s: dt_s, taus_s: taus_s, nb: nb, binOf: binOf, nmodes: nmodes,
+             q_per_um: q_per_um, d2d: d2d, dq: dq, varq: varq, q_lo_per_um: q_lo_per_um, q_nyq_per_um: q_nyq_per_um, q_opt_per_um: q_opt_per_um,
+             q_sig_per_um: q_sig_per_um, q_hi_per_um: q_hi_per_um, gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz, B_floor: B_floor, B_est: B_est, A_est: A_est };
+  }
+  function* analyse(movie, opts) {
+    need(["simple", "stretched", "schulz", "two", "three"].indexOf(opts.fit_model) >= 0, "fit_model must be simple, stretched, schulz, two or three");
+    const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
+    need("q_min_per_um" in opts && "q_max_per_um" in opts, "q range missing (use null for the full range)");
+    const S = yield* structure(movie, opts);
+    const images = S.images, n = S.n, T = S.T, P = S.P, fft = S.fft, lags = S.lags, L = S.L, taus_s = S.taus_s, nb = S.nb, binOf = S.binOf, nmodes = S.nmodes,
+      q_per_um = S.q_per_um, d2d = S.d2d, dq = S.dq, varq = S.varq, q_lo_per_um = S.q_lo_per_um, q_nyq_per_um = S.q_nyq_per_um, q_opt_per_um = S.q_opt_per_um,
+      q_hi_per_um = S.q_hi_per_um, gamma_lo_hz = S.gamma_lo_hz, gamma_hi_hz = S.gamma_hi_hz, B_floor = S.B_floor, B_est = S.B_est, A_est = S.A_est;
     // fit every q
     const stretched = opts.fit_model === "stretched", kind = opts.fit_model === "stretched" || opts.fit_model === "schulz" ? opts.fit_model : "simple";
     const fits = [];
@@ -3309,7 +3453,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   const api = {
     CAMERA_PIXEL_UM: CAMERA_PIXEL_UM, WAVELENGTH_UM: WAVELENGTH_UM,
     waterViscosity_Pa_s: waterViscosity_Pa_s, diffusion_um2_s: diffusion_um2_s, diameterFromD_um: diameterFromD_um,
-    simulate: simulate, analyse: analyse, structureMap: structureMap, runToEnd: runToEnd,
+    simulate: simulate, analyse: analyse, structure: structure, structureMap: structureMap, lm: lm, solve: solve, invert: invert, logspaceLags: logspaceLags, runToEnd: runToEnd,
     // compact result of one analysis for repeated measurements: D from the main fit and the cumulants, the q used and the truth
     repeatSummary: function (r, mv) {
       return { main_D: r.D ? r.D.D_um2_s : null, cum_D: r.cumulants && r.cumulants.D_um2_s ? r.cumulants.D_um2_s : null, cum_pi: r.cumulants && r.cumulants.pi !== null && r.cumulants.pi !== undefined ? r.cumulants.pi : null, sch_pi: r.cumulants && r.cumulants.schulz_shared ? r.cumulants.schulz_shared.pi : null,

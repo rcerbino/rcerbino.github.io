@@ -62,5 +62,17 @@ movieCase("E. coli-like motility assay, phase contrast 10x, 60 % swim at 20 um/s
   function (m, r) { const s = m.truth.swim; return r.swim && Math.abs(r.swim.v_um_s / s.v_mean_um_s - 1) < 0.05 && Math.abs(r.swim.alpha - s.fraction_seen) < 0.05 && Math.abs(r.pv.data_still_share - (1 - s.fraction_seen)) < 0.05 && Math.abs(r.pv.data_mean_swimmers_um_s / s.v_mean_um_s - 1) < 0.08; });
 movieCase("plane swimmers (2D), dark field 10x, 80 % swim at 15 um/s, q up to 1.5 um^-1 (rod length 2 um)", { swim: { fraction: 0.8, v_um_s: 15, v_spread: 0.25, plane_fraction: 1, plane_still: true, height_um: 1, rot_diff_s: 0.1 }, n_frames: 512, illum: { na_in: 0.42, na_out: 0.5 }, pupil: undefined, cell_um: 20, focus_um: 1, volume_fraction: 2e-3 }, { kind: "2d", q_max_per_um: 1.5 },
   function (m, r) { const s = m.truth.swim; return r.swim && Math.abs(r.swim.v_um_s / s.v_mean_um_s - 1) < 0.05 && Math.abs(r.swim.alpha - s.fraction_seen) < 0.05; });
+// 5. confocal (spinning disk, 20x NA 0.75): swimmers leave the thin slice. Wilson's model reads the speed high, the
+// model with the depth response of the microscope gets it right
+{
+  const cfg = { seed: 1, mode: "spinning", objective: { mag: 20, na: 0.75, n_imm: 1.0 }, l_ex_um: 0.488, l_em_um: 0.52, pinhole_um: 50, crosstalk: Math.PI / 4 * 0.04, photons_per_particle: 3000, background_photons: 5,
+    detector: { kind: "camera", pixel_um: 6.5, binning: 2, bin_charge: false, qe: 0.8, read_noise_e: 1.6, full_well_e: 30000, timing: "global", t_row_s: 0, rows_total: 256, crop_row0: 0 },
+    n_px: 128, n_frames: 512, frame_rate_hz: 100, exposure_s: 0.002, shape: "sphere", diameter_um: 1.0, particle: "bacterium", size_spread: 0, volume_fraction: 4e-4,
+    liquid: { n: 1.335, viscosity_mPa_s: 0.95 }, T_C: 22, cell_um: 50, focus_um: 25, drift_um_s: 0, vector: false, swim: { fraction: 0.6, v_um_s: 20, v_spread: 0.3, rot_diff_s: 0.1 } };
+  const t0 = Date.now(), m = DDM.runToEnd(MOVIE.simulate(cfg)), r = DDM.runToEnd(A.analyse(m, { q_min_per_um: null, q_max_per_um: null, beta: null, kind: "3d", depth: true }));
+  const so = A.seenOver(m.truth.swim, r.fits.filter(function (f) { return f.reason === null; }).map(function (f) { return f.q_per_um; }));
+  const dw = r.swim.v_um_s / so.v_mean_um_s - 1, dd = r.swim_depth.v_um_s / so.v_mean_um_s - 1;
+  check("spinning disk 20x: Wilson's model reads high (" + (100 * dw).toFixed(0) + " %), the depth model within 6 % (" + (100 * dd).toFixed(1) + " %)", dw > 0.12 && Math.abs(dd) < 0.06, "true " + so.v_mean_um_s.toFixed(1) + " um/s; " + (Date.now() - t0) + " ms");
+}
 console.log(failures === 0 ? "\nALL SWIMMER ANALYSIS CHECKS PASSED" : "\n" + failures + " CHECK(S) FAILED");
 process.exit(failures ? 1 : 0);

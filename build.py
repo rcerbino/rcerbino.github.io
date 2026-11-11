@@ -43,7 +43,9 @@ FOOTER_ONLY = {"Legal notice and privacy"}
 # Pages built outside the templates (copied from static/) that still get a place in the main menu:
 # (output path, menu label, put after this label). The DDM page is assembled by ddm/build.py into
 # static/ddm/index.html; this build writes the main menu into it.
-EXTRA_PAGES = [("ddm/index.html", "DDM", "Research")]
+# A page with None as the last entry gets the menu with that item marked as current, without a new item of its own
+# (the swimmers page is a second DDM page, reached from a switch under the title of both).
+EXTRA_PAGES = [("ddm/index.html", "DDM", "Research"), ("ddm/swimmers/index.html", "DDM", None)]
 
 TYPE_LABELS = {
     "preprint": "Preprints",
@@ -422,6 +424,8 @@ def main(check=False, preview=False):
     env.globals["link"] = link
     nav = [(link(path), label) for path, _, label in PAGES if label not in FOOTER_ONLY]
     for path, label, after in EXTRA_PAGES:
+        if after is None:
+            continue
         i = next(k for k, (_, l) in enumerate(nav) if l == after)
         nav.insert(i + 1, (link(path), label))
     ctx = dict(profile=profile, about=about, research=research, teaching=teaching,
