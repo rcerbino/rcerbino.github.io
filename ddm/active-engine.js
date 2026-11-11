@@ -192,7 +192,7 @@
       else if (!r.ok) r.reason = "fit failed";
       else if (r.lnGamma_se > 0.2) r.reason = "signal lost in camera noise";
       else if (r.gamma_hz <= 3 * S.gamma_lo_hz) r.reason = "too slow for this movie";
-      else if (r.gamma_hz >= 0.5 * S.gamma_hi_hz) r.reason = "too fast for this frame rate";
+      else if (r.gamma_hz >= S.gamma_hi_hz) r.reason = "too fast for this frame rate";
       else if (r.q < qmin || r.q > qmax) r.reason = "outside the chosen fit range";
     }
     const used = rows.filter(function (r) { return r.reason === null; });

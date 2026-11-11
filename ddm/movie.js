@@ -116,7 +116,8 @@
    *  swim (optional): self-propelled particles (swimming bacteria, active colloids)
    *    { fraction (0..1, share that swims), v_um_s (mean speed), v_spread (0..1, relative SD of a Schulz distribution
    *      of speeds), plane_fraction (0..1, share of the swimmers that swim along the bottom glass, axis parallel to it,
-   *      at centre height height_um; the others swim in 3D), height_um (needed when plane_fraction > 0),
+   *      at centre height height_um, or spread uniformly within +- height_spread_um of it, each keeping its height; the
+   *      others swim in 3D), height_um (needed when plane_fraction > 0), height_spread_um (optional),
    *      rot_diff_s (optional: rotational diffusion of swimmers; default the passive value of the body),
    *      tumble_hz (optional: rate of tumbles, each a new random direction), circle_rad_s (optional: angular
    *      velocity of plane swimmers, positive counter-clockwise seen from the objective), plane_still (optional: the
@@ -156,11 +157,11 @@
     const drift = num(cfg, "drift_um_s", 0, 1000);
     // swimmers (optional)
     const sw = cfg.swim || null;
-    let swFrac = 0, swV = 0, swSpread = 0, swPlane = 0, swH = 0, swDr = null, swTumble = 0, swOmega = 0;
+    let swFrac = 0, swV = 0, swSpread = 0, swPlane = 0, swH = 0, swHs = 0, swDr = null, swTumble = 0, swOmega = 0;
     if (sw) {
       swFrac = num(sw, "fraction", 0, 1); swV = num(sw, "v_um_s", 0, 1000); swSpread = num(sw, "v_spread", 0, 1);
       swPlane = sw.plane_fraction === undefined ? 0 : num(sw, "plane_fraction", 0, 1);
-      if (swPlane > 0) swH = num(sw, "height_um", 0, 2000);
+      if (swPlane > 0) { swH = num(sw, "height_um", 0, 2000); swHs = sw.height_spread_um === undefined ? 0 : num(sw, "height_spread_um", 0, 2000); }
       if (sw.rot_diff_s !== undefined) swDr = num(sw, "rot_diff_s", 0, 1000);
       if (sw.tumble_hz !== undefined) swTumble = num(sw, "tumble_hz", 0, 1000);
       if (sw.circle_rad_s !== undefined) swOmega = num(sw, "circle_rad_s", -100, 100);
@@ -401,7 +402,7 @@
       SP[i] = swSpread > 0 ? swV * gammaDraw(k) / k : swV;
       if (!(SP[i] > 0)) { SP[i] = 0; SW[i] = stillPlane ? 1 : 0; if (!stillPlane) continue; }
       if (swPlane > 0 && rng.u() < swPlane) {
-        PL[i] = 1; H[i] = Math.min(Lz - classes[cls[i]].aex, Math.max(classes[cls[i]].aex, swH));
+        PL[i] = 1; H[i] = Math.min(Lz - classes[cls[i]].aex, Math.max(classes[cls[i]].aex, swH + swHs * (2 * rng.u() - 1)));
         const ph = TWO_PI * rng.u(); UX[i] = Math.cos(ph); UY[i] = Math.sin(ph); UZ[i] = 0;
       } else if (!oriented) randomAxis(i);
       swList.push(SP[i]);
