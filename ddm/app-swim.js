@@ -1096,6 +1096,65 @@
     const so = ACTIVE.seenOver(tr, qs.length ? qs : [res.window.q_hi_per_um / 3]);
     return { share: so ? so.fraction : tr.fraction, v: so && so.v_mean_um_s ? so.v_mean_um_s : tr.v_mean_um_s, spread: tr.v_sd_um_s / Math.max(1e-9, tr.v_mean_um_s) };
   }
+  // What moves, and how: the curves of all used q against q dt (straight swimming: a pattern renews when a cell has
+  // swum across it, so the fast step of every q falls on one curve) and against q^2 dt (diffusion: the slow step does)
+  function drawCollapse() {
+    const res = cache.res, h = res.head, taus = res.taus_s, M = res.master || [];
+    ["chart-ballistic", "chart-diffusive"].forEach(function (id, k) {
+      const cv = $(id); if (!cv) return;
+      const pow = k === 0 ? 1 : 2;
+      if (!M.length) { axes(cv, { xlog: true, ylog: false, x0: 0.01, x1: 100, y0: -0.1, y1: 1.1, xlabel: k === 0 ? "q \u0394t (" + MU + "m\u207b\u00b9 s)" : "q\u00b2 \u0394t (" + MU + "m\u207b\u00b2 s)", ylabel: "f" }).done(); return; }
+      let x0 = Infinity, x1 = 0; M.forEach(function (m) { const s0 = Math.pow(m.q, pow); x0 = Math.min(x0, s0 * taus[0]); x1 = Math.max(x1, s0 * taus[taus.length - 1]); });
+      const a = axes(cv, { xlog: true, ylog: false, x0: x0, x1: x1, y0: -0.1, y1: 1.1,
+        xlabel: k === 0 ? (level === "curious" ? "pattern fineness x delay (q \u0394t)" : "q \u0394t (" + MU + "m\u207b\u00b9 s)") : (level === "curious" ? "fineness squared x delay (q\u00b2 \u0394t)" : "q\u00b2 \u0394t (" + MU + "m\u207b\u00b2 s)"),
+        ylabel: level === "curious" ? "How alike (1 = same)" : "f(q, \u0394t)" });
+      const ctx = a.ctx;
+      // the level of the cells that do not swim (between the two steps)
+      if (h && !h.no_swim) { const y = a.fy(1 - h.alpha); ctx.setLineDash([5, 4]); ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.m.l, y); ctx.lineTo(a.m.l + a.pw, y); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = C.muted; ctx.textAlign = "left"; ctx.textBaseline = h.alpha > 0.85 ? "bottom" : "top"; ctx.fillText("cells that do not swim: " + Math.round(100 * (1 - h.alpha)) + " %", a.m.l + 6, h.alpha > 0.85 ? y - 3 : y + 3); }
+      const step = Math.max(1, Math.round(M.length / 14));
+      M.forEach(function (m, j) {
+        if (j % step) return;
+        const s0 = Math.pow(m.q, pow); ctx.strokeStyle = qColor(qPos(m.q)); ctx.lineWidth = 1.4; ctx.beginPath();
+        for (let i = 0; i < taus.length; i++) { const X = a.fx(s0 * taus[i]), Y = a.fy(Math.max(-0.1, Math.min(1.1, m.f[i]))); if (i) ctx.lineTo(X, Y); else ctx.moveTo(X, Y); }
+        ctx.stroke();
+      });
+      // what each kind of motion predicts on its own axis: swimmers on the left, diffusion on the right
+      if (h) {
+        ctx.strokeStyle = C.ink; ctx.lineWidth = 2.2; ctx.setLineDash([]); ctx.beginPath();
+        for (let i = 0; i <= 80; i++) {
+          const x = x0 * Math.pow(x1 / x0, i / 80); let f;
+          if (k === 0) f = h.no_swim ? null : (1 - h.alpha) + h.alpha * ACTIVE.swimF(res.kind === "2d" ? "2d" : "3d", 1, x, { v: h.v_um_s, alpha: 1, spread: h.spread, D: 0 });
+          else f = (h.no_swim ? 1 : 1 - h.alpha) * Math.exp(-h.D_um2_s * x);
+          if (f === null) break;
+          const X = a.fx(x), Y = a.fy(Math.max(-0.1, Math.min(1.1, f))); if (i) ctx.lineTo(X, Y); else ctx.moveTo(X, Y);
+        }
+        ctx.stroke();
+      }
+      a.done();
+    });
+  }
+  // one paragraph and a bar: who swims, who only diffuses, and the evidence
+  function renderMotion() {
+    const el = $("motion"); if (!el) return;
+    const res = cache.res, h = res.head, st = seenTruth(), tr = cache.movie.truth.swim, c = res.compressed;
+    const bar = function (share, label) { const p = Math.round(100 * Math.max(0, Math.min(1, share))); return '<div class="mbar"><span class="mlab">' + label + '</span><span class="mtrack"><span class="msw" style="width:' + p + '%"></span><span class="mdf" style="width:' + (100 - p) + '%"></span></span><span class="mnum">' + p + ' % / ' + (100 - p) + ' %</span></div>'; };
+    let html = '<div class="eyebrow">What moves, and how</div>';
+    if (!h) { el.innerHTML = html + '<p class="small">Too few usable patterns to tell.</p>'; return; }
+    const measured = h.no_swim ? 0 : h.alpha;
+    html += '<div class="mkey"><span><i class="msw"></i>swim in straight runs</span><span><i class="mdf"></i>only diffuse</span></div>';
+    html += bar(measured, "Measured") + bar(st.share, "True");
+    const slope = c ? c.slope : null, tmax = res.taus_s[res.taus_s.length - 1], qhi = res.used.length ? res.used[res.used.length - 1].q_per_um : 1;
+    const still = h.D_um2_s * qhi * qhi * tmax;
+    let lines = [];
+    if (h.no_swim) {
+      lines.push("<b>One kind of motion: diffusion.</b> The curves fall on one curve against q\u00b2\u0394t (second chart), not against q\u0394t (first chart): every cell wanders at random" + (TURNS() ? " and turns" : "") + ", D = " + fmtSig(h.D_um2_s, 2) + " " + MU + "m\u00b2/s. Nothing swims." + (TURNS() ? " The widest patterns (blue) fade sooner than the others: for them it is the turning of the rods, not their wandering, that renews the pattern." : ""));
+    } else {
+      lines.push("<b>Swimmers, " + Math.round(100 * h.alpha) + " % of the signal:</b> straight runs. The fast first step of every curve falls on one curve against q\u0394t (first chart; black line: the swimmer model), as it must for motion at constant speed: a pattern renews when a cell has swum across it. Mean speed " + fmtV(h.v_um_s) + (slope !== null && level !== "curious" ? "; one rate per q rises with slope " + slope.toFixed(2) + " (step 6 chart)" : "") + ".");
+      lines.push("<b>The others, " + Math.round(100 * (1 - h.alpha)) + " %:</b> they only diffuse" + (TURNS() ? " and turn (turning rods also pull the curves a little below the dashed level)" : "") + ". The level between the two steps (dashed) is their share; their slow final step falls on one curve against q\u00b2\u0394t (second chart; black line: D = " + fmtSig(h.D_um2_s, 2) + " " + MU + "m\u00b2/s)." + (still < 0.5 ? " In this movie they barely move (D q\u00b2\u0394t = " + fmtSig(still, 2) + " at the finest pattern and longest delay), so their step is cut short: their share is read from how far each curve still has to fall." : ""));
+    }
+    if (tr && tr.n_swimmers > 0 && h && !h.no_swim && Math.abs(h.alpha - st.share) > 0.08) lines.push("The measured share is off by " + Math.round(100 * Math.abs(h.alpha - st.share)) + " points from the truth: see the checks below.");
+    el.innerHTML = html + lines.map(function (t) { return '<p class="small" style="margin:0">' + t + '</p>'; }).join("");
+  }
   function drawRates() {
     const res = cache.res, w = res.window;
     const ok = res.fits.filter(function (f) { return f.ok && f.gamma_hz > 0 && Number.isFinite(f.gamma_hz); });
@@ -1366,7 +1425,7 @@
   function renderAll() {
     if (!cache.res) return;
     readColors(); grey = greyRange(cache.movie); diffScale = null;
-    setQSpan(); renderLag(); renderText(); drawFov(); drawParticle(); drawMovieFrames(); drawMap(); drawStripes(); drawCurves(); drawRates(); drawSize(); drawPv(); drawAmp(); renderResult(); renderSettings(); renderReport();
+    setQSpan(); renderLag(); renderText(); drawFov(); drawParticle(); drawMovieFrames(); drawMap(); drawStripes(); drawCurves(); drawRates(); drawCollapse(); renderMotion(); drawSize(); drawPv(); drawAmp(); renderResult(); renderSettings(); renderReport();
   }
 
   // ---- "what matters" cards ---------------------------------------------------------------
@@ -1473,7 +1532,7 @@
     try { navigator.clipboard.writeText(txt).then(function () { $("btn-copy").textContent = "Copied"; }, fallback); } catch (e) { fallback(); }
   });
   let rz = null;
-  const redraw = function () { clearTimeout(rz); rz = setTimeout(function () { readColors(); drawFov(); if (cache.res) { drawCurves(); drawRates(); drawSize(); drawPv(); drawAmp(); drawMapOverlay(); } }, 80); };
+  const redraw = function () { clearTimeout(rz); rz = setTimeout(function () { readColors(); drawFov(); if (cache.res) { drawCurves(); drawRates(); drawCollapse(); drawSize(); drawPv(); drawAmp(); drawMapOverlay(); } }, 80); };
   new ResizeObserver(redraw).observe(document.querySelector(".steps"));
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
   new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });

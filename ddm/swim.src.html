@@ -182,6 +182,16 @@ figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(
 .chart { position: relative; width: 100%; height: 300px; }
 .chart canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .chart.short { height: 220px; }
+.ctitle { font: 500 0.85rem var(--sans); color: var(--muted); margin-bottom: 0.2rem; }
+.twin { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+@media (max-width: 720px) { .twin { grid-template-columns: 1fr; } }
+.motion .mkey { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.85rem; color: var(--muted); }
+.motion .mkey i { display: inline-block; width: 0.9rem; height: 0.9rem; border-radius: 2px; vertical-align: -0.12rem; margin-right: 0.35rem; }
+.motion .mbar { display: grid; grid-template-columns: 5.5rem 1fr auto; align-items: center; gap: 0.6rem; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+.motion .mtrack { display: flex; height: 0.95rem; border-radius: 3px; overflow: hidden; border: 1px solid var(--rule); }
+.motion .msw { background: var(--accent); }
+.motion .mdf { background: var(--rule); }
+.motion .mkey i.msw { background: var(--accent); } .motion .mkey i.mdf { background: var(--rule); }
 .toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-family: var(--sans); font-size: 0.88rem; }
 .toolbar input[type="range"] { flex: 1 1 10rem; accent-color: var(--accent); }
 .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
@@ -433,8 +443,16 @@ A_est = 2 * aa.var - B_est
 
       <!-- 6 -->
       <section class="step" id="step-rates" aria-labelledby="h-rates">
-        <div class="step-title"><span class="num">6</span><h2 id="h-rates">From the curves to swimming speeds</h2></div>
+        <div class="step-title"><span class="num">6</span><h2 id="h-rates">Who swims, who only diffuses, and how fast</h2></div>
         <div class="step-body">
+          <div class="text">
+            <p>Each curve of step 5 falls in two steps when only some cells swim. Two ways of plotting the same curves tell the two kinds of motion apart. A swimmer at constant speed covers a distance in a time proportional to it, so a pattern renews when <i>q</i>&Delta;<i>t</i> reaches a fixed value: against <i>q</i>&Delta;<i>t</i> (first chart) the fast first steps of all patterns fall on one curve. A cell that only diffuses needs four times as long to go twice as far, so against <i>q</i><sup>2</sup>&Delta;<i>t</i> (second chart) the slow last steps fall on one curve instead. The level between the two steps is the share of cells that do not swim.</p>
+          </div>
+          <div class="result motion" id="motion" aria-live="polite"></div>
+          <figure class="viz">
+            <div class="twin"><div><div class="ctitle">Test for straight swimming: against <i>q</i>&Delta;<i>t</i></div><div class="chart short"><canvas id="chart-ballistic" aria-label="Curves against q times delay"></canvas></div></div><div><div class="ctitle">Test for diffusion: against <i>q</i><sup>2</sup>&Delta;<i>t</i></div><div class="chart short"><canvas id="chart-diffusive" aria-label="Curves against q squared times delay"></canvas></div></div></div>
+            <figcaption>Coloured lines: the measured curves of the patterns used, from wide (blue) to fine (red), as in step 5. Black: what the fitted model predicts for straight swimming (first chart) and for diffusion (second chart). Dashed: the level of the cells that do not swim.</figcaption>
+          </figure>
           <div class="text">
             <p>Now plot how fast each pattern changes against how fine it is. A swimmer covers twice the distance in twice the time, so halving the stripe spacing makes the change twice as fast: on these logarithmic axes the points fall on a line of slope 1. Cells that only jiggle need four times as long to wander twice as far, which gives slope 2.</p>
             <p>The speed itself comes from fitting one swimmer model to all the curves of step 5 at once. It gives the mean swimming speed, how much the speeds spread, the share of cells that swim and how fast the others diffuse.</p>
