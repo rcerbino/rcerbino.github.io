@@ -1719,6 +1719,9 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const fr = num(cfg, "frame_rate_hz", 0.01, 30000), expo = det.kind === "scanner" ? 0 : num(cfg, "exposure_s", 0, 10);
     need(expo <= 1 / fr * 1.0000001, "exposure longer than the frame interval");
     num(det, "qe", 0.01, 1); num(det, "t_row_s", 0, 1); num(det, "rows_total", 1, 20000); num(det, "crop_row0", 0, 20000);
+    // frame times: evenly spaced at 1 / frame rate, unless bursts or a list of times are asked for. Uneven times keep
+    // 1 / frame rate as the shortest interval, so the exposure and read-out checks below still hold.
+    const times = frameTimes(cfg, T, fr);
     const timing = det.kind === "scanner" ? "scan" : det.timing;
     need(timing === "scan" || timing === "global" || timing === "rolling" || timing === "rolling_center", "unknown shutter timing");
     const readout = timing === "rolling_center" ? det.rows_total / 2 * det.t_row_s : timing === "global" ? 0 : det.rows_total * det.t_row_s;
@@ -2275,7 +2278,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const swSeen = { ws: new Float64Array(nq), wn: new Float64Array(nq), wv: new Float64Array(nq), wv2: new Float64Array(nq) };
     for (let t = 0; t < T; t++) {
       grid.fill(0);
-      const t0 = t * dtFrame;
+      const t0 = times ? times[t] : t * dtFrame;
       for (let i = 0; i < nTot; i++) {
         const del = delay(Y[i]), ci = cls[i], c = classes[ci], ch = chans[ci];
         for (let sub = 0; sub < nsub; sub++) {
@@ -2408,7 +2411,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     return {
       test_track: track || undefined,
       test_heights: cfg.test_return_heights === true ? { H: Float64Array.from(H), lg: classes[0].lg, aex: classes[0].aex, ah: classes[0].ah } : undefined,   // test only
-      n: N, T: T, frames: frames, fft: fft,
+      n: N, T: T, frames: frames, fft: fft, times_s: times || undefined,
       pixel_um: a, L_um: L, frame_rate_hz: fr, T_C: T_C, viscosity_Pa_s: eta,
       q_opt_per_um: trans ? TWO_PI * Math.min(na, 1.34) / lamRef : 2 * TWO_PI * Math.min(na, 1.34) / lamRef,
       q_signal_max_per_um: qcut,
@@ -2458,7 +2461,37 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     return out;
   }
 
-  const api = { simulate: simulate, particleTerms: particleTerms };
+  /** Frame times in bursts, like the channels of a multi-tau correlator. Frame k, written in base B (digits d0, d1, ...),
+   *  is taken at dt (d0 + d1 (B s) + d2 (B s)^2 + ...): bursts of B frames at the frame interval dt, bursts of bursts
+   *  (B s) times further apart, and so on. s = 1 gives evenly spaced frames; the movie lasts about s^levels times longer. */
+  function burstTimes(T, dt, B, s) {
+    const out = new Float64Array(T), unit = B * s;
+    for (let k = 0; k < T; k++) { let r = k, w = 1, t = 0; while (r > 0) { t += (r % B) * w; r = Math.floor(r / B); w *= unit; } out[k] = t * dt; }
+    return out;
+  }
+  // null for evenly spaced frames; otherwise the time of each frame from the first one, in s
+  function frameTimes(cfg, T, fr) {
+    let t = null;
+    if (cfg.bursts) {
+      const B = num(cfg.bursts, "size", 2, 64), s = num(cfg.bursts, "stretch", 1, 64);
+      need(B === Math.round(B), "frames per burst must be a whole number");
+      if (s === 1) return null;
+      t = burstTimes(T, 1 / fr, B, s);
+    } else if (cfg.frame_times_s) {
+      need(cfg.frame_times_s.length === T, "frame_times_s needs one time per frame");
+      t = Float64Array.from(cfg.frame_times_s, function (v, k) { need(isFinite(v), "frame time " + k + " is not a number"); return v; });
+      const t0 = t[0]; for (let k = 0; k < T; k++) t[k] -= t0;
+    } else return null;
+    let even = true;
+    for (let k = 1; k < T; k++) {
+      const g = t[k] - t[k - 1];
+      need(g >= (1 - 1e-9) / fr, "frames " + (k - 1) + " and " + k + " are closer than 1 / frame rate");
+      if (Math.abs(g - 1 / fr) > 1e-9 / fr) even = false;
+    }
+    return even ? null : t;
+  }
+
+  const api = { simulate: simulate, particleTerms: particleTerms, burstTimes: burstTimes };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.MOVIE = api;
 })(this);
 
@@ -2776,16 +2809,45 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
    */
   /* Structure function d(q, dt) of a movie (2D per lag and azimuthally averaged), temporal variance, measurable
    * window and noise estimate B(q) (A = 2 var - B). Shared by the sizing analysis and the swimmer analysis. */
+  /** Pairs of frames grouped by how far apart in time they are, for uneven frame times (sorted, from 0).
+   *  Groups: one per whole number of shortest intervals up to 10, then 12 per decade; delays up to half the movie, as with
+   *  evenly spaced frames. Each group keeps at most cap pairs, taken evenly through the movie, and needs at least 4.
+   *  Returns the mean delay of the pairs kept (taus_s), that delay in shortest intervals, rounded (lags), and the pairs. */
+  function pairBins(times, dt, cap) {
+    const T = times.length, half = (times[T - 1] - times[0]) / 2, PER = 12;
+    const group = function (u) { return u < 10.5 ? Math.max(0, Math.round(u) - 1) : 10 + Math.floor(PER * Math.log10(u / 10.5)); };
+    const G = group(half / dt) + 1, cnt = new Int32Array(G);
+    for (let i = 0; i < T; i++) for (let j = i + 1; j < T; j++) { const g = times[j] - times[i]; if (g > half * (1 + 1e-12)) break; cnt[group(g / dt)]++; }
+    const stride = Array.from(cnt, function (c) { return Math.max(1, Math.ceil(c / cap)); });
+    const seen = new Int32Array(G), sum = new Float64Array(G), list = [];
+    for (let k = 0; k < G; k++) list.push([]);
+    for (let i = 0; i < T; i++) for (let j = i + 1; j < T; j++) {
+      const g = times[j] - times[i]; if (g > half * (1 + 1e-12)) break;
+      const b = group(g / dt);
+      if (seen[b]++ % stride[b] === 0) { list[b].push(i, j); sum[b] += g; }
+    }
+    const lags = [], taus_s = [], pairs = [];
+    for (let b = 0; b < G; b++) {
+      const n = list[b].length / 2; if (n < 4) continue;
+      const tau = sum[b] / n; taus_s.push(tau); lags.push(Math.max(1, Math.round(tau / dt))); pairs.push(Int32Array.from(list[b]));
+    }
+    need(lags.length >= 3, "too few delays between the frames");
+    return { lags: lags, taus_s: taus_s, pairs: pairs };
+  }
+
   function* structure(movie, opts) {
     const images = opts.images === undefined ? "recorded" : opts.images;
     need(images === "recorded" || images === "squared_gradient", "images must be recorded or squared_gradient");
     const sg = images === "squared_gradient";
     if (sg) yield { stage: "Squared gradient of each frame", frac: 0 };
     const n = movie.n, T = movie.T, P = n * n, fft = sg ? squaredGradientFft(movie) : movie.fft;
-    const lags = logspaceLags(Math.floor(T / 2), 40);
-    const L = lags.length;
     const dt_s = 1 / movie.frame_rate_hz;
-    const taus_s = lags.map(function (m) { return m * dt_s; });
+    // evenly spaced frames: integer lags, every pair at each lag. Uneven frame times (bursts): pairs grouped by their
+    // time apart (pairBins), at most T pairs per group. lags are then in units of the shortest interval, rounded.
+    const PB = movie.times_s ? pairBins(movie.times_s, dt_s, T) : null;
+    const lags = PB ? PB.lags : logspaceLags(Math.floor(T / 2), 40);
+    const L = lags.length;
+    const taus_s = PB ? PB.taus_s : lags.map(function (m) { return m * dt_s; });
 
     // wave vector of every Fourier pixel, bin = nearest integer |k|
     const nb = n / 2;
@@ -2808,11 +2870,12 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const d2d = [];                                   // per lag: Float32Array(P), normalised by P
     const dq = [];                                    // per lag: Float64Array(nb + 1)
     for (let li = 0; li < L; li++) {
-      const m = lags[li];
+      const m = lags[li], pr = PB ? PB.pairs[li] : null, np = pr ? pr.length / 2 : T - m;
       const acc = new Float64Array(P);
       let count = 0;
-      for (let t = 0; t + m < T; t++) {
-        const o1 = 2 * P * t, o2 = 2 * P * (t + m);
+      for (let k = 0; k < np; k++) {
+        const t1 = pr ? pr[2 * k] : k, t2 = pr ? pr[2 * k + 1] : k + m;
+        const o1 = 2 * P * t1, o2 = 2 * P * t2;
         for (let p = 0; p < P; p++) {
           const dr = fft[o2 + 2 * p] - fft[o1 + 2 * p], di = fft[o2 + 2 * p + 1] - fft[o1 + 2 * p + 1];
           acc[p] += dr * dr + di * di;
@@ -2885,7 +2948,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       if (B_floor !== null) Bq = Math.min(B_floor, dq[0][b]);
       B_est[b] = Bq; A_est[b] = 2 * varq[b] - Bq;
     }
-    return { images: images, sg: sg, n: n, T: T, P: P, fft: fft, lags: lags, L: L, dt_s: dt_s, taus_s: taus_s, nb: nb, binOf: binOf, nmodes: nmodes,
+    return { images: images, sg: sg, n: n, T: T, P: P, fft: fft, lags: lags, L: L, dt_s: dt_s, taus_s: taus_s, pairs: PB ? PB.pairs : null, times_s: movie.times_s || null, nb: nb, binOf: binOf, nmodes: nmodes,
              q_per_um: q_per_um, d2d: d2d, dq: dq, varq: varq, powq: powq, q_lo_per_um: q_lo_per_um, q_nyq_per_um: q_nyq_per_um, q_opt_per_um: q_opt_per_um,
              q_sig_per_um: q_sig_per_um, q_hi_per_um: q_hi_per_um, gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz, B_floor: B_floor, B_est: B_est, A_est: A_est };
   }
@@ -3484,6 +3547,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   function structureMap(movie, lag) {
     const n = movie.n, T = movie.T, P = n * n, fft = movie.fft;
     need(lag >= 1 && lag < T, "lag out of range");
+    need(!movie.times_s, "structureMap needs evenly spaced frames");
     const acc = new Float64Array(P); let count = 0;
     for (let t = 0; t + lag < T; t++) {
       const o1 = 2 * P * t, o2 = 2 * P * (t + lag);
@@ -3503,7 +3567,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   const api = {
     CAMERA_PIXEL_UM: CAMERA_PIXEL_UM, WAVELENGTH_UM: WAVELENGTH_UM,
     waterViscosity_Pa_s: waterViscosity_Pa_s, diffusion_um2_s: diffusion_um2_s, diameterFromD_um: diameterFromD_um,
-    simulate: simulate, analyse: analyse, structure: structure, structureMap: structureMap, lm: lm, solve: solve, invert: invert, logspaceLags: logspaceLags, runToEnd: runToEnd,
+    simulate: simulate, analyse: analyse, structure: structure, structureMap: structureMap, lm: lm, solve: solve, invert: invert, logspaceLags: logspaceLags, pairBins: pairBins, runToEnd: runToEnd,
     // compact result of one analysis for repeated measurements: D from the main fit and the cumulants, the q used and the truth
     repeatSummary: function (r, mv) {
       return { main_D: r.D ? r.D.D_um2_s : null, cum_D: r.cumulants && r.cumulants.D_um2_s ? r.cumulants.D_um2_s : null, cum_pi: r.cumulants && r.cumulants.pi !== null && r.cumulants.pi !== undefined ? r.cumulants.pi : null, sch_pi: r.cumulants && r.cumulants.schulz_shared ? r.cumulants.schulz_shared.pi : null,

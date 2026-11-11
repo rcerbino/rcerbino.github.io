@@ -157,6 +157,9 @@
     const fr = num(cfg, "frame_rate_hz", 0.01, 30000), expo = det.kind === "scanner" ? 0 : num(cfg, "exposure_s", 0, 10);
     need(expo <= 1 / fr * 1.0000001, "exposure longer than the frame interval");
     num(det, "qe", 0.01, 1); num(det, "t_row_s", 0, 1); num(det, "rows_total", 1, 20000); num(det, "crop_row0", 0, 20000);
+    // frame times: evenly spaced at 1 / frame rate, unless bursts or a list of times are asked for. Uneven times keep
+    // 1 / frame rate as the shortest interval, so the exposure and read-out checks below still hold.
+    const times = frameTimes(cfg, T, fr);
     const timing = det.kind === "scanner" ? "scan" : det.timing;
     need(timing === "scan" || timing === "global" || timing === "rolling" || timing === "rolling_center", "unknown shutter timing");
     const readout = timing === "rolling_center" ? det.rows_total / 2 * det.t_row_s : timing === "global" ? 0 : det.rows_total * det.t_row_s;
@@ -713,7 +716,7 @@
     const swSeen = { ws: new Float64Array(nq), wn: new Float64Array(nq), wv: new Float64Array(nq), wv2: new Float64Array(nq) };
     for (let t = 0; t < T; t++) {
       grid.fill(0);
-      const t0 = t * dtFrame;
+      const t0 = times ? times[t] : t * dtFrame;
       for (let i = 0; i < nTot; i++) {
         const del = delay(Y[i]), ci = cls[i], c = classes[ci], ch = chans[ci];
         for (let sub = 0; sub < nsub; sub++) {
@@ -846,7 +849,7 @@
     return {
       test_track: track || undefined,
       test_heights: cfg.test_return_heights === true ? { H: Float64Array.from(H), lg: classes[0].lg, aex: classes[0].aex, ah: classes[0].ah } : undefined,   // test only
-      n: N, T: T, frames: frames, fft: fft,
+      n: N, T: T, frames: frames, fft: fft, times_s: times || undefined,
       pixel_um: a, L_um: L, frame_rate_hz: fr, T_C: T_C, viscosity_Pa_s: eta,
       q_opt_per_um: trans ? TWO_PI * Math.min(na, 1.34) / lamRef : 2 * TWO_PI * Math.min(na, 1.34) / lamRef,
       q_signal_max_per_um: qcut,
@@ -896,6 +899,36 @@
     return out;
   }
 
-  const api = { simulate: simulate, particleTerms: particleTerms };
+  /** Frame times in bursts, like the channels of a multi-tau correlator. Frame k, written in base B (digits d0, d1, ...),
+   *  is taken at dt (d0 + d1 (B s) + d2 (B s)^2 + ...): bursts of B frames at the frame interval dt, bursts of bursts
+   *  (B s) times further apart, and so on. s = 1 gives evenly spaced frames; the movie lasts about s^levels times longer. */
+  function burstTimes(T, dt, B, s) {
+    const out = new Float64Array(T), unit = B * s;
+    for (let k = 0; k < T; k++) { let r = k, w = 1, t = 0; while (r > 0) { t += (r % B) * w; r = Math.floor(r / B); w *= unit; } out[k] = t * dt; }
+    return out;
+  }
+  // null for evenly spaced frames; otherwise the time of each frame from the first one, in s
+  function frameTimes(cfg, T, fr) {
+    let t = null;
+    if (cfg.bursts) {
+      const B = num(cfg.bursts, "size", 2, 64), s = num(cfg.bursts, "stretch", 1, 64);
+      need(B === Math.round(B), "frames per burst must be a whole number");
+      if (s === 1) return null;
+      t = burstTimes(T, 1 / fr, B, s);
+    } else if (cfg.frame_times_s) {
+      need(cfg.frame_times_s.length === T, "frame_times_s needs one time per frame");
+      t = Float64Array.from(cfg.frame_times_s, function (v, k) { need(isFinite(v), "frame time " + k + " is not a number"); return v; });
+      const t0 = t[0]; for (let k = 0; k < T; k++) t[k] -= t0;
+    } else return null;
+    let even = true;
+    for (let k = 1; k < T; k++) {
+      const g = t[k] - t[k - 1];
+      need(g >= (1 - 1e-9) / fr, "frames " + (k - 1) + " and " + k + " are closer than 1 / frame rate");
+      if (Math.abs(g - 1 / fr) > 1e-9 / fr) even = false;
+    }
+    return even ? null : t;
+  }
+
+  const api = { simulate: simulate, particleTerms: particleTerms, burstTimes: burstTimes };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.MOVIE = api;
 })(this);

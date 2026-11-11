@@ -310,16 +310,45 @@
    */
   /* Structure function d(q, dt) of a movie (2D per lag and azimuthally averaged), temporal variance, measurable
    * window and noise estimate B(q) (A = 2 var - B). Shared by the sizing analysis and the swimmer analysis. */
+  /** Pairs of frames grouped by how far apart in time they are, for uneven frame times (sorted, from 0).
+   *  Groups: one per whole number of shortest intervals up to 10, then 12 per decade; delays up to half the movie, as with
+   *  evenly spaced frames. Each group keeps at most cap pairs, taken evenly through the movie, and needs at least 4.
+   *  Returns the mean delay of the pairs kept (taus_s), that delay in shortest intervals, rounded (lags), and the pairs. */
+  function pairBins(times, dt, cap) {
+    const T = times.length, half = (times[T - 1] - times[0]) / 2, PER = 12;
+    const group = function (u) { return u < 10.5 ? Math.max(0, Math.round(u) - 1) : 10 + Math.floor(PER * Math.log10(u / 10.5)); };
+    const G = group(half / dt) + 1, cnt = new Int32Array(G);
+    for (let i = 0; i < T; i++) for (let j = i + 1; j < T; j++) { const g = times[j] - times[i]; if (g > half * (1 + 1e-12)) break; cnt[group(g / dt)]++; }
+    const stride = Array.from(cnt, function (c) { return Math.max(1, Math.ceil(c / cap)); });
+    const seen = new Int32Array(G), sum = new Float64Array(G), list = [];
+    for (let k = 0; k < G; k++) list.push([]);
+    for (let i = 0; i < T; i++) for (let j = i + 1; j < T; j++) {
+      const g = times[j] - times[i]; if (g > half * (1 + 1e-12)) break;
+      const b = group(g / dt);
+      if (seen[b]++ % stride[b] === 0) { list[b].push(i, j); sum[b] += g; }
+    }
+    const lags = [], taus_s = [], pairs = [];
+    for (let b = 0; b < G; b++) {
+      const n = list[b].length / 2; if (n < 4) continue;
+      const tau = sum[b] / n; taus_s.push(tau); lags.push(Math.max(1, Math.round(tau / dt))); pairs.push(Int32Array.from(list[b]));
+    }
+    need(lags.length >= 3, "too few delays between the frames");
+    return { lags: lags, taus_s: taus_s, pairs: pairs };
+  }
+
   function* structure(movie, opts) {
     const images = opts.images === undefined ? "recorded" : opts.images;
     need(images === "recorded" || images === "squared_gradient", "images must be recorded or squared_gradient");
     const sg = images === "squared_gradient";
     if (sg) yield { stage: "Squared gradient of each frame", frac: 0 };
     const n = movie.n, T = movie.T, P = n * n, fft = sg ? squaredGradientFft(movie) : movie.fft;
-    const lags = logspaceLags(Math.floor(T / 2), 40);
-    const L = lags.length;
     const dt_s = 1 / movie.frame_rate_hz;
-    const taus_s = lags.map(function (m) { return m * dt_s; });
+    // evenly spaced frames: integer lags, every pair at each lag. Uneven frame times (bursts): pairs grouped by their
+    // time apart (pairBins), at most T pairs per group. lags are then in units of the shortest interval, rounded.
+    const PB = movie.times_s ? pairBins(movie.times_s, dt_s, T) : null;
+    const lags = PB ? PB.lags : logspaceLags(Math.floor(T / 2), 40);
+    const L = lags.length;
+    const taus_s = PB ? PB.taus_s : lags.map(function (m) { return m * dt_s; });
 
     // wave vector of every Fourier pixel, bin = nearest integer |k|
     const nb = n / 2;
@@ -342,11 +371,12 @@
     const d2d = [];                                   // per lag: Float32Array(P), normalised by P
     const dq = [];                                    // per lag: Float64Array(nb + 1)
     for (let li = 0; li < L; li++) {
-      const m = lags[li];
+      const m = lags[li], pr = PB ? PB.pairs[li] : null, np = pr ? pr.length / 2 : T - m;
       const acc = new Float64Array(P);
       let count = 0;
-      for (let t = 0; t + m < T; t++) {
-        const o1 = 2 * P * t, o2 = 2 * P * (t + m);
+      for (let k = 0; k < np; k++) {
+        const t1 = pr ? pr[2 * k] : k, t2 = pr ? pr[2 * k + 1] : k + m;
+        const o1 = 2 * P * t1, o2 = 2 * P * t2;
         for (let p = 0; p < P; p++) {
           const dr = fft[o2 + 2 * p] - fft[o1 + 2 * p], di = fft[o2 + 2 * p + 1] - fft[o1 + 2 * p + 1];
           acc[p] += dr * dr + di * di;
@@ -419,7 +449,7 @@
       if (B_floor !== null) Bq = Math.min(B_floor, dq[0][b]);
       B_est[b] = Bq; A_est[b] = 2 * varq[b] - Bq;
     }
-    return { images: images, sg: sg, n: n, T: T, P: P, fft: fft, lags: lags, L: L, dt_s: dt_s, taus_s: taus_s, nb: nb, binOf: binOf, nmodes: nmodes,
+    return { images: images, sg: sg, n: n, T: T, P: P, fft: fft, lags: lags, L: L, dt_s: dt_s, taus_s: taus_s, pairs: PB ? PB.pairs : null, times_s: movie.times_s || null, nb: nb, binOf: binOf, nmodes: nmodes,
              q_per_um: q_per_um, d2d: d2d, dq: dq, varq: varq, powq: powq, q_lo_per_um: q_lo_per_um, q_nyq_per_um: q_nyq_per_um, q_opt_per_um: q_opt_per_um,
              q_sig_per_um: q_sig_per_um, q_hi_per_um: q_hi_per_um, gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz, B_floor: B_floor, B_est: B_est, A_est: A_est };
   }
@@ -1018,6 +1048,7 @@
   function structureMap(movie, lag) {
     const n = movie.n, T = movie.T, P = n * n, fft = movie.fft;
     need(lag >= 1 && lag < T, "lag out of range");
+    need(!movie.times_s, "structureMap needs evenly spaced frames");
     const acc = new Float64Array(P); let count = 0;
     for (let t = 0; t + lag < T; t++) {
       const o1 = 2 * P * t, o2 = 2 * P * (t + lag);
@@ -1037,7 +1068,7 @@
   const api = {
     CAMERA_PIXEL_UM: CAMERA_PIXEL_UM, WAVELENGTH_UM: WAVELENGTH_UM,
     waterViscosity_Pa_s: waterViscosity_Pa_s, diffusion_um2_s: diffusion_um2_s, diameterFromD_um: diameterFromD_um,
-    simulate: simulate, analyse: analyse, structure: structure, structureMap: structureMap, lm: lm, solve: solve, invert: invert, logspaceLags: logspaceLags, runToEnd: runToEnd,
+    simulate: simulate, analyse: analyse, structure: structure, structureMap: structureMap, lm: lm, solve: solve, invert: invert, logspaceLags: logspaceLags, pairBins: pairBins, runToEnd: runToEnd,
     // compact result of one analysis for repeated measurements: D from the main fit and the cumulants, the q used and the truth
     repeatSummary: function (r, mv) {
       return { main_D: r.D ? r.D.D_um2_s : null, cum_D: r.cumulants && r.cumulants.D_um2_s ? r.cumulants.D_um2_s : null, cum_pi: r.cumulants && r.cumulants.pi !== null && r.cumulants.pi !== undefined ? r.cumulants.pi : null, sch_pi: r.cumulants && r.cumulants.schulz_shared ? r.cumulants.schulz_shared.pi : null,

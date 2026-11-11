@@ -347,6 +347,12 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <pre class="code">import fastddm as fd
 img_seq = fd.read_images(file_names)</pre>
         </details>
+        <details class="math lvl-2" data-open-at="researcher">
+          <summary>Frames in bursts: long movies from few frames</summary>
+          <p>A camera can also be triggered at chosen times. With "Frame timing: in bursts" the page takes the frames in bursts of <i>B</i> frames at the frame interval &delta;<i>t</i>, bursts of bursts (<i>B s</i>) &delta;<i>t</i> apart, and so on: frame <i>k</i>, written in base <i>B</i> with digits <i>d</i><sub>0</sub>, <i>d</i><sub>1</sub>, ..., is taken at</p>
+          <div class="eq"><i>t<sub>k</sub></i> = &delta;<i>t</i> [<i>d</i><sub>0</sub> + <i>d</i><sub>1</sub> (<i>B s</i>) + <i>d</i><sub>2</sub> (<i>B s</i>)<sup>2</sup> + ...]</div>
+          <p>With <i>s</i> = 1 the frames are evenly spaced; with 256 frames and <i>B</i> = 4 the movie lasts about 7, 22 or 50 times longer for <i>s</i> = 2, 3 or 4. As in a multi-tau correlator, the short delays come from pairs inside a burst and the long ones from pairs in distant bursts. The price is gaps: inside a burst the delays go up to (<i>B</i> &minus; 1) &delta;<i>t</i>, the next ones start near (<i>B</i> <i>s</i> &minus; <i>B</i> + 1) &delta;<i>t</i>, so each level leaves out a factor of about <i>s</i>. The structure function is then computed from pairs of frames grouped by how far apart they are (one group per frame interval up to 10, then 12 groups per factor of ten), with up to as many pairs per group as there are frames. The movie in step 2 is played one frame after the other, so the jumps between bursts show as sudden changes.</p>
+        </details>
       </section>
 
       <!-- 2 -->
