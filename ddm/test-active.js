@@ -46,12 +46,12 @@ function movieCase(label, over, opts, test) {
     liquid: { n: 1.335, viscosity_mPa_s: 0.95 }, T_C: 22, cell_um: 50, focus_um: 25, drift_um_s: 0
   }, over);
   const t0 = Date.now(), m = DDM.runToEnd(MOVIE.simulate(cfg)), t1 = Date.now();
-  const r = DDM.runToEnd(A.analyse(m, Object.assign({ q_min_per_um: null, q_max_per_um: null, beta: null, kind: "3d" }, opts))), t2 = Date.now();
+  const r = DDM.runToEnd(A.analyse(m, Object.assign({ q_min_per_um: null, q_max_per_um: null, beta: null, kind: "3d", D_from_cells: true }, opts))), t2 = Date.now();
   const s = Object.assign({}, m.truth.swim), sw = r.swim, c = r.compressed;
   const so = A.seenOver(s, r.rows.filter(function (x) { return !x.reason; }).map(function (x) { return x.q_per_um; }));
   if (so) { s.fraction_seen = so.fraction; s.v_mean_seen_um_s = so.v_mean_um_s; }
   const msg = label + ": " + m.info.n_particles + " cells; true v " + s.v_mean_um_s.toFixed(1) + " (SD " + (s.v_sd_um_s / s.v_mean_um_s).toFixed(2) + "), share " + s.fraction.toFixed(2) + " (seen " + (s.fraction_seen || 0).toFixed(2) + ", v seen " + (s.v_mean_seen_um_s || 0).toFixed(1) + ")" +
-    "; model v " + (sw ? sw.v_um_s.toFixed(1) + " spread " + sw.spread.toFixed(2) + " share " + sw.alpha.toFixed(2) + " D " + sw.D_um2_s.toFixed(2) : "none") +
+    "; model v " + (sw && sw.no_swim ? "no swimming found" : sw ? sw.v_um_s.toFixed(1) + " spread " + sw.spread.toFixed(2) + " share " + sw.alpha.toFixed(2) + " D " + sw.D_um2_s.toFixed(2) : "none") +
     "; compressed v0 " + (c ? c.v0_um_s.toFixed(1) + " slope " + c.slope.toFixed(2) + " beta " + c.beta_free_mean.toFixed(2) + " c " + c.intercept_hz.toFixed(1) : "none") + " (" + (c ? c.n_points : 0) + " q)" +
     (r.pv ? "; P(v) data: share still " + r.pv.data_still_share.toFixed(2) + ", mean " + (r.pv.data_mean_swimmers_um_s || 0).toFixed(1) : "") + "; movie " + (t1 - t0) + " ms, analysis " + (t2 - t1) + " ms";
   if (!test) { console.log("info " + msg); return { m, r }; }
@@ -62,6 +62,10 @@ movieCase("E. coli-like motility assay, phase contrast 10x, 60 % swim at 20 um/s
   function (m, r) { const s = m.truth.swim; return r.swim && Math.abs(r.swim.v_um_s / s.v_mean_um_s - 1) < 0.05 && Math.abs(r.swim.alpha - s.fraction_seen) < 0.06 && Math.abs(r.pv.data_still_share - (1 - s.fraction_seen)) < 0.06 && Math.abs(r.pv.data_mean_swimmers_um_s / s.v_mean_um_s - 1) < 0.08; });
 movieCase("plane swimmers (2D), dark field 10x, 80 % swim at 15 um/s, q up to 1.5 um^-1 (rod length 2 um)", { swim: { fraction: 0.8, v_um_s: 15, v_spread: 0.25, plane_fraction: 1, plane_still: true, height_um: 1, rot_diff_s: 0.1 }, n_frames: 512, illum: { na_in: 0.42, na_out: 0.5 }, pupil: undefined, cell_um: 20, focus_um: 1, volume_fraction: 2e-3 }, { kind: "2d", q_max_per_um: 1.5 },
   function (m, r) { const s = m.truth.swim; return r.swim && Math.abs(r.swim.v_um_s / s.v_mean_um_s - 1) < 0.05 && Math.abs(r.swim.alpha - s.fraction_seen) < 0.05; });
+movieCase("no swimmers: still rods that turn are not taken for swimmers", { seed: 2, swim: { fraction: 0, v_um_s: 20, v_spread: 0.3, rot_diff_s: 0.1 } }, { q_max_per_um: 1.5 },
+  function (m, r) { return r.head && r.head.no_swim === true && r.head.alpha === 0; });
+movieCase("all swim: the share is found (diffusion set from the cell size)", { seed: 3, swim: { fraction: 1, v_um_s: 20, v_spread: 0.3, rot_diff_s: 0.1 } }, { q_max_per_um: 1.5 },
+  function (m, r) { const s = m.truth.swim; return r.swim && r.swim.alpha > 0.95 && Math.abs(r.swim.v_um_s / s.v_mean_um_s - 1) < 0.05; });
 // 5. confocal (spinning disk, 20x NA 0.75): swimmers leave the thin slice. Wilson's model reads the speed high, the
 // model with the depth response of the microscope gets it right
 {

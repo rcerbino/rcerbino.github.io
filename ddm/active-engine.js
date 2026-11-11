@@ -332,15 +332,33 @@
         if (best === null || g.cost < best.cost) best = g;
       }
       swim = best;
+      // diffusion expected from the size of the cells and the viscosity (opts.D_hint, known to the experimenter): when
+      // the data do not ask for another value, it is kept. Without it the share of swimmers can drift with a D near 0
+      // (cells that do not swim then look frozen, and frozen cells add nothing to the changes in the movie)
+      // (the page passes D_from_cells: the bulk value the simulation uses, which the experimenter computes the same way
+      // from the size and shape of the cells and the viscosity)
+      const Dh = opts.D_hint > 0 ? opts.D_hint : opts.D_from_cells === true && movie.truth && movie.truth.D_um2_s > 0 ? movie.truth.D_um2_s : 0;
+      if (Dh > 0) {
+        // first without turning; if that does not describe the data, with the turning of rods (b, D_R) free
+        const st = { v: best.v_um_s, alpha: Math.max(0.05, best.alpha), spread: best.spread, D: Dh, b: 0.3, Dr: 0.3 };
+        let g = fitSwimGlobal(kind, taus, used, st, Object.assign({ D: Dh }, turnFix));
+        if (!(g.cost <= 1.03 * best.cost) && !turns) g = fitSwimGlobal(kind, taus, used, st, { D: Dh });
+        if (g.cost <= 1.03 * best.cost) { g.D_fixed = true; g.cost_free_D = best.cost; swim = g; }
+      }
+      // cells that do not swim at all (rods also fade as they turn, share b at rate 6 D_R): if this describes the data
+      // about as well, no swimming is found (the swimmer model alone mistakes the turning of still rods for slow swimmers)
+      const still = fitSwimGlobal(kind, taus, used, { v: swim.v_um_s, alpha: 0, spread: swim.spread, D: 0.3, b: 0.3, Dr: 0.3 }, { alpha: 0, v: swim.v_um_s, spread: swim.spread });
+      swim.cost_still = still.cost;
+      if (still.cost <= 1.1 * swim.cost) { still.no_swim = true; still.cost_swim = swim.cost; still.perq = []; swim = still; }
       // per-q speed and fraction with spread and D fixed: the speed should not depend on q
-      swim.perq = used.map(function (r) {
+      if (!swim.no_swim) swim.perq = used.map(function (r) {
         const g = fitSwimGlobal(kind, taus, [r], { v: swim.v_um_s, alpha: swim.alpha, spread: swim.spread, D: swim.D_um2_s }, { spread: swim.spread, D: swim.D_um2_s, b: swim.turn_share, Dr: swim.D_r_s });
         return { q: r.q, v_um_s: g.v_um_s, alpha: g.alpha };
       });
     }
     // 3D swimmers seen through the depth response of the microscope (when asked and the movie carries its optics)
     let swimDepth = null;
-    if (swim && kind === "3d" && opts.depth === true && movie.info && movie.info.kernel) {
+    if (swim && !swim.no_swim && kind === "3d" && opts.depth === true && movie.info && movie.info.kernel) {
       yield { stage: "Depth response of the microscope", frac: 0.95 };
       used.forEach(function (r) { r.depth = depthTable(movie.info, r.q); });
       let best = null;
@@ -397,13 +415,13 @@
       return { bin: r.bin, q_per_um: r.q, ok: r.ok, reason: r.reason, A: u ? r.An : r.A, B: u ? r.Bn : r.B, gamma_hz: r.gamma_hz, beta: r.fixed.beta, beta_free: r.beta_free, lnGamma_se: r.lnGamma_se, curve: curve };
     });
     return { kind: kind, model: head === swimDepth && swimDepth ? "depth" : kind, lags: S.lags, taus_s: taus, q_per_um: S.q_per_um, dq: S.dq, d2d: S.d2d, varq: S.varq, B_floor: S.B_floor, B_est: S.B_est, A_est: S.A_est,
-             fits: fits, head: head ? { v_um_s: head.v_um_s, alpha: head.alpha, spread: head.spread, D_um2_s: head.D_um2_s, turn_share: head.turn_share, D_r_s: head.D_r_s, v_rel_err: head.v_rel_err, alpha_err: head.alpha_err, spread_err: head.spread_err, perq: head.perq } : null,
+             fits: fits, head: head ? { no_swim: head.no_swim === true, D_fixed: head.D_fixed === true, v_um_s: head.no_swim ? null : head.v_um_s, alpha: head.alpha, spread: head.spread, D_um2_s: head.D_um2_s, turn_share: head.turn_share, D_r_s: head.D_r_s, v_rel_err: head.v_rel_err, alpha_err: head.alpha_err, spread_err: head.spread_err, perq: head.perq } : null,
              window: { q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, q_opt_per_um: S.q_opt_per_um, q_nyq_per_um: S.q_nyq_per_um, gamma_lo_hz: S.gamma_lo_hz, gamma_hi_hz: S.gamma_hi_hz },
              rows: rows.map(function (r) { return { bin: r.bin, q_per_um: r.q, A: r.A, B: r.B, gamma_hz: r.gamma_hz, beta_free: r.beta_free, gamma_free_hz: r.free.gamma_hz, lnGamma_se: r.lnGamma_se, reason: r.reason }; }),
              compressed: comp, swim: strip(swim), swim_depth: strip(swimDepth), pv: pv, master: master };
   }
 
-  function strip(g) { if (!g) return null; const o = Object.assign({}, g); delete o.ab; return o; }
+  function strip(g) { if (!g) return null; const o = Object.assign({}, g); delete o.ab; if (o.no_swim) o.v_um_s = null; return o; }
   // compact result for repeated measurements
   function summary(r, mv) {
     const h = r.head, used = r.fits.filter(function (f) { return f.reason === null; }).map(function (f) { return f.q_per_um; });

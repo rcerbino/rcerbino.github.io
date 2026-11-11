@@ -271,7 +271,7 @@
   // automatic upper end of the q range: patterns at least about twice the cell length (3 / length), so that a cell
   // looks the same after a short step except at its ends only for patterns the analysis leaves out
   function autoQmax() { return 3 / Math.max(0.3, state.diameter_um); }
-  function analysisOptions() { const m = swimModel(); return { q_min_per_um: state.q_min, q_max_per_um: state.q_max !== null ? state.q_max : autoQmax(), beta: null, kind: m === "plane" ? "2d" : "3d", depth: m === "depth" }; }
+  function analysisOptions() { const m = swimModel(); return { q_min_per_um: state.q_min, q_max_per_um: state.q_max !== null ? state.q_max : autoQmax(), beta: null, kind: m === "plane" ? "2d" : "3d", depth: m === "depth", D_from_cells: true }; }
   // centre height of cells lying on the bottom glass: half their thickness plus a 0.2 um gap
   function glassHeight() { const g = geometry(); return Math.min(g.a_par, g.a_perp) + 0.2; }
 
@@ -1078,7 +1078,7 @@
   // speed from each q alone (swimmer model with the spread and D of all q fixed): flat when the model fits
   function drawSize() {
     if (level === "curious" || !$("chart-size")) return;
-    const res = cache.res, h = res.head;
+    const res = cache.res, h = swimHead(res);
     if (!h || !h.perq || h.perq.length < 2) { axes($("chart-size"), { xlog: true, ylog: false, x0: 0.1, x1: 10, y0: 0, y1: 1, xlabel: "Wave vector q (" + MU + "m\u207b\u00b9)", ylabel: "Speed (" + MU + "m/s)" }).done(); return; }
     const st = seenTruth(), vals = h.perq.map(function (e) { return e.v_um_s; }).concat([h.v_um_s, st.v]);
     vals.sort(function (p, q) { return p - q; });
@@ -1097,7 +1097,7 @@
   function schulzPdf(v, vm, spread) { if (v <= 0) return 0; const Z = 1 / (spread * spread) - 1, u = v / vm; return Math.exp((Z + 1) * Math.log(Z + 1) + Z * Math.log(u) - (Z + 1) * u - lnGamma(Z + 1)) / vm; }
   function drawPv() {
     const cv = $("chart-pv"); if (!cv || level === "curious") return;
-    const res = cache.res, pv = res.pv, h = res.head, tr = cache.movie.truth.swim;
+    const res = cache.res, pv = res.pv, h = swimHead(res), tr = cache.movie.truth.swim;
     const vmax = pv ? pv.v_um_s[pv.v_um_s.length - 1] : 3 * state.swim_v;
     const nb = 30, bw = vmax / nb, hist = new Float64Array(nb);
     if (tr && tr.v_list) { for (let i = 0; i < tr.v_list.length; i++) { const k = Math.floor(tr.v_list[i] / bw); if (k >= 0 && k < nb) hist[k]++; } const n = tr.v_list.length || 1; for (let k = 0; k < nb; k++) hist[k] /= n * bw; }
@@ -1159,9 +1159,12 @@
   function spotWidth() { return 0.61 * centralWavelength() / Math.min(objective().na, nLiquid(centralWavelength())); }
   function pctTxt(x) { return x === null || x === undefined || !isFinite(x) ? "-" : (x < 0.0995 ? (100 * x).toFixed(1) : Math.round(100 * x)) + " %"; }
   function fmtV(v) { return v === null || v === undefined || !isFinite(v) ? "-" : fmtSig(v, 3) + " " + MU + "m/s"; }
+  // the fit result when swimming was found (null when the cells that do not swim explain the data as well)
+  function swimHead(res) { return res.head && !res.head.no_swim ? res.head : null; }
   function speedVerdict() {
-    const res = cache.res, h = res.head, st = seenTruth(), tr = cache.movie.truth.swim;
+    const res = cache.res, st = seenTruth(), tr = cache.movie.truth.swim, h = swimHead(res);
     if (!tr || tr.n_swimmers === 0) return h && h.alpha > 0.1 ? { cls: "bad", text: "Swimming found where there is none" } : { cls: "good", text: "No swimming, as it should be" };
+    if (res.head && res.head.no_swim) return st.share < 0.15 ? { cls: "warn", text: "Too few swimmers to see", why: "Only about " + Math.round(100 * st.share) + " % of the signal comes from swimmers: the curves are explained as well by cells that only jiggle and turn." } : { cls: "bad", text: "Swimmers missed" };
     if (!h) {
       const counts = {}; res.fits.forEach(function (f) { if (f.reason) counts[f.reason] = (counts[f.reason] || 0) + 1; });
       const top = Object.keys(counts).sort(function (p, q) { return counts[q] - counts[p]; })[0];
@@ -1204,10 +1207,11 @@
   function renderResult() {
     const res = cache.res, mv = cache.movie, tr = mv.truth, swt = tr.swim, h = res.head, v = speedVerdict(), sv = shareVerdict(), st = seenTruth();
     let html = '<div class="eyebrow">Result</div>';
-    html += h ? '<div class="big">' + fmtV(h.v_um_s) + (h.v_rel_err ? ' <small>&plusmn; ' + Math.max(1, Math.round(100 * h.v_rel_err)) + ' %</small>' : '') + '</div>' : '<div class="big">No result</div>';
+    html += h && h.no_swim ? '<div class="big">No swimming found</div>' : h ? '<div class="big">' + fmtV(h.v_um_s) + (h.v_rel_err ? ' <small>&plusmn; ' + Math.max(1, Math.round(100 * h.v_rel_err)) + ' %</small>' : '') + '</div>' : '<div class="big">No result</div>';
     html += '<span class="chip ' + v.cls + '">' + v.text + '</span>' + (sv ? ' <span class="chip ' + sv.cls + '">' + sv.text + '</span>' : '');
     if (v.why) html += '<p class="small" style="margin:0">' + v.why + '</p>';
-    if (h) html += '<p class="small" style="margin:0">Mean swimming speed and share of cells that swim (' + Math.round(100 * h.alpha) + ' %, true ' + Math.round(100 * st.share) + ' % as seen), from the model of ' + MODEL_LABEL[swimModel()] + ' fitted to all q at once. True mean speed ' + fmtV(swt.v_mean_um_s) + (Math.abs(st.v / swt.v_mean_um_s - 1) > 0.02 ? ', ' + fmtV(st.v) + ' as weighted by the signal' : '') + '.</p>';
+    if (h && h.no_swim) html += '<p class="small" style="margin:0">The curves are described as well by cells that only jiggle (and, for rods, turn) as by any share of swimmers.</p>';
+    else if (h) html += '<p class="small" style="margin:0">Mean swimming speed and share of cells that swim (' + Math.round(100 * h.alpha) + ' %, true ' + Math.round(100 * st.share) + ' % as seen), from the model of ' + MODEL_LABEL[swimModel()] + ' fitted to all q at once. True mean speed ' + fmtV(swt.v_mean_um_s) + (Math.abs(st.v / swt.v_mean_um_s - 1) > 0.02 ? ', ' + fmtV(st.v) + ' as weighted by the signal' : '') + '.</p>';
     if (level !== "curious" && h) {
       const row = function (cls, name, vv, share, spread, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + fmtV(vv) + '</td><td>' + (share === null || share === undefined ? "-" : Math.round(100 * share) + " %") + '</td><td>' + (spread === null || spread === undefined ? "-" : Math.round(100 * spread) + " %") + '</td></tr>'; };
       let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">Mean speed</th><th scope="col">Swimming</th><th scope="col">Spread</th></tr></thead><tbody>';
@@ -1224,7 +1228,7 @@
       html += '<div class="btns"><button type="button" id="btn-repeat"' + (repeat && !repeat.done ? ' disabled' : '') + '>' + (repeat && !repeat.done ? 'Repeating... ' + repeat.runs.length + ' of 5' : repeat && repeat.done ? 'Repeat 5 times again' : 'Repeat 5 times with new cells') + '</button><span class="small">' + (lastRunS ? 'about ' + Math.max(5, Math.round(5 * lastRunS)) + ' s' : '') + '</span></div>';
       if (repeat && repeat.runs.length) html += renderRepeatTable();
       html += '<details class="more"><summary>Details</summary><dl>';
-      html += '<dt>Diffusion of cells that do not swim</dt><dd>' + fmtSig(h.D_um2_s, 3) + ' ' + MU + 'm<sup>2</sup>/s (true ' + fmtSig(tr.D_um2_s, 3) + ')</dd>';
+      html += '<dt>Diffusion of cells that do not swim</dt><dd>' + fmtSig(h.D_um2_s, 3) + ' ' + MU + 'm<sup>2</sup>/s ' + (h.D_fixed ? '(set from the size of the cells and the viscosity: the data agree with it)' : '(fitted; true ' + fmtSig(tr.D_um2_s, 3) + ')') + '</dd>';
       html += '<dt>Liquid</dt><dd>' + LIQUIDS[state.liquid] + (state.liquid === "glycerol" ? " " + Math.round(100 * state.glycerol_w) + " %" : "") + ', ' + state.T_C.toFixed(0) + ' &deg;C, ' + (mv.viscosity_Pa_s * 1000).toFixed(2) + ' mPa s</dd>';
       html += '<dt>Wave vectors used</dt><dd>' + res.used.length + (res.used.length ? ', ' + res.used[0].q_per_um.toFixed(2) + ' to ' + res.used[res.used.length - 1].q_per_um.toFixed(2) + ' ' + MU + 'm\u207b\u00b9' : '') + '</dd>';
       if (res.compressed) html += '<dt>Compressed exponential</dt><dd>exponent &beta; ' + res.compressed.beta_free_mean.toFixed(2) + ' (mean over q), v<sub>0</sub> ' + fmtV(res.compressed.v0_um_s) + ', slope ' + res.compressed.slope.toFixed(2) + '</dd>';
@@ -1268,7 +1272,7 @@
     const r = cache.res, i = cache.movie.info, h = r.head;
     const obj = { microscope: "Nikon Ti2-E", objective: objective().n, contrast: state.mode, detector: SCANNING() ? "Nikon AX R, " + SCANNERS[state.scanner].label : cam().label + ", " + cam().modes[state.cam_mode].label, simulation: cache.cfg, analysis: cache.opts,
       optics: { cells: i.n_particles, kernel_rank: i.rank, kernel_residual: +i.rank_residual.toExponential(1) },
-      result: h ? { model: swimModel(), v_um_s: +h.v_um_s.toPrecision(4), share_swimming: +h.alpha.toFixed(3), spread: +h.spread.toFixed(3), D_um2_s: +h.D_um2_s.toPrecision(3), q_used: r.used.length } : null,
+      result: h ? { model: h.no_swim ? "no swimming found" : swimModel(), v_um_s: h.no_swim ? null : +h.v_um_s.toPrecision(4), share_swimming: +h.alpha.toFixed(3), spread: +h.spread.toFixed(3), D_um2_s: +h.D_um2_s.toPrecision(3), q_used: r.used.length } : null,
       compressed: r.compressed ? { v0_um_s: +r.compressed.v0_um_s.toPrecision(4), slope: +r.compressed.slope.toFixed(3), beta_mean: +r.compressed.beta_free_mean.toFixed(3) } : null };
     $("settings-json").textContent = JSON.stringify(obj, function (k, v) { return k === "v_list" ? undefined : v; }, 1);
   }
@@ -1279,7 +1283,8 @@
     L.push("Generated by the DDM swimmers page on " + new Date().toISOString().slice(0, 10) + ". Simulated data: not a real measurement.");
     L.push("");
     L.push("Results");
-    if (h) {
+    if (h && h.no_swim) L.push("  No swimming found: the curves are described as well by cells that only diffuse" + (state.shape === "rod" ? " and turn" : "") + " (diffusion " + fmtSig(h.D_um2_s, 3) + " um^2/s).");
+    else if (h) {
       L.push("  Mean swimming speed: " + fmtSig(h.v_um_s, 3) + " um/s" + (h.v_rel_err ? " (+- " + (100 * h.v_rel_err).toFixed(1) + " %)" : "") + "; relative spread of speeds " + Math.round(100 * h.spread) + " %");
       L.push("  Share of cells that swim: " + Math.round(100 * h.alpha) + " %; diffusion of the others " + fmtSig(h.D_um2_s, 3) + " um^2/s");
       L.push("  Model: " + MODEL_LABEL[swimModel()] + ", fitted to " + r.used.length + " wave vectors at once (" + r.used[0].q_per_um.toFixed(2) + " to " + r.used[r.used.length - 1].q_per_um.toFixed(2) + " um^-1)");
