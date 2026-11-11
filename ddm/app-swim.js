@@ -122,7 +122,54 @@
     frame_rate_hz: 50, exposure_ms: 1,
     shape: "rod", aspect: 2.5, dn: 0, dn_body: 0, polarizer: "off", analyzer: "off", pol_angle_deg: 90, extinction: 1e-4,
     swim_frac: 0.6, swim_v: 20, swim_spread: 0.3, swim_geom: "3d", swim_rot: 0.1, swim_tumble: 0,
-    swim_model: "auto", q_min: null, q_max: null, seed: 1
+    swim_model: "auto", q_min: null, q_max: null, seed: 1,
+    organism: "model", swim_osc_amp: 0, swim_osc_hz: 20, swim_osc_dir: "along", drag: 1
+  };
+  // Microorganisms measured with DDM, with the values reported in the papers (marked "assumed" where a paper gives none).
+  // Each entry changes the sample, and the microscope and recording to those of the paper where they fit the page.
+  const PH10 = { mode: "phase", objective: objIndexByName("CFI Plan Fluor DLL 10X") };
+  const BFOBJ = function (name, nac) { return { mode: "brightfield", objective: objIndexByName(name), condenser: "lwd", na_c: nac }; };
+  const ORGANISMS = {
+    model: { label: "Example: E. coli-like rods on straight runs (the start of this page)", set: {},
+      text: "Not a real strain: E. coli-sized rods (2 x 0.8 " + MU + "m) that swim in straight lines without tumbling, a clean case for the model." },
+    ecoli_wt: { label: "E. coli, wild type (AB1157): run and tumble", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0.58, swim_v: 13.7, swim_spread: 0.51, swim_tumble: 0.42, q_min: 0.3 }),
+      text: "Mean speed 13.7 " + MU + "m/s, spread 7.0 " + MU + "m/s, 58 % swimming, 10x phase contrast at 100 frames/s (Wilson et al. 2011). Runs of about 2.4 s between tumbles (Kurzthaler et al. 2024). Cells 2.4 x 0.86 " + MU + "m (Schwarz-Linek et al. 2016). The fit starts at q = 0.3 " + MU + "m\u207b\u00b9: over longer distances the tumbles bend the runs, which the model leaves out (Wilson et al. used q from 0.5)." },
+    ecoli_smooth: { label: "E. coli, smooth swimmer (cheY deletion): no tumbles", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0.585, swim_v: 10.9, swim_spread: 0.59, swim_tumble: 0 }),
+      text: "AB1157 without cheY: the motors never reverse, so the cells never tumble. Mean speed 10.9 " + MU + "m/s, spread 6.4 " + MU + "m/s, 58.5 % swimming, D = 0.35 " + MU + "m\u00b2/s (Martinez et al. 2012)." },
+    ecoli_glucose: { label: "E. coli, wild type with glucose: faster", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0.7, swim_v: 22, swim_spread: 0.5, swim_tumble: 0.42, q_min: 0.3 }),
+      text: "Glucose in the motility buffer raises the speed by about half, up to about 25 " + MU + "m/s (Jepson et al. 2013; Schwarz-Linek et al. 2016). Speed 22 and share 70 % assumed within the reported ranges." },
+    ecoli_pvp: { label: "E. coli, wild type in a polymer solution (PVP 360k, 1 %)", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0.58, swim_v: 15, swim_spread: 0.5, swim_tumble: 0.42, q_min: 0.3, liquid: "custom", n_liquid: 1.335, visc_mPa_s: 4 }),
+      text: "In 1 % PVP 360k (about 4 mPa s) the cells swim about as fast as in buffer (15 " + MU + "m/s), while the cells that do not swim diffuse four times more slowly (Martinez et al. 2014)." },
+    ecoli_light: { label: "E. coli powered by light (proteorhodopsin, AD10), light on", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0.8, swim_v: 9.5, swim_spread: 0.5, swim_tumble: 0 }),
+      text: "Smooth swimmers that run on light once the oxygen is used up: 9.5 " + MU + "m/s at about 5 mW/cm\u00b2 of green light, up to about 27 " + MU + "m/s in brighter light (Arlt et al. 2018). Share and spread assumed." },
+    ecoli_dark: { label: "E. coli powered by light (AD10), light off", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0.01, swim_v: 9.5, swim_spread: 0.5, swim_tumble: 0 }),
+      text: "Within a second of switching the light off fewer than 1 % of the cells still swim (Arlt et al. 2018)." },
+    ecoli_nz1: { label: "E. coli with tunable tumbling (NZ1), much IPTG", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0.95, swim_v: 23.5, swim_spread: 0.25, swim_tumble: 0.1 }),
+      text: "IPTG switches on cheZ: without it the cells tumble all the time, with more of it the runs get longer, by about two orders of magnitude in persistence length; speed about 23.5 " + MU + "m/s (Kurzthaler et al. 2024). Runs of 10 s assumed here." },
+    ecoli_mota: { label: "E. coli, paralysed flagella (motA): no swimming", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0, drag: 1.02 }),
+      text: "The motors have no stators, so the flagella do not turn. The cells only diffuse: D = 0.30 " + MU + "m\u00b2/s (Wilson et al. 2011) or 0.29 (Jepson et al. 2013), slowed by the flagella they carry." },
+    ecoli_flif: { label: "E. coli without flagella (fliF): no swimming", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0, drag: 0.76 }),
+      text: "No flagella at all: D = 0.39 " + MU + "m\u00b2/s, faster than cells with paralysed flagella (Jepson et al. 2013)." },
+    ecoli_dh5a: { label: "E. coli DH5alpha, no flagella, in dark field", set: { mode: "darkfield", df_kind: "annulus", annulus: "Ph3", objective: objIndexByName("CFI Plan Fluor 10X"), diameter_um: 1.8, aspect: 2, swim_frac: 0, liquid: "custom", n_liquid: 1.34, visc_mPa_s: 2.1 },
+      text: "Non-motile cells in PBS with Percoll (to stop them sinking). Dark field sees them turn: D_t = 0.149 " + MU + "m\u00b2/s and D_R = 0.165 s\u207b\u00b9 (Cerbino et al. 2017; Lattuada et al. 2025). Size and viscosity chosen here to give both." },
+    salmonella: { label: "Salmonella Typhimurium (SJW1103)", set: Object.assign({}, BFOBJ("CFI Plan Fluor 10X", 0.1), { diameter_um: 2.5, aspect: 3.1, swim_frac: 0.8, swim_v: 21.2, swim_spread: 0.53, swim_tumble: 0, frame_rate_hz: 100 }),
+      text: "Mean speed 21.2 " + MU + "m/s, spread 11.3 " + MU + "m/s, 80 % swimming, D = 0.28 " + MU + "m\u00b2/s; 10x bright field (Germain et al. 2016, a student lab). Size assumed; tumbles left out." },
+    bsubtilis: { label: "Bacillus subtilis", set: Object.assign({}, PH10, { diameter_um: 4, aspect: 5, swim_frac: 0.9, swim_v: 55, swim_spread: 0.5 }),
+      text: "Measured by confocal DDM in a dense suspension: rate = v\u2080 q with v\u2080 = 24.9 " + MU + "m/s and a compressed exponential of exponent 1.35 (Lu et al. 2012; Lattuada et al. 2025). That exponent points to a broad spread of speeds and a mean speed of about 2.2 v\u2080. Here as a dilute sample; cells 4 x 0.8 " + MU + "m, spread 50 % and share assumed." },
+    chlamy: { label: "Chlamydomonas reinhardtii (alga): swims with a breaststroke", set: Object.assign({}, BFOBJ("CFI Plan Fluor 4X", 0.1), { shape: "sphere", diameter_um: 10, phi: 0.01, cell_um: 200, swim_frac: 0.9, swim_v: 89.6, swim_spread: 0.28, swim_rot: 0.2, swim_osc_amp: 0.98, swim_osc_hz: 48.6, swim_osc_dir: "along", roi: 256, frame_rate_hz: 500, exposure_ms: 0.5, n_frames: 512 }),
+      text: "Wild type CCAP 11/32B, about 10 " + MU + "m. Each stroke of the two flagella pulls the cell forward and part of the way back: mean speed 89.6 " + MU + "m/s, spread 24.9 " + MU + "m/s, back-and-forth of 0.98 " + MU + "m at 48.6 Hz; 4x bright field at 1000 frames/s (Martinez et al. 2012). Share assumed. Its helical path (Croze et al. 2019) is not simulated." },
+    euglena: { label: "Euglena gracilis (alga), in the dark", set: Object.assign({}, BFOBJ("CFI Plan Achromat 1X", 0.03), { diameter_um: 50, aspect: 5, phi: 0.01, cell_um: 150, swim_frac: 0.9, swim_v: 80, swim_spread: 0.17, swim_rot: 0.011, frame_rate_hz: 25, exposure_ms: 5, n_frames: 512, q_max: 0.4 }),
+      text: "About 50 x 10 " + MU + "m. In the dark: speed 79.7 " + MU + "m/s and straight runs over about 3.7 mm (Li et al. 2025, bright field at 10 frames/s). Here 1x bright field at 25 frames/s. The runs are set by a slow wobble of the direction; the Levy walks of that paper are not simulated. Share assumed. The cells are long: patterns finer than a cell renew mostly where its ends pass, so the speed comes out about 10 % low (see the card Long cells)." },
+    euglena_light: { label: "Euglena gracilis in blue light (0.6 W/m\u00b2)", set: Object.assign({}, BFOBJ("CFI Plan Achromat 1X", 0.03), { diameter_um: 50, aspect: 5, phi: 0.01, cell_um: 150, swim_frac: 0.9, swim_v: 63, swim_spread: 0.17, swim_rot: 0.26, frame_rate_hz: 25, exposure_ms: 5, n_frames: 512, q_max: 0.4 }),
+      text: "Blue light makes the cells turn more: speed 63 " + MU + "m/s and runs of only about 120 " + MU + "m (Li et al. 2025)." },
+    sperm: { label: "Bull sperm, fresh, diluted 25 times", set: Object.assign({}, BFOBJ("CFI Plan Achromat 2X", 0.05), { shape: "sphere", diameter_um: 5, phi: 0.004, cell_um: 50, T_C: 37, swim_frac: 0.61, swim_v: 111, swim_spread: 0.43, swim_rot: 0.2, swim_osc_amp: 4.2, swim_osc_hz: 16, swim_osc_dir: "across", roi: 256, frame_rate_hz: 200, exposure_ms: 0.5, n_frames: 512 }),
+      text: "Speed 111 " + MU + "m/s, spread 48 " + MU + "m/s, 61 % swimming, head moving sideways by 4.2 " + MU + "m at 16 Hz, at 37 " + DEG + "C (Jepson et al. 2019). The head is drawn as a 5 " + MU + "m ball; the cells are denser here than in the paper, for a fair count in this small field." },
+    sperm_50: { label: "Bull sperm, fresh, diluted 50 times", set: Object.assign({}, BFOBJ("CFI Plan Achromat 2X", 0.05), { shape: "sphere", diameter_um: 5, phi: 0.004, cell_um: 50, T_C: 37, swim_frac: 0.25, swim_v: 107, swim_spread: 0.43, swim_rot: 0.2, swim_osc_amp: 4.0, swim_osc_hz: 13.6, swim_osc_dir: "across", roi: 256, frame_rate_hz: 200, exposure_ms: 0.5, n_frames: 512 }),
+      text: "25 % swimming, 107 " + MU + "m/s, head 4.0 " + MU + "m at 13.6 Hz (Jepson et al. 2019; spread as for the 25-fold sample)." },
+    sperm_thawed: { label: "Bull sperm, frozen and thawed", set: Object.assign({}, BFOBJ("CFI Plan Achromat 2X", 0.05), { shape: "sphere", diameter_um: 5, phi: 0.004, cell_um: 50, T_C: 37, swim_frac: 0.42, swim_v: 82, swim_spread: 0.43, swim_rot: 0.2, swim_osc_amp: 3.2, swim_osc_hz: 14, swim_osc_dir: "across", roi: 256, frame_rate_hz: 200, exposure_ms: 0.5, n_frames: 512 }),
+      text: "42 % swimming, 82 " + MU + "m/s, head 3.2 " + MU + "m at 14 Hz (Jepson et al. 2019)." },
+    sperm_dead: { label: "Bull sperm, thawed and mixed with dead cells", set: Object.assign({}, BFOBJ("CFI Plan Achromat 2X", 0.05), { shape: "sphere", diameter_um: 5, phi: 0.004, cell_um: 50, T_C: 37, swim_frac: 0.15, swim_v: 76, swim_spread: 0.43, swim_rot: 0.2, swim_osc_amp: 2.6, swim_osc_hz: 17, swim_osc_dir: "across", roi: 256, frame_rate_hz: 200, exposure_ms: 0.5, n_frames: 512 }),
+      text: "15 % swimming, 76 " + MU + "m/s, head 2.6 " + MU + "m at 17 Hz (Jepson et al. 2019)." }
   };
   let state = Object.assign({}, BASE);
   const LEVEL_RANK = { curious: 1, student: 2, researcher: 3 };
@@ -198,9 +245,11 @@
   function swimModel() {
     if (state.swim_model !== "auto") return state.swim_model;
     if (state.swim_geom === "glass") return "plane";
-    return state.mode === "spinning" || state.mode === "scanning" ? "depth" : "wilson";
+    if (state.mode === "spinning" || state.mode === "scanning") return "depth";
+    return state.swim_osc_amp > 0 ? (state.swim_osc_dir === "across" ? "strokex" : "stroke") : "wilson";
   }
-  const MODEL_LABEL = { wilson: "3D swimmers (Wilson et al. 2011)", depth: "3D swimmers seen through the depth of field", plane: "swimmers in the image plane" };
+  const MODEL_LABEL = { wilson: "3D swimmers (Wilson et al. 2011)", depth: "3D swimmers seen through the depth of field", plane: "swimmers in the image plane",
+    stroke: "3D swimmers with a stroke along their path (Martinez et al. 2012)", strokex: "3D swimmers with a sideways stroke" };
   function detectorConfig() {
     if (SCANNING()) {
       const sc = SCANNERS[state.scanner], tl = sc.line(state.scan_px);
@@ -264,14 +313,18 @@
       shape: state.shape, aspect: BODY() ? Math.max(state.shape === "rod" ? 2 : 1, state.aspect) : 1, birefringence: state.shape === "sphere" || !TRANS() ? 0 : state.shape === "bisphere" ? state.dn : state.dn_body, polarization: polarization(),
       volume_fraction: state.phi, liquid: liquidSpec(), T_C: state.T_C, cell_um: state.cell_um, focus_um: state.focus_frac * state.cell_um,
       drift_um_s: state.drift_um_s, gravity: false, walls: state.swim_geom === "glass", vector: useVector(),
+      // rods narrower than the smallest spot the optics make are drawn as a line of points (much faster)
+      thin_bodies: state.shape !== "sphere" && state.diameter_um / Math.max(1, state.aspect) < spotWidth(),
       swim: { fraction: state.swim_frac, v_um_s: state.swim_v, v_spread: state.swim_spread, rot_diff_s: state.swim_rot, tumble_hz: state.swim_tumble,
-              plane_fraction: state.swim_geom === "glass" ? 1 : 0, plane_still: state.swim_geom === "glass", height_um: glassHeight() }
+              plane_fraction: state.swim_geom === "glass" ? 1 : 0, plane_still: state.swim_geom === "glass", height_um: glassHeight(),
+              osc_amp_um: state.swim_osc_amp, osc_hz: state.swim_osc_hz, osc_dir: state.swim_osc_dir },
+      drag_factor: state.drag
     };
   }
   // automatic upper end of the q range: patterns at least about twice the cell length (3 / length), so that a cell
   // looks the same after a short step except at its ends only for patterns the analysis leaves out
-  function autoQmax() { return 3 / Math.max(0.3, state.diameter_um); }
-  function analysisOptions() { const m = swimModel(); return { q_min_per_um: state.q_min, q_max_per_um: state.q_max !== null ? state.q_max : autoQmax(), beta: null, kind: m === "plane" ? "2d" : "3d", depth: m === "depth", D_from_cells: true }; }
+  function autoQmax() { return state.shape === "sphere" || state.swim_frac === 0 ? null : 3 / Math.max(0.3, state.diameter_um); }   // long cells only (see the card "Long cells")
+  function analysisOptions() { const m = swimModel(); return { q_min_per_um: state.q_min, q_max_per_um: state.q_max !== null ? state.q_max : autoQmax(), beta: null, kind: m === "plane" ? "2d" : "3d", depth: m === "depth", stroke: m === "stroke" || m === "strokex", stroke_dir: m === "strokex" ? "across" : "along", D_from_cells: true }; }
   // centre height of cells lying on the bottom glass: half their thickness plus a 0.2 um gap
   function glassHeight() { const g = geometry(); return Math.min(g.a_par, g.a_perp) + 0.2; }
 
@@ -283,18 +336,23 @@
   const TURNS = function () { return state.shape !== "sphere"; };
   const objOptions = function () { return OBJECTIVES.map(function (o, i) { return [i, o.n.replace(/^CFI /, "") + "  (" + o.m + "x, NA " + o.na + (o.im !== "dry" ? ", " + o.im : "") + ")", o.s]; }); };
   const CONTROLS = [
+    { key: "organism", group: "Sample", lvl: 1, label: "Organism", kind: "select", options: Object.keys(ORGANISMS).map(function (k) { return [k, ORGANISMS[k].label]; }), hint: function () { const o = ORGANISMS[state.organism]; return (o ? o.text : "") + " You can change every setting afterwards."; } },
     { key: "shape", group: "Sample", lvl: 1, label: "Cell shape", kind: "select", options: function () { return Object.keys(SHAPES).filter(function (k) { return state.mode !== "dic" || k === "sphere"; }).map(function (k) { return [k, SHAPES[k]]; }); }, hint: function () { return state.mode === "dic" ? "DIC is simulated for spheres only." : shapeHint(); } },
     { key: "swim_frac", group: "Sample", lvl: 1, label: "Share of cells that swim", kind: "lin", min: 0, max: 1, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, hint: "The others only diffuse (dead or non-motile cells)." },
-    { key: "swim_v", group: "Sample", lvl: 1, label: "Mean swimming speed", kind: "log", min: 1, max: 100, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m/s"; } },
+    { key: "swim_v", group: "Sample", lvl: 1, label: "Mean swimming speed", kind: "log", min: 1, max: 200, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m/s"; } },
     { key: "swim_spread", group: "Sample", lvl: 2, label: "Spread of speeds (relative standard deviation)", kind: "lin", min: 0.05, max: 0.9, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, hint: "Schulz (gamma) distribution of speeds, as in Wilson et al. 2011." },
     { key: "swim_geom", group: "Sample", lvl: 1, label: "Where they swim", kind: "select", options: [["3d", "Everywhere in the cell, in all directions"], ["glass", "Along the bottom glass, in the plane"]], hint: function () { return state.swim_geom === "glass" ? "All cells lie on the glass, " + fmtSig(glassHeight(), 2) + " " + MU + "m above it at their centre; the focus is put there. Many bacteria swim this way near surfaces." : ""; } },
     { key: "swim_tumble", group: "Sample", lvl: 2, label: "Tumbles (new random direction)", kind: "lin", min: 0, max: 5, step: 0.1, fmt: function (v) { return v === 0 ? "none: straight runs" : fmtSig(v, 2) + " per second"; }, hint: function () { return state.swim_tumble > 0 ? "A run lasts " + fmtSig(1 / state.swim_tumble, 2) + " s on average, about " + fmtSig(state.swim_v / state.swim_tumble, 2) + " " + MU + "m. The swimmer models assume straight runs, so the largest patterns read slow." : "E. coli tumbles about once per second; smooth-swimming mutants do not."; } },
     { key: "swim_rot", group: "Sample", lvl: 3, label: "Rotational diffusion of swimmers", kind: "log", min: 0.01, max: 5, fmt: function (v) { return fmtSig(v, 2) + " s\u207b\u00b9"; }, hint: "Slow wobbling of the swimming direction (about 0.1 s\u207b\u00b9 for E. coli)." },
+    { key: "swim_osc_amp", group: "Sample", lvl: 2, label: "Stroke: back-and-forth of each swimmer", kind: "lin", min: 0, max: 10, step: 0.1, fmt: function (v) { return v === 0 ? "none" : fmtSig(v, 2) + " " + MU + "m"; }, hint: "Algae and sperm do not swim smoothly: each beat moves the cell (or the head) back and forth about its mean path." },
+    { key: "swim_osc_hz", group: "Sample", lvl: 2, label: "Stroke: beats per second", kind: "log", min: 1, max: 100, fmt: function (v) { return fmtSig(v, 3) + " Hz"; }, when: function () { return state.swim_osc_amp > 0; }, hint: function () { return state.frame_rate_hz < 2.2 * state.swim_osc_hz ? "The camera takes fewer than two frames per beat: the stroke cannot be seen." : ""; } },
+    { key: "swim_osc_dir", group: "Sample", lvl: 3, label: "Stroke: direction", kind: "select", options: [["along", "Along the swimming direction (Chlamydomonas)"], ["across", "Across it (sperm head)"]], when: function () { return state.swim_osc_amp > 0; } },
+    { key: "drag", group: "Sample", lvl: 3, label: "Drag relative to a plain rod of this size", kind: "log", min: 0.5, max: 3, fmt: function (v) { return fmtSig(v, 2) + "x"; }, hint: function () { return "Diffusion of the cells: " + fmtSig(hydro().D_t / state.drag, 2) + " " + MU + "m\u00b2/s. Flagella, turning or not, add drag."; } },
     { key: "particle", group: "Sample", lvl: 3, label: "Material", kind: "select", options: function () { return SHAPE_MATERIALS[state.shape].map(function (k) { return [k, MATERIALS[k]]; }); } },
     { key: "n_custom", group: "Sample", lvl: 1, label: function () { return state.shape === "bisphere" ? "Ordinary refractive index (n_o)" : "Particle refractive index"; }, kind: "lin", min: 1.3, max: 2.6, step: 0.01, fmt: function (v) { return v.toFixed(2); }, when: function () { return state.particle === "custom"; } },
-    { key: "diameter_um", group: "Sample", lvl: 2, label: function () { return SIZE_LABEL[state.shape]; }, kind: "log", min: 0.3, max: 8, fmt: fmtSize },
+    { key: "diameter_um", group: "Sample", lvl: 2, label: function () { return SIZE_LABEL[state.shape]; }, kind: "log", min: 0.3, max: 60, fmt: fmtSize },
     { key: "aspect", group: "Sample", lvl: 2, label: function () { return ASPECT_LABEL[state.shape] || "Aspect ratio"; }, kind: "log", min: 1.2, max: 20, fmt: function (v) { return fmtSig(Math.max(state.shape === "rod" ? 2 : 1, v), 2); }, when: BODY, hint: function () { return state.shape === "rod" && state.aspect < 2 ? "Rods are simulated from aspect ratio 2 (the friction formulas hold from there)." : ""; } },
-    { key: "phi", group: "Sample", lvl: 2, label: "Concentration (volume fraction)", kind: "log", min: 1e-6, max: 1e-2, fmt: fmtPhi, hint: function () { return particleCount() + " cells in the simulated volume." + (phiCapped ? " Lowered to fit what the browser can follow (" + MAX_PARTICLES + " cells even in the smallest simulated field)." : "") + (phiRaised ? " Raised so that a few cells are in the simulated field." : ""); } },
+    { key: "phi", group: "Sample", lvl: 2, label: "Concentration (volume fraction)", kind: "log", min: 1e-6, max: 5e-2, fmt: fmtPhi, hint: function () { return particleCount() + " cells in the simulated volume." + (phiCapped ? " Lowered to fit what the browser can follow (" + MAX_PARTICLES + " cells even in the smallest simulated field)." : "") + (phiRaised ? " Raised so that a few cells are in the simulated field." : ""); } },
     { key: "liquid", group: "Sample", lvl: 2, label: "Liquid", kind: "select", options: Object.keys(LIQUIDS).map(function (k) { return [k, LIQUIDS[k]]; }) },
     { key: "glycerol_w", group: "Sample", lvl: 2, label: "Glycerol (by mass)", kind: "lin", min: 0, max: 0.95, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, when: function () { return state.liquid === "glycerol"; } },
     { key: "n_liquid", group: "Sample", lvl: 3, label: "Liquid refractive index", kind: "lin", min: 1.30, max: 1.60, step: 0.005, fmt: function (v) { return v.toFixed(3); }, when: function () { return state.liquid === "custom"; } },
@@ -341,14 +399,14 @@
       hint: function () { return "The browser holds up to " + maxFrames(simPx()) + " frames at " + simPx() + " x " + simPx() + " pixels; asking for more makes the simulated image smaller."; } },
     { key: "sim_px", group: "Camera and recording", lvl: 3, label: "Simulated part of the image", kind: "select", num: true, options: [[64, "64 x 64 pixels (fast)"], [128, "128 x 128 pixels"], [256, "256 x 256 pixels (slow)"]] },
 
-    { key: "swim_model", group: "Analysis", lvl: 2, label: "Swimmer model fitted to all q", kind: "select", options: [["auto", "Automatic"], ["wilson", MODEL_LABEL.wilson], ["depth", MODEL_LABEL.depth], ["plane", MODEL_LABEL.plane]], hint: function () { return "In use: " + MODEL_LABEL[swimModel()] + "." + (swimModel() === "depth" ? " Uses how each pattern fades as a cell moves up or down through the focus, computed from the optics of this microscope." : ""); } },
+    { key: "swim_model", group: "Analysis", lvl: 2, label: "Swimmer model fitted to all q", kind: "select", options: [["auto", "Automatic"], ["wilson", MODEL_LABEL.wilson], ["depth", MODEL_LABEL.depth], ["plane", MODEL_LABEL.plane], ["stroke", MODEL_LABEL.stroke], ["strokex", MODEL_LABEL.strokex]], hint: function () { return "In use: " + MODEL_LABEL[swimModel()] + "." + (swimModel() === "depth" ? " Uses how each pattern fades as a cell moves up or down through the focus, computed from the optics of this microscope." : ""); } },
     { key: "qrange", group: "Analysis", lvl: 3, label: "Fit range in q (1/" + MU + "m)", kind: "qrange" }
   ];
   // where each control sits: the imaging mode, then everything about the sample, the light reaching it, and how the
   // light is collected and recorded. Every control appears exactly once (checked at start-up).
   const LAYOUT = [
     ["Imaging mode", ["mode"]],
-    ["Sample", ["shape", "swim_frac", "swim_v", "swim_spread", "swim_geom", "swim_tumble", "swim_rot", "particle", "n_custom", "diameter_um", "aspect", "phi", "dye", "liquid", "glycerol_w", "n_liquid", "visc_mPa_s", "T_C", "cell_um", "drift_um_s"]],
+    ["Sample", ["organism", "shape", "swim_frac", "swim_v", "swim_spread", "swim_geom", "swim_tumble", "swim_rot", "swim_osc_amp", "swim_osc_hz", "swim_osc_dir", "drag", "particle", "n_custom", "diameter_um", "aspect", "phi", "dye", "liquid", "glycerol_w", "n_liquid", "visc_mPa_s", "T_C", "cell_um", "drift_um_s"]],
     ["Illumination", ["source", "condenser", "na_c", "df_kind", "annulus", "light_frac", "df_light_e", "stray_frac", "rate_ph_ms", "bg_e_ms", "scan_rate"]],
     ["Detection", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg",
       "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "sim_px"]],
@@ -525,6 +583,7 @@
   let lastKey = null;
   function onChange(key) {
     lastKey = key;
+    if (key === "organism") { applyPreset(Object.assign({ organism: state.organism }, ORGANISMS[state.organism].set)); return; }
     // switching to phase contrast with an objective that has no phase ring: take the phase objective of the same
     // magnification with the closest NA (Plan Fluor 20X -> Plan Fluor DLL 20X Ph1), so phase contrast is really on
     if (key === "mode" && state.mode === "phase" && !objRing()) {
@@ -562,7 +621,7 @@
     });
     if (lv !== "researcher" && state.seed !== BASE.seed) { state.seed = BASE.seed; changed = true; }
     if (curveView === "d" && lv === "curious") setCurveView("change");
-    if (fromUser && location.hash !== "#" + lv) history.replaceState(null, "", "#" + lv);
+    if (fromUser && location.hash !== "#" + lv) { try { history.replaceState(null, "", "#" + lv); } catch (e) { /* sandboxed previews (about:srcdoc) refuse it */ } }
     constrain(); syncControls(); drawFov();
     if (changed) schedule(); else if (cache.res) renderAll();
   }
@@ -1212,12 +1271,14 @@
     if (v.why) html += '<p class="small" style="margin:0">' + v.why + '</p>';
     if (h && h.no_swim) html += '<p class="small" style="margin:0">The curves are described as well by cells that only jiggle (and, for rods, turn) as by any share of swimmers.</p>';
     else if (h) html += '<p class="small" style="margin:0">Mean swimming speed and share of cells that swim (' + Math.round(100 * h.alpha) + ' %, true ' + Math.round(100 * st.share) + ' % as seen), from the model of ' + MODEL_LABEL[swimModel()] + ' fitted to all q at once. True mean speed ' + fmtV(swt.v_mean_um_s) + (Math.abs(st.v / swt.v_mean_um_s - 1) > 0.02 ? ', ' + fmtV(st.v) + ' as weighted by the signal' : '') + '.</p>';
+    if (h && h.stroke_um) html += '<p class="small" style="margin:0">Stroke of each swimmer: ' + fmtSig(h.stroke_um, 2) + ' ' + MU + 'm at ' + fmtSig(h.stroke_hz, 3) + ' Hz (true ' + fmtSig(swt.osc_amp_um || 0, 2) + ' ' + MU + 'm at ' + fmtSig(swt.osc_hz || 0, 3) + ' Hz' + (swt.osc_amp_um > 0 && swt.osc_dir === "across" && swimModel() === "stroke" ? '; the cells stroke sideways, the model assumes along' : '') + ').</p>';
     if (level !== "curious" && h) {
       const row = function (cls, name, vv, share, spread, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + fmtV(vv) + '</td><td>' + (share === null || share === undefined ? "-" : Math.round(100 * share) + " %") + '</td><td>' + (spread === null || spread === undefined ? "-" : Math.round(100 * spread) + " %") + '</td></tr>'; };
       let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">Mean speed</th><th scope="col">Swimming</th><th scope="col">Spread</th></tr></thead><tbody>';
       const isMain = function (m) { return swimModel() === m ? "main" : ""; };
       if (res.swim) t += row(isMain(res.kind === "2d" ? "plane" : "wilson"), res.kind === "2d" ? "Swimmers in the image plane" : "3D swimmers (Wilson et al. 2011)", res.swim.v_um_s, res.swim.alpha, res.swim.spread, isMain(res.kind === "2d" ? "plane" : "wilson") ? "the headline" : "");
       if (res.swim_depth) t += row("main", "3D swimmers, with the depth of field", res.swim_depth.v_um_s, res.swim_depth.alpha, res.swim_depth.spread, "the headline");
+      if (res.swim_stroke) t += row("main", MODEL_LABEL[swimModel() === "strokex" ? "strokex" : "stroke"], res.swim_stroke.v_um_s, res.swim_stroke.alpha, res.swim_stroke.spread, "the headline; stroke " + fmtSig(res.swim_stroke.stroke_um, 2) + " " + MU + "m at " + fmtSig(res.swim_stroke.stroke_hz, 3) + " Hz");
       if (res.pv) t += row("", "Distribution from the data, no shape assumed", res.pv.data_mean_swimmers_um_s, 1 - res.pv.data_still_share, null, "see the chart below");
       if (res.compressed) t += row("", "v\u2080 from rate = v\u2080 q (compressed exponential)", res.compressed.v0_um_s, null, null, "a speed scale, not the mean speed: in 3D about mean / 2.2");
       t += row("truth", "True (simulation)", st.v, st.share, st.spread, "weighted by the signal");
@@ -1229,6 +1290,7 @@
       if (repeat && repeat.runs.length) html += renderRepeatTable();
       html += '<details class="more"><summary>Details</summary><dl>';
       html += '<dt>Diffusion of cells that do not swim</dt><dd>' + fmtSig(h.D_um2_s, 3) + ' ' + MU + 'm<sup>2</sup>/s ' + (h.D_fixed ? '(set from the size of the cells and the viscosity: the data agree with it)' : '(fitted; true ' + fmtSig(tr.D_um2_s, 3) + ')') + '</dd>';
+      if (h.no_swim && TURNS()) html += '<dt>Turning of the cells</dt><dd>rate 6 D<sub>R</sub> = ' + fmtSig(6 * h.D_r_s, 2) + ' s\u207b\u00b9 (true ' + (cache.movie.truth.rot_rate_s ? fmtSig(cache.movie.truth.rot_rate_s, 2) : '-') + '), seen in ' + Math.round(100 * (h.turn_share || 0)) + ' % of each pattern on average. The turning of rods is only roughly described by one rate, so both numbers come out approximate.</dd>';
       html += '<dt>Liquid</dt><dd>' + LIQUIDS[state.liquid] + (state.liquid === "glycerol" ? " " + Math.round(100 * state.glycerol_w) + " %" : "") + ', ' + state.T_C.toFixed(0) + ' &deg;C, ' + (mv.viscosity_Pa_s * 1000).toFixed(2) + ' mPa s</dd>';
       html += '<dt>Wave vectors used</dt><dd>' + res.used.length + (res.used.length ? ', ' + res.used[0].q_per_um.toFixed(2) + ' to ' + res.used[res.used.length - 1].q_per_um.toFixed(2) + ' ' + MU + 'm\u207b\u00b9' : '') + '</dd>';
       if (res.compressed) html += '<dt>Compressed exponential</dt><dd>exponent &beta; ' + res.compressed.beta_free_mean.toFixed(2) + ' (mean over q), v<sub>0</sub> ' + fmtV(res.compressed.v0_um_s) + ', slope ' + res.compressed.slope.toFixed(2) + '</dd>';
@@ -1261,7 +1323,8 @@
     const m = cache.movie, cfg = cache.cfg, sw = m.truth.swim;
     const modeTxt = { brightfield: "a bright-field microscope", phase: "a phase-contrast microscope", darkfield: "a dark-field microscope", dic: "a DIC microscope", fluorescence: "a widefield fluorescence microscope", spinning: "a spinning-disk confocal microscope", scanning: "a point-scanning confocal microscope" }[state.mode];
     $("movie-text").textContent = "The movie shows " + (state.shape === "rod" ? fmtSize(cfg.diameter_um) + " long rod-shaped cells" : fmtSize(cfg.diameter_um) + " round cells") + ", filmed through " + modeTxt + " " + fmtNum(cfg.frame_rate_hz) + " times a second. " +
-      Math.round(100 * state.swim_frac) + " % of them swim, on average at " + fmtV(state.swim_v) + (state.swim_geom === "glass" ? ", along the bottom glass" : ", in all directions") + "; the others only jiggle. " + visibilityText(cfg, m) +
+      Math.round(100 * state.swim_frac) + " % of them swim, on average at " + fmtV(state.swim_v) + (state.swim_geom === "glass" ? ", along the bottom glass" : ", in all directions") + "; the others only jiggle. " +
+      (state.swim_osc_amp > 0 ? "Each swimmer also moves back and forth by " + fmtSig(state.swim_osc_amp, 2) + " " + MU + "m, " + fmtSig(state.swim_osc_hz, 3) + " times a second (" + (state.swim_osc_dir === "across" ? "sideways, like a sperm head" : "along its path, like an alga's breaststroke") + "). " : "") + visibilityText(cfg, m) +
       (state.swim_geom === "glass" ? "" : " Cells above and below the focal plane add wider, fainter blurs, and swimmers move in and out of focus.");
     $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s = " + fmtSig(m.T / m.frame_rate_hz, 3) + " s. Cell " + cfg.cell_um + " " + MU + "m thick, focus " + fmtSig(cfg.focus_um, 2) + " " + MU + "m above the bottom, " + m.info.n_particles + " cells, " + sw.n_swimmers + " swimming.";
     $("diff-note").textContent = "A cell that moved leaves a pair of shapes, one darker and one brighter, at its old and its new place. Swimmers leave pairs that are far apart, cells that only jiggle leave close pairs.";
@@ -1287,11 +1350,13 @@
     else if (h) {
       L.push("  Mean swimming speed: " + fmtSig(h.v_um_s, 3) + " um/s" + (h.v_rel_err ? " (+- " + (100 * h.v_rel_err).toFixed(1) + " %)" : "") + "; relative spread of speeds " + Math.round(100 * h.spread) + " %");
       L.push("  Share of cells that swim: " + Math.round(100 * h.alpha) + " %; diffusion of the others " + fmtSig(h.D_um2_s, 3) + " um^2/s");
+      if (h.stroke_um) L.push("  Stroke: " + fmtSig(h.stroke_um, 2) + " um at " + fmtSig(h.stroke_hz, 3) + " Hz");
       L.push("  Model: " + MODEL_LABEL[swimModel()] + ", fitted to " + r.used.length + " wave vectors at once (" + r.used[0].q_per_um.toFixed(2) + " to " + r.used[r.used.length - 1].q_per_um.toFixed(2) + " um^-1)");
       if (r.pv) L.push("  Distribution without an assumed shape: mean " + fmtSig(r.pv.data_mean_swimmers_um_s, 3) + " um/s, " + Math.round(100 * (1 - r.pv.data_still_share)) + " % swimming");
       if (r.compressed) L.push("  Compressed exponential: v0 = " + fmtSig(r.compressed.v0_um_s, 3) + " um/s from Gamma = v0 q (not the mean speed), mean exponent " + r.compressed.beta_free_mean.toFixed(2));
     } else L.push("  No result: too few usable wave vectors.");
     L.push("");
+    L.push("Organism: " + ORGANISMS[state.organism].label + (state.organism === "model" ? "" : " (settings after the cited paper; see the page)"));
     L.push("Sample (simulated): " + (state.shape === "rod" ? "rods " + fmtSize(cfg.diameter_um) + " long, aspect ratio " + fmtSig(cfg.aspect, 2) : "spheres " + fmtSize(cfg.diameter_um)) + "; " + mv.info.n_particles + " cells, " + tr.swim.n_swimmers + " swimming" + (state.swim_geom === "glass" ? " along the glass" : " in 3D") + (state.swim_tumble > 0 ? ", " + fmtSig(state.swim_tumble, 2) + " tumbles per second" : ", straight runs") + "; " + LIQUIDS[state.liquid] + ", " + state.T_C.toFixed(0) + " C, cell " + cfg.cell_um + " um, focus " + fmtSig(cfg.focus_um, 2) + " um above the bottom");
     L.push("Microscope (simulated): Nikon Ti2-E, " + objective().n + ", " + ($("c-mode").selectedOptions[0].textContent) + "; " + mv.n + " x " + mv.n + " pixels of " + fmtSig(mv.pixel_um, 3) + " um, " + mv.T + " frames at " + fmtNum(mv.frame_rate_hz) + " frames/s");
     L.push("True values: mean speed " + fmtSig(tr.swim.v_mean_um_s, 3) + " um/s (relative spread " + Math.round(100 * tr.swim.v_sd_um_s / Math.max(1e-9, tr.swim.v_mean_um_s)) + " %), " + Math.round(100 * tr.swim.fraction) + " % swimming; as seen by the microscope over the q used: " + fmtSig(seenTruth().v, 3) + " um/s, " + Math.round(100 * seenTruth().share) + " %.");
@@ -1320,6 +1385,8 @@
       shows: [{ label: "Spinning disk 20x, Wilson's model", set: SPIN20("wilson"), go: "step-rates" }, { label: "Spinning disk 20x, with the depth of field", set: SPIN20("depth"), go: "step-rates" }, { label: "Spinning disk 60x water, Wilson's model", set: SPIN60("wilson"), go: "step-rates", lvl: 2 }, { label: "Spinning disk 60x water, with the depth of field", set: SPIN60("depth"), go: "step-rates", lvl: 2 }] },
     { lvl: 2, title: "Tumbles", text: "E. coli runs for about a second, then tumbles and swims off in a new direction. Over distances longer than a run the cells get less far than on a straight line, so the widest patterns renew more slowly and the speed from them comes out low. The models here assume straight runs; use the finer patterns, or a model with tumbles (Kurzthaler et al. 2024).",
       shows: [{ label: "One tumble per second", set: { swim_tumble: 1 }, go: "step-rates" }, { label: "Three per second", set: { swim_tumble: 3 }, go: "step-rates" }] },
+    { lvl: 2, title: "Algae and sperm: the stroke", text: "Chlamydomonas pulls itself forward with a breaststroke of its two flagella, about 50 times a second, and slips back a little each time. Its curves dip and rise again once per beat. Wilson's model, made for gliding bacteria, ignores the stroke and reads the speed somewhat low; the model with the stroke (Martinez et al. 2012) gets the speed, the size of the stroke and the beat. The camera must take at least two frames per beat.",
+      shows: [{ label: "Chlamydomonas, model with the stroke", set: Object.assign({ organism: "chlamy" }, ORGANISMS.chlamy.set), go: "step-curves" }, { label: "The same, Wilson's model", set: Object.assign({ organism: "chlamy", swim_model: "wilson" }, ORGANISMS.chlamy.set), go: "step-rates" }, { label: "Bull sperm (head moving sideways)", set: Object.assign({ organism: "sperm" }, ORGANISMS.sperm.set), go: "step-rates", lvl: 2 }] },
     { lvl: 2, title: "Long cells", text: "A long rod that swims along its own axis looks the same after a short step, except near its ends. For stripes finer than its length the image changes mainly where the ends pass, so these patterns renew more slowly than the speed suggests and the speed from them comes out low. The page therefore keeps, by default, to patterns more than about twice as wide as the cells (q below 3 / length). For rods this long only a few such patterns fit in the field, so the speed then scatters by about 10 % from movie to movie, and the share of swimmers is not reliable: the still rods also fade as they turn. A larger field (lower magnification) helps.",
       shows: [{ label: "Rods 5 " + MU + "m long, all q", set: { diameter_um: 5, aspect: 6, phi: 1.5e-3, q_max: 5 }, go: "step-rates" }, { label: "The same, automatic range (up to 3 / length)", set: { diameter_um: 5, aspect: 6, phi: 1.5e-3 }, go: "step-rates" }] },
     { lvl: 2, title: "Dark field and fluorescence", text: "The same assay in other contrasts. Dark field shows the cells bright on black with a low-NA objective and a phase annulus. Widefield fluorescence needs labelled cells and collects light from far out of focus, which adds some of the confocal problem.",
@@ -1419,6 +1486,8 @@
   // hook for automated checks of the page (reads settings, applies a preset; changes nothing by itself)
   window.DDM_PAGE = {
     preset: applyPreset, state: function () { return JSON.parse(JSON.stringify(state)); },
+    organisms: function () { return Object.keys(ORGANISMS); }, organism: function (k) { state.organism = k; onChange("organism"); },
+    stroke: function () { const h = cache && cache.res && cache.res.head; return h ? { A: h.stroke_um, f: h.stroke_hz } : null; },
     controls: function () { return CONTROLS.filter(function (c) { return c.kind !== "qrange" && (!c.when || c.when()); }).map(function (c) {
       const opts = c.kind === "objective" ? OBJECTIVES.map(function (o, i) { return i; }) : c.kind === "select" ? (typeof c.options === "function" ? c.options() : c.options).map(function (o) { return o[0]; }) : null;
       return { key: c.key, kind: c.kind, lvl: c.lvl, min: c.min, max: c.max, options: opts };

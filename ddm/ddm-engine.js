@@ -366,8 +366,9 @@
       yield { stage: "Comparing frames", frac: (li + 1) / L };
     }
 
-    // temporal variance per mode: A + B = 2 var
-    const varq = new Float64Array(nb + 1);
+    // temporal variance per mode: A + B = 2 var. Also the mean power per mode (it includes what does not change during
+    // the movie, so 2 pow - B is the whole amplitude even when part of the sample stays put)
+    const varq = new Float64Array(nb + 1), powq = new Float64Array(nb + 1);
     {
       const mr = new Float64Array(P), mi = new Float64Array(P), m2 = new Float64Array(P);
       for (let t = 0; t < T; t++) {
@@ -380,9 +381,9 @@
       for (let p = 0; p < P; p++) {
         const b = binOf[p]; if (b <= 0) continue;
         const v = (m2[p] / T - (mr[p] * mr[p] + mi[p] * mi[p]) / (T * T)) / P;
-        varq[b] += v;
+        varq[b] += v; powq[b] += m2[p] / T / P;
       }
-      for (let b = 1; b <= nb; b++) varq[b] = nmodes[b] > 0 ? varq[b] / nmodes[b] : NaN;
+      for (let b = 1; b <= nb; b++) { varq[b] = nmodes[b] > 0 ? varq[b] / nmodes[b] : NaN; powq[b] = nmodes[b] > 0 ? powq[b] / nmodes[b] : NaN; }
     }
 
     // measurable window (fastDDM tutorial 1, section 2.C)
@@ -419,7 +420,7 @@
       B_est[b] = Bq; A_est[b] = 2 * varq[b] - Bq;
     }
     return { images: images, sg: sg, n: n, T: T, P: P, fft: fft, lags: lags, L: L, dt_s: dt_s, taus_s: taus_s, nb: nb, binOf: binOf, nmodes: nmodes,
-             q_per_um: q_per_um, d2d: d2d, dq: dq, varq: varq, q_lo_per_um: q_lo_per_um, q_nyq_per_um: q_nyq_per_um, q_opt_per_um: q_opt_per_um,
+             q_per_um: q_per_um, d2d: d2d, dq: dq, varq: varq, powq: powq, q_lo_per_um: q_lo_per_um, q_nyq_per_um: q_nyq_per_um, q_opt_per_um: q_opt_per_um,
              q_sig_per_um: q_sig_per_um, q_hi_per_um: q_hi_per_um, gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz, B_floor: B_floor, B_est: B_est, A_est: A_est };
   }
   function* analyse(movie, opts) {

@@ -1583,6 +1583,16 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   const TWO_PI = 2 * Math.PI;
   const KB = 1.380649e-23;
   function fail(msg) { throw new Error("Movie: " + msg); }
+  // the optical kernels depend only on the optics, the liquid and the depth range, not on the particles' motion:
+  // kept for the next movie (new cells, other swimming), which then skips the slowest part of the set-up
+  const kernelMemo = new Map();
+  function memoKernel(name, fn, args) {
+    const key = name + JSON.stringify(args, function (k, v) { return ArrayBuffer.isView(v) ? Array.from(v) : v; });
+    if (kernelMemo.has(key)) return kernelMemo.get(key);
+    const r = fn(args);
+    if (kernelMemo.size >= 8) kernelMemo.delete(kernelMemo.keys().next().value);
+    kernelMemo.set(key, r); return r;
+  }
   function need(c, msg) { if (!c) fail(msg); }
   function num(o, k, lo, hi) { const v = o[k]; need(typeof v === "number" && Number.isFinite(v), "missing setting '" + k + "'"); need(v >= lo && v <= hi, "setting '" + k + "' = " + v + " outside [" + lo + ", " + hi + "]"); return v; }
 
@@ -1713,7 +1723,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     need(timing === "scan" || timing === "global" || timing === "rolling" || timing === "rolling_center", "unknown shutter timing");
     const readout = timing === "rolling_center" ? det.rows_total / 2 * det.t_row_s : timing === "global" ? 0 : det.rows_total * det.t_row_s;
     need(readout <= 1.001 / fr, "the " + (timing === "scan" ? "scan" : "read-out") + " of one frame takes longer than the frame interval");
-    const d0 = num(cfg, "diameter_um", 0.01, 20), spread = num(cfg, "size_spread", 0, 0.5);
+    const d0 = num(cfg, "diameter_um", 0.01, 100), spread = num(cfg, "size_spread", 0, 0.5);
     const phi = num(cfg, "volume_fraction", 1e-9, 0.05);
     const T_C = num(cfg, "T_C", 0, 90), Lz = num(cfg, "cell_um", 1, 2000), hf = num(cfg, "focus_um", -50, 2050);
     const drift = num(cfg, "drift_um_s", 0, 1000);
@@ -1728,6 +1738,16 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       if (sw.tumble_hz !== undefined) swTumble = num(sw, "tumble_hz", 0, 1000);
       if (sw.circle_rad_s !== undefined) swOmega = num(sw, "circle_rad_s", -100, 100);
     }
+    // swimming stroke (optional): each swimmer's image moves back and forth by A sin(2 pi f t + phase) about its mean
+    // path, along its axis (Chlamydomonas breaststroke) or across it (sperm head), with a random phase per cell
+    let oscA = 0, oscF = 0, oscAcross = false;
+    if (sw && sw.osc_amp_um !== undefined) {
+      oscA = num(sw, "osc_amp_um", 0, 100); oscF = num(sw, "osc_hz", 0, 1000);
+      need(sw.osc_dir === undefined || sw.osc_dir === "along" || sw.osc_dir === "across", "osc_dir must be along or across");
+      oscAcross = sw.osc_dir === "across";
+    }
+    // cells with paralysed flagella and the like: all diffusion slowed by this factor (extra drag of the flagella)
+    const dragF = cfg.drag_factor === undefined ? 1 : num(cfg, "drag_factor", 0.3, 100);
     const a = det.kind === "camera" ? num(det, "pixel_um", 0.5, 30) * b / mag : num(det, "pixel_um", 0.005, 50);   // pixel at the sample (um)
     const L = N * a;                             // simulated field (um)
     const eta_mPa_s = cfg.liquid.viscosity_mPa_s !== undefined ? cfg.liquid.viscosity_mPa_s : O.viscosityWaterGlycerol_mPa_s(cfg.liquid.glycerol_w, T_C);
@@ -1764,7 +1784,10 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       const W = gw.reduce(function (p, v) { return p + v; }, 0);
       for (let i = 0; i < 5; i++) classes.push({ d: d0 * Math.exp(Math.SQRT2 * s * gx[i] - s2 / 2), w: gw[i] / W });
     } else classes.push({ d: d0, w: 1 });
-    classes.forEach(function (c) { c.geo = O.shapeGeometry(shape, c.d, pAsp); c.hyd = O.hydrodynamics(c.geo, kT, eta); });
+    classes.forEach(function (c) {
+      c.geo = O.shapeGeometry(shape, c.d, pAsp); c.hyd = O.hydrodynamics(c.geo, kT, eta);
+      if (dragF !== 1) { const h0 = c.hyd, hh = Object.assign({}, h0); ["D_t", "D_par", "D_perp", "D_r"].forEach(function (k) { if (typeof h0[k] === "number") hh[k] = h0[k] / dragF; }); c.hyd = hh; }
+    });
     let meanVol = 0; classes.forEach(function (c) { meanVol += c.w * c.geo.volume; });
     const nTot = Math.round(phi / meanVol * L * L * Lz);
     need(nTot >= 1, "no particle in the simulated volume: raise the concentration");
@@ -1801,7 +1824,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     let Cext = null, dark = false;
     const lamC = lamRef, nLc = trans ? O.liquidIndex(cfg.liquid, lamC) : 1;
     const tKern = function (diam, particle, homOnly) {
-      return O.transmittedKernel({ diameter_um: diam, particle: particle, liquid: cfg.liquid, na_obj: na, illum: cfg.illum, pupil: cfg.pupil || { kind: "none" }, source: cfg.source, q_per_um: qk, z_lo: zlo - 0.5 - ext, z_hi: zhi + 0.5 + ext, homodyne: homOnly ? false : (!split && cfg.homodyne), homodyne_only: !!homOnly, aberration: abr, scalar: scalar });
+      return memoKernel("t", O.transmittedKernel, { diameter_um: diam, particle: particle, liquid: cfg.liquid, na_obj: na, illum: cfg.illum, pupil: cfg.pupil || { kind: "none" }, source: cfg.source, q_per_um: qk, z_lo: zlo - 0.5 - ext, z_hi: zhi + 0.5 + ext, homodyne: homOnly ? false : (!split && cfg.homodyne), homodyne_only: !!homOnly, aberration: abr, scalar: scalar });
     };
     const push = function (Kr, Ki, nd, z) { blocks.push({ Kr: Kr, Ki: Ki, nd: nd, z_um: z }); return blocks.length - 1; };
     if (trans) need(typeof cfg.homodyne === "boolean", "say whether to include the scattered-intensity term");
@@ -1850,7 +1873,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       need(zz.length <= 3000, "cell too thick for the fluorescence kernel");
       // pinhole projected on the sample: spinning disk through a 1x relay (assumed), scanner in Airy units
       const pin = mode === "spinning" ? num(cfg, "pinhole_um", 5, 200) / mag : mode === "scanning" ? num(cfg, "pinhole_au", 0.1, 10) * 1.22 * cfg.l_em_um / Math.min(na, 1.34) : 0;
-      const fk = function (diam) { return O.fluorescenceKernel({ na_obj: na, liquid: cfg.liquid, l_ex: cfg.l_ex_um, l_em: cfg.l_em_um, diameter_um: diam, q_per_um: qk, z_um: zz, confocal: confocal, pinhole_um_sample: pin, crosstalk: mode === "spinning" ? num(cfg, "crosstalk", 0, 0.49) : 0, aberration: abr, scalar: scalar }).K; };
+      const fk = function (diam) { return memoKernel("f", O.fluorescenceKernel, { na_obj: na, liquid: cfg.liquid, l_ex: cfg.l_ex_um, l_em: cfg.l_em_um, diameter_um: diam, q_per_um: qk, z_um: zz, confocal: confocal, pinhole_um_sample: pin, crosstalk: mode === "spinning" ? num(cfg, "crosstalk", 0, 0.49) : 0, aberration: abr, scalar: scalar }).K; };
       if (body) { const K = fk(TINY_UM), ib = push(K, new Float64Array(K.length), 1, zz); classes.forEach(function (c, ci) { chans[ci].all = ib; }); }
       else for (let ci = 0; ci < classes.length; ci++) { const K = fk(classes[ci].d); chans[ci].all = push(K, new Float64Array(K.length), 1, zz); yield { stage: "Computing how one particle looks", frac: 0.02 + 0.1 * (ci + 1) / classes.length }; }
     }
@@ -1862,6 +1885,14 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     if (body) {
       const qPts = trans && dark ? 2 * TWO_PI / lamC * Math.min(na, 1.34) * 1.1 : qcut;
       classes.forEach(function (c) { c.pts = O.bodyPoints(c.geo, 0.7 * Math.PI / qPts, 64); });
+      // thin bodies (cfg.thin_bodies, for cells narrower than the optics resolve): the points of each cross-section
+      // merged onto the axis, so a rod is a line of points (about 8 times fewer); its width then shows only at large q
+      if (cfg.thin_bodies === true) classes.forEach(function (c) {
+        const P = c.pts, xs = [];
+        for (let k = 0; k < P.n; k++) { const x = P.xyz[3 * k]; if (!xs.some(function (u) { return Math.abs(u - x) < 1e-9; })) xs.push(x); }
+        const xyz = new Float64Array(3 * xs.length); xs.forEach(function (x, k) { xyz[3 * k] = x; });
+        c.pts = { xyz: xyz, n: xs.length, spacing: P.spacing };
+      });
       ptsTotal = 0; classes.forEach(function (c) { ptsTotal += c.w * nTot * c.pts.n; });
       need(ptsTotal <= 60000, "too many particles for the browser with these elongated particles: lower the concentration or use a smaller field");
     }
@@ -1970,6 +2001,10 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       swList.push(SP[i]);
     }
     let vMax = 0; for (let i = 0; i < nTot; i++) vMax = Math.max(vMax, SP[i]);
+    // stroke phases and directions from their own random stream (the main stream, and so every other movie, unchanged)
+    const PH = new Float64Array(nTot), PSI = new Float64Array(nTot);
+    if (oscA > 0) { const r2 = makeRng((cfg.seed >>> 0) + 7919); for (let i = 0; i < nTot; i++) { PH[i] = TWO_PI * r2.u(); PSI[i] = TWO_PI * r2.u(); } vMax += TWO_PI * oscF * oscA; }
+    const oscW = TWO_PI * oscF;
     // exposure blur: sub-steps when particles move or turn noticeably during the exposure
     // (D q^2 t_exp at the finest pattern imaged, 6 D_r t_exp); otherwise the exposure is treated as instantaneous
     let Dmax = 0, Drmax = 0; classes.forEach(function (c) { Dmax = Math.max(Dmax, c.hyd.D_par, c.hyd.D_perp); Drmax = Math.max(Drmax, c.hyd.D_r); });
@@ -2208,14 +2243,19 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       const B = blocks[bi]; zLocate(B, zp); const col = zw.col, f = zw.f; wgt /= B.scale;
       for (let m = 0; m < M; m++) wm[m] += wgt * (Vm[m][col] + f * (Vm[m][col + 1] - Vm[m][col]));
     };
+    // (column offsets computed once per point; the rank-M weights added in one pass per grid cell)
+    const colOff = new Int32Array(tabN), rowM = G * M;
     const splat = function (xp, yp) {
       const px = xp / h, py = yp / h, cx = Math.round(px), cy = Math.round(py);
       for (let j = -R; j <= R; j++) { const dx = cx + j - px, dy = cy + j - py; gx[j + R] = Math.exp(-dx * dx * inv2s2); gy[j + R] = Math.exp(-dy * dy * inv2s2); }
+      for (let jx = 0; jx < tabN; jx++) { let c = (cx - R + jx) % G; if (c < 0) c += G; colOff[jx] = c * M; }
+      const g = grid, w0 = wm;
       for (let jy = 0; jy < tabN; jy++) {
-        const row = ((cy - R + jy) % G + G) % G, wy = gy[jy];
+        let row = (cy - R + jy) % G; if (row < 0) row += G;
+        const rb = row * rowM, wy = gy[jy];
         for (let jx = 0; jx < tabN; jx++) {
-          const col2 = ((cx - R + jx) % G + G) % G, w = wy * gx[jx], base = (row * G + col2) * M;
-          for (let m = 0; m < M; m++) grid[base + m] += w * wm[m];
+          const w = wy * gx[jx], base = rb + colOff[jx];
+          for (let m = 0; m < M; m++) g[base + m] += w * w0[m];
         }
       }
     };
@@ -2244,10 +2284,18 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
           if (when > tp[i]) tp[i] = when;
           let wHet = 0, wHom = 0;
           if (split) { channelWeights(c, UX[i], UY[i], UZ[i]); wHet = cw.het; wHom = cfg.test_no_hom === true ? 0 : cw.hom; }   // test_no_hom: test-only switch
+          // where the cell is drawn: its mean path plus the stroke (swimmers only)
+          let xr = X[i], yr = Y[i], hr = H[i];
+          if (oscA > 0 && SP[i] > 0) {
+            const sv = oscA * Math.sin(oscW * when + PH[i]);
+            let dx = UX[i], dy = UY[i], dz = UZ[i];
+            if (oscAcross) { frame(dx, dy, dz); const cp = Math.cos(PSI[i]), spp = PL[i] ? 0 : Math.sin(PSI[i]); dx = cp * e1[0] + spp * e2[0]; dy = cp * e1[1] + spp * e2[1]; dz = cp * e1[2] + spp * e2[2]; }
+            xr += sv * dx; yr += sv * dy; hr -= sv * dz;
+          }
           if (!body) {
-            wm.fill(0); const zp = hf - H[i];
+            wm.fill(0); const zp = hf - hr;
             if (split) { addBlock(ch.het, zp, wHet / nsub); addBlock(ch.hom, zp, wHom / nsub); } else addBlock(ch.all, zp, 1 / nsub);
-            splat(X[i], Y[i]);
+            splat(xr, yr);
           } else {
             const P = c.pts, np = P.n, ux = UX[i], uy = UY[i], uz = UZ[i];
             frame(ux, uy, uz);
@@ -2255,9 +2303,9 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
             for (let k = 0; k < np; k++) {
               const bx = P.xyz[3 * k], by = P.xyz[3 * k + 1], bz = P.xyz[3 * k + 2];
               const lx = bx * ux + by * e1[0] + bz * e2[0], ly = bx * uy + by * e1[1] + bz * e2[1], lz = bx * uz + by * e1[2] + bz * e2[2];
-              wm.fill(0); const zp = hf - H[i] + lz;      // lz along +z (the light): further from the condenser
+              wm.fill(0); const zp = hf - hr + lz;      // lz along +z (the light): further from the condenser
               if (split) { addBlock(ch.het, zp, wHet * sc); addBlock(ch.hom, zp, wHom * sc); } else addBlock(ch.all, zp, sc);
-              splat(X[i] + lx, Y[i] + ly);
+              splat(xr + lx, yr + ly);
             }
           }
         }
@@ -2356,7 +2404,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     }
     const cm = classes[Math.floor(classes.length / 2)], chm = chans[Math.floor(classes.length / 2)];
     const kInfo = function (bi) { if (bi === undefined) return null; const B = blocks[bi]; return { Kr: B.Kr, Ki: B.Ki, nd: B.nd, z_um: B.z_um }; };
-    const h0 = classes[0].hyd, hd0 = O.hydrodynamics(O.shapeGeometry(shape, d0, pAsp), kT, eta);
+    const h0 = classes[0].hyd, hd0 = (function () { const h = O.hydrodynamics(O.shapeGeometry(shape, d0, pAsp), kT, eta), o = Object.assign({}, h); if (dragF !== 1) ["D_t", "D_par", "D_perp", "D_r"].forEach(function (k) { if (typeof h[k] === "number") o[k] = h[k] / dragF; }); return o; })();
     return {
       test_track: track || undefined,
       test_heights: cfg.test_return_heights === true ? { H: Float64Array.from(H), lg: classes[0].lg, aex: classes[0].aex, ah: classes[0].ah } : undefined,   // test only
@@ -2383,7 +2431,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
                  return { fraction: n / nTot, v_mean_um_s: m, v_sd_um_s: sd, seen_table: tab,
                           fraction_seen: tab.fraction[iqm], v_mean_seen_um_s: vs,
                           v_sd_seen_um_s: vs !== null ? Math.sqrt(Math.max(0, swSeen.wv2[iqm] / swSeen.ws[iqm] - vs * vs)) : null, v_list: Float32Array.from(swList), n_swimmers: n, n_plane: nPl,
-                          v_set_um_s: swV, v_spread_set: swSpread, fraction_set: swFrac, plane_fraction_set: swPlane, rot_diff_s: swDr !== null ? swDr : hd0.D_r, tumble_hz: swTumble, circle_rad_s: swOmega };
+                          v_set_um_s: swV, v_spread_set: swSpread, fraction_set: swFrac, plane_fraction_set: swPlane, rot_diff_s: swDr !== null ? swDr : hd0.D_r, tumble_hz: swTumble, circle_rad_s: swOmega, osc_amp_um: oscA, osc_hz: oscF, osc_dir: oscAcross ? "across" : "along" };
                })() : null,
                shape: shape, oriented: oriented, D_r_s: oriented ? hd0.D_r : null, D_par_um2_s: hd0.D_par, D_perp_um2_s: hd0.D_perp, rot_rate_s: oriented ? 6 * hd0.D_r : null, first_class_D_um2_s: h0.D_t }
     };
@@ -2784,8 +2832,9 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       yield { stage: "Comparing frames", frac: (li + 1) / L };
     }
 
-    // temporal variance per mode: A + B = 2 var
-    const varq = new Float64Array(nb + 1);
+    // temporal variance per mode: A + B = 2 var. Also the mean power per mode (it includes what does not change during
+    // the movie, so 2 pow - B is the whole amplitude even when part of the sample stays put)
+    const varq = new Float64Array(nb + 1), powq = new Float64Array(nb + 1);
     {
       const mr = new Float64Array(P), mi = new Float64Array(P), m2 = new Float64Array(P);
       for (let t = 0; t < T; t++) {
@@ -2798,9 +2847,9 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       for (let p = 0; p < P; p++) {
         const b = binOf[p]; if (b <= 0) continue;
         const v = (m2[p] / T - (mr[p] * mr[p] + mi[p] * mi[p]) / (T * T)) / P;
-        varq[b] += v;
+        varq[b] += v; powq[b] += m2[p] / T / P;
       }
-      for (let b = 1; b <= nb; b++) varq[b] = nmodes[b] > 0 ? varq[b] / nmodes[b] : NaN;
+      for (let b = 1; b <= nb; b++) { varq[b] = nmodes[b] > 0 ? varq[b] / nmodes[b] : NaN; powq[b] = nmodes[b] > 0 ? powq[b] / nmodes[b] : NaN; }
     }
 
     // measurable window (fastDDM tutorial 1, section 2.C)
@@ -2837,7 +2886,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       B_est[b] = Bq; A_est[b] = 2 * varq[b] - Bq;
     }
     return { images: images, sg: sg, n: n, T: T, P: P, fft: fft, lags: lags, L: L, dt_s: dt_s, taus_s: taus_s, nb: nb, binOf: binOf, nmodes: nmodes,
-             q_per_um: q_per_um, d2d: d2d, dq: dq, varq: varq, q_lo_per_um: q_lo_per_um, q_nyq_per_um: q_nyq_per_um, q_opt_per_um: q_opt_per_um,
+             q_per_um: q_per_um, d2d: d2d, dq: dq, varq: varq, powq: powq, q_lo_per_um: q_lo_per_um, q_nyq_per_um: q_nyq_per_um, q_opt_per_um: q_opt_per_um,
              q_sig_per_um: q_sig_per_um, q_hi_per_um: q_hi_per_um, gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz, B_floor: B_floor, B_est: B_est, A_est: A_est };
   }
   function* analyse(movie, opts) {
@@ -4070,7 +4119,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     });
     if (lv !== "researcher" && state.seed !== BASE.seed) { state.seed = BASE.seed; changed = true; }
     if (curveView === "d" && lv === "curious") setCurveView("change");
-    if (fromUser && location.hash !== "#" + lv) history.replaceState(null, "", "#" + lv);
+    if (fromUser && location.hash !== "#" + lv) { try { history.replaceState(null, "", "#" + lv); } catch (e) { /* sandboxed previews (about:srcdoc) refuse it */ } }
     constrain(); syncControls(); drawFov();
     if (changed) schedule(); else if (cache.res) renderAll();
   }

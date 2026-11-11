@@ -419,6 +419,9 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
           <p><b>The depth of field.</b> Wilson's model counts only sideways motion. A cell at depth <i>z</i> adds <i>K</i>(<i>q</i>, <i>z</i>) e<sup>&minus;<i>i</i><b>q</b>&middot;<b>x</b></sup> to the image, with <i>K</i> the optical kernel of step 1, so a swimmer that also moves up or down fades from each pattern. With <i>C<sub>q</sub></i>(&delta;<i>z</i>) the overlap of <i>K</i>(<i>q</i>, <i>z</i>) and <i>K</i>(<i>q</i>, <i>z</i> + &delta;<i>z</i>) averaged over the cell, a swimmer that has moved <i>s</i> = <i>v</i>&Delta;<i>t</i> gives</p>
           <div class="eq"><i>h<sub>q</sub></i>(<i>s</i>) = &int;<sub>0</sub><sup>1</sup> d&mu; <i>J</i><sub>0</sub>(<i>qs</i> &radic;(1 &minus; &mu;<sup>2</sup>)) Re <i>C<sub>q</sub></i>(<i>s</i>&mu;)</div>
           <p>in place of the sine over its argument (they are equal when <i>C</i> = 1), averaged over the speeds; the cells that do not swim get <i>C<sub>q</sub></i> averaged over their axial diffusion. This model is used automatically in the confocal modes. As far as we know it has not been published.</p>
+          <p><b>The stroke.</b> Algae and sperm do not glide: each beat moves the cell, or the sperm head, back and forth about its mean path. Martinez et al. (2012) wrote the displacement as <i>v</i>&Delta;<i>t</i> + <i>A</i>[sin(2&pi;<i>f</i>&Delta;<i>t</i> + &phi;) &minus; sin &phi;], with a random phase &phi; for each cell. Averaged over &phi; and over the speeds, the sine over its argument of Wilson's model becomes</p>
+          <div class="eq">&int;<sub>0</sub><sup>1</sup> d&mu; &lang;cos(<i>q</i>&mu;<i>v</i>&Delta;<i>t</i>)&rang;<sub><i>v</i></sub> <i>J</i><sub>0</sub>(2<i>q</i>&mu;<i>A</i> |sin(&pi;<i>f</i>&Delta;<i>t</i>)|)</div>
+          <p>with &mu; the cosine between the path and <b>q</b>. The curves dip and rise again once per beat, so the camera needs at least two frames per beat. For a stroke across the path (the sperm head) in a random direction about it, the Bessel factor becomes <i>J</i><sub>0</sub>(<i>qA</i> |sin(&pi;<i>f</i>&Delta;<i>t</i>)| &radic;(1 &minus; &mu;<sup>2</sup>))<sup>2</sup>. The page fits <i>A</i> and <i>f</i> with the other parameters, after a search over a grid of beat frequencies.</p>
           <div class="lvl-3"><pre class="code">B_est, _ = fd.noise_est.estimate_camera_noise(aa, mode='polyfit', num_points=5)
 A_est = 2 * aa.var - B_est
 # swimmer model: write it as an lmfit model and fit all q together, as in
@@ -486,6 +489,24 @@ A_est = 2 * aa.var - B_est
     <h2 id="h-matters">What matters</h2>
     <p class="prose">Each card sets the bench to a typical problem and shows where to look. Use "Back to the standard sample" to start again.</p>
     <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-organisms">
+    <h2 id="h-organisms">The organisms on this page</h2>
+    <p class="prose">The <i>Organism</i> menu in step 1 sets up the bacteria, algae and sperm that have been measured with DDM, with the speeds, shares and strokes the papers report. Where a paper gives no value the page assumes one, and says so. Every setting can be changed afterwards.</p>
+    <ul class="lvl-2">
+      <li><b>E. coli</b>, wild type, smooth swimmers and paralysed cells: L. G. Wilson et al., <a href="https://doi.org/10.1103/PhysRevLett.106.018101">Phys. Rev. Lett. 106, 018101 (2011)</a>; V. A. Martinez et al., <a href="https://doi.org/10.1016/j.bpj.2012.08.045">Biophys. J. 103, 1637 (2012)</a>. Cells without flagella, and with glucose: A. Jepson et al., <a href="https://doi.org/10.1103/PhysRevE.88.041002">Enhanced diffusion of nonswimmers in a three-dimensional bath of motile bacteria</a>, Phys. Rev. E 88, 041002 (2013). Cell size and strains: J. Schwarz-Linek et al., <a href="https://doi.org/10.1016/j.colsurfb.2015.07.048">Escherichia coli as a model active colloid: a practical introduction</a>, Colloids Surf. B 137, 2 (2016).</li>
+      <li><b>E. coli in polymer solutions</b>: V. A. Martinez, J. Schwarz-Linek, M. Reufer, L. G. Wilson, A. N. Morozov and W. C. K. Poon, <a href="https://doi.org/10.1073/pnas.1415460111">Flagellated bacterial motility in polymer solutions</a>, PNAS 111, 17771 (2014).</li>
+      <li><b>E. coli powered by light</b>: J. Arlt, V. A. Martinez, A. Dawson, T. Pilizota and W. C. K. Poon, <a href="https://doi.org/10.1038/s41467-018-03161-8">Painting with light-powered bacteria</a>, Nat. Commun. 9, 768 (2018).</li>
+      <li><b>E. coli with tunable tumbling</b>: C. Kurzthaler et al., <a href="https://doi.org/10.1103/PhysRevLett.132.038302">Phys. Rev. Lett. 132, 038302 (2024)</a>.</li>
+      <li><b>E. coli seen turning in dark field</b>: R. Cerbino et al., <a href="https://doi.org/10.1088/1361-648X/aa9bc5">Dark field differential dynamic microscopy enables accurate characterization of the roto-translational dynamics of bacteria and colloidal clusters</a>, J. Phys.: Condens. Matter 30, 025901 (2018).</li>
+      <li><b>Salmonella Typhimurium</b>: D. Germain et al., <a href="https://arxiv.org/abs/1511.00923">Differential dynamic microscopy to characterize Brownian motion and bacteria motility</a>, Am. J. Phys. (2016).</li>
+      <li><b>Bacillus subtilis</b>: P. J. Lu et al., <a href="https://doi.org/10.1103/PhysRevLett.108.218103">Phys. Rev. Lett. 108, 218103 (2012)</a>, in a dense suspension, and the guide by E. Lattuada et al. (2025) below.</li>
+      <li><b>Chlamydomonas reinhardtii</b>: Martinez et al. (2012) above; for its helical path, O. A. Croze et al., <a href="https://arxiv.org/abs/1904.05183">Helical and oscillatory microswimmer motility statistics from differential dynamic microscopy</a>, New J. Phys. 21, 063012 (2019).</li>
+      <li><b>Euglena gracilis</b>: M.-Y. Li et al., <a href="https://arxiv.org/abs/2511.00775">Detecting active Levy particles using differential dynamic microscopy</a>, Phys. Rev. E (2025).</li>
+      <li><b>Bull sperm</b>: A. Jepson et al., <a href="https://doi.org/10.1371/journal.pone.0202720">High-throughput characterisation of bull semen motility using differential dynamic microscopy</a>, PLoS ONE 14, e0202720 (2019).</li>
+    </ul>
+    <p class="prose lvl-2">Not simulated: the helical paths of algae, the Levy walks of Euglena, the time a tumble takes, and swimmers whose shape changes as they swim (the sperm tail, the flagella of the alga). We found no DDM study of deflagellated algae.</p>
   </section>
 
   <section class="wrap further" aria-labelledby="h-beyond">
@@ -1569,6 +1590,16 @@ A_est = 2 * aa.var - B_est
   const TWO_PI = 2 * Math.PI;
   const KB = 1.380649e-23;
   function fail(msg) { throw new Error("Movie: " + msg); }
+  // the optical kernels depend only on the optics, the liquid and the depth range, not on the particles' motion:
+  // kept for the next movie (new cells, other swimming), which then skips the slowest part of the set-up
+  const kernelMemo = new Map();
+  function memoKernel(name, fn, args) {
+    const key = name + JSON.stringify(args, function (k, v) { return ArrayBuffer.isView(v) ? Array.from(v) : v; });
+    if (kernelMemo.has(key)) return kernelMemo.get(key);
+    const r = fn(args);
+    if (kernelMemo.size >= 8) kernelMemo.delete(kernelMemo.keys().next().value);
+    kernelMemo.set(key, r); return r;
+  }
   function need(c, msg) { if (!c) fail(msg); }
   function num(o, k, lo, hi) { const v = o[k]; need(typeof v === "number" && Number.isFinite(v), "missing setting '" + k + "'"); need(v >= lo && v <= hi, "setting '" + k + "' = " + v + " outside [" + lo + ", " + hi + "]"); return v; }
 
@@ -1699,7 +1730,7 @@ A_est = 2 * aa.var - B_est
     need(timing === "scan" || timing === "global" || timing === "rolling" || timing === "rolling_center", "unknown shutter timing");
     const readout = timing === "rolling_center" ? det.rows_total / 2 * det.t_row_s : timing === "global" ? 0 : det.rows_total * det.t_row_s;
     need(readout <= 1.001 / fr, "the " + (timing === "scan" ? "scan" : "read-out") + " of one frame takes longer than the frame interval");
-    const d0 = num(cfg, "diameter_um", 0.01, 20), spread = num(cfg, "size_spread", 0, 0.5);
+    const d0 = num(cfg, "diameter_um", 0.01, 100), spread = num(cfg, "size_spread", 0, 0.5);
     const phi = num(cfg, "volume_fraction", 1e-9, 0.05);
     const T_C = num(cfg, "T_C", 0, 90), Lz = num(cfg, "cell_um", 1, 2000), hf = num(cfg, "focus_um", -50, 2050);
     const drift = num(cfg, "drift_um_s", 0, 1000);
@@ -1714,6 +1745,16 @@ A_est = 2 * aa.var - B_est
       if (sw.tumble_hz !== undefined) swTumble = num(sw, "tumble_hz", 0, 1000);
       if (sw.circle_rad_s !== undefined) swOmega = num(sw, "circle_rad_s", -100, 100);
     }
+    // swimming stroke (optional): each swimmer's image moves back and forth by A sin(2 pi f t + phase) about its mean
+    // path, along its axis (Chlamydomonas breaststroke) or across it (sperm head), with a random phase per cell
+    let oscA = 0, oscF = 0, oscAcross = false;
+    if (sw && sw.osc_amp_um !== undefined) {
+      oscA = num(sw, "osc_amp_um", 0, 100); oscF = num(sw, "osc_hz", 0, 1000);
+      need(sw.osc_dir === undefined || sw.osc_dir === "along" || sw.osc_dir === "across", "osc_dir must be along or across");
+      oscAcross = sw.osc_dir === "across";
+    }
+    // cells with paralysed flagella and the like: all diffusion slowed by this factor (extra drag of the flagella)
+    const dragF = cfg.drag_factor === undefined ? 1 : num(cfg, "drag_factor", 0.3, 100);
     const a = det.kind === "camera" ? num(det, "pixel_um", 0.5, 30) * b / mag : num(det, "pixel_um", 0.005, 50);   // pixel at the sample (um)
     const L = N * a;                             // simulated field (um)
     const eta_mPa_s = cfg.liquid.viscosity_mPa_s !== undefined ? cfg.liquid.viscosity_mPa_s : O.viscosityWaterGlycerol_mPa_s(cfg.liquid.glycerol_w, T_C);
@@ -1750,7 +1791,10 @@ A_est = 2 * aa.var - B_est
       const W = gw.reduce(function (p, v) { return p + v; }, 0);
       for (let i = 0; i < 5; i++) classes.push({ d: d0 * Math.exp(Math.SQRT2 * s * gx[i] - s2 / 2), w: gw[i] / W });
     } else classes.push({ d: d0, w: 1 });
-    classes.forEach(function (c) { c.geo = O.shapeGeometry(shape, c.d, pAsp); c.hyd = O.hydrodynamics(c.geo, kT, eta); });
+    classes.forEach(function (c) {
+      c.geo = O.shapeGeometry(shape, c.d, pAsp); c.hyd = O.hydrodynamics(c.geo, kT, eta);
+      if (dragF !== 1) { const h0 = c.hyd, hh = Object.assign({}, h0); ["D_t", "D_par", "D_perp", "D_r"].forEach(function (k) { if (typeof h0[k] === "number") hh[k] = h0[k] / dragF; }); c.hyd = hh; }
+    });
     let meanVol = 0; classes.forEach(function (c) { meanVol += c.w * c.geo.volume; });
     const nTot = Math.round(phi / meanVol * L * L * Lz);
     need(nTot >= 1, "no particle in the simulated volume: raise the concentration");
@@ -1787,7 +1831,7 @@ A_est = 2 * aa.var - B_est
     let Cext = null, dark = false;
     const lamC = lamRef, nLc = trans ? O.liquidIndex(cfg.liquid, lamC) : 1;
     const tKern = function (diam, particle, homOnly) {
-      return O.transmittedKernel({ diameter_um: diam, particle: particle, liquid: cfg.liquid, na_obj: na, illum: cfg.illum, pupil: cfg.pupil || { kind: "none" }, source: cfg.source, q_per_um: qk, z_lo: zlo - 0.5 - ext, z_hi: zhi + 0.5 + ext, homodyne: homOnly ? false : (!split && cfg.homodyne), homodyne_only: !!homOnly, aberration: abr, scalar: scalar });
+      return memoKernel("t", O.transmittedKernel, { diameter_um: diam, particle: particle, liquid: cfg.liquid, na_obj: na, illum: cfg.illum, pupil: cfg.pupil || { kind: "none" }, source: cfg.source, q_per_um: qk, z_lo: zlo - 0.5 - ext, z_hi: zhi + 0.5 + ext, homodyne: homOnly ? false : (!split && cfg.homodyne), homodyne_only: !!homOnly, aberration: abr, scalar: scalar });
     };
     const push = function (Kr, Ki, nd, z) { blocks.push({ Kr: Kr, Ki: Ki, nd: nd, z_um: z }); return blocks.length - 1; };
     if (trans) need(typeof cfg.homodyne === "boolean", "say whether to include the scattered-intensity term");
@@ -1836,7 +1880,7 @@ A_est = 2 * aa.var - B_est
       need(zz.length <= 3000, "cell too thick for the fluorescence kernel");
       // pinhole projected on the sample: spinning disk through a 1x relay (assumed), scanner in Airy units
       const pin = mode === "spinning" ? num(cfg, "pinhole_um", 5, 200) / mag : mode === "scanning" ? num(cfg, "pinhole_au", 0.1, 10) * 1.22 * cfg.l_em_um / Math.min(na, 1.34) : 0;
-      const fk = function (diam) { return O.fluorescenceKernel({ na_obj: na, liquid: cfg.liquid, l_ex: cfg.l_ex_um, l_em: cfg.l_em_um, diameter_um: diam, q_per_um: qk, z_um: zz, confocal: confocal, pinhole_um_sample: pin, crosstalk: mode === "spinning" ? num(cfg, "crosstalk", 0, 0.49) : 0, aberration: abr, scalar: scalar }).K; };
+      const fk = function (diam) { return memoKernel("f", O.fluorescenceKernel, { na_obj: na, liquid: cfg.liquid, l_ex: cfg.l_ex_um, l_em: cfg.l_em_um, diameter_um: diam, q_per_um: qk, z_um: zz, confocal: confocal, pinhole_um_sample: pin, crosstalk: mode === "spinning" ? num(cfg, "crosstalk", 0, 0.49) : 0, aberration: abr, scalar: scalar }).K; };
       if (body) { const K = fk(TINY_UM), ib = push(K, new Float64Array(K.length), 1, zz); classes.forEach(function (c, ci) { chans[ci].all = ib; }); }
       else for (let ci = 0; ci < classes.length; ci++) { const K = fk(classes[ci].d); chans[ci].all = push(K, new Float64Array(K.length), 1, zz); yield { stage: "Computing how one particle looks", frac: 0.02 + 0.1 * (ci + 1) / classes.length }; }
     }
@@ -1848,6 +1892,14 @@ A_est = 2 * aa.var - B_est
     if (body) {
       const qPts = trans && dark ? 2 * TWO_PI / lamC * Math.min(na, 1.34) * 1.1 : qcut;
       classes.forEach(function (c) { c.pts = O.bodyPoints(c.geo, 0.7 * Math.PI / qPts, 64); });
+      // thin bodies (cfg.thin_bodies, for cells narrower than the optics resolve): the points of each cross-section
+      // merged onto the axis, so a rod is a line of points (about 8 times fewer); its width then shows only at large q
+      if (cfg.thin_bodies === true) classes.forEach(function (c) {
+        const P = c.pts, xs = [];
+        for (let k = 0; k < P.n; k++) { const x = P.xyz[3 * k]; if (!xs.some(function (u) { return Math.abs(u - x) < 1e-9; })) xs.push(x); }
+        const xyz = new Float64Array(3 * xs.length); xs.forEach(function (x, k) { xyz[3 * k] = x; });
+        c.pts = { xyz: xyz, n: xs.length, spacing: P.spacing };
+      });
       ptsTotal = 0; classes.forEach(function (c) { ptsTotal += c.w * nTot * c.pts.n; });
       need(ptsTotal <= 60000, "too many particles for the browser with these elongated particles: lower the concentration or use a smaller field");
     }
@@ -1956,6 +2008,10 @@ A_est = 2 * aa.var - B_est
       swList.push(SP[i]);
     }
     let vMax = 0; for (let i = 0; i < nTot; i++) vMax = Math.max(vMax, SP[i]);
+    // stroke phases and directions from their own random stream (the main stream, and so every other movie, unchanged)
+    const PH = new Float64Array(nTot), PSI = new Float64Array(nTot);
+    if (oscA > 0) { const r2 = makeRng((cfg.seed >>> 0) + 7919); for (let i = 0; i < nTot; i++) { PH[i] = TWO_PI * r2.u(); PSI[i] = TWO_PI * r2.u(); } vMax += TWO_PI * oscF * oscA; }
+    const oscW = TWO_PI * oscF;
     // exposure blur: sub-steps when particles move or turn noticeably during the exposure
     // (D q^2 t_exp at the finest pattern imaged, 6 D_r t_exp); otherwise the exposure is treated as instantaneous
     let Dmax = 0, Drmax = 0; classes.forEach(function (c) { Dmax = Math.max(Dmax, c.hyd.D_par, c.hyd.D_perp); Drmax = Math.max(Drmax, c.hyd.D_r); });
@@ -2194,14 +2250,19 @@ A_est = 2 * aa.var - B_est
       const B = blocks[bi]; zLocate(B, zp); const col = zw.col, f = zw.f; wgt /= B.scale;
       for (let m = 0; m < M; m++) wm[m] += wgt * (Vm[m][col] + f * (Vm[m][col + 1] - Vm[m][col]));
     };
+    // (column offsets computed once per point; the rank-M weights added in one pass per grid cell)
+    const colOff = new Int32Array(tabN), rowM = G * M;
     const splat = function (xp, yp) {
       const px = xp / h, py = yp / h, cx = Math.round(px), cy = Math.round(py);
       for (let j = -R; j <= R; j++) { const dx = cx + j - px, dy = cy + j - py; gx[j + R] = Math.exp(-dx * dx * inv2s2); gy[j + R] = Math.exp(-dy * dy * inv2s2); }
+      for (let jx = 0; jx < tabN; jx++) { let c = (cx - R + jx) % G; if (c < 0) c += G; colOff[jx] = c * M; }
+      const g = grid, w0 = wm;
       for (let jy = 0; jy < tabN; jy++) {
-        const row = ((cy - R + jy) % G + G) % G, wy = gy[jy];
+        let row = (cy - R + jy) % G; if (row < 0) row += G;
+        const rb = row * rowM, wy = gy[jy];
         for (let jx = 0; jx < tabN; jx++) {
-          const col2 = ((cx - R + jx) % G + G) % G, w = wy * gx[jx], base = (row * G + col2) * M;
-          for (let m = 0; m < M; m++) grid[base + m] += w * wm[m];
+          const w = wy * gx[jx], base = rb + colOff[jx];
+          for (let m = 0; m < M; m++) g[base + m] += w * w0[m];
         }
       }
     };
@@ -2230,10 +2291,18 @@ A_est = 2 * aa.var - B_est
           if (when > tp[i]) tp[i] = when;
           let wHet = 0, wHom = 0;
           if (split) { channelWeights(c, UX[i], UY[i], UZ[i]); wHet = cw.het; wHom = cfg.test_no_hom === true ? 0 : cw.hom; }   // test_no_hom: test-only switch
+          // where the cell is drawn: its mean path plus the stroke (swimmers only)
+          let xr = X[i], yr = Y[i], hr = H[i];
+          if (oscA > 0 && SP[i] > 0) {
+            const sv = oscA * Math.sin(oscW * when + PH[i]);
+            let dx = UX[i], dy = UY[i], dz = UZ[i];
+            if (oscAcross) { frame(dx, dy, dz); const cp = Math.cos(PSI[i]), spp = PL[i] ? 0 : Math.sin(PSI[i]); dx = cp * e1[0] + spp * e2[0]; dy = cp * e1[1] + spp * e2[1]; dz = cp * e1[2] + spp * e2[2]; }
+            xr += sv * dx; yr += sv * dy; hr -= sv * dz;
+          }
           if (!body) {
-            wm.fill(0); const zp = hf - H[i];
+            wm.fill(0); const zp = hf - hr;
             if (split) { addBlock(ch.het, zp, wHet / nsub); addBlock(ch.hom, zp, wHom / nsub); } else addBlock(ch.all, zp, 1 / nsub);
-            splat(X[i], Y[i]);
+            splat(xr, yr);
           } else {
             const P = c.pts, np = P.n, ux = UX[i], uy = UY[i], uz = UZ[i];
             frame(ux, uy, uz);
@@ -2241,9 +2310,9 @@ A_est = 2 * aa.var - B_est
             for (let k = 0; k < np; k++) {
               const bx = P.xyz[3 * k], by = P.xyz[3 * k + 1], bz = P.xyz[3 * k + 2];
               const lx = bx * ux + by * e1[0] + bz * e2[0], ly = bx * uy + by * e1[1] + bz * e2[1], lz = bx * uz + by * e1[2] + bz * e2[2];
-              wm.fill(0); const zp = hf - H[i] + lz;      // lz along +z (the light): further from the condenser
+              wm.fill(0); const zp = hf - hr + lz;      // lz along +z (the light): further from the condenser
               if (split) { addBlock(ch.het, zp, wHet * sc); addBlock(ch.hom, zp, wHom * sc); } else addBlock(ch.all, zp, sc);
-              splat(X[i] + lx, Y[i] + ly);
+              splat(xr + lx, yr + ly);
             }
           }
         }
@@ -2342,7 +2411,7 @@ A_est = 2 * aa.var - B_est
     }
     const cm = classes[Math.floor(classes.length / 2)], chm = chans[Math.floor(classes.length / 2)];
     const kInfo = function (bi) { if (bi === undefined) return null; const B = blocks[bi]; return { Kr: B.Kr, Ki: B.Ki, nd: B.nd, z_um: B.z_um }; };
-    const h0 = classes[0].hyd, hd0 = O.hydrodynamics(O.shapeGeometry(shape, d0, pAsp), kT, eta);
+    const h0 = classes[0].hyd, hd0 = (function () { const h = O.hydrodynamics(O.shapeGeometry(shape, d0, pAsp), kT, eta), o = Object.assign({}, h); if (dragF !== 1) ["D_t", "D_par", "D_perp", "D_r"].forEach(function (k) { if (typeof h[k] === "number") o[k] = h[k] / dragF; }); return o; })();
     return {
       test_track: track || undefined,
       test_heights: cfg.test_return_heights === true ? { H: Float64Array.from(H), lg: classes[0].lg, aex: classes[0].aex, ah: classes[0].ah } : undefined,   // test only
@@ -2369,7 +2438,7 @@ A_est = 2 * aa.var - B_est
                  return { fraction: n / nTot, v_mean_um_s: m, v_sd_um_s: sd, seen_table: tab,
                           fraction_seen: tab.fraction[iqm], v_mean_seen_um_s: vs,
                           v_sd_seen_um_s: vs !== null ? Math.sqrt(Math.max(0, swSeen.wv2[iqm] / swSeen.ws[iqm] - vs * vs)) : null, v_list: Float32Array.from(swList), n_swimmers: n, n_plane: nPl,
-                          v_set_um_s: swV, v_spread_set: swSpread, fraction_set: swFrac, plane_fraction_set: swPlane, rot_diff_s: swDr !== null ? swDr : hd0.D_r, tumble_hz: swTumble, circle_rad_s: swOmega };
+                          v_set_um_s: swV, v_spread_set: swSpread, fraction_set: swFrac, plane_fraction_set: swPlane, rot_diff_s: swDr !== null ? swDr : hd0.D_r, tumble_hz: swTumble, circle_rad_s: swOmega, osc_amp_um: oscA, osc_hz: oscF, osc_dir: oscAcross ? "across" : "along" };
                })() : null,
                shape: shape, oriented: oriented, D_r_s: oriented ? hd0.D_r : null, D_par_um2_s: hd0.D_par, D_perp_um2_s: hd0.D_perp, rot_rate_s: oriented ? 6 * hd0.D_r : null, first_class_D_um2_s: h0.D_t }
     };
@@ -2770,8 +2839,9 @@ A_est = 2 * aa.var - B_est
       yield { stage: "Comparing frames", frac: (li + 1) / L };
     }
 
-    // temporal variance per mode: A + B = 2 var
-    const varq = new Float64Array(nb + 1);
+    // temporal variance per mode: A + B = 2 var. Also the mean power per mode (it includes what does not change during
+    // the movie, so 2 pow - B is the whole amplitude even when part of the sample stays put)
+    const varq = new Float64Array(nb + 1), powq = new Float64Array(nb + 1);
     {
       const mr = new Float64Array(P), mi = new Float64Array(P), m2 = new Float64Array(P);
       for (let t = 0; t < T; t++) {
@@ -2784,9 +2854,9 @@ A_est = 2 * aa.var - B_est
       for (let p = 0; p < P; p++) {
         const b = binOf[p]; if (b <= 0) continue;
         const v = (m2[p] / T - (mr[p] * mr[p] + mi[p] * mi[p]) / (T * T)) / P;
-        varq[b] += v;
+        varq[b] += v; powq[b] += m2[p] / T / P;
       }
-      for (let b = 1; b <= nb; b++) varq[b] = nmodes[b] > 0 ? varq[b] / nmodes[b] : NaN;
+      for (let b = 1; b <= nb; b++) { varq[b] = nmodes[b] > 0 ? varq[b] / nmodes[b] : NaN; powq[b] = nmodes[b] > 0 ? powq[b] / nmodes[b] : NaN; }
     }
 
     // measurable window (fastDDM tutorial 1, section 2.C)
@@ -2823,7 +2893,7 @@ A_est = 2 * aa.var - B_est
       B_est[b] = Bq; A_est[b] = 2 * varq[b] - Bq;
     }
     return { images: images, sg: sg, n: n, T: T, P: P, fft: fft, lags: lags, L: L, dt_s: dt_s, taus_s: taus_s, nb: nb, binOf: binOf, nmodes: nmodes,
-             q_per_um: q_per_um, d2d: d2d, dq: dq, varq: varq, q_lo_per_um: q_lo_per_um, q_nyq_per_um: q_nyq_per_um, q_opt_per_um: q_opt_per_um,
+             q_per_um: q_per_um, d2d: d2d, dq: dq, varq: varq, powq: powq, q_lo_per_um: q_lo_per_um, q_nyq_per_um: q_nyq_per_um, q_opt_per_um: q_opt_per_um,
              q_sig_per_um: q_sig_per_um, q_hi_per_um: q_hi_per_um, gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz, B_floor: B_floor, B_est: B_est, A_est: A_est };
   }
   function* analyse(movie, opts) {
@@ -3516,8 +3586,34 @@ A_est = 2 * aa.var - B_est
   // cells that do not swim but turn (rods): a share b of their signal depends on how they are turned and fades as
   // exp(-6 D_R t) (first orientation mode); b = 0 for round cells
   function stillTurn(p, t) { return p.b ? (1 - p.b) + p.b * Math.exp(-6 * p.Dr * t) : 1; }
-  function swimF(kind, q, t, p) {   // p: { v, alpha, spread, D, b, Dr }
-    const Z = shapeOf(p.spread), X = q * p.v * t, S = kind === "2d" ? swim2(X, Z) : swim3(X, Z);
+  // 3D swimmers with a stroke along the axis (Martinez et al. 2012, Chlamydomonas; Jepson et al. 2019, sperm):
+  // displacement v t + A [sin(2 pi f t + phi) - sin phi] with a random phase phi. Averaging over phi gives J0(q mu a),
+  // a = 2 A |sin(pi f t)|, mu the cosine to q; over the Schulz speeds the cosine averages in closed form, so
+  //   S = int_0^1 dmu (1 + L^2)^(-(Z+1)/2) cos((Z + 1) atan L) J0(q mu a),  L = q mu vmean t / (Z + 1)
+  // (with a = 0 this is the sine over its argument of Wilson's model). A stroke across the axis (sperm head), in a
+  // direction turned at random about the axis: J0(q mu a) becomes J0(q a sqrt(1 - mu^2) / 2)^2 (average of
+  // J0(z cos psi) over psi).
+  function swimStroke(q, t, v, Z, A, f, across) {
+    const X = q * v * t, qa = q * 2 * A * Math.abs(Math.sin(Math.PI * f * t));
+    if (qa < 1e-6) return swim3(X, Z);
+    const c = Z + 1;
+    // the speed average falls as L^-c: beyond L = 10^(4/c) the integrand is below 1e-4 and is left out
+    const mx = Math.min(1, Math.pow(10, 4 / c) * c / Math.max(X, 1e-9));
+    if (across && mx < 1) { /* the stroke factor does not vanish at large mu: keep the cut, the speed factor is below 1e-4 there */ }
+    // over [0, mx] the speed average turns through at most c pi / 2 and J0 oscillates q a mx / pi times: smooth, so
+    // Simpson with a few dozen intervals (broad speed distributions, small c, have a long tail and get more)
+    let n = Math.min(2000, (c < 3 ? 48 : 24) + 2 * Math.ceil(2 * qa * mx + 3 * Math.min(X * mx, c) / Math.PI)); if (n % 2) n++;
+    const h = mx / n;
+    let s = 0;
+    for (let k = 0; k <= n; k++) {
+      const mu = k * h, L = X * mu / c, j = across ? besselJ0(0.5 * qa * Math.sqrt(1 - mu * mu)) : 0;
+      const val = Math.pow(1 + L * L, -c / 2) * Math.cos(c * Math.atan(L)) * (across ? j * j : besselJ0(qa * mu));
+      s += (k === 0 || k === n ? 1 : (k % 2 ? 4 : 2)) * val;
+    }
+    return s * h / 3;
+  }
+  function swimF(kind, q, t, p) {   // p: { v, alpha, spread, D, b, Dr, A, f }
+    const Z = shapeOf(p.spread), X = q * p.v * t, S = kind === "2d" ? swim2(X, Z) : kind === "stroke" || kind === "strokex" ? swimStroke(q, t, p.v, Z, p.A, p.f, kind === "strokex") : swim3(X, Z);
     return Math.exp(-p.D * q * q * t) * ((1 - p.alpha) * stillTurn(p, t) + p.alpha * S);
   }
 
@@ -3626,17 +3722,71 @@ A_est = 2 * aa.var - B_est
   }
 
   // global swimmer fit over the q in the window: shared v, alpha, spread, D; A and B per q by linear least squares
+  // cells that do not swim: translation D (all q) and turning D_R (all q) with a share b of each pattern that depends
+  // on the orientation, different at each q (it grows with q):
+  //   d = A [1 - e^(-D q^2 t)] + A b e^(-D q^2 t) [1 - e^(-6 D_R t)] + B,  linear in A, A b, B for given D, D_R
+  function stillRow(r, taus, D, Dr, g1, g2) {
+    const L = taus.length, q2 = r.q * r.q;
+    for (let i = 0; i < L; i++) { const e = Math.exp(-D * q2 * taus[i]); g1[i] = 1 - e; g2[i] = e * (1 - Math.exp(-6 * Dr * taus[i])); }
+    // least squares in (c1, c2, B); c2 kept in [0, c1] (b between 0 and 1), A within the bounds of boundAB
+    let s11 = 0, s12 = 0, s22 = 0, s1 = 0, s2 = 0, sy = 0, s1y = 0, s2y = 0;
+    for (let i = 0; i < L; i++) { s11 += g1[i] * g1[i]; s12 += g1[i] * g2[i]; s22 += g2[i] * g2[i]; s1 += g1[i]; s2 += g2[i]; sy += r.y[i]; s1y += g1[i] * r.y[i]; s2y += g2[i] * r.y[i]; }
+    const solve3 = function () {
+      const M = [[s11, s12, s1], [s12, s22, s2], [s1, s2, L]], v = [s1y, s2y, sy];
+      const x = DDM.solve(M, v); return x ? { c1: x[0], c2: x[1], B: x[2] } : null;
+    };
+    const solve2 = function (c2fix) {   // c2 = c2fix * c1 (b fixed)
+      let a11 = 0, a1 = 0, ay = 0; for (let i = 0; i < L; i++) { const g = g1[i] + c2fix * g2[i]; a11 += g * g; a1 += g; ay += g * r.y[i]; }
+      const det = a11 * L - a1 * a1; if (Math.abs(det) < 1e-300) return null;
+      const c1 = (ay * L - a1 * sy) / det, B = (sy - c1 * a1) / L; return { c1: c1, c2: c2fix * c1, B: B };
+    };
+    let x = solve3();
+    if (!x || !(x.c1 > 0) || x.c2 < 0 || x.c2 > x.c1) { const a = solve2(0), b = solve2(1); const cost = function (z) { if (!z) return Infinity; let c = 0; for (let i = 0; i < L; i++) { const e = z.c1 * g1[i] + z.c2 * g2[i] + z.B - r.y[i]; c += e * e; } return c; }; x = cost(a) <= cost(b) ? a : b; }
+    const hiA = r.Ahi > 0 ? Math.min(3 * r.scale, r.Ahi) : 3 * r.scale, loA = r.Alo > 0 ? Math.min(r.Alo, hiA) : 0;
+    if (x && (x.c1 < loA || x.c1 > hiA)) { const bq = x.c1 > 0 ? Math.min(1, Math.max(0, x.c2 / x.c1)) : 0, c1 = Math.min(hiA, Math.max(loA, x.c1)); let sb = 0; for (let i = 0; i < L; i++) sb += r.y[i] - c1 * (g1[i] + bq * g2[i]); x = { c1: c1, c2: bq * c1, B: sb / L }; }
+    return x;
+  }
+  function fitStill(taus, rows, start) {
+    const L = taus.length, g1 = new Float64Array(L), g2 = new Float64Array(L);
+    const resid = function (p) {
+      const D = Math.exp(p[0]), Dr = Math.exp(p[1]), out = new Float64Array(rows.length * L);
+      rows.forEach(function (r, j) { const x = stillRow(r, taus, D, Dr, g1, g2); for (let i = 0; i < L; i++) out[j * L + i] = x ? (x.c1 * g1[i] + x.c2 * g2[i] + x.B - r.y[i]) / r.scale : 1; });
+      return out;
+    };
+    const clamp = function (p) {
+      p[0] = Math.min(Math.log(D_LIMITS ? D_LIMITS[1] : 1e3), Math.max(Math.log(D_LIMITS ? D_LIMITS[0] : 1e-5), p[0]));
+      p[1] = Math.min(Math.log(100), Math.max(Math.log(1e-3), p[1])); return p;
+    };
+    let best = null;
+    for (const dr0 of [start.Dr || 0.3, 3 * (start.Dr || 0.3)]) {
+      const r = DDM.lm(resid, [Math.log(Math.max(1e-4, start.D)), Math.log(dr0)], clamp);
+      if (best === null || r.cost < best.cost) best = r;
+    }
+    const D = Math.exp(best.p[0]), Dr = Math.exp(best.p[1]);
+    const se = function (i) { return best.cov && best.cov[i][i] > 0 ? Math.sqrt(best.cov[i][i]) : null; };
+    const ab = rows.map(function (r) { const x = stillRow(r, taus, D, Dr, g1, g2); return x ? { A: x.c1, B: x.B, b: x.c1 > 0 ? x.c2 / x.c1 : 0 } : { A: r.A, B: r.B, b: 0 }; });
+    const bm = ab.reduce(function (s, x) { return s + x.b; }, 0) / Math.max(1, ab.length);
+    return { kind: "still", v_um_s: start.v, alpha: 0, spread: start.spread, D_um2_s: D, turn_share: bm, D_r_s: Dr, cost: best.cost, n_points: rows.length * L,
+             D_rel_err: se(0), D_r_rel_err: se(1), ab: ab, stroke_um: 0, stroke_hz: 0 };
+  }
+  // limits on D while one analysis runs: within a factor 5 of the value expected from the cells, when it is known
+  // (a free D otherwise runs off to tens of um^2/s to mimic swimmers that the model describes badly)
+  let D_LIMITS = null;
   function fitSwimGlobal(kind, taus, rows, start, fixed) {
     const L = taus.length;
     // kind: "3d" or "2d" (closed models), or "depth" (3D swimmers seen through the depth response of the microscope;
     // every row then carries its table, see depthTable)
     const fm = kind === "depth" ? function (r, t, p) { return depthF(r.depth, t, p); } : function (r, t, p) { return swimF(kind, r.q, t, p); };
-    // parameters: ln v, alpha, spread, ln D; fixed ones are left out of the fit
-    const names = ["v", "alpha", "spread", "D", "b", "Dr"], free = names.filter(function (k) { return fixed[k] === undefined; });
-    const toP = { v: Math.log(start.v), alpha: start.alpha, spread: start.spread, D: Math.log(Math.max(start.D, 1e-4)), b: start.b === undefined ? 0.5 : start.b, Dr: Math.log(start.Dr === undefined ? 0.2 : Math.max(1e-3, start.Dr)) };
+    // parameters: ln v, alpha, spread, ln D, turning (b, ln D_R), stroke (ln A, ln f, model "stroke" only); fixed ones
+    // are left out of the fit
+    if (kind !== "stroke" && kind !== "strokex") fixed = Object.assign({ A: 0, f: 0 }, fixed);
+    const names = ["v", "alpha", "spread", "D", "b", "Dr", "A", "f"], free = names.filter(function (k) { return fixed[k] === undefined; });
+    const toP = { v: Math.log(start.v), alpha: start.alpha, spread: start.spread, D: Math.log(Math.max(start.D, 1e-4)), b: start.b === undefined ? 0.5 : start.b, Dr: Math.log(start.Dr === undefined ? 0.2 : Math.max(1e-3, start.Dr)),
+                  A: Math.log(Math.max(0.01, start.A || 1)), f: Math.log(Math.max(0.1, start.f || 10)) };
+    const LOGS = { v: 1, D: 1, Dr: 1, A: 1, f: 1 };
     const unpack = function (p) {
       const o = {}; names.forEach(function (k) { o[k] = fixed[k] !== undefined ? fixed[k] : null; });
-      free.forEach(function (k, i) { o[k] = k === "v" || k === "D" || k === "Dr" ? Math.exp(p[i]) : p[i]; });
+      free.forEach(function (k, i) { o[k] = LOGS[k] ? Math.exp(p[i]) : p[i]; });
       return o;
     };
     const fbuf = new Float64Array(L);
@@ -3652,10 +3802,12 @@ A_est = 2 * aa.var - B_est
     const clamp = function (p) {
       free.forEach(function (k, i) {
         if (k === "alpha") p[i] = Math.min(1, Math.max(0, p[i]));
-        if (k === "spread") p[i] = Math.min(0.95, Math.max(0.05, p[i]));
-        if (k === "D") p[i] = Math.min(Math.log(1e3), Math.max(Math.log(1e-5), p[i]));
+        if (k === "spread") p[i] = Math.min(0.95, Math.max(kind === "stroke" || kind === "strokex" ? 0.1 : 0.05, p[i]));
+        if (k === "D") p[i] = Math.min(Math.log(D_LIMITS ? D_LIMITS[1] : 1e3), Math.max(Math.log(D_LIMITS ? D_LIMITS[0] : 1e-5), p[i]));
         if (k === "b") p[i] = Math.min(1, Math.max(0, p[i]));
         if (k === "Dr") p[i] = Math.min(Math.log(100), Math.max(Math.log(1e-3), p[i]));
+        if (k === "A") p[i] = Math.min(Math.log(50), Math.max(Math.log(0.01), p[i]));
+        if (k === "f") p[i] = Math.min(Math.log(0.5 / (taus[0] || 1e-3)), Math.max(Math.log(0.1), p[i]));   // below the Nyquist frequency of the movie
       });
       return p;
     };
@@ -3663,17 +3815,17 @@ A_est = 2 * aa.var - B_est
     const par = unpack(r.p);
     const se = function (k) { const i = free.indexOf(k); return i >= 0 && r.cov && r.cov[i][i] > 0 ? Math.sqrt(r.cov[i][i]) : null; };
     const ab = rows.map(function (rw) { for (let i = 0; i < L; i++) fbuf[i] = fm(rw, taus[i], par); return boundAB(rw, fbuf); });
-    return { kind: kind, v_um_s: par.v, alpha: par.alpha, spread: par.spread, D_um2_s: par.D, turn_share: par.b, D_r_s: par.Dr, cost: r.cost, n_points: rows.length * L,
-             v_rel_err: se("v"), alpha_err: se("alpha"), spread_err: se("spread"), D_rel_err: se("D"), ab: ab };
+    return { kind: kind, v_um_s: par.v, alpha: par.alpha, spread: par.spread, D_um2_s: par.D, turn_share: par.b, D_r_s: par.Dr, stroke_um: par.A, stroke_hz: par.f, cost: r.cost, n_points: rows.length * L,
+             v_rel_err: se("v"), alpha_err: se("alpha"), spread_err: se("spread"), D_rel_err: se("D"), stroke_rel_err: se("A"), stroke_hz_rel_err: se("f"), ab: ab };
   }
 
   // A and B of one q for a given f: least squares, with A kept between 0 and 3 times A + B = 2 var (the plateau the
   // data must reach); without the bound a model that hardly decays (f near 1) can mimic any rise with a huge A
   function boundAB(r, f) {
     let ab = linAB(r.y, f);
-    const L = f.length, hiA = 3 * r.scale;
-    if (ab === null || !(ab.A >= 0 && ab.A <= hiA)) {
-      const A = ab === null ? Math.max(0, r.A) : Math.min(hiA, Math.max(0, ab.A));
+    const L = f.length, hiA = r.Ahi > 0 ? Math.min(3 * r.scale, r.Ahi) : 3 * r.scale, loA = r.Alo > 0 ? Math.min(r.Alo, hiA) : 0;
+    if (ab === null || !(ab.A >= loA && ab.A <= hiA)) {
+      const A = ab === null ? Math.max(loA, r.A) : Math.min(hiA, Math.max(loA, ab.A));
       let sb = 0; for (let i = 0; i < L; i++) sb += r.y[i] - A * (1 - f[i]);
       ab = { A: A, B: sb / L };
     }
@@ -3734,7 +3886,11 @@ A_est = 2 * aa.var - B_est
       const y = new Float64Array(L); for (let i = 0; i < L; i++) y[i] = S.dq[i][b];
       let A0 = S.A_est[b], B0 = S.B_est[b]; if (!(A0 > 0)) A0 = Math.max(y[L - 1] - B0, 1e-12);
       const cf = fitCompressed(taus, y, A0, B0, null), cx = betaFix === null ? cf : fitCompressed(taus, y, cf.A, cf.B, betaFix);
-      rows.push({ bin: b, q: S.q_per_um[b], y: y, A: cx.A, B: cx.B, scale: 2 * S.varq[b], free: cf, fixed: cx, gamma_hz: cx.gamma_hz, beta_free: cf.beta, lnGamma_se: cx.lnGamma_se, ok: cx.ok });
+      // whole amplitude from the mean power (cells that stay put included), with the scatter of a few modes allowed for
+      // (and at least that amplitude divided by the same margin: cells that stay put still count in the whole)
+      const Atot = S.powq ? 2 * S.powq[b] - S.B_est[b] : NaN, kA = Math.max(1.3, 1 + 3 / Math.sqrt(Math.max(1, S.nmodes[b])));
+      const Ahi = Atot > 0 ? Atot * kA : NaN, Alo = Atot > 0 && opts.amplitude_floor !== false ? Atot / kA : NaN;
+      rows.push({ bin: b, q: S.q_per_um[b], y: y, A: cx.A, B: cx.B, scale: 2 * S.varq[b], Atot: Atot, Ahi: Ahi, Alo: Alo, free: cf, fixed: cx, gamma_hz: cx.gamma_hz, beta_free: cf.beta, lnGamma_se: cx.lnGamma_se, ok: cx.ok });
     }
     // window: measurable q, rates the movie can follow
     const qmin = opts.q_min_per_um === null || opts.q_min_per_um === undefined ? 0 : opts.q_min_per_um;
@@ -3774,7 +3930,26 @@ A_est = 2 * aa.var - B_est
     // rods (known to the experimenter from the images): the cells that do not swim also fade as they turn; free share b
     // and rate 6 D_R, shared by all q. Round cells: b = 0.
     const turns = opts.turns === true;   // off by default: it trades the share of swimmers against the turning (tests)
-    const turnFix = turns ? {} : { b: 0, Dr: 0.2 };
+    // share of swimmers straight from the amplitudes, when the cells that do not swim stay put during the movie (their
+    // expected D q^2 t below 0.3 at the largest q used) while the swimmers have long renewed their patterns: then the
+    // curves alone cannot tell the share (a smaller share with a larger amplitude fits as well), but the plateau of
+    // each curve over the whole amplitude from the mean power can
+    const Dh = opts.D_hint > 0 ? opts.D_hint : opts.D_from_cells === true && movie.truth && movie.truth.D_um2_s > 0 ? movie.truth.D_um2_s : 0;
+    D_LIMITS = Dh > 0 ? [Dh / 5, 5 * Dh] : null;
+    let alphaDirect = null;
+    if (Dh > 0 && used.length >= 3 && opts.share_from_amplitude !== false) {
+      const tmax = taus[L - 1], qhi = used[used.length - 1].q;
+      if (Dh * qhi * qhi * tmax < 0.3) {
+        let num = 0, den = 0, n = 0;
+        for (const r of used) {
+          if (!(r.Atot > 0) || !(r.gamma_hz * tmax > 5)) continue;
+          num += (r.y[L - 1] + r.y[L - 2] + r.y[L - 3]) / 3 - r.B; den += r.Atot; n++;
+        }
+        if (n >= 3 && den > 0) alphaDirect = Math.min(1, Math.max(0, num / den));
+      }
+    }
+    const shareFix = alphaDirect !== null ? { alpha: alphaDirect } : {};
+    const turnFix = Object.assign(turns ? {} : { b: 0, Dr: 0.2 }, shareFix);
     // global swimmer model: start from the compressed result
     yield { stage: "Fitting the swimmer model", frac: 0.94 };
     let swim = null;
@@ -3792,19 +3967,21 @@ A_est = 2 * aa.var - B_est
       // (cells that do not swim then look frozen, and frozen cells add nothing to the changes in the movie)
       // (the page passes D_from_cells: the bulk value the simulation uses, which the experimenter computes the same way
       // from the size and shape of the cells and the viscosity)
-      const Dh = opts.D_hint > 0 ? opts.D_hint : opts.D_from_cells === true && movie.truth && movie.truth.D_um2_s > 0 ? movie.truth.D_um2_s : 0;
       if (Dh > 0) {
         // first without turning; if that does not describe the data, with the turning of rods (b, D_R) free
         const st = { v: best.v_um_s, alpha: Math.max(0.05, best.alpha), spread: best.spread, D: Dh, b: 0.3, Dr: 0.3 };
         let g = fitSwimGlobal(kind, taus, used, st, Object.assign({ D: Dh }, turnFix));
-        if (!(g.cost <= 1.03 * best.cost) && !turns) g = fitSwimGlobal(kind, taus, used, st, { D: Dh });
+        if (!(g.cost <= 1.03 * best.cost) && !turns) g = fitSwimGlobal(kind, taus, used, st, Object.assign({ D: Dh }, shareFix));
         if (g.cost <= 1.03 * best.cost) { g.D_fixed = true; g.cost_free_D = best.cost; swim = g; }
       }
       // cells that do not swim at all (rods also fade as they turn, share b at rate 6 D_R): if this describes the data
       // about as well, no swimming is found (the swimmer model alone mistakes the turning of still rods for slow swimmers)
-      const still = fitSwimGlobal(kind, taus, used, { v: swim.v_um_s, alpha: 0, spread: swim.spread, D: 0.3, b: 0.3, Dr: 0.3 }, { alpha: 0, v: swim.v_um_s, spread: swim.spread });
+      const still = fitStill(taus, used, { v: swim.v_um_s, spread: swim.spread, D: Dh > 0 ? Dh : 0.3, Dr: 0.3 });
       swim.cost_still = still.cost;
-      if (still.cost <= 1.1 * swim.cost) { still.no_swim = true; still.cost_swim = swim.cost; still.perq = []; swim = still; }
+      // also when the swimmer fit itself finds next to no swimmers, or a small share of "swimmers" whose rates hardly grow
+      // with q (log-log slope under 0.5: rods that turn, not cells that swim)
+      // (or "swimmers" far faster than any rate in the data: v above 15 v0 of the compressed fits)
+      if (still.cost <= 1.1 * swim.cost || swim.alpha < 0.05 || (comp.slope < 0.5 && swim.alpha < 0.3) || swim.v_um_s > 15 * comp.v0_um_s || swim.v_um_s < 0.3 * comp.v0_um_s) { still.no_swim = true; still.cost_swim = swim.cost; still.perq = []; swim = still; }
       // per-q speed and fraction with spread and D fixed: the speed should not depend on q
       if (!swim.no_swim) swim.perq = used.map(function (r) {
         const g = fitSwimGlobal(kind, taus, [r], { v: swim.v_um_s, alpha: swim.alpha, spread: swim.spread, D: swim.D_um2_s }, { spread: swim.spread, D: swim.D_um2_s, b: swim.turn_share, Dr: swim.D_r_s });
@@ -3827,9 +4004,51 @@ A_est = 2 * aa.var - B_est
         return { q: r.q, v_um_s: g.v_um_s, alpha: g.alpha };
       });
     }
+    // 3D swimmers with a stroke (opts.stroke): the cost on a grid of stroke frequencies and amplitudes with the rest from
+    // the straight model, then a full fit from the best point (the cost has many local minima in f)
+    let swimStrokeFit = null;
+    const sk = opts.stroke_dir === "across" ? "strokex" : "stroke";   // stroke along the axis or across it
+    if (swim && !swim.no_swim && kind === "3d" && opts.stroke === true && !swimDepth) {
+      yield { stage: "Fitting the stroke", frac: 0.955 };
+      // D: the value expected from the cells when given (the straight model may have bent it to mimic the stroke)
+      const Dst = Dh > 0 ? Dh : swim.D_um2_s;
+      const base = { v: swim.v_um_s, alpha: swim.alpha, spread: swim.spread, D: Dst, b: swim.turn_share, Dr: swim.D_r_s };
+      const fb = new Float64Array(L);
+      const costAt = function (par) {
+        let c = 0;
+        for (const r of used) { for (let i = 0; i < L; i++) fb[i] = swimF(sk, r.q, taus[i], par); const ab = boundAB(r, fb); for (let i = 0; i < L; i++) { const e = (ab.A * (1 - fb[i]) + ab.B - r.y[i]) / r.scale; c += e * e; } }
+        return c;
+      };
+      const fNyq = 0.5 / taus[0];
+      let bestP = null, bestC = Infinity;
+      const sub = used.filter(function (r, j) { return j % 3 === 1; });   // the grid on a third of the q is enough to find the valley
+      const costSub = function (par) { let c = 0; for (const r of sub) { for (let i = 0; i < L; i++) fb[i] = swimF(sk, r.q, taus[i], par); const ab = boundAB(r, fb); for (let i = 0; i < L; i++) { const e = (ab.A * (1 - fb[i]) + ab.B - r.y[i]) / r.scale; c += e * e; } } return c; };
+      for (const fz of [2, 3, 5, 8, 12, 16, 20, 25, 32, 40, 50, 63, 80, 100, 130, 160, 200]) {
+        if (fz >= 0.9 * fNyq) continue;
+        for (const Az of [0.3, 0.7, 1.5, 3, 6, 12]) for (const a0 of [base.alpha, 0.95]) for (const vf of [1, 1.15]) {
+          const par = Object.assign({}, base, { A: Az, f: fz, alpha: a0, v: base.v * vf }), c = sub.length ? costSub(par) : costAt(par);
+          if (c < bestC) { bestC = c; bestP = par; }
+        }
+      }
+      if (bestP) {
+        // fitted on every other q (the stroke model is slow), with D from the straight model; compared on all q
+        const fixS = Object.assign({ D: Dst }, turnFix), half = used.filter(function (r, j) { return j % 2 === 0; });
+        const g = fitSwimGlobal(sk, taus, half.length >= 3 ? half : used, bestP, fixS);
+        g.cost = costAt({ v: g.v_um_s, alpha: g.alpha, spread: g.spread, D: g.D_um2_s, b: g.turn_share, Dr: g.D_r_s, A: g.stroke_um, f: g.stroke_hz });
+        g.ab = used.map(function (r) { for (let i = 0; i < L; i++) fb[i] = swimF(sk, r.q, taus[i], { v: g.v_um_s, alpha: g.alpha, spread: g.spread, D: g.D_um2_s, b: g.turn_share, Dr: g.D_r_s, A: g.stroke_um, f: g.stroke_hz }); return boundAB(r, fb); });
+        if (g.cost < swim.cost) {
+          if (swim.D_fixed) g.D_fixed = true;
+          g.perq = used.map(function (r) {
+            const h = fitSwimGlobal(sk, taus, [r], { v: g.v_um_s, alpha: g.alpha, spread: g.spread, D: g.D_um2_s, A: g.stroke_um, f: g.stroke_hz }, { spread: g.spread, D: g.D_um2_s, b: g.turn_share, Dr: g.D_r_s, A: g.stroke_um, f: g.stroke_hz });
+            return { q: r.q, v_um_s: h.v_um_s, alpha: h.alpha };
+          });
+          swimStrokeFit = g;
+        }
+      }
+    }
     // amplitude and noise used to normalise f(q, dt): from the swimmer fit (it has the slow part of the particles that
     // do not swim), else from the compressed fits
-    const head = swimDepth || swim;
+    const head = swimDepth || swimStrokeFit || swim;
     used.forEach(function (r, j) { const ab = head && head.ab[j] && head.ab[j].A > 0 ? head.ab[j] : null; r.An = ab ? ab.A : r.A; r.Bn = ab ? ab.B : r.B; });
     // speed distributions
     yield { stage: "Speed distribution", frac: 0.97 };
@@ -3865,15 +4084,17 @@ A_est = 2 * aa.var - B_est
     // model where the q is used, the compressed exponential elsewhere)
     const fits = rows.map(function (r) {
       const curve = new Float64Array(L), u = r.reason === null && head;
-      if (u) { const par = { v: head.v_um_s, alpha: head.alpha, spread: head.spread, D: head.D_um2_s, b: head.turn_share, Dr: head.D_r_s }; for (let i = 0; i < L; i++) curve[i] = r.An * (1 - (head === swimDepth ? depthF(r.depth, taus[i], par) : swimF(kind, r.q, taus[i], par))) + r.Bn; }
+      if (u) { const jj = used.indexOf(r), bq = head.kind === "still" && head.ab[jj] ? head.ab[jj].b : head.turn_share;
+               const par = { v: head.v_um_s, alpha: head.alpha, spread: head.spread, D: head.D_um2_s, b: bq, Dr: head.D_r_s, A: head.stroke_um, f: head.stroke_hz }; for (let i = 0; i < L; i++) curve[i] = r.An * (1 - (head === swimDepth ? depthF(r.depth, taus[i], par) : swimF(head === swimStrokeFit ? sk : kind, r.q, taus[i], par))) + r.Bn; }
       else for (let i = 0; i < L; i++) curve[i] = r.A * (1 - Math.exp(-Math.pow(r.gamma_hz * taus[i], r.fixed.beta))) + r.B;
       return { bin: r.bin, q_per_um: r.q, ok: r.ok, reason: r.reason, A: u ? r.An : r.A, B: u ? r.Bn : r.B, gamma_hz: r.gamma_hz, beta: r.fixed.beta, beta_free: r.beta_free, lnGamma_se: r.lnGamma_se, curve: curve };
     });
-    return { kind: kind, model: head === swimDepth && swimDepth ? "depth" : kind, lags: S.lags, taus_s: taus, q_per_um: S.q_per_um, dq: S.dq, d2d: S.d2d, varq: S.varq, B_floor: S.B_floor, B_est: S.B_est, A_est: S.A_est,
-             fits: fits, head: head ? { no_swim: head.no_swim === true, D_fixed: head.D_fixed === true, v_um_s: head.no_swim ? null : head.v_um_s, alpha: head.alpha, spread: head.spread, D_um2_s: head.D_um2_s, turn_share: head.turn_share, D_r_s: head.D_r_s, v_rel_err: head.v_rel_err, alpha_err: head.alpha_err, spread_err: head.spread_err, perq: head.perq } : null,
+    D_LIMITS = null;
+    return { kind: kind, model: head === swimDepth && swimDepth ? "depth" : head === swimStrokeFit && swimStrokeFit ? "stroke" : kind, lags: S.lags, taus_s: taus, q_per_um: S.q_per_um, dq: S.dq, d2d: S.d2d, varq: S.varq, B_floor: S.B_floor, B_est: S.B_est, A_est: S.A_est,
+             fits: fits, share_from_amplitude: alphaDirect, head: head ? { no_swim: head.no_swim === true, D_fixed: head.D_fixed === true, v_um_s: head.no_swim ? null : head.v_um_s, alpha: head.alpha, spread: head.spread, D_um2_s: head.D_um2_s, turn_share: head.turn_share, D_r_s: head.D_r_s, v_rel_err: head.v_rel_err, alpha_err: head.alpha_err, spread_err: head.spread_err, stroke_um: head === swimStrokeFit ? head.stroke_um : null, stroke_hz: head === swimStrokeFit ? head.stroke_hz : null, perq: head.perq } : null,
              window: { q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, q_opt_per_um: S.q_opt_per_um, q_nyq_per_um: S.q_nyq_per_um, gamma_lo_hz: S.gamma_lo_hz, gamma_hi_hz: S.gamma_hi_hz },
              rows: rows.map(function (r) { return { bin: r.bin, q_per_um: r.q, A: r.A, B: r.B, gamma_hz: r.gamma_hz, beta_free: r.beta_free, gamma_free_hz: r.free.gamma_hz, lnGamma_se: r.lnGamma_se, reason: r.reason }; }),
-             compressed: comp, swim: strip(swim), swim_depth: strip(swimDepth), pv: pv, master: master };
+             compressed: comp, swim: strip(swim), swim_depth: strip(swimDepth), swim_stroke: strip(swimStrokeFit), pv: pv, master: master };
   }
 
   function strip(g) { if (!g) return null; const o = Object.assign({}, g); delete o.ab; if (o.no_swim) o.v_um_s = null; return o; }
@@ -3890,7 +4111,7 @@ A_est = 2 * aa.var - B_est
     return { fraction: fs / qs.length, v_mean_um_s: nv ? vs / nv : null };
   }
 
-  const api = { summary: summary, depthTable: depthTable, depthF: depthF, seenOver: seenOver, analyse: analyse, swimF: swimF, swim3: swim3, swim2: swim2, besselJ0: besselJ0, nnls: nnls, invertCurve: invertCurve, fitSwimGlobal: fitSwimGlobal, fitCompressed: fitCompressed, linAB: linAB };
+  const api = { fitStill: fitStill, summary: summary, depthTable: depthTable, depthF: depthF, seenOver: seenOver, analyse: analyse, swimF: swimF, swim3: swim3, swim2: swim2, besselJ0: besselJ0, nnls: nnls, invertCurve: invertCurve, fitSwimGlobal: fitSwimGlobal, fitCompressed: fitCompressed, linAB: linAB };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ACTIVE = api;
 })(this);
 
@@ -4066,7 +4287,54 @@ A_est = 2 * aa.var - B_est
     frame_rate_hz: 50, exposure_ms: 1,
     shape: "rod", aspect: 2.5, dn: 0, dn_body: 0, polarizer: "off", analyzer: "off", pol_angle_deg: 90, extinction: 1e-4,
     swim_frac: 0.6, swim_v: 20, swim_spread: 0.3, swim_geom: "3d", swim_rot: 0.1, swim_tumble: 0,
-    swim_model: "auto", q_min: null, q_max: null, seed: 1
+    swim_model: "auto", q_min: null, q_max: null, seed: 1,
+    organism: "model", swim_osc_amp: 0, swim_osc_hz: 20, swim_osc_dir: "along", drag: 1
+  };
+  // Microorganisms measured with DDM, with the values reported in the papers (marked "assumed" where a paper gives none).
+  // Each entry changes the sample, and the microscope and recording to those of the paper where they fit the page.
+  const PH10 = { mode: "phase", objective: objIndexByName("CFI Plan Fluor DLL 10X") };
+  const BFOBJ = function (name, nac) { return { mode: "brightfield", objective: objIndexByName(name), condenser: "lwd", na_c: nac }; };
+  const ORGANISMS = {
+    model: { label: "Example: E. coli-like rods on straight runs (the start of this page)", set: {},
+      text: "Not a real strain: E. coli-sized rods (2 x 0.8 " + MU + "m) that swim in straight lines without tumbling, a clean case for the model." },
+    ecoli_wt: { label: "E. coli, wild type (AB1157): run and tumble", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0.58, swim_v: 13.7, swim_spread: 0.51, swim_tumble: 0.42, q_min: 0.3 }),
+      text: "Mean speed 13.7 " + MU + "m/s, spread 7.0 " + MU + "m/s, 58 % swimming, 10x phase contrast at 100 frames/s (Wilson et al. 2011). Runs of about 2.4 s between tumbles (Kurzthaler et al. 2024). Cells 2.4 x 0.86 " + MU + "m (Schwarz-Linek et al. 2016). The fit starts at q = 0.3 " + MU + "m\u207b\u00b9: over longer distances the tumbles bend the runs, which the model leaves out (Wilson et al. used q from 0.5)." },
+    ecoli_smooth: { label: "E. coli, smooth swimmer (cheY deletion): no tumbles", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0.585, swim_v: 10.9, swim_spread: 0.59, swim_tumble: 0 }),
+      text: "AB1157 without cheY: the motors never reverse, so the cells never tumble. Mean speed 10.9 " + MU + "m/s, spread 6.4 " + MU + "m/s, 58.5 % swimming, D = 0.35 " + MU + "m\u00b2/s (Martinez et al. 2012)." },
+    ecoli_glucose: { label: "E. coli, wild type with glucose: faster", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0.7, swim_v: 22, swim_spread: 0.5, swim_tumble: 0.42, q_min: 0.3 }),
+      text: "Glucose in the motility buffer raises the speed by about half, up to about 25 " + MU + "m/s (Jepson et al. 2013; Schwarz-Linek et al. 2016). Speed 22 and share 70 % assumed within the reported ranges." },
+    ecoli_pvp: { label: "E. coli, wild type in a polymer solution (PVP 360k, 1 %)", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0.58, swim_v: 15, swim_spread: 0.5, swim_tumble: 0.42, q_min: 0.3, liquid: "custom", n_liquid: 1.335, visc_mPa_s: 4 }),
+      text: "In 1 % PVP 360k (about 4 mPa s) the cells swim about as fast as in buffer (15 " + MU + "m/s), while the cells that do not swim diffuse four times more slowly (Martinez et al. 2014)." },
+    ecoli_light: { label: "E. coli powered by light (proteorhodopsin, AD10), light on", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0.8, swim_v: 9.5, swim_spread: 0.5, swim_tumble: 0 }),
+      text: "Smooth swimmers that run on light once the oxygen is used up: 9.5 " + MU + "m/s at about 5 mW/cm\u00b2 of green light, up to about 27 " + MU + "m/s in brighter light (Arlt et al. 2018). Share and spread assumed." },
+    ecoli_dark: { label: "E. coli powered by light (AD10), light off", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0.01, swim_v: 9.5, swim_spread: 0.5, swim_tumble: 0 }),
+      text: "Within a second of switching the light off fewer than 1 % of the cells still swim (Arlt et al. 2018)." },
+    ecoli_nz1: { label: "E. coli with tunable tumbling (NZ1), much IPTG", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0.95, swim_v: 23.5, swim_spread: 0.25, swim_tumble: 0.1 }),
+      text: "IPTG switches on cheZ: without it the cells tumble all the time, with more of it the runs get longer, by about two orders of magnitude in persistence length; speed about 23.5 " + MU + "m/s (Kurzthaler et al. 2024). Runs of 10 s assumed here." },
+    ecoli_mota: { label: "E. coli, paralysed flagella (motA): no swimming", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0, drag: 1.02 }),
+      text: "The motors have no stators, so the flagella do not turn. The cells only diffuse: D = 0.30 " + MU + "m\u00b2/s (Wilson et al. 2011) or 0.29 (Jepson et al. 2013), slowed by the flagella they carry." },
+    ecoli_flif: { label: "E. coli without flagella (fliF): no swimming", set: Object.assign({}, PH10, { diameter_um: 2.4, aspect: 2.8, swim_frac: 0, drag: 0.76 }),
+      text: "No flagella at all: D = 0.39 " + MU + "m\u00b2/s, faster than cells with paralysed flagella (Jepson et al. 2013)." },
+    ecoli_dh5a: { label: "E. coli DH5alpha, no flagella, in dark field", set: { mode: "darkfield", df_kind: "annulus", annulus: "Ph3", objective: objIndexByName("CFI Plan Fluor 10X"), diameter_um: 1.8, aspect: 2, swim_frac: 0, liquid: "custom", n_liquid: 1.34, visc_mPa_s: 2.1 },
+      text: "Non-motile cells in PBS with Percoll (to stop them sinking). Dark field sees them turn: D_t = 0.149 " + MU + "m\u00b2/s and D_R = 0.165 s\u207b\u00b9 (Cerbino et al. 2017; Lattuada et al. 2025). Size and viscosity chosen here to give both." },
+    salmonella: { label: "Salmonella Typhimurium (SJW1103)", set: Object.assign({}, BFOBJ("CFI Plan Fluor 10X", 0.1), { diameter_um: 2.5, aspect: 3.1, swim_frac: 0.8, swim_v: 21.2, swim_spread: 0.53, swim_tumble: 0, frame_rate_hz: 100 }),
+      text: "Mean speed 21.2 " + MU + "m/s, spread 11.3 " + MU + "m/s, 80 % swimming, D = 0.28 " + MU + "m\u00b2/s; 10x bright field (Germain et al. 2016, a student lab). Size assumed; tumbles left out." },
+    bsubtilis: { label: "Bacillus subtilis", set: Object.assign({}, PH10, { diameter_um: 4, aspect: 5, swim_frac: 0.9, swim_v: 55, swim_spread: 0.5 }),
+      text: "Measured by confocal DDM in a dense suspension: rate = v\u2080 q with v\u2080 = 24.9 " + MU + "m/s and a compressed exponential of exponent 1.35 (Lu et al. 2012; Lattuada et al. 2025). That exponent points to a broad spread of speeds and a mean speed of about 2.2 v\u2080. Here as a dilute sample; cells 4 x 0.8 " + MU + "m, spread 50 % and share assumed." },
+    chlamy: { label: "Chlamydomonas reinhardtii (alga): swims with a breaststroke", set: Object.assign({}, BFOBJ("CFI Plan Fluor 4X", 0.1), { shape: "sphere", diameter_um: 10, phi: 0.01, cell_um: 200, swim_frac: 0.9, swim_v: 89.6, swim_spread: 0.28, swim_rot: 0.2, swim_osc_amp: 0.98, swim_osc_hz: 48.6, swim_osc_dir: "along", roi: 256, frame_rate_hz: 500, exposure_ms: 0.5, n_frames: 512 }),
+      text: "Wild type CCAP 11/32B, about 10 " + MU + "m. Each stroke of the two flagella pulls the cell forward and part of the way back: mean speed 89.6 " + MU + "m/s, spread 24.9 " + MU + "m/s, back-and-forth of 0.98 " + MU + "m at 48.6 Hz; 4x bright field at 1000 frames/s (Martinez et al. 2012). Share assumed. Its helical path (Croze et al. 2019) is not simulated." },
+    euglena: { label: "Euglena gracilis (alga), in the dark", set: Object.assign({}, BFOBJ("CFI Plan Achromat 1X", 0.03), { diameter_um: 50, aspect: 5, phi: 0.01, cell_um: 150, swim_frac: 0.9, swim_v: 80, swim_spread: 0.17, swim_rot: 0.011, frame_rate_hz: 25, exposure_ms: 5, n_frames: 512, q_max: 0.4 }),
+      text: "About 50 x 10 " + MU + "m. In the dark: speed 79.7 " + MU + "m/s and straight runs over about 3.7 mm (Li et al. 2025, bright field at 10 frames/s). Here 1x bright field at 25 frames/s. The runs are set by a slow wobble of the direction; the Levy walks of that paper are not simulated. Share assumed. The cells are long: patterns finer than a cell renew mostly where its ends pass, so the speed comes out about 10 % low (see the card Long cells)." },
+    euglena_light: { label: "Euglena gracilis in blue light (0.6 W/m\u00b2)", set: Object.assign({}, BFOBJ("CFI Plan Achromat 1X", 0.03), { diameter_um: 50, aspect: 5, phi: 0.01, cell_um: 150, swim_frac: 0.9, swim_v: 63, swim_spread: 0.17, swim_rot: 0.26, frame_rate_hz: 25, exposure_ms: 5, n_frames: 512, q_max: 0.4 }),
+      text: "Blue light makes the cells turn more: speed 63 " + MU + "m/s and runs of only about 120 " + MU + "m (Li et al. 2025)." },
+    sperm: { label: "Bull sperm, fresh, diluted 25 times", set: Object.assign({}, BFOBJ("CFI Plan Achromat 2X", 0.05), { shape: "sphere", diameter_um: 5, phi: 0.004, cell_um: 50, T_C: 37, swim_frac: 0.61, swim_v: 111, swim_spread: 0.43, swim_rot: 0.2, swim_osc_amp: 4.2, swim_osc_hz: 16, swim_osc_dir: "across", roi: 256, frame_rate_hz: 200, exposure_ms: 0.5, n_frames: 512 }),
+      text: "Speed 111 " + MU + "m/s, spread 48 " + MU + "m/s, 61 % swimming, head moving sideways by 4.2 " + MU + "m at 16 Hz, at 37 " + DEG + "C (Jepson et al. 2019). The head is drawn as a 5 " + MU + "m ball; the cells are denser here than in the paper, for a fair count in this small field." },
+    sperm_50: { label: "Bull sperm, fresh, diluted 50 times", set: Object.assign({}, BFOBJ("CFI Plan Achromat 2X", 0.05), { shape: "sphere", diameter_um: 5, phi: 0.004, cell_um: 50, T_C: 37, swim_frac: 0.25, swim_v: 107, swim_spread: 0.43, swim_rot: 0.2, swim_osc_amp: 4.0, swim_osc_hz: 13.6, swim_osc_dir: "across", roi: 256, frame_rate_hz: 200, exposure_ms: 0.5, n_frames: 512 }),
+      text: "25 % swimming, 107 " + MU + "m/s, head 4.0 " + MU + "m at 13.6 Hz (Jepson et al. 2019; spread as for the 25-fold sample)." },
+    sperm_thawed: { label: "Bull sperm, frozen and thawed", set: Object.assign({}, BFOBJ("CFI Plan Achromat 2X", 0.05), { shape: "sphere", diameter_um: 5, phi: 0.004, cell_um: 50, T_C: 37, swim_frac: 0.42, swim_v: 82, swim_spread: 0.43, swim_rot: 0.2, swim_osc_amp: 3.2, swim_osc_hz: 14, swim_osc_dir: "across", roi: 256, frame_rate_hz: 200, exposure_ms: 0.5, n_frames: 512 }),
+      text: "42 % swimming, 82 " + MU + "m/s, head 3.2 " + MU + "m at 14 Hz (Jepson et al. 2019)." },
+    sperm_dead: { label: "Bull sperm, thawed and mixed with dead cells", set: Object.assign({}, BFOBJ("CFI Plan Achromat 2X", 0.05), { shape: "sphere", diameter_um: 5, phi: 0.004, cell_um: 50, T_C: 37, swim_frac: 0.15, swim_v: 76, swim_spread: 0.43, swim_rot: 0.2, swim_osc_amp: 2.6, swim_osc_hz: 17, swim_osc_dir: "across", roi: 256, frame_rate_hz: 200, exposure_ms: 0.5, n_frames: 512 }),
+      text: "15 % swimming, 76 " + MU + "m/s, head 2.6 " + MU + "m at 17 Hz (Jepson et al. 2019)." }
   };
   let state = Object.assign({}, BASE);
   const LEVEL_RANK = { curious: 1, student: 2, researcher: 3 };
@@ -4142,9 +4410,11 @@ A_est = 2 * aa.var - B_est
   function swimModel() {
     if (state.swim_model !== "auto") return state.swim_model;
     if (state.swim_geom === "glass") return "plane";
-    return state.mode === "spinning" || state.mode === "scanning" ? "depth" : "wilson";
+    if (state.mode === "spinning" || state.mode === "scanning") return "depth";
+    return state.swim_osc_amp > 0 ? (state.swim_osc_dir === "across" ? "strokex" : "stroke") : "wilson";
   }
-  const MODEL_LABEL = { wilson: "3D swimmers (Wilson et al. 2011)", depth: "3D swimmers seen through the depth of field", plane: "swimmers in the image plane" };
+  const MODEL_LABEL = { wilson: "3D swimmers (Wilson et al. 2011)", depth: "3D swimmers seen through the depth of field", plane: "swimmers in the image plane",
+    stroke: "3D swimmers with a stroke along their path (Martinez et al. 2012)", strokex: "3D swimmers with a sideways stroke" };
   function detectorConfig() {
     if (SCANNING()) {
       const sc = SCANNERS[state.scanner], tl = sc.line(state.scan_px);
@@ -4208,14 +4478,18 @@ A_est = 2 * aa.var - B_est
       shape: state.shape, aspect: BODY() ? Math.max(state.shape === "rod" ? 2 : 1, state.aspect) : 1, birefringence: state.shape === "sphere" || !TRANS() ? 0 : state.shape === "bisphere" ? state.dn : state.dn_body, polarization: polarization(),
       volume_fraction: state.phi, liquid: liquidSpec(), T_C: state.T_C, cell_um: state.cell_um, focus_um: state.focus_frac * state.cell_um,
       drift_um_s: state.drift_um_s, gravity: false, walls: state.swim_geom === "glass", vector: useVector(),
+      // rods narrower than the smallest spot the optics make are drawn as a line of points (much faster)
+      thin_bodies: state.shape !== "sphere" && state.diameter_um / Math.max(1, state.aspect) < spotWidth(),
       swim: { fraction: state.swim_frac, v_um_s: state.swim_v, v_spread: state.swim_spread, rot_diff_s: state.swim_rot, tumble_hz: state.swim_tumble,
-              plane_fraction: state.swim_geom === "glass" ? 1 : 0, plane_still: state.swim_geom === "glass", height_um: glassHeight() }
+              plane_fraction: state.swim_geom === "glass" ? 1 : 0, plane_still: state.swim_geom === "glass", height_um: glassHeight(),
+              osc_amp_um: state.swim_osc_amp, osc_hz: state.swim_osc_hz, osc_dir: state.swim_osc_dir },
+      drag_factor: state.drag
     };
   }
   // automatic upper end of the q range: patterns at least about twice the cell length (3 / length), so that a cell
   // looks the same after a short step except at its ends only for patterns the analysis leaves out
-  function autoQmax() { return 3 / Math.max(0.3, state.diameter_um); }
-  function analysisOptions() { const m = swimModel(); return { q_min_per_um: state.q_min, q_max_per_um: state.q_max !== null ? state.q_max : autoQmax(), beta: null, kind: m === "plane" ? "2d" : "3d", depth: m === "depth", D_from_cells: true }; }
+  function autoQmax() { return state.shape === "sphere" || state.swim_frac === 0 ? null : 3 / Math.max(0.3, state.diameter_um); }   // long cells only (see the card "Long cells")
+  function analysisOptions() { const m = swimModel(); return { q_min_per_um: state.q_min, q_max_per_um: state.q_max !== null ? state.q_max : autoQmax(), beta: null, kind: m === "plane" ? "2d" : "3d", depth: m === "depth", stroke: m === "stroke" || m === "strokex", stroke_dir: m === "strokex" ? "across" : "along", D_from_cells: true }; }
   // centre height of cells lying on the bottom glass: half their thickness plus a 0.2 um gap
   function glassHeight() { const g = geometry(); return Math.min(g.a_par, g.a_perp) + 0.2; }
 
@@ -4227,18 +4501,23 @@ A_est = 2 * aa.var - B_est
   const TURNS = function () { return state.shape !== "sphere"; };
   const objOptions = function () { return OBJECTIVES.map(function (o, i) { return [i, o.n.replace(/^CFI /, "") + "  (" + o.m + "x, NA " + o.na + (o.im !== "dry" ? ", " + o.im : "") + ")", o.s]; }); };
   const CONTROLS = [
+    { key: "organism", group: "Sample", lvl: 1, label: "Organism", kind: "select", options: Object.keys(ORGANISMS).map(function (k) { return [k, ORGANISMS[k].label]; }), hint: function () { const o = ORGANISMS[state.organism]; return (o ? o.text : "") + " You can change every setting afterwards."; } },
     { key: "shape", group: "Sample", lvl: 1, label: "Cell shape", kind: "select", options: function () { return Object.keys(SHAPES).filter(function (k) { return state.mode !== "dic" || k === "sphere"; }).map(function (k) { return [k, SHAPES[k]]; }); }, hint: function () { return state.mode === "dic" ? "DIC is simulated for spheres only." : shapeHint(); } },
     { key: "swim_frac", group: "Sample", lvl: 1, label: "Share of cells that swim", kind: "lin", min: 0, max: 1, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, hint: "The others only diffuse (dead or non-motile cells)." },
-    { key: "swim_v", group: "Sample", lvl: 1, label: "Mean swimming speed", kind: "log", min: 1, max: 100, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m/s"; } },
+    { key: "swim_v", group: "Sample", lvl: 1, label: "Mean swimming speed", kind: "log", min: 1, max: 200, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m/s"; } },
     { key: "swim_spread", group: "Sample", lvl: 2, label: "Spread of speeds (relative standard deviation)", kind: "lin", min: 0.05, max: 0.9, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, hint: "Schulz (gamma) distribution of speeds, as in Wilson et al. 2011." },
     { key: "swim_geom", group: "Sample", lvl: 1, label: "Where they swim", kind: "select", options: [["3d", "Everywhere in the cell, in all directions"], ["glass", "Along the bottom glass, in the plane"]], hint: function () { return state.swim_geom === "glass" ? "All cells lie on the glass, " + fmtSig(glassHeight(), 2) + " " + MU + "m above it at their centre; the focus is put there. Many bacteria swim this way near surfaces." : ""; } },
     { key: "swim_tumble", group: "Sample", lvl: 2, label: "Tumbles (new random direction)", kind: "lin", min: 0, max: 5, step: 0.1, fmt: function (v) { return v === 0 ? "none: straight runs" : fmtSig(v, 2) + " per second"; }, hint: function () { return state.swim_tumble > 0 ? "A run lasts " + fmtSig(1 / state.swim_tumble, 2) + " s on average, about " + fmtSig(state.swim_v / state.swim_tumble, 2) + " " + MU + "m. The swimmer models assume straight runs, so the largest patterns read slow." : "E. coli tumbles about once per second; smooth-swimming mutants do not."; } },
     { key: "swim_rot", group: "Sample", lvl: 3, label: "Rotational diffusion of swimmers", kind: "log", min: 0.01, max: 5, fmt: function (v) { return fmtSig(v, 2) + " s\u207b\u00b9"; }, hint: "Slow wobbling of the swimming direction (about 0.1 s\u207b\u00b9 for E. coli)." },
+    { key: "swim_osc_amp", group: "Sample", lvl: 2, label: "Stroke: back-and-forth of each swimmer", kind: "lin", min: 0, max: 10, step: 0.1, fmt: function (v) { return v === 0 ? "none" : fmtSig(v, 2) + " " + MU + "m"; }, hint: "Algae and sperm do not swim smoothly: each beat moves the cell (or the head) back and forth about its mean path." },
+    { key: "swim_osc_hz", group: "Sample", lvl: 2, label: "Stroke: beats per second", kind: "log", min: 1, max: 100, fmt: function (v) { return fmtSig(v, 3) + " Hz"; }, when: function () { return state.swim_osc_amp > 0; }, hint: function () { return state.frame_rate_hz < 2.2 * state.swim_osc_hz ? "The camera takes fewer than two frames per beat: the stroke cannot be seen." : ""; } },
+    { key: "swim_osc_dir", group: "Sample", lvl: 3, label: "Stroke: direction", kind: "select", options: [["along", "Along the swimming direction (Chlamydomonas)"], ["across", "Across it (sperm head)"]], when: function () { return state.swim_osc_amp > 0; } },
+    { key: "drag", group: "Sample", lvl: 3, label: "Drag relative to a plain rod of this size", kind: "log", min: 0.5, max: 3, fmt: function (v) { return fmtSig(v, 2) + "x"; }, hint: function () { return "Diffusion of the cells: " + fmtSig(hydro().D_t / state.drag, 2) + " " + MU + "m\u00b2/s. Flagella, turning or not, add drag."; } },
     { key: "particle", group: "Sample", lvl: 3, label: "Material", kind: "select", options: function () { return SHAPE_MATERIALS[state.shape].map(function (k) { return [k, MATERIALS[k]]; }); } },
     { key: "n_custom", group: "Sample", lvl: 1, label: function () { return state.shape === "bisphere" ? "Ordinary refractive index (n_o)" : "Particle refractive index"; }, kind: "lin", min: 1.3, max: 2.6, step: 0.01, fmt: function (v) { return v.toFixed(2); }, when: function () { return state.particle === "custom"; } },
-    { key: "diameter_um", group: "Sample", lvl: 2, label: function () { return SIZE_LABEL[state.shape]; }, kind: "log", min: 0.3, max: 8, fmt: fmtSize },
+    { key: "diameter_um", group: "Sample", lvl: 2, label: function () { return SIZE_LABEL[state.shape]; }, kind: "log", min: 0.3, max: 60, fmt: fmtSize },
     { key: "aspect", group: "Sample", lvl: 2, label: function () { return ASPECT_LABEL[state.shape] || "Aspect ratio"; }, kind: "log", min: 1.2, max: 20, fmt: function (v) { return fmtSig(Math.max(state.shape === "rod" ? 2 : 1, v), 2); }, when: BODY, hint: function () { return state.shape === "rod" && state.aspect < 2 ? "Rods are simulated from aspect ratio 2 (the friction formulas hold from there)." : ""; } },
-    { key: "phi", group: "Sample", lvl: 2, label: "Concentration (volume fraction)", kind: "log", min: 1e-6, max: 1e-2, fmt: fmtPhi, hint: function () { return particleCount() + " cells in the simulated volume." + (phiCapped ? " Lowered to fit what the browser can follow (" + MAX_PARTICLES + " cells even in the smallest simulated field)." : "") + (phiRaised ? " Raised so that a few cells are in the simulated field." : ""); } },
+    { key: "phi", group: "Sample", lvl: 2, label: "Concentration (volume fraction)", kind: "log", min: 1e-6, max: 5e-2, fmt: fmtPhi, hint: function () { return particleCount() + " cells in the simulated volume." + (phiCapped ? " Lowered to fit what the browser can follow (" + MAX_PARTICLES + " cells even in the smallest simulated field)." : "") + (phiRaised ? " Raised so that a few cells are in the simulated field." : ""); } },
     { key: "liquid", group: "Sample", lvl: 2, label: "Liquid", kind: "select", options: Object.keys(LIQUIDS).map(function (k) { return [k, LIQUIDS[k]]; }) },
     { key: "glycerol_w", group: "Sample", lvl: 2, label: "Glycerol (by mass)", kind: "lin", min: 0, max: 0.95, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, when: function () { return state.liquid === "glycerol"; } },
     { key: "n_liquid", group: "Sample", lvl: 3, label: "Liquid refractive index", kind: "lin", min: 1.30, max: 1.60, step: 0.005, fmt: function (v) { return v.toFixed(3); }, when: function () { return state.liquid === "custom"; } },
@@ -4285,14 +4564,14 @@ A_est = 2 * aa.var - B_est
       hint: function () { return "The browser holds up to " + maxFrames(simPx()) + " frames at " + simPx() + " x " + simPx() + " pixels; asking for more makes the simulated image smaller."; } },
     { key: "sim_px", group: "Camera and recording", lvl: 3, label: "Simulated part of the image", kind: "select", num: true, options: [[64, "64 x 64 pixels (fast)"], [128, "128 x 128 pixels"], [256, "256 x 256 pixels (slow)"]] },
 
-    { key: "swim_model", group: "Analysis", lvl: 2, label: "Swimmer model fitted to all q", kind: "select", options: [["auto", "Automatic"], ["wilson", MODEL_LABEL.wilson], ["depth", MODEL_LABEL.depth], ["plane", MODEL_LABEL.plane]], hint: function () { return "In use: " + MODEL_LABEL[swimModel()] + "." + (swimModel() === "depth" ? " Uses how each pattern fades as a cell moves up or down through the focus, computed from the optics of this microscope." : ""); } },
+    { key: "swim_model", group: "Analysis", lvl: 2, label: "Swimmer model fitted to all q", kind: "select", options: [["auto", "Automatic"], ["wilson", MODEL_LABEL.wilson], ["depth", MODEL_LABEL.depth], ["plane", MODEL_LABEL.plane], ["stroke", MODEL_LABEL.stroke], ["strokex", MODEL_LABEL.strokex]], hint: function () { return "In use: " + MODEL_LABEL[swimModel()] + "." + (swimModel() === "depth" ? " Uses how each pattern fades as a cell moves up or down through the focus, computed from the optics of this microscope." : ""); } },
     { key: "qrange", group: "Analysis", lvl: 3, label: "Fit range in q (1/" + MU + "m)", kind: "qrange" }
   ];
   // where each control sits: the imaging mode, then everything about the sample, the light reaching it, and how the
   // light is collected and recorded. Every control appears exactly once (checked at start-up).
   const LAYOUT = [
     ["Imaging mode", ["mode"]],
-    ["Sample", ["shape", "swim_frac", "swim_v", "swim_spread", "swim_geom", "swim_tumble", "swim_rot", "particle", "n_custom", "diameter_um", "aspect", "phi", "dye", "liquid", "glycerol_w", "n_liquid", "visc_mPa_s", "T_C", "cell_um", "drift_um_s"]],
+    ["Sample", ["organism", "shape", "swim_frac", "swim_v", "swim_spread", "swim_geom", "swim_tumble", "swim_rot", "swim_osc_amp", "swim_osc_hz", "swim_osc_dir", "drag", "particle", "n_custom", "diameter_um", "aspect", "phi", "dye", "liquid", "glycerol_w", "n_liquid", "visc_mPa_s", "T_C", "cell_um", "drift_um_s"]],
     ["Illumination", ["source", "condenser", "na_c", "df_kind", "annulus", "light_frac", "df_light_e", "stray_frac", "rate_ph_ms", "bg_e_ms", "scan_rate"]],
     ["Detection", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg",
       "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "sim_px"]],
@@ -4469,6 +4748,7 @@ A_est = 2 * aa.var - B_est
   let lastKey = null;
   function onChange(key) {
     lastKey = key;
+    if (key === "organism") { applyPreset(Object.assign({ organism: state.organism }, ORGANISMS[state.organism].set)); return; }
     // switching to phase contrast with an objective that has no phase ring: take the phase objective of the same
     // magnification with the closest NA (Plan Fluor 20X -> Plan Fluor DLL 20X Ph1), so phase contrast is really on
     if (key === "mode" && state.mode === "phase" && !objRing()) {
@@ -4506,7 +4786,7 @@ A_est = 2 * aa.var - B_est
     });
     if (lv !== "researcher" && state.seed !== BASE.seed) { state.seed = BASE.seed; changed = true; }
     if (curveView === "d" && lv === "curious") setCurveView("change");
-    if (fromUser && location.hash !== "#" + lv) history.replaceState(null, "", "#" + lv);
+    if (fromUser && location.hash !== "#" + lv) { try { history.replaceState(null, "", "#" + lv); } catch (e) { /* sandboxed previews (about:srcdoc) refuse it */ } }
     constrain(); syncControls(); drawFov();
     if (changed) schedule(); else if (cache.res) renderAll();
   }
@@ -5156,12 +5436,14 @@ A_est = 2 * aa.var - B_est
     if (v.why) html += '<p class="small" style="margin:0">' + v.why + '</p>';
     if (h && h.no_swim) html += '<p class="small" style="margin:0">The curves are described as well by cells that only jiggle (and, for rods, turn) as by any share of swimmers.</p>';
     else if (h) html += '<p class="small" style="margin:0">Mean swimming speed and share of cells that swim (' + Math.round(100 * h.alpha) + ' %, true ' + Math.round(100 * st.share) + ' % as seen), from the model of ' + MODEL_LABEL[swimModel()] + ' fitted to all q at once. True mean speed ' + fmtV(swt.v_mean_um_s) + (Math.abs(st.v / swt.v_mean_um_s - 1) > 0.02 ? ', ' + fmtV(st.v) + ' as weighted by the signal' : '') + '.</p>';
+    if (h && h.stroke_um) html += '<p class="small" style="margin:0">Stroke of each swimmer: ' + fmtSig(h.stroke_um, 2) + ' ' + MU + 'm at ' + fmtSig(h.stroke_hz, 3) + ' Hz (true ' + fmtSig(swt.osc_amp_um || 0, 2) + ' ' + MU + 'm at ' + fmtSig(swt.osc_hz || 0, 3) + ' Hz' + (swt.osc_amp_um > 0 && swt.osc_dir === "across" && swimModel() === "stroke" ? '; the cells stroke sideways, the model assumes along' : '') + ').</p>';
     if (level !== "curious" && h) {
       const row = function (cls, name, vv, share, spread, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + fmtV(vv) + '</td><td>' + (share === null || share === undefined ? "-" : Math.round(100 * share) + " %") + '</td><td>' + (spread === null || spread === undefined ? "-" : Math.round(100 * spread) + " %") + '</td></tr>'; };
       let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">Mean speed</th><th scope="col">Swimming</th><th scope="col">Spread</th></tr></thead><tbody>';
       const isMain = function (m) { return swimModel() === m ? "main" : ""; };
       if (res.swim) t += row(isMain(res.kind === "2d" ? "plane" : "wilson"), res.kind === "2d" ? "Swimmers in the image plane" : "3D swimmers (Wilson et al. 2011)", res.swim.v_um_s, res.swim.alpha, res.swim.spread, isMain(res.kind === "2d" ? "plane" : "wilson") ? "the headline" : "");
       if (res.swim_depth) t += row("main", "3D swimmers, with the depth of field", res.swim_depth.v_um_s, res.swim_depth.alpha, res.swim_depth.spread, "the headline");
+      if (res.swim_stroke) t += row("main", MODEL_LABEL[swimModel() === "strokex" ? "strokex" : "stroke"], res.swim_stroke.v_um_s, res.swim_stroke.alpha, res.swim_stroke.spread, "the headline; stroke " + fmtSig(res.swim_stroke.stroke_um, 2) + " " + MU + "m at " + fmtSig(res.swim_stroke.stroke_hz, 3) + " Hz");
       if (res.pv) t += row("", "Distribution from the data, no shape assumed", res.pv.data_mean_swimmers_um_s, 1 - res.pv.data_still_share, null, "see the chart below");
       if (res.compressed) t += row("", "v\u2080 from rate = v\u2080 q (compressed exponential)", res.compressed.v0_um_s, null, null, "a speed scale, not the mean speed: in 3D about mean / 2.2");
       t += row("truth", "True (simulation)", st.v, st.share, st.spread, "weighted by the signal");
@@ -5173,6 +5455,7 @@ A_est = 2 * aa.var - B_est
       if (repeat && repeat.runs.length) html += renderRepeatTable();
       html += '<details class="more"><summary>Details</summary><dl>';
       html += '<dt>Diffusion of cells that do not swim</dt><dd>' + fmtSig(h.D_um2_s, 3) + ' ' + MU + 'm<sup>2</sup>/s ' + (h.D_fixed ? '(set from the size of the cells and the viscosity: the data agree with it)' : '(fitted; true ' + fmtSig(tr.D_um2_s, 3) + ')') + '</dd>';
+      if (h.no_swim && TURNS()) html += '<dt>Turning of the cells</dt><dd>rate 6 D<sub>R</sub> = ' + fmtSig(6 * h.D_r_s, 2) + ' s\u207b\u00b9 (true ' + (cache.movie.truth.rot_rate_s ? fmtSig(cache.movie.truth.rot_rate_s, 2) : '-') + '), seen in ' + Math.round(100 * (h.turn_share || 0)) + ' % of each pattern on average. The turning of rods is only roughly described by one rate, so both numbers come out approximate.</dd>';
       html += '<dt>Liquid</dt><dd>' + LIQUIDS[state.liquid] + (state.liquid === "glycerol" ? " " + Math.round(100 * state.glycerol_w) + " %" : "") + ', ' + state.T_C.toFixed(0) + ' &deg;C, ' + (mv.viscosity_Pa_s * 1000).toFixed(2) + ' mPa s</dd>';
       html += '<dt>Wave vectors used</dt><dd>' + res.used.length + (res.used.length ? ', ' + res.used[0].q_per_um.toFixed(2) + ' to ' + res.used[res.used.length - 1].q_per_um.toFixed(2) + ' ' + MU + 'm\u207b\u00b9' : '') + '</dd>';
       if (res.compressed) html += '<dt>Compressed exponential</dt><dd>exponent &beta; ' + res.compressed.beta_free_mean.toFixed(2) + ' (mean over q), v<sub>0</sub> ' + fmtV(res.compressed.v0_um_s) + ', slope ' + res.compressed.slope.toFixed(2) + '</dd>';
@@ -5205,7 +5488,8 @@ A_est = 2 * aa.var - B_est
     const m = cache.movie, cfg = cache.cfg, sw = m.truth.swim;
     const modeTxt = { brightfield: "a bright-field microscope", phase: "a phase-contrast microscope", darkfield: "a dark-field microscope", dic: "a DIC microscope", fluorescence: "a widefield fluorescence microscope", spinning: "a spinning-disk confocal microscope", scanning: "a point-scanning confocal microscope" }[state.mode];
     $("movie-text").textContent = "The movie shows " + (state.shape === "rod" ? fmtSize(cfg.diameter_um) + " long rod-shaped cells" : fmtSize(cfg.diameter_um) + " round cells") + ", filmed through " + modeTxt + " " + fmtNum(cfg.frame_rate_hz) + " times a second. " +
-      Math.round(100 * state.swim_frac) + " % of them swim, on average at " + fmtV(state.swim_v) + (state.swim_geom === "glass" ? ", along the bottom glass" : ", in all directions") + "; the others only jiggle. " + visibilityText(cfg, m) +
+      Math.round(100 * state.swim_frac) + " % of them swim, on average at " + fmtV(state.swim_v) + (state.swim_geom === "glass" ? ", along the bottom glass" : ", in all directions") + "; the others only jiggle. " +
+      (state.swim_osc_amp > 0 ? "Each swimmer also moves back and forth by " + fmtSig(state.swim_osc_amp, 2) + " " + MU + "m, " + fmtSig(state.swim_osc_hz, 3) + " times a second (" + (state.swim_osc_dir === "across" ? "sideways, like a sperm head" : "along its path, like an alga's breaststroke") + "). " : "") + visibilityText(cfg, m) +
       (state.swim_geom === "glass" ? "" : " Cells above and below the focal plane add wider, fainter blurs, and swimmers move in and out of focus.");
     $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s = " + fmtSig(m.T / m.frame_rate_hz, 3) + " s. Cell " + cfg.cell_um + " " + MU + "m thick, focus " + fmtSig(cfg.focus_um, 2) + " " + MU + "m above the bottom, " + m.info.n_particles + " cells, " + sw.n_swimmers + " swimming.";
     $("diff-note").textContent = "A cell that moved leaves a pair of shapes, one darker and one brighter, at its old and its new place. Swimmers leave pairs that are far apart, cells that only jiggle leave close pairs.";
@@ -5231,11 +5515,13 @@ A_est = 2 * aa.var - B_est
     else if (h) {
       L.push("  Mean swimming speed: " + fmtSig(h.v_um_s, 3) + " um/s" + (h.v_rel_err ? " (+- " + (100 * h.v_rel_err).toFixed(1) + " %)" : "") + "; relative spread of speeds " + Math.round(100 * h.spread) + " %");
       L.push("  Share of cells that swim: " + Math.round(100 * h.alpha) + " %; diffusion of the others " + fmtSig(h.D_um2_s, 3) + " um^2/s");
+      if (h.stroke_um) L.push("  Stroke: " + fmtSig(h.stroke_um, 2) + " um at " + fmtSig(h.stroke_hz, 3) + " Hz");
       L.push("  Model: " + MODEL_LABEL[swimModel()] + ", fitted to " + r.used.length + " wave vectors at once (" + r.used[0].q_per_um.toFixed(2) + " to " + r.used[r.used.length - 1].q_per_um.toFixed(2) + " um^-1)");
       if (r.pv) L.push("  Distribution without an assumed shape: mean " + fmtSig(r.pv.data_mean_swimmers_um_s, 3) + " um/s, " + Math.round(100 * (1 - r.pv.data_still_share)) + " % swimming");
       if (r.compressed) L.push("  Compressed exponential: v0 = " + fmtSig(r.compressed.v0_um_s, 3) + " um/s from Gamma = v0 q (not the mean speed), mean exponent " + r.compressed.beta_free_mean.toFixed(2));
     } else L.push("  No result: too few usable wave vectors.");
     L.push("");
+    L.push("Organism: " + ORGANISMS[state.organism].label + (state.organism === "model" ? "" : " (settings after the cited paper; see the page)"));
     L.push("Sample (simulated): " + (state.shape === "rod" ? "rods " + fmtSize(cfg.diameter_um) + " long, aspect ratio " + fmtSig(cfg.aspect, 2) : "spheres " + fmtSize(cfg.diameter_um)) + "; " + mv.info.n_particles + " cells, " + tr.swim.n_swimmers + " swimming" + (state.swim_geom === "glass" ? " along the glass" : " in 3D") + (state.swim_tumble > 0 ? ", " + fmtSig(state.swim_tumble, 2) + " tumbles per second" : ", straight runs") + "; " + LIQUIDS[state.liquid] + ", " + state.T_C.toFixed(0) + " C, cell " + cfg.cell_um + " um, focus " + fmtSig(cfg.focus_um, 2) + " um above the bottom");
     L.push("Microscope (simulated): Nikon Ti2-E, " + objective().n + ", " + ($("c-mode").selectedOptions[0].textContent) + "; " + mv.n + " x " + mv.n + " pixels of " + fmtSig(mv.pixel_um, 3) + " um, " + mv.T + " frames at " + fmtNum(mv.frame_rate_hz) + " frames/s");
     L.push("True values: mean speed " + fmtSig(tr.swim.v_mean_um_s, 3) + " um/s (relative spread " + Math.round(100 * tr.swim.v_sd_um_s / Math.max(1e-9, tr.swim.v_mean_um_s)) + " %), " + Math.round(100 * tr.swim.fraction) + " % swimming; as seen by the microscope over the q used: " + fmtSig(seenTruth().v, 3) + " um/s, " + Math.round(100 * seenTruth().share) + " %.");
@@ -5264,6 +5550,8 @@ A_est = 2 * aa.var - B_est
       shows: [{ label: "Spinning disk 20x, Wilson's model", set: SPIN20("wilson"), go: "step-rates" }, { label: "Spinning disk 20x, with the depth of field", set: SPIN20("depth"), go: "step-rates" }, { label: "Spinning disk 60x water, Wilson's model", set: SPIN60("wilson"), go: "step-rates", lvl: 2 }, { label: "Spinning disk 60x water, with the depth of field", set: SPIN60("depth"), go: "step-rates", lvl: 2 }] },
     { lvl: 2, title: "Tumbles", text: "E. coli runs for about a second, then tumbles and swims off in a new direction. Over distances longer than a run the cells get less far than on a straight line, so the widest patterns renew more slowly and the speed from them comes out low. The models here assume straight runs; use the finer patterns, or a model with tumbles (Kurzthaler et al. 2024).",
       shows: [{ label: "One tumble per second", set: { swim_tumble: 1 }, go: "step-rates" }, { label: "Three per second", set: { swim_tumble: 3 }, go: "step-rates" }] },
+    { lvl: 2, title: "Algae and sperm: the stroke", text: "Chlamydomonas pulls itself forward with a breaststroke of its two flagella, about 50 times a second, and slips back a little each time. Its curves dip and rise again once per beat. Wilson's model, made for gliding bacteria, ignores the stroke and reads the speed somewhat low; the model with the stroke (Martinez et al. 2012) gets the speed, the size of the stroke and the beat. The camera must take at least two frames per beat.",
+      shows: [{ label: "Chlamydomonas, model with the stroke", set: Object.assign({ organism: "chlamy" }, ORGANISMS.chlamy.set), go: "step-curves" }, { label: "The same, Wilson's model", set: Object.assign({ organism: "chlamy", swim_model: "wilson" }, ORGANISMS.chlamy.set), go: "step-rates" }, { label: "Bull sperm (head moving sideways)", set: Object.assign({ organism: "sperm" }, ORGANISMS.sperm.set), go: "step-rates", lvl: 2 }] },
     { lvl: 2, title: "Long cells", text: "A long rod that swims along its own axis looks the same after a short step, except near its ends. For stripes finer than its length the image changes mainly where the ends pass, so these patterns renew more slowly than the speed suggests and the speed from them comes out low. The page therefore keeps, by default, to patterns more than about twice as wide as the cells (q below 3 / length). For rods this long only a few such patterns fit in the field, so the speed then scatters by about 10 % from movie to movie, and the share of swimmers is not reliable: the still rods also fade as they turn. A larger field (lower magnification) helps.",
       shows: [{ label: "Rods 5 " + MU + "m long, all q", set: { diameter_um: 5, aspect: 6, phi: 1.5e-3, q_max: 5 }, go: "step-rates" }, { label: "The same, automatic range (up to 3 / length)", set: { diameter_um: 5, aspect: 6, phi: 1.5e-3 }, go: "step-rates" }] },
     { lvl: 2, title: "Dark field and fluorescence", text: "The same assay in other contrasts. Dark field shows the cells bright on black with a low-NA objective and a phase annulus. Widefield fluorescence needs labelled cells and collects light from far out of focus, which adds some of the confocal problem.",
@@ -5363,6 +5651,8 @@ A_est = 2 * aa.var - B_est
   // hook for automated checks of the page (reads settings, applies a preset; changes nothing by itself)
   window.DDM_PAGE = {
     preset: applyPreset, state: function () { return JSON.parse(JSON.stringify(state)); },
+    organisms: function () { return Object.keys(ORGANISMS); }, organism: function (k) { state.organism = k; onChange("organism"); },
+    stroke: function () { const h = cache && cache.res && cache.res.head; return h ? { A: h.stroke_um, f: h.stroke_hz } : null; },
     controls: function () { return CONTROLS.filter(function (c) { return c.kind !== "qrange" && (!c.when || c.when()); }).map(function (c) {
       const opts = c.kind === "objective" ? OBJECTIVES.map(function (o, i) { return i; }) : c.kind === "select" ? (typeof c.options === "function" ? c.options() : c.options).map(function (o) { return o[0]; }) : null;
       return { key: c.key, kind: c.kind, lvl: c.lvl, min: c.min, max: c.max, options: opts };

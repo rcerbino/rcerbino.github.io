@@ -15,6 +15,23 @@ function avg(kern, X, Z) { const n = 40000, umax = 1 + 12 / Math.sqrt(Z + 1); le
   check("3D swimmer factor (closed form) equals the average of sin(x)/x over Schulz speeds", w3 < 1e-4, "largest difference " + w3.toExponential(1));
   check("2D swimmer factor (Gauss-Laguerre) equals the average of J0 over Schulz speeds", w2 < 2e-3, "largest difference " + w2.toExponential(1));
 }
+// 1b. stroke models against Monte Carlo averages over speed, direction, phase (and the stroke direction about the path)
+{
+  const g = function () { let u = 0; while (u === 0) u = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * Math.random()); };
+  const gam = function (k) { const d = k - 1 / 3, c = 1 / Math.sqrt(9 * d); for (;;) { let x, w; do { x = g(); w = 1 + c * x; } while (w <= 0); w = w * w * w; if (Math.log(Math.random()) < 0.5 * x * x + d * (1 - w + Math.log(w))) return d * w; } };
+  let worst = 0;
+  for (const across of [false, true]) for (const q of [0.2, 0.8]) for (const t of [0.004, 0.012, 0.05]) {
+    const sp = 0.3, k = 1 / (sp * sp), vm = 90, Am = 2, f = 40, N = 120000; let s = 0;
+    for (let i = 0; i < N; i++) {
+      const v = vm * gam(k) / k, mu = 2 * Math.random() - 1, ph = 2 * Math.PI * Math.random(), sv = Am * (Math.sin(2 * Math.PI * f * t + ph) - Math.sin(ph));
+      // along: q.u = q mu; across: q.e = q sqrt(1 - mu^2) cos(psi)
+      const qe = across ? q * Math.sqrt(1 - mu * mu) * Math.cos(2 * Math.PI * Math.random()) : q * mu;
+      s += Math.cos(q * mu * v * t + qe * sv);
+    }
+    worst = Math.max(worst, Math.abs(s / N - A.swimF(across ? "strokex" : "stroke", q, t, { v: vm, alpha: 1, spread: sp, D: 0, A: Am, f: f })));
+  }
+  check("stroke models (along and across the path) equal Monte Carlo averages", worst < 0.01, "largest difference " + worst.toFixed(4));
+}
 // 2. inversion of a known f(x): Schulz speeds (Z = 8, mean 20 um/s) in 3D and in 2D
 for (const kind of ["3d", "2d"]) {
   const Z = 8, vm = 20, vg = []; for (let k = 1; k <= 60; k++) vg.push(k);
@@ -66,6 +83,17 @@ movieCase("no swimmers: still rods that turn are not taken for swimmers", { seed
   function (m, r) { return r.head && r.head.no_swim === true && r.head.alpha === 0; });
 movieCase("all swim: the share is found (diffusion set from the cell size)", { seed: 3, swim: { fraction: 1, v_um_s: 20, v_spread: 0.3, rot_diff_s: 0.1 } }, { q_max_per_um: 1.5 },
   function (m, r) { const s = m.truth.swim; return r.swim && r.swim.alpha > 0.95 && Math.abs(r.swim.v_um_s / s.v_mean_um_s - 1) < 0.05; });
+// 4b. Chlamydomonas-like swimmers with a breaststroke: the stroke model finds speed, amplitude and frequency
+{
+  const cfg = { seed: 1, mode: "brightfield", objective: { mag: 4, na: 0.1 }, illum: { na_in: 0, na_out: 0.05 }, pupil: { kind: "none" }, source: "halogen", homodyne: true, light_frac: 0.5, df_light_e: 1e7, stray_frac: 1e-4,
+    detector: { kind: "camera", pixel_um: 6.5, binning: 1, bin_charge: false, qe: 0.8, read_noise_e: 1.6, full_well_e: 30000, timing: "global", t_row_s: 0, rows_total: 128, crop_row0: 0 },
+    n_px: 128, n_frames: 512, frame_rate_hz: 500, exposure_s: 0.0005, shape: "sphere", diameter_um: 10, particle: "bacterium", size_spread: 0, volume_fraction: 0.02,
+    liquid: { n: 1.335, viscosity_mPa_s: 0.95 }, T_C: 22, cell_um: 100, focus_um: 50, drift_um_s: 0,
+    swim: { fraction: 0.9, v_um_s: 89.6, v_spread: 0.28, rot_diff_s: 0.2, osc_amp_um: 0.98, osc_hz: 48.6, osc_dir: "along" } };
+  const m = DDM.runToEnd(MOVIE.simulate(cfg)), r = DDM.runToEnd(A.analyse(m, { stroke: true, D_from_cells: true })), st = r.swim_stroke, tv = m.truth.swim.v_mean_um_s;
+  check("breaststroke (Chlamydomonas-like): speed within 5 %, stroke within 10 %, beat within 2 %", st && Math.abs(st.v_um_s / tv - 1) < 0.05 && Math.abs(st.stroke_um / 0.98 - 1) < 0.1 && Math.abs(st.stroke_hz / 48.6 - 1) < 0.02,
+    st ? "v " + st.v_um_s.toFixed(1) + " (true " + tv.toFixed(1) + "), A " + st.stroke_um.toFixed(2) + " um, f " + st.stroke_hz.toFixed(1) + " Hz; Wilson's model v " + r.swim.v_um_s.toFixed(1) : "no stroke fit");
+}
 // 5. confocal (spinning disk, 20x NA 0.75): swimmers leave the thin slice. Wilson's model reads the speed high, the
 // model with the depth response of the microscope gets it right
 {

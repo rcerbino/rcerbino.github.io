@@ -84,6 +84,14 @@ function unwrap(tr, i, T) {   // unwrapped positions of tracked particle i
   for (let t = T - 100; t < T; t++) for (let i = 0; i < tr.n; i++) { const h = tr.H[t * tr.n + i]; if (h > 5 && h < 15) mid++; n++; }
   check("walls: after many crossings half of the swimmers are in the middle half of the cell", Math.abs(mid / n - 0.5) < 0.06, (100 * mid / n).toFixed(1) + " % in the middle half");
 }
+// 4c. stroke: same mean paths as without it (its phases have their own random stream), different images, in the truth
+{
+  const a = DDM.runToEnd(MOVIE.simulate(base({ n_frames: 40, swim: { fraction: 1, v_um_s: 20, v_spread: 0, rot_diff_s: 0 } })));
+  const b = DDM.runToEnd(MOVIE.simulate(base({ n_frames: 40, swim: { fraction: 1, v_um_s: 20, v_spread: 0, rot_diff_s: 0, osc_amp_um: 1, osc_hz: 10, osc_dir: "along" } })));
+  let same = true; for (let k = 0; k < a.test_track.X.length; k += 7) if (a.test_track.X[k] !== b.test_track.X[k]) same = false;
+  let diff = 0; for (let k = 0; k < a.frames.length; k += 13) diff += Math.abs(a.frames[k] - b.frames[k]);
+  check("stroke: same mean paths, different images, recorded in the truth", same && diff > 0 && b.truth.swim.osc_amp_um === 1 && b.truth.swim.osc_hz === 10);
+}
 // 5. fraction 0
 {
   const a = DDM.runToEnd(MOVIE.simulate(base({ test_track: false, n_frames: 20 })));

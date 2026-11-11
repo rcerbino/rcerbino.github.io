@@ -554,7 +554,7 @@
     });
     if (lv !== "researcher" && state.seed !== BASE.seed) { state.seed = BASE.seed; changed = true; }
     if (curveView === "d" && lv === "curious") setCurveView("change");
-    if (fromUser && location.hash !== "#" + lv) history.replaceState(null, "", "#" + lv);
+    if (fromUser && location.hash !== "#" + lv) { try { history.replaceState(null, "", "#" + lv); } catch (e) { /* sandboxed previews (about:srcdoc) refuse it */ } }
     constrain(); syncControls(); drawFov();
     if (changed) schedule(); else if (cache.res) renderAll();
   }

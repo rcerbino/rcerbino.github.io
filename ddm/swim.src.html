@@ -421,6 +421,9 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
           <p><b>The depth of field.</b> Wilson's model counts only sideways motion. A cell at depth <i>z</i> adds <i>K</i>(<i>q</i>, <i>z</i>) e<sup>&minus;<i>i</i><b>q</b>&middot;<b>x</b></sup> to the image, with <i>K</i> the optical kernel of step 1, so a swimmer that also moves up or down fades from each pattern. With <i>C<sub>q</sub></i>(&delta;<i>z</i>) the overlap of <i>K</i>(<i>q</i>, <i>z</i>) and <i>K</i>(<i>q</i>, <i>z</i> + &delta;<i>z</i>) averaged over the cell, a swimmer that has moved <i>s</i> = <i>v</i>&Delta;<i>t</i> gives</p>
           <div class="eq"><i>h<sub>q</sub></i>(<i>s</i>) = &int;<sub>0</sub><sup>1</sup> d&mu; <i>J</i><sub>0</sub>(<i>qs</i> &radic;(1 &minus; &mu;<sup>2</sup>)) Re <i>C<sub>q</sub></i>(<i>s</i>&mu;)</div>
           <p>in place of the sine over its argument (they are equal when <i>C</i> = 1), averaged over the speeds; the cells that do not swim get <i>C<sub>q</sub></i> averaged over their axial diffusion. This model is used automatically in the confocal modes. As far as we know it has not been published.</p>
+          <p><b>The stroke.</b> Algae and sperm do not glide: each beat moves the cell, or the sperm head, back and forth about its mean path. Martinez et al. (2012) wrote the displacement as <i>v</i>&Delta;<i>t</i> + <i>A</i>[sin(2&pi;<i>f</i>&Delta;<i>t</i> + &phi;) &minus; sin &phi;], with a random phase &phi; for each cell. Averaged over &phi; and over the speeds, the sine over its argument of Wilson's model becomes</p>
+          <div class="eq">&int;<sub>0</sub><sup>1</sup> d&mu; &lang;cos(<i>q</i>&mu;<i>v</i>&Delta;<i>t</i>)&rang;<sub><i>v</i></sub> <i>J</i><sub>0</sub>(2<i>q</i>&mu;<i>A</i> |sin(&pi;<i>f</i>&Delta;<i>t</i>)|)</div>
+          <p>with &mu; the cosine between the path and <b>q</b>. The curves dip and rise again once per beat, so the camera needs at least two frames per beat. For a stroke across the path (the sperm head) in a random direction about it, the Bessel factor becomes <i>J</i><sub>0</sub>(<i>qA</i> |sin(&pi;<i>f</i>&Delta;<i>t</i>)| &radic;(1 &minus; &mu;<sup>2</sup>))<sup>2</sup>. The page fits <i>A</i> and <i>f</i> with the other parameters, after a search over a grid of beat frequencies.</p>
           <div class="lvl-3"><pre class="code">B_est, _ = fd.noise_est.estimate_camera_noise(aa, mode='polyfit', num_points=5)
 A_est = 2 * aa.var - B_est
 # swimmer model: write it as an lmfit model and fit all q together, as in
@@ -488,6 +491,24 @@ A_est = 2 * aa.var - B_est
     <h2 id="h-matters">What matters</h2>
     <p class="prose">Each card sets the bench to a typical problem and shows where to look. Use "Back to the standard sample" to start again.</p>
     <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-organisms">
+    <h2 id="h-organisms">The organisms on this page</h2>
+    <p class="prose">The <i>Organism</i> menu in step 1 sets up the bacteria, algae and sperm that have been measured with DDM, with the speeds, shares and strokes the papers report. Where a paper gives no value the page assumes one, and says so. Every setting can be changed afterwards.</p>
+    <ul class="lvl-2">
+      <li><b>E. coli</b>, wild type, smooth swimmers and paralysed cells: L. G. Wilson et al., <a href="https://doi.org/10.1103/PhysRevLett.106.018101">Phys. Rev. Lett. 106, 018101 (2011)</a>; V. A. Martinez et al., <a href="https://doi.org/10.1016/j.bpj.2012.08.045">Biophys. J. 103, 1637 (2012)</a>. Cells without flagella, and with glucose: A. Jepson et al., <a href="https://doi.org/10.1103/PhysRevE.88.041002">Enhanced diffusion of nonswimmers in a three-dimensional bath of motile bacteria</a>, Phys. Rev. E 88, 041002 (2013). Cell size and strains: J. Schwarz-Linek et al., <a href="https://doi.org/10.1016/j.colsurfb.2015.07.048">Escherichia coli as a model active colloid: a practical introduction</a>, Colloids Surf. B 137, 2 (2016).</li>
+      <li><b>E. coli in polymer solutions</b>: V. A. Martinez, J. Schwarz-Linek, M. Reufer, L. G. Wilson, A. N. Morozov and W. C. K. Poon, <a href="https://doi.org/10.1073/pnas.1415460111">Flagellated bacterial motility in polymer solutions</a>, PNAS 111, 17771 (2014).</li>
+      <li><b>E. coli powered by light</b>: J. Arlt, V. A. Martinez, A. Dawson, T. Pilizota and W. C. K. Poon, <a href="https://doi.org/10.1038/s41467-018-03161-8">Painting with light-powered bacteria</a>, Nat. Commun. 9, 768 (2018).</li>
+      <li><b>E. coli with tunable tumbling</b>: C. Kurzthaler et al., <a href="https://doi.org/10.1103/PhysRevLett.132.038302">Phys. Rev. Lett. 132, 038302 (2024)</a>.</li>
+      <li><b>E. coli seen turning in dark field</b>: R. Cerbino et al., <a href="https://doi.org/10.1088/1361-648X/aa9bc5">Dark field differential dynamic microscopy enables accurate characterization of the roto-translational dynamics of bacteria and colloidal clusters</a>, J. Phys.: Condens. Matter 30, 025901 (2018).</li>
+      <li><b>Salmonella Typhimurium</b>: D. Germain et al., <a href="https://arxiv.org/abs/1511.00923">Differential dynamic microscopy to characterize Brownian motion and bacteria motility</a>, Am. J. Phys. (2016).</li>
+      <li><b>Bacillus subtilis</b>: P. J. Lu et al., <a href="https://doi.org/10.1103/PhysRevLett.108.218103">Phys. Rev. Lett. 108, 218103 (2012)</a>, in a dense suspension, and the guide by E. Lattuada et al. (2025) below.</li>
+      <li><b>Chlamydomonas reinhardtii</b>: Martinez et al. (2012) above; for its helical path, O. A. Croze et al., <a href="https://arxiv.org/abs/1904.05183">Helical and oscillatory microswimmer motility statistics from differential dynamic microscopy</a>, New J. Phys. 21, 063012 (2019).</li>
+      <li><b>Euglena gracilis</b>: M.-Y. Li et al., <a href="https://arxiv.org/abs/2511.00775">Detecting active Levy particles using differential dynamic microscopy</a>, Phys. Rev. E (2025).</li>
+      <li><b>Bull sperm</b>: A. Jepson et al., <a href="https://doi.org/10.1371/journal.pone.0202720">High-throughput characterisation of bull semen motility using differential dynamic microscopy</a>, PLoS ONE 14, e0202720 (2019).</li>
+    </ul>
+    <p class="prose lvl-2">Not simulated: the helical paths of algae, the Levy walks of Euglena, the time a tumble takes, and swimmers whose shape changes as they swim (the sperm tail, the flagella of the alga). We found no DDM study of deflagellated algae.</p>
   </section>
 
   <section class="wrap further" aria-labelledby="h-beyond">
