@@ -308,10 +308,9 @@
    *   q_min_per_um, q_max_per_um (fit range chosen by the user; null = full measurable range),
    *   images (optional): "recorded" (default) or "squared_gradient"
    */
-  function* analyse(movie, opts) {
-    need(["simple", "stretched", "schulz", "two", "three"].indexOf(opts.fit_model) >= 0, "fit_model must be simple, stretched, schulz, two or three");
-    const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
-    need("q_min_per_um" in opts && "q_max_per_um" in opts, "q range missing (use null for the full range)");
+  /* Structure function d(q, dt) of a movie (2D per lag and azimuthally averaged), temporal variance, measurable
+   * window and noise estimate B(q) (A = 2 var - B). Shared by the sizing analysis and the swimmer analysis. */
+  function* structure(movie, opts) {
     const images = opts.images === undefined ? "recorded" : opts.images;
     need(images === "recorded" || images === "squared_gradient", "images must be recorded or squared_gradient");
     const sg = images === "squared_gradient";
@@ -419,6 +418,18 @@
       if (B_floor !== null) Bq = Math.min(B_floor, dq[0][b]);
       B_est[b] = Bq; A_est[b] = 2 * varq[b] - Bq;
     }
+    return { images: images, sg: sg, n: n, T: T, P: P, fft: fft, lags: lags, L: L, dt_s: dt_s, taus_s: taus_s, nb: nb, binOf: binOf, nmodes: nmodes,
+             q_per_um: q_per_um, d2d: d2d, dq: dq, varq: varq, q_lo_per_um: q_lo_per_um, q_nyq_per_um: q_nyq_per_um, q_opt_per_um: q_opt_per_um,
+             q_sig_per_um: q_sig_per_um, q_hi_per_um: q_hi_per_um, gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz, B_floor: B_floor, B_est: B_est, A_est: A_est };
+  }
+  function* analyse(movie, opts) {
+    need(["simple", "stretched", "schulz", "two", "three"].indexOf(opts.fit_model) >= 0, "fit_model must be simple, stretched, schulz, two or three");
+    const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
+    need("q_min_per_um" in opts && "q_max_per_um" in opts, "q range missing (use null for the full range)");
+    const S = yield* structure(movie, opts);
+    const images = S.images, n = S.n, T = S.T, P = S.P, fft = S.fft, lags = S.lags, L = S.L, taus_s = S.taus_s, nb = S.nb, binOf = S.binOf, nmodes = S.nmodes,
+      q_per_um = S.q_per_um, d2d = S.d2d, dq = S.dq, varq = S.varq, q_lo_per_um = S.q_lo_per_um, q_nyq_per_um = S.q_nyq_per_um, q_opt_per_um = S.q_opt_per_um,
+      q_hi_per_um = S.q_hi_per_um, gamma_lo_hz = S.gamma_lo_hz, gamma_hi_hz = S.gamma_hi_hz, B_floor = S.B_floor, B_est = S.B_est, A_est = S.A_est;
     // fit every q
     const stretched = opts.fit_model === "stretched", kind = opts.fit_model === "stretched" || opts.fit_model === "schulz" ? opts.fit_model : "simple";
     const fits = [];
@@ -1025,7 +1036,7 @@
   const api = {
     CAMERA_PIXEL_UM: CAMERA_PIXEL_UM, WAVELENGTH_UM: WAVELENGTH_UM,
     waterViscosity_Pa_s: waterViscosity_Pa_s, diffusion_um2_s: diffusion_um2_s, diameterFromD_um: diameterFromD_um,
-    simulate: simulate, analyse: analyse, structureMap: structureMap, runToEnd: runToEnd,
+    simulate: simulate, analyse: analyse, structure: structure, structureMap: structureMap, lm: lm, solve: solve, invert: invert, logspaceLags: logspaceLags, runToEnd: runToEnd,
     // compact result of one analysis for repeated measurements: D from the main fit and the cumulants, the q used and the truth
     repeatSummary: function (r, mv) {
       return { main_D: r.D ? r.D.D_um2_s : null, cum_D: r.cumulants && r.cumulants.D_um2_s ? r.cumulants.D_um2_s : null, cum_pi: r.cumulants && r.cumulants.pi !== null && r.cumulants.pi !== undefined ? r.cumulants.pi : null, sch_pi: r.cumulants && r.cumulants.schulz_shared ? r.cumulants.schulz_shared.pi : null,
