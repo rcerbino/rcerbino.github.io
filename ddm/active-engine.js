@@ -60,6 +60,73 @@
   function shapeOf(spread) { return 1 / (spread * spread) - 1; }
   // cells that do not swim but turn (rods): a share b of their signal depends on how they are turned and fades as
   // exp(-6 D_R t) (first orientation mode); b = 0 for round cells
+  /* Elongated swimmers swim along their axis. The image of a cell at wave vector q depends on the angle between q and
+   * the axis: for a cylinder of length L and radius R lying along u (q in the image plane, so the image is the body seen
+   * at q_z = 0, the blur of the optics being the same for every direction), |F|^2 = sinc^2(q mu L / 2) [2 J1(x) / x]^2,
+   * x = q R sqrt(1 - mu^2), mu = cos(q, u). A swimmer moves along u, so q.dr = q v t mu, and the swimmers are weighted
+   * by |F|^2 of their own direction:
+   *   S = int dmu w(mu) <cos(q v t mu)>_v / int dmu w(mu),  <cos(k v)>_v = (1 + L^2)^(-(Z+1)/2) cos((Z+1) atan L), L = k vmean / (Z+1)
+   * mu uniform on [0, 1] for 3D swimmers, mu = cos(phi) with phi uniform for swimmers in the plane. For w = 1 this is
+   * Wilson's sin(X)/X (3D) or J0 (2D). Point-like cells (q L small) give w = 1. Used when the size of the cells is known
+   * (opts.cell_length_um, opts.cell_width_um, or the cells of the movie when D_from_cells). */
+  let SHAPE = null;
+  const shapeCache = new Map();
+  function besselJ1(x) {
+    const ax = Math.abs(x);
+    if (ax < 8) {
+      const y = x * x;
+      const a = x * (72362614232.0 + y * (-7895059235.0 + y * (242396853.1 + y * (-2972611.439 + y * (15704.48260 + y * (-30.16036606))))));
+      const b = 144725228442.0 + y * (2300535178.0 + y * (18583304.74 + y * (99447.43394 + y * (376.9991397 + y))));
+      return a / b;
+    }
+    const z = 8 / ax, y = z * z, xx = ax - 2.356194491;
+    const a = 1.0 + y * (0.183105e-2 + y * (-0.3516396496e-4 + y * (0.2457520174e-5 + y * (-0.240337019e-6))));
+    const b = 0.04687499995 + y * (-0.2002690873e-3 + y * (0.8449199096e-5 + y * (-0.88228987e-6 + y * 0.105787412e-6)));
+    const ans = Math.sqrt(0.636619772 / ax) * (Math.cos(xx) * a - z * Math.sin(xx) * b);
+    return x < 0 ? -ans : ans;
+  }
+  // Gauss-Legendre nodes and weights on [0, 1]
+  const glCache = new Map();
+  function gaussLegendre(n) {
+    if (glCache.has(n)) return glCache.get(n);
+    const x = new Float64Array(n), w = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      let z = Math.cos(Math.PI * (i + 0.75) / (n + 0.5)), pp = 0;
+      for (let it = 0; it < 100; it++) {
+        let p1 = 1, p2 = 0; for (let j = 1; j <= n; j++) { const p3 = p2; p2 = p1; p1 = ((2 * j - 1) * z * p2 - (j - 1) * p3) / j; }
+        pp = n * (z * p1 - p2) / (z * z - 1); const z1 = z; z = z1 - p1 / pp; if (Math.abs(z - z1) < 1e-15) break;
+      }
+      x[i] = (1 - z) / 2; w[i] = 1 / ((1 - z * z) * pp * pp);    // on [0, 1]: (1 + t)/2 with t = -z, weight 2/((1-z^2) p'^2) / 2
+    }
+    const out = { x: x, w: w }; glCache.set(n, out); return out;
+  }
+  // weights of the swimmers by direction at one q (null when the cell is short against the pattern: Wilson's closed forms)
+  function shapeWeights(q, kind) {
+    const key = kind + ":" + q.toPrecision(6);
+    if (shapeCache.has(key)) return shapeCache.get(key);
+    const L = SHAPE.L, R = SHAPE.R, aMax = q * L / 2, xMax = q * R;
+    let out = null;
+    if (aMax > 0.3 || xMax > 0.3) {
+      const n = aMax < 2 ? 16 : aMax < 6 ? 24 : 40, G = gaussLegendre(n), mu = new Float64Array(n), w = new Float64Array(n);
+      let W = 0;
+      for (let k = 0; k < n; k++) {
+        const c = G.x[k];                                       // mu (3D) or phi / (pi/2) (2D)
+        const m = kind === "2d" ? Math.cos(c * Math.PI / 2) : c, a = q * m * L / 2, x = q * R * Math.sqrt(Math.max(0, 1 - m * m));
+        const sl = Math.abs(a) < 1e-8 ? 1 : Math.sin(a) / a, tr = x < 1e-8 ? 1 : 2 * besselJ1(x) / x;
+        mu[k] = m; w[k] = G.w[k] * sl * sl * tr * tr; W += w[k];
+      }
+      for (let k = 0; k < n; k++) w[k] /= W;
+      out = { mu: mu, w: w };
+    }
+    if (shapeCache.size > 4000) shapeCache.clear();
+    shapeCache.set(key, out); return out;
+  }
+  function swimShaped(W, X, Z) {
+    if (X < 1e-8) return 1;
+    let s = 0;
+    for (let k = 0; k < W.mu.length; k++) { const L = X * W.mu[k] / (Z + 1); s += W.w[k] * Math.pow(1 + L * L, -(Z + 1) / 2) * Math.cos((Z + 1) * Math.atan(L)); }
+    return s;
+  }
   // turning share at the j-th used q of a fit: its own value when the fit has one per q, else the common one
   function bOf(g, j) { return (g.kind === "still" || g.turn_perq) && g.ab && g.ab[j] && g.ab[j].b !== undefined ? g.ab[j].b : g.turn_share; }
   // the pattern that depends on the orientation (to lowest order cos 2 theta) fades at l (l + 1) D_R = 6 D_R for rods that
@@ -93,7 +160,8 @@
     return s * h / 3;
   }
   function swimF(kind, q, t, p) {   // p: { v, alpha, spread, D, b, Dr, A, f }
-    const Z = shapeOf(p.spread), X = q * p.v * t, S = kind === "2d" ? swim2(X, Z) : kind === "stroke" || kind === "strokex" ? swimStroke(q, t, p.v, Z, p.A, p.f, kind === "strokex") : swim3(X, Z);
+    const Z = shapeOf(p.spread), X = q * p.v * t, W = SHAPE && (kind === "3d" || kind === "2d") ? shapeWeights(q, kind) : null;
+    const S = W ? swimShaped(W, X, Z) : kind === "2d" ? swim2(X, Z) : kind === "stroke" || kind === "strokex" ? swimStroke(q, t, p.v, Z, p.A, p.f, kind === "strokex") : swim3(X, Z);
     return Math.exp(-p.D * q * q * t) * ((1 - p.alpha) * stillTurn(p, t) + p.alpha * S);
   }
 
@@ -465,6 +533,14 @@
     const Dh = opts.D_hint > 0 ? opts.D_hint : opts.D_from_cells === true && movie.truth && movie.truth.D_um2_s > 0 ? movie.truth.D_um2_s : 0;
     D_LIMITS = Dh > 0 ? [Dh / 5, 5 * Dh] : null;
     ROT = kind === "2d" ? 4 : 6;
+    // size of the cells for the swimmer model (elongated cells only): given, or those of the movie (known to the
+    // experimenter from the images, like D from the size and the viscosity)
+    SHAPE = null; shapeCache.clear();
+    if (opts.cell_shape !== false) {
+      const pc = movie.info && movie.info.particle, geo = pc && pc.oriented && pc.geometry;
+      if (opts.cell_length_um > 0) SHAPE = { L: opts.cell_length_um, R: (opts.cell_width_um > 0 ? opts.cell_width_um : 0) / 2 };
+      else if (opts.D_from_cells === true && geo && geo.kind === "cylinder" && geo.a_par > geo.a_perp) SHAPE = { L: 2 * geo.a_par, R: geo.a_perp };
+    }
     let alphaDirect = null;
     if (Dh > 0 && used.length >= 3 && opts.share_from_amplitude !== false && S.pairs) {
       // uneven frame times: per q, the delays after the swimmers have renewed the pattern and before the others have
@@ -650,7 +726,7 @@
       else for (let i = 0; i < L; i++) curve[i] = r.A * (1 - Math.exp(-Math.pow(r.gamma_hz * taus[i], r.fixed.beta))) + r.B;
       return { bin: r.bin, q_per_um: r.q, ok: r.ok, reason: r.reason, A: u ? r.An : r.A, B: u ? r.Bn : r.B, gamma_hz: r.gamma_hz, beta: r.fixed.beta, beta_free: r.beta_free, lnGamma_se: r.lnGamma_se, curve: curve };
     });
-    D_LIMITS = null; ROT = 6;
+    D_LIMITS = null; ROT = 6; SHAPE = null;
     return { kind: kind, model: head === swimDepth && swimDepth ? "depth" : head === swimStrokeFit && swimStrokeFit ? "stroke" : kind, lags: S.lags, pairs: S.pairs, times_s: S.times_s, taus_s: taus, curve_taus_s: ct, q_per_um: S.q_per_um, dq: S.dq, d2d: S.d2d, varq: S.varq, B_floor: S.B_floor, B_est: S.B_est, A_est: S.A_est,
              fits: fits, share_from_amplitude: alphaDirect, head: head ? { no_swim: head.no_swim === true, D_fixed: head.D_fixed === true, v_um_s: head.no_swim ? null : head.v_um_s, alpha: head.alpha, spread: head.spread, D_um2_s: head.D_um2_s, turn_share: head.turn_share, turn_perq: head.kind === "still" || head.turn_perq === true, turn_b: head.ab ? head.ab.map(function (x) { return x.b === undefined ? head.turn_share : x.b; }) : null, D_r_s: head.D_r_s, v_rel_err: head.v_rel_err, alpha_err: head.alpha_err, spread_err: head.spread_err, stroke_um: head === swimStrokeFit ? head.stroke_um : null, stroke_hz: head === swimStrokeFit ? head.stroke_hz : null, perq: head.perq } : null,
              window: { q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, q_opt_per_um: S.q_opt_per_um, q_nyq_per_um: S.q_nyq_per_um, gamma_lo_hz: S.gamma_lo_hz, gamma_hi_hz: S.gamma_hi_hz },

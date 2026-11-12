@@ -431,6 +431,9 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
           <div class="eq"><i>f</i> = e<sup>&minus;<i>Dq</i><sup>2</sup>&Delta;<i>t</i></sup> [ (1 &minus; &alpha;) + &alpha; &lang;sin(<i>qv</i>&Delta;<i>t</i>) / (<i>qv</i>&Delta;<i>t</i>)&rang;<sub><i>v</i></sub> ]</div>
           <div class="eq">&lang;sin(<i>qv</i>&Delta;<i>t</i>) / (<i>qv</i>&Delta;<i>t</i>)&rang;<sub><i>v</i></sub> = (<i>Z</i> + 1) sin(<i>Z</i> arctan &Lambda;) / [<i>Z</i> <i>qv&#772;</i>&Delta;<i>t</i> (1 + &Lambda;<sup>2</sup>)<sup><i>Z</i>/2</sup>], &nbsp; &Lambda; = <i>qv&#772;</i>&Delta;<i>t</i> / (<i>Z</i> + 1)</div>
           <p>The sine over its argument is the average of e<sup>&minus;<i>i</i><b>q</b>&middot;<b>v</b>&Delta;<i>t</i></sup> over directions in 3D. For cells swimming in the image plane the average over directions in the plane is the Bessel function <i>J</i><sub>0</sub>(<i>qv</i>&Delta;<i>t</i>) instead. The page fits &alpha;, <i>v&#772;</i>, &sigma; and <i>D</i> to all <i>q</i> at once; <i>A</i> and <i>B</i> of each <i>q</i> follow by linear least squares. Several starting points are tried and the best fit is kept.</p>
+          <p><b>The shape of the cells.</b> Wilson's model treats each cell as a point. A rod swims along its own axis <b>u</b>, and its image at <b>q</b> depends on the angle between the two: for a cylinder of length <i>L</i> and radius <i>R</i> the weight is |<i>F</i>|<sup>2</sup> = sinc<sup>2</sup>(<i>q&mu;L</i>/2) [2<i>J</i><sub>1</sub>(<i>x</i>)/<i>x</i>]<sup>2</sup>, with &mu; the cosine of the angle between <b>q</b> and <b>u</b> and <i>x</i> = <i>qR</i>(1 &minus; &mu;<sup>2</sup>)<sup>1/2</sup>. A swimmer moves along <b>u</b>, so <b>q</b>&middot;&Delta;<b>r</b> = <i>qv</i>&Delta;<i>t</i>&mu;, and the page averages over directions with this weight:</p>
+          <div class="eq">&lang;&hellip;&rang; = &int; d&mu; |<i>F</i>|<sup>2</sup> &lang;cos(<i>qv</i>&Delta;<i>t</i>&mu;)&rang;<sub><i>v</i></sub> / &int; d&mu; |<i>F</i>|<sup>2</sup>, &nbsp; &lang;cos(<i>k v</i>)&rang;<sub><i>v</i></sub> = cos((<i>Z</i> + 1) arctan &Lambda;) / (1 + &Lambda;<sup>2</sup>)<sup>(<i>Z</i>+1)/2</sup>, &nbsp; &Lambda; = <i>kv&#772;</i>/(<i>Z</i> + 1)</div>
+          <p>&mu; is spread evenly over [0, 1] for cells swimming in 3D, and &mu; = cos &phi; with &phi; spread evenly for cells in the plane; with |<i>F</i>|<sup>2</sup> = 1 this gives back the sine over its argument and <i>J</i><sub>0</sub>. When <i>qL</i> is large, the swimmers moving across <b>q</b>, which renew the pattern slowly, dominate. The length and width are those of the simulated cells, which an experimenter measures in the images. In a simulation with fluorescent 50 &mu;m Euglena the point model reads the speed 40 % low and the weighted model is within 1 %. In bright field at very low aperture the image of a thick cell is not its flat outline at patterns finer than its length, so the page keeps by default to patterns at least as wide as a cell is long.</p>
           <p><b>Two safeguards.</b> When the cells that do not swim barely move during the movie, a smaller &alpha; with a larger <i>A</i> describes the curves just as well (cells that stay put add nothing to the changes from frame to frame). So the page also tries <i>D</i> fixed at the value expected from the size and shape of the cells and the viscosity of the liquid, and keeps it when the data do not ask for another one (cost at most 3 % higher); for rods it may add the fading of the still cells as they turn, a share <i>b</i> at rate 6<i>D<sub>R</sub></i>. And it fits cells that do not swim at all (&alpha; = 0, with <i>b</i> and <i>D<sub>R</sub></i> free): if that is about as good (cost at most 10 % higher), it reports no swimming, because turning rods alone can pass for slow swimmers.</p>
           <p><b>The depth of field.</b> Wilson's model counts only sideways motion. A cell at depth <i>z</i> adds <i>K</i>(<i>q</i>, <i>z</i>) e<sup>&minus;<i>i</i><b>q</b>&middot;<b>x</b></sup> to the image, with <i>K</i> the optical kernel of step 1, so a swimmer that also moves up or down fades from each pattern. With <i>C<sub>q</sub></i>(&delta;<i>z</i>) the overlap of <i>K</i>(<i>q</i>, <i>z</i>) and <i>K</i>(<i>q</i>, <i>z</i> + &delta;<i>z</i>) averaged over the cell, a swimmer that has moved <i>s</i> = <i>v</i>&Delta;<i>t</i> gives</p>
           <div class="eq"><i>h<sub>q</sub></i>(<i>s</i>) = &int;<sub>0</sub><sup>1</sup> d&mu; <i>J</i><sub>0</sub>(<i>qs</i> &radic;(1 &minus; &mu;<sup>2</sup>)) Re <i>C<sub>q</sub></i>(<i>s</i>&mu;)</div>
@@ -3679,6 +3682,73 @@ A_est = 2 * aa.var - B_est
   function shapeOf(spread) { return 1 / (spread * spread) - 1; }
   // cells that do not swim but turn (rods): a share b of their signal depends on how they are turned and fades as
   // exp(-6 D_R t) (first orientation mode); b = 0 for round cells
+  /* Elongated swimmers swim along their axis. The image of a cell at wave vector q depends on the angle between q and
+   * the axis: for a cylinder of length L and radius R lying along u (q in the image plane, so the image is the body seen
+   * at q_z = 0, the blur of the optics being the same for every direction), |F|^2 = sinc^2(q mu L / 2) [2 J1(x) / x]^2,
+   * x = q R sqrt(1 - mu^2), mu = cos(q, u). A swimmer moves along u, so q.dr = q v t mu, and the swimmers are weighted
+   * by |F|^2 of their own direction:
+   *   S = int dmu w(mu) <cos(q v t mu)>_v / int dmu w(mu),  <cos(k v)>_v = (1 + L^2)^(-(Z+1)/2) cos((Z+1) atan L), L = k vmean / (Z+1)
+   * mu uniform on [0, 1] for 3D swimmers, mu = cos(phi) with phi uniform for swimmers in the plane. For w = 1 this is
+   * Wilson's sin(X)/X (3D) or J0 (2D). Point-like cells (q L small) give w = 1. Used when the size of the cells is known
+   * (opts.cell_length_um, opts.cell_width_um, or the cells of the movie when D_from_cells). */
+  let SHAPE = null;
+  const shapeCache = new Map();
+  function besselJ1(x) {
+    const ax = Math.abs(x);
+    if (ax < 8) {
+      const y = x * x;
+      const a = x * (72362614232.0 + y * (-7895059235.0 + y * (242396853.1 + y * (-2972611.439 + y * (15704.48260 + y * (-30.16036606))))));
+      const b = 144725228442.0 + y * (2300535178.0 + y * (18583304.74 + y * (99447.43394 + y * (376.9991397 + y))));
+      return a / b;
+    }
+    const z = 8 / ax, y = z * z, xx = ax - 2.356194491;
+    const a = 1.0 + y * (0.183105e-2 + y * (-0.3516396496e-4 + y * (0.2457520174e-5 + y * (-0.240337019e-6))));
+    const b = 0.04687499995 + y * (-0.2002690873e-3 + y * (0.8449199096e-5 + y * (-0.88228987e-6 + y * 0.105787412e-6)));
+    const ans = Math.sqrt(0.636619772 / ax) * (Math.cos(xx) * a - z * Math.sin(xx) * b);
+    return x < 0 ? -ans : ans;
+  }
+  // Gauss-Legendre nodes and weights on [0, 1]
+  const glCache = new Map();
+  function gaussLegendre(n) {
+    if (glCache.has(n)) return glCache.get(n);
+    const x = new Float64Array(n), w = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      let z = Math.cos(Math.PI * (i + 0.75) / (n + 0.5)), pp = 0;
+      for (let it = 0; it < 100; it++) {
+        let p1 = 1, p2 = 0; for (let j = 1; j <= n; j++) { const p3 = p2; p2 = p1; p1 = ((2 * j - 1) * z * p2 - (j - 1) * p3) / j; }
+        pp = n * (z * p1 - p2) / (z * z - 1); const z1 = z; z = z1 - p1 / pp; if (Math.abs(z - z1) < 1e-15) break;
+      }
+      x[i] = (1 - z) / 2; w[i] = 1 / ((1 - z * z) * pp * pp);    // on [0, 1]: (1 + t)/2 with t = -z, weight 2/((1-z^2) p'^2) / 2
+    }
+    const out = { x: x, w: w }; glCache.set(n, out); return out;
+  }
+  // weights of the swimmers by direction at one q (null when the cell is short against the pattern: Wilson's closed forms)
+  function shapeWeights(q, kind) {
+    const key = kind + ":" + q.toPrecision(6);
+    if (shapeCache.has(key)) return shapeCache.get(key);
+    const L = SHAPE.L, R = SHAPE.R, aMax = q * L / 2, xMax = q * R;
+    let out = null;
+    if (aMax > 0.3 || xMax > 0.3) {
+      const n = aMax < 2 ? 16 : aMax < 6 ? 24 : 40, G = gaussLegendre(n), mu = new Float64Array(n), w = new Float64Array(n);
+      let W = 0;
+      for (let k = 0; k < n; k++) {
+        const c = G.x[k];                                       // mu (3D) or phi / (pi/2) (2D)
+        const m = kind === "2d" ? Math.cos(c * Math.PI / 2) : c, a = q * m * L / 2, x = q * R * Math.sqrt(Math.max(0, 1 - m * m));
+        const sl = Math.abs(a) < 1e-8 ? 1 : Math.sin(a) / a, tr = x < 1e-8 ? 1 : 2 * besselJ1(x) / x;
+        mu[k] = m; w[k] = G.w[k] * sl * sl * tr * tr; W += w[k];
+      }
+      for (let k = 0; k < n; k++) w[k] /= W;
+      out = { mu: mu, w: w };
+    }
+    if (shapeCache.size > 4000) shapeCache.clear();
+    shapeCache.set(key, out); return out;
+  }
+  function swimShaped(W, X, Z) {
+    if (X < 1e-8) return 1;
+    let s = 0;
+    for (let k = 0; k < W.mu.length; k++) { const L = X * W.mu[k] / (Z + 1); s += W.w[k] * Math.pow(1 + L * L, -(Z + 1) / 2) * Math.cos((Z + 1) * Math.atan(L)); }
+    return s;
+  }
   // turning share at the j-th used q of a fit: its own value when the fit has one per q, else the common one
   function bOf(g, j) { return (g.kind === "still" || g.turn_perq) && g.ab && g.ab[j] && g.ab[j].b !== undefined ? g.ab[j].b : g.turn_share; }
   // the pattern that depends on the orientation (to lowest order cos 2 theta) fades at l (l + 1) D_R = 6 D_R for rods that
@@ -3712,7 +3782,8 @@ A_est = 2 * aa.var - B_est
     return s * h / 3;
   }
   function swimF(kind, q, t, p) {   // p: { v, alpha, spread, D, b, Dr, A, f }
-    const Z = shapeOf(p.spread), X = q * p.v * t, S = kind === "2d" ? swim2(X, Z) : kind === "stroke" || kind === "strokex" ? swimStroke(q, t, p.v, Z, p.A, p.f, kind === "strokex") : swim3(X, Z);
+    const Z = shapeOf(p.spread), X = q * p.v * t, W = SHAPE && (kind === "3d" || kind === "2d") ? shapeWeights(q, kind) : null;
+    const S = W ? swimShaped(W, X, Z) : kind === "2d" ? swim2(X, Z) : kind === "stroke" || kind === "strokex" ? swimStroke(q, t, p.v, Z, p.A, p.f, kind === "strokex") : swim3(X, Z);
     return Math.exp(-p.D * q * q * t) * ((1 - p.alpha) * stillTurn(p, t) + p.alpha * S);
   }
 
@@ -4084,6 +4155,14 @@ A_est = 2 * aa.var - B_est
     const Dh = opts.D_hint > 0 ? opts.D_hint : opts.D_from_cells === true && movie.truth && movie.truth.D_um2_s > 0 ? movie.truth.D_um2_s : 0;
     D_LIMITS = Dh > 0 ? [Dh / 5, 5 * Dh] : null;
     ROT = kind === "2d" ? 4 : 6;
+    // size of the cells for the swimmer model (elongated cells only): given, or those of the movie (known to the
+    // experimenter from the images, like D from the size and the viscosity)
+    SHAPE = null; shapeCache.clear();
+    if (opts.cell_shape !== false) {
+      const pc = movie.info && movie.info.particle, geo = pc && pc.oriented && pc.geometry;
+      if (opts.cell_length_um > 0) SHAPE = { L: opts.cell_length_um, R: (opts.cell_width_um > 0 ? opts.cell_width_um : 0) / 2 };
+      else if (opts.D_from_cells === true && geo && geo.kind === "cylinder" && geo.a_par > geo.a_perp) SHAPE = { L: 2 * geo.a_par, R: geo.a_perp };
+    }
     let alphaDirect = null;
     if (Dh > 0 && used.length >= 3 && opts.share_from_amplitude !== false && S.pairs) {
       // uneven frame times: per q, the delays after the swimmers have renewed the pattern and before the others have
@@ -4269,7 +4348,7 @@ A_est = 2 * aa.var - B_est
       else for (let i = 0; i < L; i++) curve[i] = r.A * (1 - Math.exp(-Math.pow(r.gamma_hz * taus[i], r.fixed.beta))) + r.B;
       return { bin: r.bin, q_per_um: r.q, ok: r.ok, reason: r.reason, A: u ? r.An : r.A, B: u ? r.Bn : r.B, gamma_hz: r.gamma_hz, beta: r.fixed.beta, beta_free: r.beta_free, lnGamma_se: r.lnGamma_se, curve: curve };
     });
-    D_LIMITS = null; ROT = 6;
+    D_LIMITS = null; ROT = 6; SHAPE = null;
     return { kind: kind, model: head === swimDepth && swimDepth ? "depth" : head === swimStrokeFit && swimStrokeFit ? "stroke" : kind, lags: S.lags, pairs: S.pairs, times_s: S.times_s, taus_s: taus, curve_taus_s: ct, q_per_um: S.q_per_um, dq: S.dq, d2d: S.d2d, varq: S.varq, B_floor: S.B_floor, B_est: S.B_est, A_est: S.A_est,
              fits: fits, share_from_amplitude: alphaDirect, head: head ? { no_swim: head.no_swim === true, D_fixed: head.D_fixed === true, v_um_s: head.no_swim ? null : head.v_um_s, alpha: head.alpha, spread: head.spread, D_um2_s: head.D_um2_s, turn_share: head.turn_share, turn_perq: head.kind === "still" || head.turn_perq === true, turn_b: head.ab ? head.ab.map(function (x) { return x.b === undefined ? head.turn_share : x.b; }) : null, D_r_s: head.D_r_s, v_rel_err: head.v_rel_err, alpha_err: head.alpha_err, spread_err: head.spread_err, stroke_um: head === swimStrokeFit ? head.stroke_um : null, stroke_hz: head === swimStrokeFit ? head.stroke_hz : null, perq: head.perq } : null,
              window: { q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, q_opt_per_um: S.q_opt_per_um, q_nyq_per_um: S.q_nyq_per_um, gamma_lo_hz: S.gamma_lo_hz, gamma_hi_hz: S.gamma_hi_hz },
@@ -4503,9 +4582,9 @@ A_est = 2 * aa.var - B_est
       text: "Measured by confocal DDM in a dense suspension: rate = v\u2080 q with v\u2080 = 24.9 " + MU + "m/s and a compressed exponential of exponent 1.35 (Lu et al. 2012; Lattuada et al. 2025). That exponent points to a broad spread of speeds and a mean speed of about 2.2 v\u2080. Here as a dilute sample; cells 4 x 0.8 " + MU + "m, spread 50 % and share assumed." },
     chlamy: { label: "Chlamydomonas reinhardtii (alga): swims with a breaststroke", set: Object.assign({}, BFOBJ("CFI Plan Fluor 4X", 0.1), { shape: "sphere", diameter_um: 10, phi: 0.01, cell_um: 200, swim_frac: 0.9, swim_v: 89.6, swim_spread: 0.28, swim_rot: 0.2, swim_osc_amp: 0.98, swim_osc_hz: 48.6, swim_osc_dir: "along", roi: 256, frame_rate_hz: 500, exposure_ms: 0.5, n_frames: 512 }),
       text: "Wild type CCAP 11/32B, about 10 " + MU + "m. Each stroke of the two flagella pulls the cell forward and part of the way back: mean speed 89.6 " + MU + "m/s, spread 24.9 " + MU + "m/s, back-and-forth of 0.98 " + MU + "m at 48.6 Hz; 4x bright field at 1000 frames/s (Martinez et al. 2012). Share assumed. Its helical path (Croze et al. 2019) is not simulated." },
-    euglena: { label: "Euglena gracilis (alga), in the dark", set: Object.assign({}, BFOBJ("CFI Plan Achromat 1X", 0.03), { diameter_um: 50, aspect: 5, phi: 0.01, cell_um: 150, swim_frac: 0.9, swim_v: 80, swim_spread: 0.17, swim_rot: 0.011, frame_rate_hz: 25, exposure_ms: 5, n_frames: 512, q_max: 0.4 }),
-      text: "About 50 x 10 " + MU + "m. In the dark: speed 79.7 " + MU + "m/s and straight runs over about 3.7 mm (Li et al. 2025, bright field at 10 frames/s). Here 1x bright field at 25 frames/s. The runs are set by a slow wobble of the direction; the Levy walks of that paper are not simulated. Share assumed. The cells are long: patterns finer than a cell renew mostly where its ends pass, so the speed comes out about 10 % low (see the card Long cells)." },
-    euglena_light: { label: "Euglena gracilis in blue light (0.6 W/m\u00b2)", set: Object.assign({}, BFOBJ("CFI Plan Achromat 1X", 0.03), { diameter_um: 50, aspect: 5, phi: 0.01, cell_um: 150, swim_frac: 0.9, swim_v: 63, swim_spread: 0.17, swim_rot: 0.26, frame_rate_hz: 25, exposure_ms: 5, n_frames: 512, q_max: 0.4 }),
+    euglena: { label: "Euglena gracilis (alga), in the dark", set: Object.assign({}, BFOBJ("CFI Plan Achromat 1X", 0.03), { diameter_um: 50, aspect: 5, phi: 0.01, cell_um: 150, swim_frac: 0.9, swim_v: 80, swim_spread: 0.17, swim_rot: 0.011, frame_rate_hz: 25, exposure_ms: 5, n_frames: 512 }),
+      text: "About 50 x 10 " + MU + "m. In the dark: speed 79.7 " + MU + "m/s and straight runs over about 3.7 mm (Li et al. 2025, bright field at 10 frames/s). Here 1x bright field at 25 frames/s. The runs are set by a slow wobble of the direction; the Levy walks of that paper are not simulated. Share assumed. The cells are long: a swimmer shows patterns along its own axis only faintly, which the model takes into account (see the card Long cells); patterns finer than a cell are left out." },
+    euglena_light: { label: "Euglena gracilis in blue light (0.6 W/m\u00b2)", set: Object.assign({}, BFOBJ("CFI Plan Achromat 1X", 0.03), { diameter_um: 50, aspect: 5, phi: 0.01, cell_um: 150, swim_frac: 0.9, swim_v: 63, swim_spread: 0.17, swim_rot: 0.26, frame_rate_hz: 25, exposure_ms: 5, n_frames: 512 }),
       text: "Blue light makes the cells turn more: speed 63 " + MU + "m/s and runs of only about 120 " + MU + "m (Li et al. 2025)." },
     sperm: { label: "Bull sperm, fresh, diluted 25 times", set: Object.assign({}, BFOBJ("CFI Plan Achromat 2X", 0.05), { shape: "sphere", diameter_um: 5, phi: 0.004, cell_um: 50, T_C: 37, swim_frac: 0.61, swim_v: 111, swim_spread: 0.43, swim_rot: 0.2, swim_osc_amp: 4.2, swim_osc_hz: 16, swim_osc_dir: "across", roi: 256, frame_rate_hz: 200, exposure_ms: 0.5, n_frames: 512 }),
       text: "Speed 111 " + MU + "m/s, spread 48 " + MU + "m/s, 61 % swimming, head moving sideways by 4.2 " + MU + "m at 16 Hz, at 37 " + DEG + "C (Jepson et al. 2019). The head is drawn as a 5 " + MU + "m ball; the cells are denser here than in the paper, for a fair count in this small field." },
@@ -4675,9 +4754,10 @@ A_est = 2 * aa.var - B_est
       drag_factor: state.drag
     };
   }
-  // automatic upper end of the q range: patterns at least about twice the cell length (3 / length), so that a cell
-  // looks the same after a short step except at its ends only for patterns the analysis leaves out
-  function autoQmax() { return state.shape === "sphere" || state.swim_frac === 0 ? null : 3 / Math.max(0.3, state.diameter_um); }   // long cells only (see the card "Long cells")
+  // automatic upper end of the q range for long cells: patterns at least as wide as a cell is long (q below 2 pi / length).
+  // The swimmer model weighs each swimmer by how its image shows the pattern along its direction of travel; finer
+  // patterns depend on details of the image of a thick cell (in bright field at low NA) that the model leaves out
+  function autoQmax() { return state.shape === "sphere" || state.swim_frac === 0 ? null : 2 * Math.PI / Math.max(0.3, state.diameter_um); }   // long cells only (see the card "Long cells")
   function analysisOptions() { const m = swimModel(); return { q_min_per_um: state.q_min, q_max_per_um: state.q_max !== null ? state.q_max : autoQmax(), beta: null, kind: m === "plane" ? "2d" : "3d", depth: m === "depth", stroke: m === "stroke" || m === "strokex", stroke_dir: m === "strokex" ? "across" : "along", D_from_cells: true }; }
   // centre height of cells lying on the bottom glass: half their thickness plus a 0.2 um gap
   function glassHeight() { const g = geometry(); return Math.min(g.a_par, g.a_perp) + 0.2; }
@@ -5807,8 +5887,8 @@ A_est = 2 * aa.var - B_est
       shows: [{ label: "One tumble per second", set: { swim_tumble: 1 }, go: "step-rates" }, { label: "Three per second", set: { swim_tumble: 3 }, go: "step-rates" }] },
     { lvl: 2, title: "Algae and sperm: the stroke", text: "Chlamydomonas pulls itself forward with a breaststroke of its two flagella, about 50 times a second, and slips back a little each time. Its curves dip and rise again once per beat. Wilson's model, made for gliding bacteria, ignores the stroke: its speed comes out a few % low, as Martinez et al. (2012) also found, and it says nothing about the beat. Their model with the stroke gets the speed, the size of the stroke and the beat. The camera must take at least two frames per beat.",
       shows: [{ label: "Chlamydomonas, model with the stroke", set: Object.assign({ organism: "chlamy" }, ORGANISMS.chlamy.set), go: "step-curves" }, { label: "The same, Wilson's model", set: Object.assign({ organism: "chlamy", swim_model: "wilson" }, ORGANISMS.chlamy.set), go: "step-rates" }, { label: "Bull sperm (head moving sideways)", set: Object.assign({ organism: "sperm" }, ORGANISMS.sperm.set), go: "step-rates", lvl: 2 }] },
-    { lvl: 2, title: "Long cells", text: "A long rod that swims along its own axis looks the same after a short step, except near its ends. For stripes finer than its length the image changes mainly where the ends pass, so these patterns renew more slowly than the speed suggests and the speed from them comes out low. The page therefore keeps, by default, to patterns more than about twice as wide as the cells (q below 3 / length). For rods this long only a few such patterns fit in the field, so the speed then scatters by about 10 % from movie to movie, and the share of swimmers is not reliable: the still rods also fade as they turn. A larger field (lower magnification) helps.",
-      shows: [{ label: "Rods 5 " + MU + "m long, all q", set: { diameter_um: 5, aspect: 6, phi: 1.5e-3, q_max: 5 }, go: "step-rates" }, { label: "The same, automatic range (up to 3 / length)", set: { diameter_um: 5, aspect: 6, phi: 1.5e-3 }, go: "step-rates" }] },
+    { lvl: 2, title: "Long cells", text: "A long rod that swims along its own axis looks the same after a short step, except near its ends. Stripes across its axis barely show in its image when they are finer than its length, so the cells that swim along a stripe pattern's wave vector, the ones that renew it fastest, count less. Wilson's model treats cells as points and then reads the speed low: for 5 " + MU + "m rods by about 20 %, for 50 " + MU + "m Euglena in fluorescence by 40 %. The page weighs each swimmer by how strongly its image shows the pattern for its direction of travel (from the length and width of the cells, which the experimenter measures in the images; see the methods). It keeps, by default, to patterns at least as wide as a cell is long (q below 2 pi / length): finer ones also depend on how a thick cell looks in bright field. The share of swimmers is less reliable for long rods: the still rods also fade as they turn.",
+      shows: [{ label: "Rods 5 " + MU + "m long, all q", set: { diameter_um: 5, aspect: 6, phi: 1.5e-3, q_max: 5 }, go: "step-rates" }, { label: "The same, automatic range (up to 2 pi / length)", set: { diameter_um: 5, aspect: 6, phi: 1.5e-3 }, go: "step-rates" }] },
     { lvl: 2, title: "Dark field and fluorescence", text: "The same assay in other contrasts. Dark field shows the cells bright on black with a low-NA objective and a phase annulus. Widefield fluorescence needs labelled cells and collects light from far out of focus, which adds some of the confocal problem.",
       shows: [{ label: "Dark field, Ph3 annulus, 10x", set: { mode: "darkfield", df_kind: "annulus", annulus: "Ph3", objective: objIndexByName("CFI Plan Fluor 10X") }, go: "step-setup" }, { label: "Widefield fluorescence, 20x", set: { mode: "fluorescence", objective: objIndexByName("CFI Plan Apochromat Lambda D 20X"), binning: 2, exposure_ms: 2 }, go: "step-setup" }] },
     { lvl: 2, title: "Fast and slow in one movie: log-spaced frames", text: "Swimmers renew a pattern in a fraction of a second; cells that only jiggle need a minute or more for the widest patterns. Evenly spaced frames cover both only with a very long movie. Taking the frames at log-spaced times, the first few at the full frame rate and then further and further apart, in a cycle that repeats, keeps the short delays and adds long ones with the same number of frames, as a multi-tau correlator does in light scattering. The slow step of the non-swimmers then shows in full (right-hand chart in step 6), and the diffusion of non-motile cells comes out right, where 5 s of evenly spaced frames read it 40 to 60 % too high. The price: fewer pairs of frames at the shortest delays, so those points scatter a little more.",
