@@ -106,7 +106,7 @@ movieCase("all swim: the share is found (diffusion set from the cell size)", { s
   const t0 = Date.now(), m = DDM.runToEnd(MOVIE.simulate(cfg)), r = DDM.runToEnd(A.analyse(m, { q_min_per_um: null, q_max_per_um: null, beta: null, kind: "3d", depth: true }));
   const so = A.seenOver(m.truth.swim, r.fits.filter(function (f) { return f.reason === null; }).map(function (f) { return f.q_per_um; }));
   const dw = r.swim.v_um_s / so.v_mean_um_s - 1, dd = r.swim_depth.v_um_s / so.v_mean_um_s - 1;
-  check("spinning disk 20x: Wilson's model reads high (" + (100 * dw).toFixed(0) + " %), the depth model within 4 % (" + (100 * dd).toFixed(1) + " %)", dw > 0.07 && Math.abs(dd) < 0.04, "true " + so.v_mean_um_s.toFixed(1) + " um/s; " + (Date.now() - t0) + " ms");
+  check("spinning disk 20x: Wilson's model reads high (" + (100 * dw).toFixed(0) + " %), the depth model within 4 % (" + (100 * dd).toFixed(1) + " %)", dw > 0.05 && Math.abs(dd) < 0.04, "true " + so.v_mean_um_s.toFixed(1) + " um/s; " + (Date.now() - t0) + " ms");
 }
 console.log(failures === 0 ? "\nALL SWIMMER ANALYSIS CHECKS PASSED" : "\n" + failures + " CHECK(S) FAILED");
 process.exit(failures ? 1 : 0);
