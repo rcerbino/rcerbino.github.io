@@ -1140,7 +1140,10 @@
         ctx.strokeStyle = C.ink; ctx.lineWidth = 2.2; ctx.setLineDash([]); ctx.beginPath();
         for (let i = 0; i <= 80; i++) {
           const x = x0 * Math.pow(x1 / x0, i / 80); let f;
-          if (k === 0) f = h.no_swim ? null : (1 - h.alpha) + h.alpha * ACTIVE.swimF(res.kind === "2d" ? "2d" : "3d", 1, x, { v: h.v_um_s, alpha: 1, spread: h.spread, D: 0 });
+          if (k === 0) { if (h.no_swim) f = null; else { const cm = res.collapse; let sw;
+            if (cm) { const t = Math.log(x / cm.x[0]) / Math.log(cm.x[cm.x.length - 1] / cm.x[0]) * (cm.x.length - 1), j = Math.max(0, Math.min(cm.x.length - 2, Math.floor(t))), fr = Math.max(0, Math.min(1, t - j)); sw = cm.f[j] + fr * (cm.f[j + 1] - cm.f[j]); }
+            else sw = ACTIVE.swimF(res.kind === "2d" ? "2d" : "3d", 1, x, { v: h.v_um_s, alpha: 1, spread: h.spread, D: 0 });
+            f = (1 - h.alpha) + h.alpha * sw; } }
           else f = (h.no_swim ? 1 : 1 - h.alpha) * Math.exp(-h.D_um2_s * x);
           if (f === null) break;
           const X = a.fx(x), Y = a.fy(Math.max(-0.1, Math.min(1.1, f))); if (i) ctx.lineTo(X, Y); else ctx.moveTo(X, Y);
@@ -1166,7 +1169,7 @@
     if (h.no_swim) {
       lines.push("<b>One kind of motion: diffusion.</b> The curves fall on one curve against q\u00b2\u0394t (second chart), not against q\u0394t (first chart): every cell wanders at random" + (TURNS() ? " and turns" : "") + ", D = " + fmtSig(h.D_um2_s, 2) + " " + MU + "m\u00b2/s. Nothing swims." + (TURNS() ? " The widest patterns (blue) fade sooner than the others: for them it is the turning of the rods, not their wandering, that renews the pattern." : ""));
     } else {
-      lines.push("<b>Swimmers, " + Math.round(100 * h.alpha) + " % of the signal:</b> " + (state.swim_tumble > 0 ? "runs broken by tumbles" : state.swim_osc_amp > 0 ? "runs with a back-and-forth stroke" : "straight runs") + ". The fast first step of every curve falls on one curve against q\u0394t (first chart; thick line: the swimmer model), as it must for motion at constant speed: a pattern renews when a cell has swum across it. Mean speed " + fmtV(h.v_um_s) + (slope !== null && level !== "curious" ? "; one rate per q rises with slope " + slope.toFixed(2) + " (step 6 chart)" : "") + ".");
+      lines.push("<b>Swimmers, " + Math.round(100 * h.alpha) + " % of the signal:</b> " + (state.swim_tumble > 0 ? "runs broken by tumbles" : state.swim_osc_amp > 0 ? "runs with a back-and-forth stroke" : "straight runs") + ". The fast first step of every curve falls on one curve against q\u0394t (first chart; thick line: the swimmer model), as it must for motion at constant speed: a pattern renews when a cell has swum across it. Mean speed " + fmtV(h.v_um_s) + (res.fast && level !== "curious" ? "; the swimmers' rate per q rises with slope " + res.fast.slope.toFixed(2) + " (rate chart)" : "") + ".");
       lines.push("<b>The others, " + Math.round(100 * (1 - h.alpha)) + " %:</b> they only diffuse" + (TURNS() ? " and turn (turning rods also pull the curves a little below the dashed level)" : "") + ". The level between the two steps (dashed) is their share; their slow final step falls on one curve against q\u00b2\u0394t (second chart; thick line: D = " + fmtSig(h.D_um2_s, 2) + " " + MU + "m\u00b2/s)." + (still < 0.5 ? " In this movie they barely move (D q\u00b2\u0394t = " + fmtSig(still, 2) + " at the finest pattern and longest delay), so their step is cut short: their share is read from how far each curve still has to fall." : ""));
     }
     if (tr && tr.n_swimmers > 0 && h && !h.no_swim && Math.abs(h.alpha - st.share) > 0.08) lines.push("The measured share is off by " + Math.round(100 * Math.abs(h.alpha - st.share)) + " points from the truth: see the checks below.");
@@ -1174,7 +1177,10 @@
   }
   function drawRates() {
     const res = cache.res, w = res.window;
-    const ok = res.fits.filter(function (f) { return f.ok && f.gamma_hz > 0 && Number.isFinite(f.gamma_hz); });
+    // used q with swimmers found: the rate of the swimmers' step (the slow part fixed from the swimmer fit); otherwise,
+    // and for the q left out, one compressed exponential per q
+    const rateOf = function (f) { return res.fast && f.reason === null && f.gamma_fast_hz ? f.gamma_fast_hz : f.gamma_hz; };
+    const ok = res.fits.filter(function (f) { const g = rateOf(f); return f.ok && g > 0 && Number.isFinite(g); });
     const x0 = res.q_per_um[1] * 0.8, x1 = res.q_per_um[res.q_per_um.length - 1] * 1.25, y0 = w.gamma_lo_hz / 8, y1 = w.gamma_hi_hz * 8;
     const a = axes($("chart-rates"), { xlog: true, ylog: true, x0: x0, x1: x1, y0: y0, y1: y1,
       xlabel: level === "curious" ? "Finer patterns \u2192   (wave vector q, " + MU + "m\u207b\u00b9)" : "Wave vector q (" + MU + "m\u207b\u00b9)",
@@ -1189,23 +1195,27 @@
     ctx.save(); ctx.translate(xq - 4, a.m.t + 6); ctx.rotate(-Math.PI / 2); ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.fillText(w.q_opt_per_um <= w.q_nyq_per_um ? "optical limit" : "pixel limit", 0, 0); ctx.restore();
     ctx.setLineDash([]);
     const line = function (fn, col, dash, lw) { ctx.strokeStyle = col; ctx.lineWidth = lw || 1.5; ctx.setLineDash(dash || []); ctx.beginPath(); for (let i = 0; i <= 60; i++) { const q = x0 * Math.pow(x1 / x0, i / 60), X = a.fx(q), Y = a.fy(Math.max(y0 / 10, fn(q))); if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); } ctx.stroke(); ctx.setLineDash([]); };
-    if (res.compressed) line(function (q) { return res.compressed.v0_um_s * q; }, C.ink);
+    // a curve through the values at the used q (the model's rate is not a straight line for long cells)
+    const curve = function (key, col, dash, lw) { const pts = res.fits.filter(function (f) { return f.reason === null && f[key] > 0; }); if (pts.length < 2) return; ctx.strokeStyle = col; ctx.lineWidth = lw || 1.5; ctx.setLineDash(dash || []); ctx.beginPath(); pts.forEach(function (f, i) { const X = a.fx(f.q_per_um), Y = a.fy(f[key]); if (i) ctx.lineTo(X, Y); else ctx.moveTo(X, Y); }); ctx.stroke(); ctx.setLineDash([]); };
+    if (res.fast) curve("gamma_model_hz", C.ink, [], 2);
+    else if (res.compressed) line(function (q) { return res.compressed.v0_um_s * q; }, C.ink);
     if (res.head && level !== "curious") line(function (q) { return res.head.D_um2_s * q * q; }, C.muted, [2, 3]);
     const tr = cache.movie.truth.swim;
     if (level !== "curious" && tr && tr.n_swimmers > 0) {
-      const st = seenTruth(), Z = 1 / Math.pow(Math.max(0.05, st.spread), 2) - 1, k = oneOverE(res.kind, Z);
-      line(function (q) { return q * st.v / k; }, C["accent-2"], [7, 4]);
+      if (res.fast) curve("gamma_true_hz", C["accent-2"], [7, 4]);
+      else { const st = seenTruth(), Z = 1 / Math.pow(Math.max(0.05, st.spread), 2) - 1, k = oneOverE(res.kind, Z); line(function (q) { return q * st.v / k; }, C["accent-2"], [7, 4]); }
     }
-    ok.forEach(function (f) { const X = a.fx(f.q_per_um), Y = a.fy(f.gamma_hz); if (f.reason === null) dot(ctx, X, Y, 3.6, qColor(qPos(f.q_per_um)), null); else dot(ctx, X, Y, 3, null, C.muted); });
-    if (sel) { const f = res.fits.find(function (ff) { return ff.bin === selBin(); }); if (f && f.ok) dot(ctx, a.fx(f.q_per_um), a.fy(f.gamma_hz), 7, null, C.ink); }
+    ok.forEach(function (f) { const X = a.fx(f.q_per_um), Y = a.fy(rateOf(f)); if (f.reason === null) dot(ctx, X, Y, 3.6, qColor(qPos(f.q_per_um)), null); else dot(ctx, X, Y, 3, null, C.muted); });
+    if (sel) { const f = res.fits.find(function (ff) { return ff.bin === selBin(); }); if (f && f.ok) dot(ctx, a.fx(f.q_per_um), a.fy(rateOf(f)), 7, null, C.ink); }
     a.done();
     const counts = {}; res.fits.forEach(function (f) { if (f.reason) counts[f.reason] = (counts[f.reason] || 0) + 1; });
     const ul = $("reasons"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
-    add("Solid line: rate = v\u2080 q, fitted to the points" + (res.compressed ? " (v\u2080 = " + fmtSig(res.compressed.v0_um_s, 3) + " " + MU + "m/s" + (level !== "curious" ? ", slope " + res.compressed.slope.toFixed(2) + " on these axes" : "") + ")" : "") + ".");
+    if (res.fast) add(level === "curious" ? "Dots: how fast the swimmers renew each pattern. Solid line: what the fitted swimmer model predicts. For swimmers the dots rise in step with the fineness of the pattern; for long cells a little more slowly at the finest patterns." : "Dots: rate of the swimmers' step at each q (one exponential exp(-(\u0393 \u0394t)^\u03b2) for the swimmers, with the share, D and turning of the others fixed from the swimmer fit). Solid line: the same rate from the fitted model (1/e of its swimmer part). For point-like swimmers it grows as q (slope 1); long cells grow more slowly at large q (here slope " + res.fast.slope.toFixed(2) + ").");
+    else add("Solid line: rate = v\u2080 q, fitted to the points" + (res.compressed ? " (v\u2080 = " + fmtSig(res.compressed.v0_um_s, 3) + " " + MU + "m/s" + (level !== "curious" ? ", slope " + res.compressed.slope.toFixed(2) + " on these axes" : "") + ")" : "") + ". One exponential per q: with no swimmers found, the rate of the whole curve.");
     if (level !== "curious") {
       add("Dotted grey line: D q\u00b2 of the cells that do not swim, from the swimmer model. Swimming gives slope 1, diffusion slope 2.");
-      add("Dashed red line: what pure swimming at the true speeds of the simulated cells gives. It lies below the speed itself: in 3D a pattern has changed by 1 \u2212 1/e when q v \u0394t is about 2.2, because most cells swim at an angle to the stripes.");
+      add("Dashed red line: the same model at the true speeds of the simulated cells. It lies below q times the speed: in 3D a pattern has changed by 1 \u2212 1/e when q v \u0394t is about 2.2, because most cells swim at an angle to the stripes.");
     }
     add(res.used.length + " points used.");
     Object.keys(counts).sort(function (p, q) { return counts[q] - counts[p]; }).forEach(function (k) { add(counts[k] + " left out: " + k + "."); });
@@ -1280,7 +1290,8 @@
       ctx.stroke(); ctx.setLineDash([]);
     };
     line(res.A_est, C.accent, []);
-    line(res.B_est, C.muted, [5, 4]);
+    if (res.noise_B > 0) { const nb = res.q_per_um.map(function () { return res.noise_B; }); nb[0] = NaN; line(nb, C.muted, [5, 4]); }
+    else line(res.B_est, C.muted, [5, 4]);
     res.fits.forEach(function (f) {
       if (!f.ok) return;
       const X = a.fx(f.q_per_um), used = f.reason === null;
@@ -1289,7 +1300,7 @@
     });
     ctx.setLineDash([5, 4]); ctx.strokeStyle = C.muted; ctx.lineWidth = 1; const xq = a.fx(w.q_opt_per_um); ctx.beginPath(); ctx.moveTo(xq, a.m.t); ctx.lineTo(xq, a.m.t + a.ph); ctx.stroke(); ctx.setLineDash([]);
     a.done();
-    $("amp-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>A: fit (dots), 2 var - B from the data (line)</span><span><i style="background:' + C.muted + '"></i>B: fit (dots), zero-delay intercept (dashed)</span><span>Hollow: point not used. Points beyond the axis are drawn at its edge.</span>';
+    $("amp-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>A: fit (dots), 2 var - B from the data (line)</span><span><i style="background:' + C.muted + '"></i>' + (res.noise_B > 0 ? 'B: camera noise from the mean count, 2 (counts + read noise\u00b2), the same at every q (dashed)' : 'B: fit (dots), zero-delay intercept (dashed)') + '</span><span>Hollow: point not used. Points beyond the axis are drawn at its edge.</span>';
   }
 
   // ---- result -------------------------------------------------------------------------------
@@ -1322,7 +1333,10 @@
   }
   function qualityChecks() {
     const res = cache.res, out = [], c = res.compressed, h = res.head;
-    if (c) {
+    if (res.fast && res.fast.dev_from_model !== null) {
+      const dv = res.fast.dev_from_model;
+      out.push({ cls: dv < 0.1 ? "good" : dv < 0.25 ? "warn" : "bad", title: "Swimmers' rates follow the model", text: "At each q the rate of the swimmers' step (dots in the rate chart) differs from what the fitted model predicts by " + Math.round(100 * dv) + " % on average. On logarithmic axes the rates rise with slope " + res.fast.slope.toFixed(2) + ": 1 for point-like cells swimming straight, less for long cells at large q, more where cells leave the focal plane." });
+    } else if (c) {
       const e = c.slope, d = Math.abs(e - 1);
       // a note, not a test: one rate per q (compressed exponential) follows the slow step of a two-step curve at some q
       // and the fast one at others, so its slope is not a clean test of the model (the speed at every q is)
@@ -1364,7 +1378,8 @@
       if (res.swim_depth) t += row("main", "3D swimmers, with the depth of field", res.swim_depth.v_um_s, res.swim_depth.alpha, res.swim_depth.spread, "the headline");
       if (res.swim_stroke) t += row("main", MODEL_LABEL[swimModel() === "strokex" ? "strokex" : "stroke"], res.swim_stroke.v_um_s, res.swim_stroke.alpha, res.swim_stroke.spread, "the headline; stroke " + fmtSig(res.swim_stroke.stroke_um, 2) + " " + MU + "m at " + fmtSig(res.swim_stroke.stroke_hz, 3) + " Hz");
       if (res.pv) t += row("", "Distribution from the data, no shape assumed", res.pv.data_mean_swimmers_um_s, 1 - res.pv.data_still_share, null, "see the chart below");
-      if (res.compressed) t += row("", "v\u2080 from rate = v\u2080 q (compressed exponential)", res.compressed.v0_um_s, null, null, "a speed scale, not the mean speed: in 3D about mean / 2.2");
+      if (res.fast) t += row("", "v\u2080 from the swimmers' step, rate = v\u2080 q", res.fast.v0_um_s, null, null, "a speed scale, not the mean speed: in 3D about mean / 2.2 for short cells");
+      else if (res.compressed) t += row("", "v\u2080 from rate = v\u2080 q (compressed exponential)", res.compressed.v0_um_s, null, null, "a speed scale, not the mean speed: in 3D about mean / 2.2");
       t += row("truth", "True (simulation)", st.v, st.share, st.spread, "weighted by the signal");
       t += '</tbody></table></div>';
       html += t;
@@ -1467,7 +1482,7 @@
       shows: [{ label: "No swimmers, drift 10 " + MU + "m/s", set: { swim_frac: 0, drift_um_s: 10 }, go: "step-rates" }] },
     { lvl: 2, title: "Swimming along the glass", text: "Near a surface many bacteria swim parallel to it. Then each pattern renews faster for the same speed (in 3D most cells swim at an angle to the stripes), and the model must be the one for the plane: analysed as 3D swimmers, the speed comes out about 30 % too high.",
       shows: [{ label: "Along the glass, plane model", set: { swim_geom: "glass", swim_model: "auto" }, go: "step-rates" }, { label: "The same, 3D model", set: { swim_geom: "glass", swim_model: "wilson" }, go: "step-rates" }] },
-    { lvl: 2, title: "Confocal: swimmers leave the slice", text: "A confocal microscope sees a slice one or a few micrometres thick. A swimmer crosses it in a fraction of a second, and a pattern fades as soon as its cells leave the slice, before they have swum across it. Wilson's 3D model knows only sideways motion, so the speed comes out too high. In our simulations of round cells 1 " + MU + "m across with a spinning disk (three movies each): 12-17 % too fast at 20x, and more than twice the true speed at 60x (water immersion). The model that also uses how each pattern fades as a cell moves up or down through the focus, computed from the optics of the microscope, brings the speed within 4 % at 20x. At 60x the slice is about as thin as a cell, and it still reads 15-20 % too fast and finds too many swimmers: it treats each cell as a point, and rods longer than the slice come out too slow with it. Widefield fluorescence shows the same effect, weaker (up to about 10 % at 20x and 25 % at 60x). As far as we know, this has not been published.",
+    { lvl: 2, title: "Confocal: swimmers leave the slice", text: "A confocal microscope sees a slice one or a few micrometres thick. A swimmer crosses it in a fraction of a second, and a pattern fades as soon as its cells leave the slice, before they have swum across it. Wilson's 3D model knows only sideways motion, so the speed comes out too high. In our simulations of round cells 1 " + MU + "m across with a spinning disk (three movies each): 12-17 % too fast at 20x, and more than twice the true speed at 60x (water immersion). The model that also uses how each pattern fades as a cell moves up or down through the focus, computed from the optics of the microscope, brings the speed within 4 % at 20x. At 60x the slice is about as thin as a cell, and it still reads about 5 % too fast and finds far too many swimmers: it treats each cell as a point, and rods longer than the slice come out too slow with it. Widefield fluorescence shows the same effect, weaker (up to about 10 % at 20x and 25 % at 60x). As far as we know, this has not been published.",
       shows: [{ label: "Spinning disk 20x, Wilson's model", set: SPIN20("wilson"), go: "step-rates" }, { label: "Spinning disk 20x, with the depth of field", set: SPIN20("depth"), go: "step-rates" }, { label: "Spinning disk 60x water, Wilson's model", set: SPIN60("wilson"), go: "step-rates", lvl: 2 }, { label: "Spinning disk 60x water, with the depth of field", set: SPIN60("depth"), go: "step-rates", lvl: 2 }] },
     { lvl: 2, title: "Tumbles", text: "E. coli runs for about a second, then tumbles and swims off in a new direction. Over distances longer than a run the cells get less far than on a straight line, so the widest patterns renew more slowly and the speed from them comes out low. The models here assume straight runs; use the finer patterns, or a model with tumbles (Kurzthaler et al. 2024).",
       shows: [{ label: "One tumble per second", set: { swim_tumble: 1 }, go: "step-rates" }, { label: "Three per second", set: { swim_tumble: 3 }, go: "step-rates" }] },
