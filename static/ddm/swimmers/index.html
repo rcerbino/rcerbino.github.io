@@ -3808,7 +3808,10 @@ A_est = 2 * aa.var - B_est
     const model = function (p, t) { const be = free ? p[3] : betaFix; return Math.exp(p[0]) * (1 - Math.exp(-Math.pow(Math.exp(p[2]) * t, be))) + p[1] * scale; };
     const resid = function (p) { const r = new Float64Array(L); for (let i = 0; i < L; i++) r[i] = (model(p, taus[i]) - y[i]) / scale; return r; };
     const p0 = [Math.log(Math.max(A0, 1e-300)), B0 / scale, Math.log(G0)]; if (free) p0.push(1.3);
-    const clamp = function (p) { if (free) p[3] = Math.min(3, Math.max(0.3, p[3])); return p; };
+    // B between 0 and the lowest measured d (d can never fall below B)
+    let ymin = Infinity; for (let i = 0; i < L; i++) ymin = Math.min(ymin, y[i]); const bHi = Math.max(0, ymin) / scale;
+    p0[1] = Math.min(bHi, Math.max(0, p0[1]));
+    const clamp = function (p) { if (free) p[3] = Math.min(3, Math.max(0.3, p[3])); p[1] = Math.min(bHi, Math.max(0, p[1])); return p; };
     const r = DDM.lm(resid, p0, clamp);
     const p = r.p;
     let se = Infinity; if (r.cov && r.cov[2][2] > 0) se = Math.sqrt(r.cov[2][2]);
@@ -3837,7 +3840,11 @@ A_est = 2 * aa.var - B_est
     let x = solve3();
     if (!x || !(x.c1 > 0) || x.c2 < 0 || x.c2 > x.c1) { const a = solve2(0), b = solve2(1); const cost = function (z) { if (!z) return Infinity; let c = 0; for (let i = 0; i < L; i++) { const e = z.c1 * g1[i] + z.c2 * g2[i] + z.B - r.y[i]; c += e * e; } return c; }; x = cost(a) <= cost(b) ? a : b; }
     const hiA = r.Ahi > 0 ? Math.min(3 * r.scale, r.Ahi) : 3 * r.scale, loA = r.Alo > 0 ? Math.min(r.Alo, hiA) : 0;
-    if (x && (x.c1 < loA || x.c1 > hiA)) { const bq = x.c1 > 0 ? Math.min(1, Math.max(0, x.c2 / x.c1)) : 0, c1 = Math.min(hiA, Math.max(loA, x.c1)); let sb = 0; for (let i = 0; i < L; i++) sb += r.y[i] - c1 * (g1[i] + bq * g2[i]); x = { c1: c1, c2: bq * c1, B: sb / L }; }
+    // A within its bounds and B between 0 and the lowest measured d (see boundAB), with the share b kept
+    if (x && (x.c1 < loA || x.c1 > hiA || x.B < 0 || x.B > dMin(r))) {
+      const bq = x.c1 > 0 ? Math.min(1, Math.max(0, x.c2 / x.c1)) : 0, g = new Float64Array(L); for (let i = 0; i < L; i++) g[i] = g1[i] + bq * g2[i];
+      const ab = boxAB(r.y, g, loA, hiA, 0, dMin(r)); x = { c1: ab.A, c2: bq * ab.A, B: ab.B };
+    }
     return x;
   }
   function fitStill(taus, rows, start) {
@@ -3915,15 +3922,29 @@ A_est = 2 * aa.var - B_est
 
   // A and B of one q for a given f: least squares, with A kept between 0 and 3 times A + B = 2 var (the plateau the
   // data must reach); without the bound a model that hardly decays (f near 1) can mimic any rise with a huge A
+  // B is kept between 0 and the lowest measured d: d = A (1 - f) + B with A (1 - f) >= 0 can never fall below B, so a
+  // larger B would only absorb a misfit (and give normalized points below 0)
   function boundAB(r, f) {
-    let ab = linAB(r.y, f);
     const L = f.length, hiA = r.Ahi > 0 ? Math.min(3 * r.scale, r.Ahi) : 3 * r.scale, loA = r.Alo > 0 ? Math.min(r.Alo, hiA) : 0;
-    if (ab === null || !(ab.A >= loA && ab.A <= hiA)) {
-      const A = ab === null ? Math.max(loA, r.A) : Math.min(hiA, Math.max(loA, ab.A));
-      let sb = 0; for (let i = 0; i < L; i++) sb += r.y[i] - A * (1 - f[i]);
-      ab = { A: A, B: sb / L };
-    }
-    return ab;
+    const g = gbuf.length === L ? gbuf : (gbuf = new Float64Array(L)); for (let i = 0; i < L; i++) g[i] = 1 - f[i];
+    return boxAB(r.y, g, loA, hiA, 0, dMin(r));
+  }
+  let gbuf = new Float64Array(0);
+  function dMin(r) { if (r.dmin === undefined) { let m = Infinity; for (let i = 0; i < r.y.length; i++) m = Math.min(m, r.y[i]); r.dmin = Math.max(0, m); } return r.dmin; }
+  // least squares of y = A g + B with A in [loA, hiA] and B in [loB, hiB]: the free solution when it is inside, else the
+  // best point on the edges
+  function boxAB(y, g, loA, hiA, loB, hiB) {
+    const L = y.length; let sg = 0, sgg = 0, sy = 0, sgy = 0;
+    for (let i = 0; i < L; i++) { sg += g[i]; sgg += g[i] * g[i]; sy += y[i]; sgy += g[i] * y[i]; }
+    const cl = function (v, a, b) { return Math.min(b, Math.max(a, v)); };
+    const cost = function (A, B) { let c = 0; for (let i = 0; i < L; i++) { const e = A * g[i] + B - y[i]; c += e * e; } return c; };
+    const det = L * sgg - sg * sg;
+    if (Math.abs(det) > 1e-300) { const A = (L * sgy - sg * sy) / det, B = (sy - A * sg) / L; if (A >= loA && A <= hiA && B >= loB && B <= hiB) return { A: A, B: B }; }
+    const cand = [];
+    for (const A of [loA, hiA]) cand.push({ A: A, B: cl((sy - A * sg) / L, loB, hiB) });
+    for (const B of [loB, hiB]) cand.push({ A: sgg > 0 ? cl((sgy - B * sg) / sgg, loA, hiA) : loA, B: B });
+    let best = cand[0], bc = Infinity; for (const c of cand) { const v = cost(c.A, c.B); if (v < bc) { bc = v; best = c; } }
+    return best;
   }
   // non-negative least squares (Lawson and Hanson) for min |M w - b|, M given by columns
   function nnls(cols, b, maxIt) {
