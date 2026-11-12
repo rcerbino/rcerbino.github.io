@@ -18,7 +18,7 @@
         const N = m.seeds.length;
         for (let k = 0; k < N; k++) {
           const mv = drive(MOVIE.simulate(Object.assign({}, m.cfg, { seed: m.seeds[k] })), m.token, k / N, (k + 0.85) / N);
-          const r = drive(ACTIVE.analyse(mv, m.opts), m.token, (k + 0.85) / N, (k + 1) / N);
+          const r = drive(ACTIVE.analyse(mv, Object.assign({}, m.opts, { jackknife: false })), m.token, (k + 0.85) / N, (k + 1) / N);   // the five movies give the scatter themselves
           self.postMessage({ type: "repeat-run", token: m.token, run: ACTIVE.summary(r, mv) });
         }
         self.postMessage({ type: "repeat-done", token: m.token });

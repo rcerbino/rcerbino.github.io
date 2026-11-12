@@ -2875,31 +2875,51 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     // structure function d(q, dt), kept in 2D (for the map) and azimuthally averaged
     const d2d = [];                                   // per lag: Float32Array(P), normalised by P
     const dq = [];                                    // per lag: Float64Array(nb + 1)
+    // the sums are also kept apart for K blocks of the movie (a pair counts in the block of its first frame), so that
+    // fits can be repeated with one block left out (jackknife estimate of the uncertainty, see jackDq)
+    const K = Math.max(1, Math.min(opts.blocks === undefined ? 5 : opts.blocks, Math.floor(T / 8)));
+    const blockOf = function (t) { return Math.min(K - 1, Math.floor(t * K / T)); };
+    const accK = []; for (let k = 0; k < K; k++) accK.push(new Float64Array(P));
+    const bSum = [], bCnt = [];                       // per lag: K x (nb + 1) sums over the modes of each bin, K counts
     for (let li = 0; li < L; li++) {
       const m = lags[li], pr = PB ? PB.pairs[li] : null, np = pr ? pr.length / 2 : T - m;
-      const acc = new Float64Array(P);
+      for (let k = 0; k < K; k++) accK[k].fill(0);
+      const cnt = new Float64Array(K);
       let count = 0;
       for (let k = 0; k < np; k++) {
         const t1 = pr ? pr[2 * k] : k, t2 = pr ? pr[2 * k + 1] : k + m;
-        const o1 = 2 * P * t1, o2 = 2 * P * t2;
+        const o1 = 2 * P * t1, o2 = 2 * P * t2, kb = blockOf(t1), acc = accK[kb];
         for (let p = 0; p < P; p++) {
           const dr = fft[o2 + 2 * p] - fft[o1 + 2 * p], di = fft[o2 + 2 * p + 1] - fft[o1 + 2 * p + 1];
           acc[p] += dr * dr + di * di;
         }
-        count++;
+        cnt[kb]++; count++;
       }
       need(count > 0, "lag longer than the movie");
       const map = new Float32Array(P);
-      const avg = new Float64Array(nb + 1);
+      const avg = new Float64Array(nb + 1), sums = [];
+      for (let k = 0; k < K; k++) sums.push(new Float64Array(nb + 1));
       for (let p = 0; p < P; p++) {
-        const v = acc[p] / count / P;               // per-pixel normalisation: B = 2 x noise variance
+        let tot = 0; const b = binOf[p];
+        for (let k = 0; k < K; k++) { const a = accK[k][p]; tot += a; if (b > 0) sums[k][b] += a; }
+        const v = tot / count / P;                  // per-pixel normalisation: B = 2 x noise variance
         map[p] = v;
-        const b = binOf[p]; if (b > 0) avg[b] += v;
+        if (b > 0) avg[b] += v;
       }
       for (let b = 1; b <= nb; b++) avg[b] = nmodes[b] > 0 ? avg[b] / nmodes[b] : NaN;
-      d2d.push(map); dq.push(avg);
+      d2d.push(map); dq.push(avg); bSum.push(sums); bCnt.push(cnt);
       yield { stage: "Comparing frames", frac: (li + 1) / L };
     }
+    // structure function with block j left out (same normalisation as dq); a lag with no pair outside block j keeps all
+    const jackDq = K < 2 ? null : function (j) {
+      return dq.map(function (avg, li) {
+        const sums = bSum[li], cnt = bCnt[li]; let c = 0; for (let k = 0; k < K; k++) if (k !== j) c += cnt[k];
+        if (!(c > 0)) return avg;
+        const out = new Float64Array(nb + 1);
+        for (let b = 1; b <= nb; b++) { if (!(nmodes[b] > 0)) { out[b] = NaN; continue; } let s = 0; for (let k = 0; k < K; k++) if (k !== j) s += sums[k][b]; out[b] = s / c / P / nmodes[b]; }
+        return out;
+      });
+    };
 
     // temporal variance per mode: A + B = 2 var. Also the mean power per mode (it includes what does not change during
     // the movie, so 2 pow - B is the whole amplitude even when part of the sample stays put)
@@ -2954,7 +2974,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       if (B_floor !== null) Bq = Math.min(B_floor, dq[0][b]);
       B_est[b] = Bq; A_est[b] = 2 * varq[b] - Bq;
     }
-    return { images: images, sg: sg, n: n, T: T, P: P, fft: fft, lags: lags, L: L, dt_s: dt_s, taus_s: taus_s, pairs: PB ? PB.pairs : null, times_s: movie.times_s || null, nb: nb, binOf: binOf, nmodes: nmodes,
+    return { images: images, sg: sg, n: n, T: T, P: P, fft: fft, lags: lags, L: L, dt_s: dt_s, taus_s: taus_s, pairs: PB ? PB.pairs : null, times_s: movie.times_s || null, nb: nb, binOf: binOf, nmodes: nmodes, blocks: K, jackDq: jackDq,
              q_per_um: q_per_um, d2d: d2d, dq: dq, varq: varq, powq: powq, q_lo_per_um: q_lo_per_um, q_nyq_per_um: q_nyq_per_um, q_opt_per_um: q_opt_per_um,
              q_sig_per_um: q_sig_per_um, q_hi_per_um: q_hi_per_um, gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz, B_floor: B_floor, B_est: B_est, A_est: A_est };
   }

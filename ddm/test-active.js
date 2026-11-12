@@ -75,7 +75,7 @@ function movieCase(label, over, opts, test) {
   check(msg, test(m, r));
   return { m, r };
 }
-movieCase("E. coli-like motility assay, phase contrast 10x, 60 % swim at 20 um/s (spread 0.3)", { swim: { fraction: 0.6, v_um_s: 20, v_spread: 0.3, rot_diff_s: 0.1 } }, {},
+const std = movieCase("E. coli-like motility assay, phase contrast 10x, 60 % swim at 20 um/s (spread 0.3)", { swim: { fraction: 0.6, v_um_s: 20, v_spread: 0.3, rot_diff_s: 0.1 } }, {},
   function (m, r) { const s = m.truth.swim; return r.swim && Math.abs(r.swim.v_um_s / s.v_mean_um_s - 1) < 0.05 && Math.abs(r.swim.alpha - s.fraction_seen) < 0.06 && Math.abs(r.pv.data_still_share - (1 - s.fraction_seen)) < 0.06 && Math.abs(r.pv.data_mean_swimmers_um_s / s.v_mean_um_s - 1) < 0.08; });
 movieCase("the same with log-spaced frames (movie 20 times longer)", { swim: { fraction: 0.6, v_um_s: 20, v_spread: 0.3, rot_diff_s: 0.1 }, log_timing: { factor: 20 } }, {},
   function (m, r) { const s = m.truth.swim; return m.times_s && r.swim && !r.swim.no_swim && Math.abs(r.swim.v_um_s / s.v_mean_um_s - 1) < 0.08 && Math.abs(r.swim.alpha - s.fraction_seen) < 0.06 && r.taus_s[r.taus_s.length - 1] > 30; });
@@ -107,6 +107,21 @@ movieCase("all swim: the share is found (diffusion set from the cell size)", { s
   const so = A.seenOver(m.truth.swim, r.fits.filter(function (f) { return f.reason === null; }).map(function (f) { return f.q_per_um; }));
   const dw = r.swim.v_um_s / so.v_mean_um_s - 1, dd = r.swim_depth.v_um_s / so.v_mean_um_s - 1;
   check("spinning disk 20x: Wilson's model reads high (" + (100 * dw).toFixed(0) + " %), the depth model within 4 % (" + (100 * dd).toFixed(1) + " %)", dw > 0.05 && Math.abs(dd) < 0.04, "true " + so.v_mean_um_s.toFixed(1) + " um/s; " + (Date.now() - t0) + " ms");
+}
+// 6. uncertainties from the movie itself (jackknife over blocks of frames), not from the covariance of the fit
+{
+  const h = std.r.head;
+  check("uncertainties: jackknife over blocks of the movie, speed error between 0.5 and 5 %, share error given", h.err_from === "jackknife" && h.v_rel_err > 0.005 && h.v_rel_err < 0.05 && h.alpha_err > 0 && h.jackknife.n === h.jackknife.blocks,
+    "speed +- " + (100 * h.v_rel_err).toFixed(1) + " %, share +- " + (100 * h.alpha_err).toFixed(1) + " points, spread +- " + (100 * (h.spread_err || 0)).toFixed(1) + " points (" + h.jackknife.blocks + " blocks)");
+}
+// 7. spinning disk 60x water, round cells 1 um: the slice is about as thin as a cell. Cells leaving it must not be taken
+// for still cells that "turn" (round cells cannot): swimmers are found, and the depth model reads the speed within 15 %
+{
+  const cfg = {"seed": 1, "mode": "spinning", "objective": {"mag": 60, "na": 1.27, "n_imm": 1.333}, "illum": {"na_in": 0, "na_out": 0.3}, "pupil": {"kind": "none"}, "source": "halogen", "df_light_e": 10000000, "stray_frac": 0.0001, "homodyne": true, "l_ex_um": 0.488, "l_em_um": 0.52, "pinhole_um": 50, "crosstalk": 0.031415926535897934, "pinhole_au": 1, "photons_per_particle": 400, "background_photons": 64, "scan_rate_hz": 200000000, "light_frac": 0.5, "detector": {"kind": "camera", "pixel_um": 6.5, "binning": 4, "bin_charge": false, "qe": 0.95, "read_noise_e": 1.6, "full_well_e": 15000, "timing": "rolling", "t_row_s": 3.749e-06, "rows_total": 512, "crop_row0": 0}, "n_px": 128, "n_frames": 256, "frame_rate_hz": 100, "exposure_s": 0.002, "log_timing": null, "particle": "bacterium", "diameter_um": 1, "size_distribution": "schulz", "size_spread": 0, "shape": "sphere", "aspect": 1, "birefringence": 0, "polarization": null, "volume_fraction": 0.0004, "liquid": {"glycerol_w": 0}, "T_C": 22, "cell_um": 50, "focus_um": 25, "drift_um_s": 0, "gravity": false, "walls": false, "vector": true, "thin_bodies": false, "swim": {"fraction": 0.6, "v_um_s": 20, "v_spread": 0.3, "rot_diff_s": 0.1, "tumble_hz": 0, "plane_fraction": 0, "plane_still": false, "height_um": 0.7, "osc_amp_um": 0, "osc_hz": 20, "osc_dir": "along"}, "drag_factor": 1};
+  const t0 = Date.now(), m = DDM.runToEnd(MOVIE.simulate(cfg)), r = DDM.runToEnd(A.analyse(m, { q_min_per_um: null, q_max_per_um: null, beta: null, kind: "3d", depth: true, D_from_cells: true }));
+  const so = A.seenOver(m.truth.swim, r.fits.filter(function (f) { return f.reason === null; }).map(function (f) { return f.q_per_um; }));
+  const ok = r.head && !r.head.no_swim && r.swim_depth, dd = ok ? r.swim_depth.v_um_s / so.v_mean_um_s - 1 : NaN;
+  check("spinning disk 60x water: swimmers found, depth model within 15 % (" + (100 * dd).toFixed(1) + " %)", ok && Math.abs(dd) < 0.15, "true " + so.v_mean_um_s.toFixed(1) + " um/s; " + (Date.now() - t0) + " ms");
 }
 console.log(failures === 0 ? "\nALL SWIMMER ANALYSIS CHECKS PASSED" : "\n" + failures + " CHECK(S) FAILED");
 process.exit(failures ? 1 : 0);
