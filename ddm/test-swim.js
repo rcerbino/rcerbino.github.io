@@ -92,18 +92,18 @@ function unwrap(tr, i, T) {   // unwrapped positions of tracked particle i
   let diff = 0; for (let k = 0; k < a.frames.length; k += 13) diff += Math.abs(a.frames[k] - b.frames[k]);
   check("stroke: same mean paths, different images, recorded in the truth", same && diff > 0 && b.truth.swim.osc_amp_um === 1 && b.truth.swim.osc_hz === 10);
 }
-// 4d. frames in bursts: cells are drawn at the frame times asked for (in-plane mean squared displacement 4 D t over the
-// short gaps inside a burst and the long ones between bursts)
+// 4d. log-spaced frames: cells are drawn at the frame times asked for (in-plane mean squared displacement 4 D t over
+// short and long gaps)
 {
-  const m = DDM.runToEnd(MOVIE.simulate(base({ n_frames: 64, swim: { fraction: 0, v_um_s: 10, v_spread: 0 }, cell_um: 400, focus_um: 200, bursts: { size: 4, stretch: 4 } })));
+  const m = DDM.runToEnd(MOVIE.simulate(base({ n_frames: 64, swim: { fraction: 0, v_um_s: 10, v_spread: 0 }, cell_um: 400, focus_um: 200, log_timing: { factor: 20 } })));
   const tr = m.test_track, T = m.T, tt = m.times_s, Dt = m.truth.D_um2_s;
   let worst = 0; const out = [];
-  for (const k of [1, 4, 16]) {            // frame k after frame 0 of each burst of that level
-    let sq = 0, n = 0, dtk = tt[k] - tt[0];
-    for (let i = 0; i < tr.n; i++) { const u = unwrap(tr, i, T); for (let t0 = 0; t0 + k < T; t0 += 4 * k) { if (Math.abs((tt[t0 + k] - tt[t0]) - dtk) > 1e-9) continue; sq += Math.pow(u.x[t0 + k] - u.x[t0], 2) + Math.pow(u.y[t0 + k] - u.y[t0], 2); n++; } }
+  for (const [a, b] of [[0, 1], [10, 15], [0, 16], [0, 32]]) {     // pairs of frames inside one cycle of 16 and across cycles
+    let sq = 0, n = 0; const dtk = tt[b] - tt[a];
+    for (let i = 0; i < tr.n; i++) { const u = unwrap(tr, i, T); for (let c = 0; c + b < T; c += 16) { sq += Math.pow(u.x[c + b] - u.x[c + a], 2) + Math.pow(u.y[c + b] - u.y[c + a], 2); n++; } }
     const r = sq / n / (4 * Dt * dtk); worst = Math.max(worst, Math.abs(r - 1)); out.push(fmtS(dtk) + ": " + r.toFixed(3));
   }
-  check("bursts: cells are drawn at the frame times (in-plane mean squared displacement 4 D t)", m.times_s && worst < 0.08, "measured / theory at delays " + out.join(", "));
+  check("log-spaced frames: cells are drawn at the frame times (in-plane mean squared displacement 4 D t)", m.times_s && worst < 0.08, "measured / theory at delays " + out.join(", "));
 }
 function fmtS(t) { return t.toFixed(2) + " s"; }
 // 5. fraction 0

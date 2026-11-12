@@ -355,7 +355,7 @@
     yield { stage: "Fitting each q", frac: 0.9 };
     // per-q compressed fits (beta free, and with the fixed beta if asked)
     const betaFix = opts.beta === null || opts.beta === undefined ? null : opts.beta;
-    // frames in bursts reach delays far beyond those of evenly spaced frames, where the slow step of the cells that do
+    // uneven frame times reach delays far beyond those of evenly spaced frames, where the slow step of the cells that do
     // not swim joins the fast one: one compressed exponential then follows neither. Its fits keep to the delays the same
     // frames evenly spaced would give (up to T/2 frame intervals; all delays when fewer than 8 are left)
     let Lc = L;
@@ -420,7 +420,7 @@
     D_LIMITS = Dh > 0 ? [Dh / 5, 5 * Dh] : null;
     let alphaDirect = null;
     if (Dh > 0 && used.length >= 3 && opts.share_from_amplitude !== false && S.pairs) {
-      // frames in bursts: per q, the delays after the swimmers have renewed the pattern and before the others have
+      // uneven frame times: per q, the delays after the swimmers have renewed the pattern and before the others have
       // diffused far; there (d - B) / A = alpha + (1 - alpha) (1 - e), e = exp(-D q^2 t), so alpha = (p - 1 + e) / e
       // round cells only: rods also fade as they turn, and at the q where that is still small their image changes
       // mostly at their ends (step 6, "Long cells"), so the swimmers have not renewed the pattern yet
@@ -553,7 +553,7 @@
     yield { stage: "Speed distribution", frac: 0.97 };
     let pv = null;
     if (comp) {
-      const vref = head ? head.v_um_s : comp.v0_um_s, vmax = 3 * vref, nv = 60, dv = vmax / nv;
+      const vref = head && !head.no_swim && head.v_um_s > 0 ? head.v_um_s : comp.v0_um_s, vmax = 3 * vref, nv = 60, dv = vmax / nv;
       const vgrid = []; for (let k = 0; k <= nv; k++) vgrid.push(k * dv);
       const beta = betaFix !== null ? betaFix : comp.beta_free_mean, v0 = comp.v0_um_s;
       const fromCurve = invertCurve(function (x) { return Math.exp(-Math.pow(v0 * x, beta)); }, kind, vgrid);
@@ -581,7 +581,12 @@
     const master = used.map(function (r) { const f = new Float64Array(L); for (let i = 0; i < L; i++) f[i] = 1 - (r.y[i] - r.Bn) / r.An; return { q: r.q, f: f, A: r.An, B: r.Bn }; });
     // per q, for the page: amplitude and noise, the compressed rate, and the model curve d(dt) (the headline swimmer
     // model where the q is used, the compressed exponential elsewhere)
+    // model curves for the charts on a fine grid of delays (the measured delays plus 120 log-spaced ones), so that
+    // they stay smooth where the measured delays are sparse
+    const ct = (function () { const a = Array.from(taus); for (let k = 0; k <= 120; k++) a.push(taus[0] * Math.pow(taus[L - 1] / taus[0], k / 120)); a.sort(function (x, y) { return x - y; });
+                              return a.filter(function (x, k) { return k === 0 || x > a[k - 1] * (1 + 1e-9); }); })();
     const fits = rows.map(function (r) {
+      const taus = ct, L = ct.length;
       const curve = new Float64Array(L), u = r.reason === null && head;
       if (u) { const jj = used.indexOf(r), bq = head.kind === "still" && head.ab[jj] ? head.ab[jj].b : head.turn_share;
                const par = { v: head.v_um_s, alpha: head.alpha, spread: head.spread, D: head.D_um2_s, b: bq, Dr: head.D_r_s, A: head.stroke_um, f: head.stroke_hz }; for (let i = 0; i < L; i++) curve[i] = r.An * (1 - (head === swimDepth ? depthF(r.depth, taus[i], par) : swimF(head === swimStrokeFit ? sk : kind, r.q, taus[i], par))) + r.Bn; }
@@ -589,7 +594,7 @@
       return { bin: r.bin, q_per_um: r.q, ok: r.ok, reason: r.reason, A: u ? r.An : r.A, B: u ? r.Bn : r.B, gamma_hz: r.gamma_hz, beta: r.fixed.beta, beta_free: r.beta_free, lnGamma_se: r.lnGamma_se, curve: curve };
     });
     D_LIMITS = null;
-    return { kind: kind, model: head === swimDepth && swimDepth ? "depth" : head === swimStrokeFit && swimStrokeFit ? "stroke" : kind, lags: S.lags, pairs: S.pairs, times_s: S.times_s, taus_s: taus, q_per_um: S.q_per_um, dq: S.dq, d2d: S.d2d, varq: S.varq, B_floor: S.B_floor, B_est: S.B_est, A_est: S.A_est,
+    return { kind: kind, model: head === swimDepth && swimDepth ? "depth" : head === swimStrokeFit && swimStrokeFit ? "stroke" : kind, lags: S.lags, pairs: S.pairs, times_s: S.times_s, taus_s: taus, curve_taus_s: ct, q_per_um: S.q_per_um, dq: S.dq, d2d: S.d2d, varq: S.varq, B_floor: S.B_floor, B_est: S.B_est, A_est: S.A_est,
              fits: fits, share_from_amplitude: alphaDirect, head: head ? { no_swim: head.no_swim === true, D_fixed: head.D_fixed === true, v_um_s: head.no_swim ? null : head.v_um_s, alpha: head.alpha, spread: head.spread, D_um2_s: head.D_um2_s, turn_share: head.turn_share, D_r_s: head.D_r_s, v_rel_err: head.v_rel_err, alpha_err: head.alpha_err, spread_err: head.spread_err, stroke_um: head === swimStrokeFit ? head.stroke_um : null, stroke_hz: head === swimStrokeFit ? head.stroke_hz : null, perq: head.perq } : null,
              window: { q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, q_opt_per_um: S.q_opt_per_um, q_nyq_per_um: S.q_nyq_per_um, gamma_lo_hz: S.gamma_lo_hz, gamma_hi_hz: S.gamma_hi_hz },
              rows: rows.map(function (r) { return { bin: r.bin, q_per_um: r.q, A: r.A, B: r.B, gamma_hz: r.gamma_hz, beta_free: r.beta_free, gamma_free_hz: r.free.gamma_hz, lnGamma_se: r.lnGamma_se, reason: r.reason }; }),

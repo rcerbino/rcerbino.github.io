@@ -75,17 +75,16 @@ function check(name, cond, info) { console.log((cond ? "ok   " : "FAIL ") + name
   check("one-mode curve with noise is kept as one mode", !g2.two, g2.two ? "split into " + g2.gamma_hz.toFixed(2) + " and " + g2.gamma2_hz.toFixed(2) : "");
 }
 
-// frames in bursts: every Fourier mode an Ornstein-Uhlenbeck process with rate G(q) = D q^2, sampled exactly at uneven
-// times (movie.js burstTimes). The structure function from grouped pairs must equal 2 var (1 - exp(-G tau)), and the
+// log-spaced frames: every Fourier mode an Ornstein-Uhlenbeck process with rate G(q) = D q^2, sampled exactly at uneven
+// times (movie.js logTimes). The structure function from grouped pairs must equal 2 var (1 - exp(-G tau)), and the
 // evenly spaced frames must give the same groups as before (no times: the integer-lag path)
 {
   const MOVIE = require("./movie.js");
   const n = 32, T = 256, P = n * n, dt = 0.02, L_um = 50, D = 0.4, rng = DDM._test.makeRng(11);
-  const times = MOVIE.burstTimes(T, dt, 4, 3);
-  const even = MOVIE.burstTimes(T, dt, 4, 1); let same = true; for (let k = 0; k < T; k++) if (Math.abs(even[k] - k * dt) > 1e-12) same = false;
-  check("bursts with stretch 1 are evenly spaced frames", same);
+  const times = MOVIE.logTimes(T, dt, 20);
   let gaps = Infinity; for (let k = 1; k < T; k++) gaps = Math.min(gaps, times[k] - times[k - 1]);
-  check("bursts: no two frames closer than the frame interval", gaps >= dt * (1 - 1e-9), "shortest gap " + (gaps / dt).toFixed(3) + " frame intervals, movie " + (times[T - 1] / (T * dt)).toFixed(1) + " times longer");
+  const span = (times[T - 1] + dt) / (T * dt);
+  check("log-spaced frames: no two frames closer than the frame interval, movie about 20 times longer", gaps >= dt * (1 - 1e-9) && Math.abs(span / 20 - 1) < 0.1, "shortest gap " + (gaps / dt).toFixed(3) + " frame intervals, movie " + span.toFixed(1) + " times longer");
   const fft = new Float32Array(2 * P * T), rate = new Float64Array(P);
   for (let iy = 0; iy < n; iy++) for (let ix = 0; ix < n; ix++) {
     const kx = ix < n / 2 ? ix : ix - n, ky = iy < n / 2 ? iy : iy - n, q = 2 * Math.PI * Math.hypot(kx, ky) / L_um, p = iy * n + ix;
@@ -109,9 +108,11 @@ function check(name, cond, info) { console.log((cond ? "ok   " : "FAIL ") + name
     }
   }
   mean /= nb;
-  check("bursts: structure function from grouped pairs follows 2 var (1 - exp(-D q^2 tau))", worst < 0.12 && Math.abs(mean) < 0.04, S.L + " delays from " + (S.taus_s[0] / dt).toFixed(0) + " to " + (S.taus_s[S.L - 1] / dt).toFixed(0) + " frame intervals; mean relative difference " + (100 * mean).toFixed(1) + " %, largest " + (100 * worst).toFixed(1) + " % over " + nb + " points");
+  let ratio = 0; for (let i = 1; i < S.L; i++) ratio = Math.max(ratio, S.taus_s[i] / S.taus_s[i - 1]);
+  check("log-spaced frames: delays without gaps (no two next delays more than a factor 2 apart)", ratio <= 2.0001, S.L + " delays, largest ratio " + ratio.toFixed(2));
+  check("log-spaced frames: structure function from grouped pairs follows 2 var (1 - exp(-D q^2 tau))", worst < 0.12 && Math.abs(mean) < 0.04, S.L + " delays from " + (S.taus_s[0] / dt).toFixed(0) + " to " + (S.taus_s[S.L - 1] / dt).toFixed(0) + " frame intervals; mean relative difference " + (100 * mean).toFixed(1) + " %, largest " + (100 * worst).toFixed(1) + " % over " + nb + " points");
   let nmax = 0; for (const pr of S.pairs) nmax = Math.max(nmax, pr.length / 2);
-  check("bursts: at most as many pairs per delay as frames", nmax <= T, "most pairs in one group " + nmax);
+  check("log-spaced frames: at most as many pairs per delay as frames", nmax <= T, "most pairs in one group " + nmax);
 }
 
 // (the full pipeline is tested in test-movie.js with the optical simulator)

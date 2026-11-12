@@ -343,7 +343,7 @@
     if (sg) yield { stage: "Squared gradient of each frame", frac: 0 };
     const n = movie.n, T = movie.T, P = n * n, fft = sg ? squaredGradientFft(movie) : movie.fft;
     const dt_s = 1 / movie.frame_rate_hz;
-    // evenly spaced frames: integer lags, every pair at each lag. Uneven frame times (bursts): pairs grouped by their
+    // evenly spaced frames: integer lags, every pair at each lag. Uneven frame times (log-spaced cycles): pairs grouped by their
     // time apart (pairBins), at most T pairs per group. lags are then in units of the shortest interval, rounded.
     const PB = movie.times_s ? pairBins(movie.times_s, dt_s, T) : null;
     const lags = PB ? PB.lags : logspaceLags(Math.floor(T / 2), 40);

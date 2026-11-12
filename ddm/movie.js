@@ -157,7 +157,7 @@
     const fr = num(cfg, "frame_rate_hz", 0.01, 30000), expo = det.kind === "scanner" ? 0 : num(cfg, "exposure_s", 0, 10);
     need(expo <= 1 / fr * 1.0000001, "exposure longer than the frame interval");
     num(det, "qe", 0.01, 1); num(det, "t_row_s", 0, 1); num(det, "rows_total", 1, 20000); num(det, "crop_row0", 0, 20000);
-    // frame times: evenly spaced at 1 / frame rate, unless bursts or a list of times are asked for. Uneven times keep
+    // frame times: evenly spaced at 1 / frame rate, unless log-spaced cycles or a list of times are asked for. Uneven times keep
     // 1 / frame rate as the shortest interval, so the exposure and read-out checks below still hold.
     const times = frameTimes(cfg, T, fr);
     const timing = det.kind === "scanner" ? "scan" : det.timing;
@@ -899,22 +899,28 @@
     return out;
   }
 
-  /** Frame times in bursts, like the channels of a multi-tau correlator. Frame k, written in base B (digits d0, d1, ...),
-   *  is taken at dt (d0 + d1 (B s) + d2 (B s)^2 + ...): bursts of B frames at the frame interval dt, bursts of bursts
-   *  (B s) times further apart, and so on. s = 1 gives evenly spaced frames; the movie lasts about s^levels times longer. */
-  function burstTimes(T, dt, B, s) {
-    const out = new Float64Array(T), unit = B * s;
-    for (let k = 0; k < T; k++) { let r = k, w = 1, t = 0; while (r > 0) { t += (r % B) * w; r = Math.floor(r / B); w *= unit; } out[k] = t * dt; }
-    return out;
+  /** Log-spaced frame times in a repeating cycle, so that a fixed number of frames lasts G times longer (G >= 2).
+   *  Each cycle has M frames (32, or a quarter of the movie if shorter): the first ones one frame interval apart, then
+   *  each gap a factor r longer than the previous one (rounded, never shorter than one interval). The cycle repeats
+   *  every 2 o_max intervals (o_max: the last offset), and r is chosen for the length asked for. Delays within a
+   *  cycle cover 1 to o_max intervals, delays between cycles k cycles apart k P - o_max to k P + o_max: no gaps. */
+  function logTimes(T, dt, G) {
+    const M = Math.max(4, Math.min(32, Math.floor(T / 4))), K = Math.ceil(T / M);
+    const offs = function (r) { const o = [0]; for (let m = 1; m < M; m++) o.push(Math.max(o[m - 1] + 1, Math.round(o[m - 1] * r))); return o; };
+    const span = function (r) { const o = offs(r); return (K - 1) * 2 * o[M - 1] + o[(T - 1) % M] + 1; };
+    let lo = 1, hi = 4;
+    for (let it = 0; it < 60; it++) { const mid = (lo + hi) / 2; if (span(mid) < G * T) lo = mid; else hi = mid; }
+    const o = offs(hi), P = 2 * o[M - 1], t = new Float64Array(T);
+    for (let k = 0; k < T; k++) t[k] = dt * (Math.floor(k / M) * P + o[k % M]);
+    return t;
   }
   // null for evenly spaced frames; otherwise the time of each frame from the first one, in s
   function frameTimes(cfg, T, fr) {
     let t = null;
-    if (cfg.bursts) {
-      const B = num(cfg.bursts, "size", 2, 64), s = num(cfg.bursts, "stretch", 1, 64);
-      need(B === Math.round(B), "frames per burst must be a whole number");
-      if (s === 1) return null;
-      t = burstTimes(T, 1 / fr, B, s);
+    if (cfg.log_timing) {
+      const G = num(cfg.log_timing, "factor", 1, 1000);
+      if (G < 2) return null;
+      t = logTimes(T, 1 / fr, G);
     } else if (cfg.frame_times_s) {
       need(cfg.frame_times_s.length === T, "frame_times_s needs one time per frame");
       t = Float64Array.from(cfg.frame_times_s, function (v, k) { need(isFinite(v), "frame time " + k + " is not a number"); return v; });
@@ -929,6 +935,6 @@
     return even ? null : t;
   }
 
-  const api = { simulate: simulate, particleTerms: particleTerms, burstTimes: burstTimes };
+  const api = { simulate: simulate, particleTerms: particleTerms, logTimes: logTimes };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.MOVIE = api;
 })(this);

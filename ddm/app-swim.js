@@ -119,7 +119,7 @@
     camera: "orca", cam_mode: "standard", iface: "cameralink", binning: 1, roi: 512, sim_px: 128, n_frames: 256,
     annulus: "Ph1", ring_T: 0.25, df_kind: "annulus", df_light_e: 1e7, stray_frac: 1e-4, dic_shear_um: 0.24, dic_bias_deg: 90, dic_angle_deg: 45,
     scanner: "resonant", scan_px: 512, zoom: 1, line_avg: 1, pinhole_au: 1, scan_rate: 2e8,
-    frame_rate_hz: 50, exposure_ms: 1, frame_timing: "even", burst_size: 4, burst_stretch: 3,
+    frame_rate_hz: 50, exposure_ms: 1, frame_timing: "even", log_factor: 20,
     shape: "rod", aspect: 2.5, dn: 0, dn_body: 0, polarizer: "off", analyzer: "off", pol_angle_deg: 90, extinction: 1e-4,
     swim_frac: 0.6, swim_v: 20, swim_spread: 0.3, swim_geom: "3d", swim_rot: 0.1, swim_tumble: 0,
     swim_model: "auto", q_min: null, q_max: null, seed: 1,
@@ -180,12 +180,12 @@
   function fmtSig(v, d) { if (!Number.isFinite(v)) return "-"; if (v === 0) return "0"; const p = Math.pow(10, d - 1 - Math.floor(Math.log10(Math.abs(v)))); return (Math.round(v * p) / p).toString(); }
   function fmtTime(s) { return s < 1 ? fmtSig(s * 1000, 2) + " ms" : fmtSig(s, 2) + " s"; }
   function fmtDur(s) { return s < 120 ? fmtTime(s) : s < 7200 ? fmtSig(s / 60, 2) + " min" : fmtSig(s / 3600, 2) + " h"; }
-  // frame timing: bursts of frames at the frame rate, bursts of bursts further apart (movie.js burstTimes)
-  function BURSTS() { return state.frame_timing === "bursts" && state.burst_stretch > 1; }
+  // frame timing: log-spaced frames in a repeating cycle, the movie log_factor times longer (movie.js logTimes)
+  function BURSTS() { return state.frame_timing === "log" && state.log_factor > 1; }
   function nFrames() { return Math.min(state.n_frames, maxFrames(simPx())); }
   function movieSpanS(stretch) {
-    const T = nFrames(), dt = 1 / state.frame_rate_hz, k = stretch === undefined ? (BURSTS() ? state.burst_stretch : 1) : stretch;
-    return k > 1 ? MOVIE.burstTimes(T, dt, state.burst_size, k)[T - 1] + dt : T * dt;
+    const T = nFrames(), dt = 1 / state.frame_rate_hz, k = stretch === undefined ? (BURSTS() ? state.log_factor : 1) : stretch;
+    return k > 1 ? MOVIE.logTimes(T, dt, k)[T - 1] + dt : T * dt;
   }
   function fmtPhi(v) { const e = Math.floor(Math.log10(v)), m = v / Math.pow(10, e); return (Math.round(m * 10) / 10) + "e" + e; }
 
@@ -317,7 +317,7 @@
       scan_rate_hz: state.scan_rate, light_frac: state.light_frac,
       detector: detectorConfig(), n_px: simPx(), n_frames: Math.min(state.n_frames, maxFrames(simPx())),
       frame_rate_hz: state.frame_rate_hz, exposure_s: SCANNING() ? 0 : state.exposure_ms / 1000,
-      bursts: BURSTS() ? { size: state.burst_size, stretch: state.burst_stretch } : null,
+      log_timing: BURSTS() ? { factor: state.log_factor } : null,
       particle: state.particle === "custom" ? { n: state.n_custom, rho: state.rho_custom } : state.particle, diameter_um: state.diameter_um, size_distribution: state.size_dist, size_spread: state.size_spread,
       shape: state.shape, aspect: BODY() ? Math.max(state.shape === "rod" ? 2 : 1, state.aspect) : 1, birefringence: state.shape === "sphere" || !TRANS() ? 0 : state.shape === "bisphere" ? state.dn : state.dn_body, polarization: polarization(),
       volume_fraction: state.phi, liquid: liquidSpec(), T_C: state.T_C, cell_um: state.cell_um, focus_um: state.focus_frac * state.cell_um,
@@ -406,11 +406,10 @@
     { key: "light_frac", group: "Camera and recording", lvl: 2, label: "Lamp brightness (background as a share of the full well)", kind: "log", min: 0.002, max: 0.9, fmt: function (v) { return fmtSig(100 * v, 2) + " %"; }, when: function () { return TRANS() && state.mode !== "darkfield"; }, hint: function () { const fw = detFullWell(); return "Background " + Math.round(state.light_frac * fw) + " electrons per pixel; shot noise " + fmtSig(100 / Math.sqrt(state.light_frac * fw), 2) + " %."; } },
     { key: "n_frames", group: "Camera and recording", lvl: 2, label: "Number of frames", kind: "select", num: true, options: [[128, "128"], [256, "256"], [512, "512"], [1024, "1024"], [2048, "2048"]],
       hint: function () { return "The browser holds up to " + maxFrames(simPx()) + " frames at " + simPx() + " x " + simPx() + " pixels; asking for more makes the simulated image smaller."; } },
-    { key: "frame_timing", group: "Camera and recording", lvl: 1, label: "Frame timing", kind: "select", options: [["even", "Evenly spaced"], ["bursts", "In bursts, further and further apart (like a multi-tau correlator)"]],
-      hint: function () { return BURSTS() ? "The same " + nFrames() + " frames cover " + fmtDur(movieSpanS()) + " instead of " + fmtDur(nFrames() / state.frame_rate_hz) + ": bursts of " + state.burst_size + " frames at the frame rate, bursts of bursts " + state.burst_size * state.burst_stretch + " frame intervals apart, and so on." : "All frames one frame interval apart: " + fmtDur(nFrames() / state.frame_rate_hz) + " of movie."; } },
-    { key: "burst_stretch", group: "Camera and recording", lvl: 1, label: "Bursts: how much further apart at each level", kind: "select", num: true, when: function () { return state.frame_timing === "bursts"; },
-      options: function () { return [2, 3, 4].map(function (k) { return [k, k + " times (movie " + fmtDur(movieSpanS(k)) + ")"]; }); } },
-    { key: "burst_size", group: "Camera and recording", lvl: 2, label: "Bursts: frames in each burst", kind: "select", num: true, when: function () { return state.frame_timing === "bursts"; }, options: [[2, "2"], [4, "4"], [8, "8"], [16, "16"]] },
+    { key: "frame_timing", group: "Camera and recording", lvl: 1, label: "Frame timing", kind: "select", options: [["even", "Evenly spaced"], ["log", "Log-spaced, in a repeating cycle (like a multi-tau correlator)"]],
+      hint: function () { return BURSTS() ? "The same " + nFrames() + " frames cover " + fmtDur(movieSpanS()) + " instead of " + fmtDur(nFrames() / state.frame_rate_hz) + ". In each cycle the first frames follow at the frame rate, then the gaps grow by a fixed factor; the cycle repeats." : "All frames one frame interval apart: " + fmtDur(nFrames() / state.frame_rate_hz) + " of movie."; } },
+    { key: "log_factor", group: "Camera and recording", lvl: 1, label: "Log-spaced: how much longer the movie lasts", kind: "select", num: true, when: function () { return state.frame_timing === "log"; },
+      options: function () { return [5, 10, 20, 50].map(function (k) { return [k, k + " times (" + fmtDur(movieSpanS(k)) + ")"]; }); } },
     { key: "sim_px", group: "Camera and recording", lvl: 3, label: "Simulated part of the image", kind: "select", num: true, options: [[64, "64 x 64 pixels (fast)"], [128, "128 x 128 pixels"], [256, "256 x 256 pixels (slow)"]] },
 
     { key: "swim_model", group: "Analysis", lvl: 2, label: "Swimmer model fitted to all q", kind: "select", options: [["auto", "Automatic"], ["wilson", MODEL_LABEL.wilson], ["depth", MODEL_LABEL.depth], ["plane", MODEL_LABEL.plane], ["stroke", MODEL_LABEL.stroke], ["strokex", MODEL_LABEL.strokex]], hint: function () { return "In use: " + MODEL_LABEL[swimModel()] + "." + (swimModel() === "depth" ? " Uses how each pattern fades as a cell moves up or down through the focus, computed from the optics of this microscope." : ""); } },
@@ -423,7 +422,7 @@
     ["Sample", ["organism", "shape", "swim_frac", "swim_v", "swim_spread", "swim_geom", "swim_tumble", "swim_rot", "swim_osc_amp", "swim_osc_hz", "swim_osc_dir", "drag", "particle", "n_custom", "diameter_um", "aspect", "phi", "dye", "liquid", "glycerol_w", "n_liquid", "visc_mPa_s", "T_C", "cell_um", "drift_um_s"]],
     ["Illumination", ["source", "condenser", "na_c", "df_kind", "annulus", "light_frac", "df_light_e", "stray_frac", "rate_ph_ms", "bg_e_ms", "scan_rate"]],
     ["Detection", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg",
-      "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "burst_stretch", "burst_size", "sim_px"]],
+      "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "log_factor", "sim_px"]],
     ["Analysis", ["swim_model", "qrange"]]
   ];
   (function () {
@@ -740,9 +739,9 @@
     frameIdx = 0;
     renderAll();
   }
-  // model curve of one q (computed by the analysis at the delays of the structure function), interpolated in log delay
+  // model curve of one q (computed by the analysis on a fine grid of delays), interpolated in log delay
   function modelAt(f, t) {
-    const taus = cache.res.taus_s, L = taus.length, c = f.curve;
+    const taus = cache.res.curve_taus_s || cache.res.taus_s, L = taus.length, c = f.curve;
     if (!c) return NaN;
     if (t <= taus[0]) return c[0];
     if (t >= taus[L - 1]) return c[L - 1];
@@ -946,7 +945,7 @@
   let diffScale = null;
   function drawDiff(t) {
     const movie = cache.movie, n = movie.n, m = lagFrames(), pr = cache.res.pairs ? cache.res.pairs[lagIndex()] : null;
-    // evenly spaced frames: frame t and frame t + lag; bursts: the pairs of frames that are this far apart, in turn
+    // evenly spaced frames: frame t and frame t + lag; log-spaced: the pairs of frames that are this far apart, in turn
     const k = pr ? t % (pr.length / 2) : 0, f1 = pr ? pr[2 * k] : t % (movie.T - m), f2 = pr ? pr[2 * k + 1] : f1 + m, c = $("diff");
     if (c.width !== n) { c.width = n; c.height = n; }
     const ctx = c.getContext("2d"), img = ctx.createImageData(n, n), d = img.data;
@@ -973,7 +972,7 @@
     drawFrame($("hero-canvas"), cache.movie, frameIdx);
     drawDiff(frameIdx);
     const mv = cache.movie, dt = 1 / mv.frame_rate_hz, fps = Math.max(8, Math.min(60, mv.frame_rate_hz)), speed = fps / mv.frame_rate_hz, tt = mv.times_s;
-    if (tt) { $("movie-time").textContent = "Frame " + (frameIdx + 1) + " of " + mv.T + ", taken at t = " + fmtSig(tt[frameIdx], 3) + " s of " + fmtDur(tt[mv.T - 1] + dt) + ". Frames taken in bursts, shown one after the other."; return; }
+    if (tt) { $("movie-time").textContent = "Frame " + (frameIdx + 1) + " of " + mv.T + ", taken at t = " + fmtSig(tt[frameIdx], 3) + " s of " + fmtDur(tt[mv.T - 1] + dt) + ". Frames taken at log-spaced times, shown one after the other."; return; }
     $("movie-time").textContent = "t = " + (frameIdx * dt).toFixed(dt < 0.01 ? 3 : dt < 0.1 ? 2 : 1) + " s of " + fmtSig(mv.T * dt, 3) + " s" +
       (Math.abs(speed - 1) > 0.01 ? (speed < 1 ? ", slowed down " + fmtNum(1 / speed) + " times" : ", sped up " + fmtNum(speed) + " times") : ", real time");
   }
@@ -1165,8 +1164,8 @@
     if (h.no_swim) {
       lines.push("<b>One kind of motion: diffusion.</b> The curves fall on one curve against q\u00b2\u0394t (second chart), not against q\u0394t (first chart): every cell wanders at random" + (TURNS() ? " and turns" : "") + ", D = " + fmtSig(h.D_um2_s, 2) + " " + MU + "m\u00b2/s. Nothing swims." + (TURNS() ? " The widest patterns (blue) fade sooner than the others: for them it is the turning of the rods, not their wandering, that renews the pattern." : ""));
     } else {
-      lines.push("<b>Swimmers, " + Math.round(100 * h.alpha) + " % of the signal:</b> straight runs. The fast first step of every curve falls on one curve against q\u0394t (first chart; black line: the swimmer model), as it must for motion at constant speed: a pattern renews when a cell has swum across it. Mean speed " + fmtV(h.v_um_s) + (slope !== null && level !== "curious" ? "; one rate per q rises with slope " + slope.toFixed(2) + " (step 6 chart)" : "") + ".");
-      lines.push("<b>The others, " + Math.round(100 * (1 - h.alpha)) + " %:</b> they only diffuse" + (TURNS() ? " and turn (turning rods also pull the curves a little below the dashed level)" : "") + ". The level between the two steps (dashed) is their share; their slow final step falls on one curve against q\u00b2\u0394t (second chart; black line: D = " + fmtSig(h.D_um2_s, 2) + " " + MU + "m\u00b2/s)." + (still < 0.5 ? " In this movie they barely move (D q\u00b2\u0394t = " + fmtSig(still, 2) + " at the finest pattern and longest delay), so their step is cut short: their share is read from how far each curve still has to fall." : ""));
+      lines.push("<b>Swimmers, " + Math.round(100 * h.alpha) + " % of the signal:</b> straight runs. The fast first step of every curve falls on one curve against q\u0394t (first chart; thick line: the swimmer model), as it must for motion at constant speed: a pattern renews when a cell has swum across it. Mean speed " + fmtV(h.v_um_s) + (slope !== null && level !== "curious" ? "; one rate per q rises with slope " + slope.toFixed(2) + " (step 6 chart)" : "") + ".");
+      lines.push("<b>The others, " + Math.round(100 * (1 - h.alpha)) + " %:</b> they only diffuse" + (TURNS() ? " and turn (turning rods also pull the curves a little below the dashed level)" : "") + ". The level between the two steps (dashed) is their share; their slow final step falls on one curve against q\u00b2\u0394t (second chart; thick line: D = " + fmtSig(h.D_um2_s, 2) + " " + MU + "m\u00b2/s)." + (still < 0.5 ? " In this movie they barely move (D q\u00b2\u0394t = " + fmtSig(still, 2) + " at the finest pattern and longest delay), so their step is cut short: their share is read from how far each curve still has to fall." : ""));
     }
     if (tr && tr.n_swimmers > 0 && h && !h.no_swim && Math.abs(h.alpha - st.share) > 0.08) lines.push("The measured share is off by " + Math.round(100 * Math.abs(h.alpha - st.share)) + " points from the truth: see the checks below.");
     el.innerHTML = html + lines.map(function (t) { return '<p class="small" style="margin:0">' + t + '</p>'; }).join("");
@@ -1232,7 +1231,8 @@
   function drawPv() {
     const cv = $("chart-pv"); if (!cv || level === "curious") return;
     const res = cache.res, pv = res.pv, h = swimHead(res), tr = cache.movie.truth.swim;
-    const vmax = pv ? pv.v_um_s[pv.v_um_s.length - 1] : 3 * state.swim_v;
+    let vmax = pv ? pv.v_um_s[pv.v_um_s.length - 1] : 3 * state.swim_v;
+    if (!(vmax > 0.01)) vmax = 3 * Math.max(state.swim_v, 1);        // no sensible speed scale (nothing swims)
     const nb = 30, bw = vmax / nb, hist = new Float64Array(nb);
     if (tr && tr.v_list) { for (let i = 0; i < tr.v_list.length; i++) { const k = Math.floor(tr.v_list[i] / bw); if (k >= 0 && k < nb) hist[k]++; } const n = tr.v_list.length || 1; for (let k = 0; k < nb; k++) hist[k] /= n * bw; }
     const data = [];
@@ -1397,11 +1397,11 @@
   function renderText() {
     const m = cache.movie, cfg = cache.cfg, sw = m.truth.swim;
     const modeTxt = { brightfield: "a bright-field microscope", phase: "a phase-contrast microscope", darkfield: "a dark-field microscope", dic: "a DIC microscope", fluorescence: "a widefield fluorescence microscope", spinning: "a spinning-disk confocal microscope", scanning: "a point-scanning confocal microscope" }[state.mode];
-    $("movie-text").textContent = "The movie shows " + (state.shape === "rod" ? fmtSize(cfg.diameter_um) + " long rod-shaped cells" : fmtSize(cfg.diameter_um) + " round cells") + ", filmed through " + modeTxt + " " + (m.times_s ? "in bursts of " + state.burst_size + " frames at " + fmtNum(cfg.frame_rate_hz) + " frames a second, the bursts further and further apart (" + fmtDur(m.times_s[m.T - 1] + 1 / m.frame_rate_hz) + " in all). " : fmtNum(cfg.frame_rate_hz) + " times a second. ") +
+    $("movie-text").textContent = "The movie shows " + (state.shape === "rod" ? fmtSize(cfg.diameter_um) + " long rod-shaped cells" : fmtSize(cfg.diameter_um) + " round cells") + ", filmed through " + modeTxt + " " + (m.times_s ? "at log-spaced times, in cycles that start at " + fmtNum(cfg.frame_rate_hz) + " frames a second and slow down (" + fmtDur(m.times_s[m.T - 1] + 1 / m.frame_rate_hz) + " in all). " : fmtNum(cfg.frame_rate_hz) + " times a second. ") +
       Math.round(100 * state.swim_frac) + " % of them swim, on average at " + fmtV(state.swim_v) + (state.swim_geom === "glass" ? ", along the bottom glass" : ", in all directions") + "; the others only jiggle. " +
       (state.swim_osc_amp > 0 ? "Each swimmer also moves back and forth by " + fmtSig(state.swim_osc_amp, 2) + " " + MU + "m, " + fmtSig(state.swim_osc_hz, 3) + " times a second (" + (state.swim_osc_dir === "across" ? "sideways, like a sperm head" : "along its path, like an alga's breaststroke") + "). " : "") + visibilityText(cfg, m) +
       (state.swim_geom === "glass" ? "" : " Cells above and below the focal plane add wider, fainter blurs, and swimmers move in and out of focus.");
-    $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + (m.times_s ? m.T + " frames in bursts of " + state.burst_size + " at " + fmtNum(m.frame_rate_hz) + " frames/s, each level " + state.burst_stretch + " times further apart: " + fmtDur(m.times_s[m.T - 1] + 1 / m.frame_rate_hz) + " in all (evenly spaced, the same frames would last " + fmtDur(m.T / m.frame_rate_hz) + ")." : m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s = " + fmtSig(m.T / m.frame_rate_hz, 3) + " s.") + " Cell " + cfg.cell_um + " " + MU + "m thick, focus " + fmtSig(cfg.focus_um, 2) + " " + MU + "m above the bottom, " + m.info.n_particles + " cells, " + sw.n_swimmers + " swimming.";
+    $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + (m.times_s ? m.T + " frames at log-spaced times, shortest interval 1/" + fmtNum(m.frame_rate_hz) + " s: " + fmtDur(m.times_s[m.T - 1] + 1 / m.frame_rate_hz) + " in all (evenly spaced, the same frames would last " + fmtDur(m.T / m.frame_rate_hz) + ")." : m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s = " + fmtSig(m.T / m.frame_rate_hz, 3) + " s.") + " Cell " + cfg.cell_um + " " + MU + "m thick, focus " + fmtSig(cfg.focus_um, 2) + " " + MU + "m above the bottom, " + m.info.n_particles + " cells, " + sw.n_swimmers + " swimming.";
     $("diff-note").textContent = "A cell that moved leaves a pair of shapes, one darker and one brighter, at its old and its new place. Swimmers leave pairs that are far apart, cells that only jiggle leave close pairs.";
     const sb = $("movie-scale"), target = m.L_um / 4, nice = niceStep(target) > target ? niceStep(target) / 2 : niceStep(target);
     sb.querySelector("i").style.width = (100 * nice / m.L_um).toFixed(1) + "%"; sb.querySelector("span").textContent = fmtSig(nice, 2) + " " + MU + "m"; sb.style.width = "100%";
@@ -1433,7 +1433,7 @@
     L.push("");
     L.push("Organism: " + ORGANISMS[state.organism].label + (state.organism === "model" ? "" : " (settings after the cited paper; see the page)"));
     L.push("Sample (simulated): " + (state.shape === "rod" ? "rods " + fmtSize(cfg.diameter_um) + " long, aspect ratio " + fmtSig(cfg.aspect, 2) : "spheres " + fmtSize(cfg.diameter_um)) + "; " + mv.info.n_particles + " cells, " + tr.swim.n_swimmers + " swimming" + (state.swim_geom === "glass" ? " along the glass" : " in 3D") + (state.swim_tumble > 0 ? ", " + fmtSig(state.swim_tumble, 2) + " tumbles per second" : ", straight runs") + "; " + LIQUIDS[state.liquid] + ", " + state.T_C.toFixed(0) + " C, cell " + cfg.cell_um + " um, focus " + fmtSig(cfg.focus_um, 2) + " um above the bottom");
-    L.push("Microscope (simulated): Nikon Ti2-E, " + objective().n + ", " + ($("c-mode").selectedOptions[0].textContent) + "; " + mv.n + " x " + mv.n + " pixels of " + fmtSig(mv.pixel_um, 3) + " um, " + mv.T + " frames at " + fmtNum(mv.frame_rate_hz) + " frames/s" + (mv.times_s ? ", taken in bursts of " + state.burst_size + ", each level " + state.burst_stretch + " times further apart (" + fmtDur(mv.times_s[mv.T - 1] + 1 / mv.frame_rate_hz) + " in all); structure function from pairs of frames grouped by their delay, up to " + mv.T + " pairs per delay" : ""));
+    L.push("Microscope (simulated): Nikon Ti2-E, " + objective().n + ", " + ($("c-mode").selectedOptions[0].textContent) + "; " + mv.n + " x " + mv.n + " pixels of " + fmtSig(mv.pixel_um, 3) + " um, " + mv.T + " frames at " + fmtNum(mv.frame_rate_hz) + " frames/s" + (mv.times_s ? ", taken at log-spaced times in repeating cycles (" + fmtDur(mv.times_s[mv.T - 1] + 1 / mv.frame_rate_hz) + " in all); structure function from pairs of frames grouped by their delay, up to " + mv.T + " pairs per delay" : ""));
     L.push("True values: mean speed " + fmtSig(tr.swim.v_mean_um_s, 3) + " um/s (relative spread " + Math.round(100 * tr.swim.v_sd_um_s / Math.max(1e-9, tr.swim.v_mean_um_s)) + " %), " + Math.round(100 * tr.swim.fraction) + " % swimming; as seen by the microscope over the q used: " + fmtSig(seenTruth().v, 3) + " um/s, " + Math.round(100 * seenTruth().share) + " %.");
     el.textContent = L.join("\n");
   }
@@ -1466,8 +1466,8 @@
       shows: [{ label: "Rods 5 " + MU + "m long, all q", set: { diameter_um: 5, aspect: 6, phi: 1.5e-3, q_max: 5 }, go: "step-rates" }, { label: "The same, automatic range (up to 3 / length)", set: { diameter_um: 5, aspect: 6, phi: 1.5e-3 }, go: "step-rates" }] },
     { lvl: 2, title: "Dark field and fluorescence", text: "The same assay in other contrasts. Dark field shows the cells bright on black with a low-NA objective and a phase annulus. Widefield fluorescence needs labelled cells and collects light from far out of focus, which adds some of the confocal problem.",
       shows: [{ label: "Dark field, Ph3 annulus, 10x", set: { mode: "darkfield", df_kind: "annulus", annulus: "Ph3", objective: objIndexByName("CFI Plan Fluor 10X") }, go: "step-setup" }, { label: "Widefield fluorescence, 20x", set: { mode: "fluorescence", objective: objIndexByName("CFI Plan Apochromat Lambda D 20X"), binning: 2, exposure_ms: 2 }, go: "step-setup" }] },
-    { lvl: 2, title: "Fast and slow in one movie: frames in bursts", text: "Swimmers renew a pattern in a fraction of a second; cells that only jiggle need a minute or more for the widest patterns. Evenly spaced frames cover both only with a very long movie. Taking the frames in bursts, fast inside a burst and further and further apart between bursts, as a multi-tau correlator does in light scattering, keeps the short delays and adds long ones with the same number of frames. The slow step of the non-swimmers then shows in full (right-hand chart in step 6), and the diffusion of non-motile cells comes out right, where 5 s of evenly spaced frames read it 40 to 60 % too high. The price is gaps between the delays: a fast step that falls in a gap is followed less well.",
-      shows: [{ label: "Bursts, 3 times further apart per level", set: { frame_timing: "bursts", burst_stretch: 3 }, go: "step-rates" }, { label: "Non-motile E. coli (motA), evenly spaced", set: Object.assign({ organism: "ecoli_mota" }, ORGANISMS.ecoli_mota.set), go: "step-rates" }, { label: "The same in bursts", set: Object.assign({ organism: "ecoli_mota" }, ORGANISMS.ecoli_mota.set, { frame_timing: "bursts", burst_stretch: 3 }), go: "step-rates" }] },
+    { lvl: 2, title: "Fast and slow in one movie: log-spaced frames", text: "Swimmers renew a pattern in a fraction of a second; cells that only jiggle need a minute or more for the widest patterns. Evenly spaced frames cover both only with a very long movie. Taking the frames at log-spaced times, the first few at the full frame rate and then further and further apart, in a cycle that repeats, keeps the short delays and adds long ones with the same number of frames, as a multi-tau correlator does in light scattering. The slow step of the non-swimmers then shows in full (right-hand chart in step 6), and the diffusion of non-motile cells comes out right, where 5 s of evenly spaced frames read it 40 to 60 % too high. The price: fewer pairs of frames at the shortest delays, so those points scatter a little more.",
+      shows: [{ label: "Log-spaced, 20 times longer", set: { frame_timing: "log", log_factor: 20 }, go: "step-curves" }, { label: "Non-motile E. coli (motA), evenly spaced", set: Object.assign({ organism: "ecoli_mota" }, ORGANISMS.ecoli_mota.set), go: "step-rates" }, { label: "The same, log-spaced", set: Object.assign({ organism: "ecoli_mota" }, ORGANISMS.ecoli_mota.set, { frame_timing: "log", log_factor: 20 }), go: "step-rates" }] },
     { lvl: 3, title: "Too few swimmers", text: "A high magnification shows a small field with few cells. The curves then scatter from one movie to the next, and the speed with them; repeat the movie, or use a lower magnification. Here a 60x objective sees a field of about 55 " + MU + "m with about a hundred cells.",
       shows: [{ label: "60x, phase contrast", set: { objective: objIndexByName("CFI Plan Apochromat Lambda D 60X Oil"), binning: 4 }, go: "step-rates" }] }
   ];
@@ -1571,7 +1571,7 @@
     }); },
     truth: function () { return cache && cache.movie ? cache.movie.truth : null; },
     config: function () { return { cfg: simConfig(), opts: analysisOptions() }; },
-    timing: function () { const m = cache && cache.movie, r = cache && cache.res; return m ? { T: m.T, span_s: m.times_s ? m.times_s[m.T - 1] + 1 / m.frame_rate_hz : m.T / m.frame_rate_hz, bursts: !!m.times_s, delays: r ? r.taus_s.length : null, tau_max_s: r ? r.taus_s[r.taus_s.length - 1] : null } : null; },
+    timing: function () { const m = cache && cache.movie, r = cache && cache.res; return m ? { T: m.T, span_s: m.times_s ? m.times_s[m.T - 1] + 1 / m.frame_rate_hz : m.T / m.frame_rate_hz, uneven: !!m.times_s, delays: r ? r.taus_s.length : null, tau_max_s: r ? r.taus_s[r.taus_s.length - 1] : null } : null; },
     result: function () { const r = cache && cache.res; if (!r) return null; const h = r.head, st = seenTruth(); return { v: h ? h.v_um_s : null, alpha: h ? h.alpha : null, spread: h ? h.spread : null, D: h ? h.D_um2_s : null, model: swimModel(), v0: r.compressed ? r.compressed.v0_um_s : null, seen_v: st.v, seen_share: st.share, true_v: cache.movie.truth.swim.v_mean_um_s, used: r.used.length, reasons: r.fits.map(function (f) { return f.reason; }) }; }
   };
 })();

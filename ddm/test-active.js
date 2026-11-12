@@ -77,7 +77,7 @@ function movieCase(label, over, opts, test) {
 }
 movieCase("E. coli-like motility assay, phase contrast 10x, 60 % swim at 20 um/s (spread 0.3)", { swim: { fraction: 0.6, v_um_s: 20, v_spread: 0.3, rot_diff_s: 0.1 } }, {},
   function (m, r) { const s = m.truth.swim; return r.swim && Math.abs(r.swim.v_um_s / s.v_mean_um_s - 1) < 0.05 && Math.abs(r.swim.alpha - s.fraction_seen) < 0.06 && Math.abs(r.pv.data_still_share - (1 - s.fraction_seen)) < 0.06 && Math.abs(r.pv.data_mean_swimmers_um_s / s.v_mean_um_s - 1) < 0.08; });
-movieCase("the same with the frames in bursts (4 frames, each level 3 times further apart: 22 times longer)", { swim: { fraction: 0.6, v_um_s: 20, v_spread: 0.3, rot_diff_s: 0.1 }, bursts: { size: 4, stretch: 3 } }, {},
+movieCase("the same with log-spaced frames (movie 20 times longer)", { swim: { fraction: 0.6, v_um_s: 20, v_spread: 0.3, rot_diff_s: 0.1 }, log_timing: { factor: 20 } }, {},
   function (m, r) { const s = m.truth.swim; return m.times_s && r.swim && !r.swim.no_swim && Math.abs(r.swim.v_um_s / s.v_mean_um_s - 1) < 0.08 && Math.abs(r.swim.alpha - s.fraction_seen) < 0.06 && r.taus_s[r.taus_s.length - 1] > 30; });
 movieCase("plane swimmers (2D), dark field 10x, 80 % swim at 15 um/s, q up to 1.5 um^-1 (rod length 2 um)", { swim: { fraction: 0.8, v_um_s: 15, v_spread: 0.25, plane_fraction: 1, plane_still: true, height_um: 1, rot_diff_s: 0.1 }, n_frames: 512, illum: { na_in: 0.42, na_out: 0.5 }, pupil: undefined, cell_um: 20, focus_um: 1, volume_fraction: 2e-3 }, { kind: "2d", q_max_per_um: 1.5 },
   function (m, r) { const s = m.truth.swim; return r.swim && Math.abs(r.swim.v_um_s / s.v_mean_um_s - 1) < 0.05 && Math.abs(r.swim.alpha - s.fraction_seen) < 0.05; });
