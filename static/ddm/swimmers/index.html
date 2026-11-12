@@ -4227,6 +4227,12 @@ A_est = 2 * aa.var - B_est
       // global swimmer model: start from the compressed result
       if (!quick) yield { stage: "Fitting the swimmer model", frac: 0.94 };
       let swim = null;
+      // quick repeat of a result without swimming: only the fit of cells that do not swim matters
+      if (quick && prev.noSwim) {
+        const still = fitStill(taus, used, { v: prev.head.v_um_s, spread: prev.head.spread, D: prev.head.D_um2_s, Dr: prev.head.D_r_s || 0.3, noTurn: !elongated });
+        still.no_swim = true; still.perq = [];
+        return { alphaDirect: alphaDirect, swim: still, swimDepth: null, swimStrokeFit: null, base: null };
+      }
       if (used.length >= 3 && comp) {
         // several starts (speeds around the compressed estimate, small and large swimming share); the best fit is kept
         let best = null;
@@ -5848,7 +5854,7 @@ A_est = 2 * aa.var - B_est
     if (h && h.stroke_um) html += '<p class="small" style="margin:0">Stroke of each swimmer: ' + fmtSig(h.stroke_um, 2) + (h.stroke_um_err ? ' &plusmn; ' + fmtSig(h.stroke_um_err, 1) : '') + ' ' + MU + 'm at ' + fmtSig(h.stroke_hz, 3) + (h.stroke_hz_err ? ' &plusmn; ' + fmtSig(h.stroke_hz_err, 1) : '') + ' Hz (true ' + fmtSig(swt.osc_amp_um || 0, 2) + ' ' + MU + 'm at ' + fmtSig(swt.osc_hz || 0, 3) + ' Hz' + (swt.osc_amp_um > 0 && swt.osc_dir === "across" && swimModel() === "stroke" ? '; the cells stroke sideways, the model assumes along' : '') + ').</p>';
     if (level !== "curious" && h) {
       const pm = function (main, e, scale, dig) { return main === "main" && e ? ' <small>&plusmn; ' + (dig ? fmtSig(e * scale, dig) : Math.max(1, Math.round(e * scale))) + '</small>' : ''; };
-      const row = function (cls, name, vv, share, spread, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + fmtV(vv) + pm(cls, h.v_rel_err && vv ? h.v_rel_err * vv : null, 1, 2) + '</td><td>' + (share === null || share === undefined ? "-" : Math.round(100 * share) + pm(cls, h.alpha_err, 100) + " %") + '</td><td>' + (spread === null || spread === undefined ? "-" : Math.round(100 * spread) + pm(cls, h.spread_err, 100) + " %") + '</td></tr>'; };
+      const row = function (cls, name, vv, share, spread, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + (pm(cls, h.v_rel_err && vv ? h.v_rel_err * vv : null, 1, 1) ? fmtSig(vv, 3) + pm(cls, h.v_rel_err * vv, 1, 1) + ' ' + MU + 'm/s' : fmtV(vv)) + '</td><td>' + (share === null || share === undefined ? "-" : Math.round(100 * share) + pm(cls, h.alpha_err, 100) + " %") + '</td><td>' + (spread === null || spread === undefined ? "-" : Math.round(100 * spread) + pm(cls, h.spread_err, 100) + " %") + '</td></tr>'; };
       let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">Mean speed</th><th scope="col">Swimming</th><th scope="col">Spread</th></tr></thead><tbody>';
       const isMain = function (m) { return swimModel() === m ? "main" : ""; };
       if (res.swim) t += row(isMain(res.kind === "2d" ? "plane" : "wilson"), res.kind === "2d" ? "Swimmers in the image plane" : "3D swimmers (Wilson et al. 2011)", res.swim.v_um_s, res.swim.alpha, res.swim.spread, isMain(res.kind === "2d" ? "plane" : "wilson") ? "the headline" : "");

@@ -584,6 +584,12 @@
       // global swimmer model: start from the compressed result
       if (!quick) yield { stage: "Fitting the swimmer model", frac: 0.94 };
       let swim = null;
+      // quick repeat of a result without swimming: only the fit of cells that do not swim matters
+      if (quick && prev.noSwim) {
+        const still = fitStill(taus, used, { v: prev.head.v_um_s, spread: prev.head.spread, D: prev.head.D_um2_s, Dr: prev.head.D_r_s || 0.3, noTurn: !elongated });
+        still.no_swim = true; still.perq = [];
+        return { alphaDirect: alphaDirect, swim: still, swimDepth: null, swimStrokeFit: null, base: null };
+      }
       if (used.length >= 3 && comp) {
         // several starts (speeds around the compressed estimate, small and large swimming share); the best fit is kept
         let best = null;
