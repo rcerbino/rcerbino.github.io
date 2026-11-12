@@ -101,7 +101,143 @@
     const out = { x: x, w: w }; glCache.set(n, out); return out;
   }
   // weights of the swimmers by direction at one q (null when the cell is short against the pattern: Wilson's closed forms)
+  // the movie module (for the image of one cell, MOVIE.particleTerms)
+  function movieApi() { return typeof module !== "undefined" && module.exports ? require("./movie.js") : root.MOVIE; }
+  // kernel K(q, z) of one block of the movie at q (linear in q between the tabulated values)
+  function kernelBlockAt(K, qk, q) {
+    const nq = qk.length, nz = K.z_um.length;
+    const tq = Math.min(nq - 2, Math.max(0, q / qk[nq - 2] * (nq - 2))), i = Math.floor(tq), f = tq - i;
+    const re = new Float64Array(nz), im = new Float64Array(nz);
+    for (let j = 0; j < nz; j++) {
+      re[j] = K.Kr[i * nz + j] + f * (K.Kr[(i + 1) * nz + j] - K.Kr[i * nz + j]);
+      im[j] = K.Ki ? K.Ki[i * nz + j] + f * (K.Ki[(i + 1) * nz + j] - K.Ki[i * nz + j]) : 0;
+    }
+    return { z: K.z_um, re: re, im: im };
+  }
+  /* Image of one cell from the optics of the microscope (OPTICS: { info, kind, zs }): for each orientation u of the cell
+   * and each depth z of its centre, F(q, u, z) = sum over its points of [w_het K_het(q, z + z_p) + w_hom K_hom(q, z + z_p)]
+   * exp(-i q x_p), with the points and weights of the movie (MOVIE.particleTerms) and its kernels; q along x. The weight
+   * of a swimmer is <|F|^2> over the depths of the cells, binned by |mu| = |q.u| / q (64 bins). This holds the shape
+   * of the cell, how its brightness changes with its tilt, and how a thick cell looks through the optics. Also kept: F at
+   * every orientation (depth-averaged |F|^2 and the complex F at each depth) for the turning of still cells. */
+  let OPTICS = null;
+  const opticsCache = new Map();
+  function opticsAt(q) {
+    const key = q.toPrecision(6); if (opticsCache.has(key)) return opticsCache.get(key);
+    const O = OPTICS, info = O.info, M = movieApi();
+    const chans = info.split && info.channels ? [{ K: info.channels.het, w: "het" }, { K: info.channels.hom, w: "hom" }] : [{ K: info.kernel, w: "all" }];
+    const tabs = chans.filter(function (c) { return c.K; }).map(function (c) { return { t: kernelBlockAt(c.K, info.kernel_q, q), w: c.w }; });
+    const interp = function (t, z) { const zg = t.z, n = zg.length; if (z <= zg[0]) return [t.re[0], t.im[0]]; if (z >= zg[n - 1]) return [t.re[n - 1], t.im[n - 1]]; let lo = 0, hi = n - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (zg[m] <= z) lo = m; else hi = m; } const f = (z - zg[lo]) / (zg[hi] - zg[lo]); return [t.re[lo] + f * (t.re[hi] - t.re[lo]), t.im[lo] + f * (t.im[hi] - t.im[lo])]; };
+    const us = O.orient, nu = us.length, zs = O.zs, nzs = zs.length;
+    const W = new Float64Array(nu), Fr = new Float64Array(nu * nzs), Fi = new Float64Array(nu * nzs);
+    for (let k = 0; k < nu; k++) {
+      const u = us[k], terms = M.particleTerms(info, u.x, u.y, u.z);
+      let s2 = 0;
+      for (let iz = 0; iz < nzs; iz++) {
+        let fr = 0, fi = 0;
+        for (const p of terms) {
+          const c = Math.cos(q * p.x), sn = -Math.sin(q * p.x);
+          let kr = 0, ki = 0;
+          for (const tb of tabs) { const v = interp(tb.t, zs[iz] + p.z), w = p[tb.w]; kr += w * v[0]; ki += w * v[1]; }
+          fr += kr * c - ki * sn; fi += kr * sn + ki * c;
+        }
+        Fr[k * nzs + iz] = fr; Fi[k * nzs + iz] = fi; s2 += fr * fr + fi * fi;
+      }
+      W[k] = s2 / nzs;
+    }
+    // weight of each |mu| for the swimmers (orientations with the same |mu| summed)
+    const byMu = new Map(); let tot = 0;
+    for (let k = 0; k < nu; k++) { const m = Math.abs(us[k].x), key = m.toFixed(9); byMu.set(key, { mu: m, w: (byMu.has(key) ? byMu.get(key).w : 0) + us[k].w * W[k] }); tot += us[k].w * W[k]; }
+    const list = Array.from(byMu.values()), mub = new Float64Array(list.length), wb = new Float64Array(list.length);
+    list.forEach(function (e, i) { mub[i] = e.mu; wb[i] = tot > 0 ? e.w / tot : 1 / list.length; });
+    const out = { mu: mub, w: wb, W: W, Fr: Fr, Fi: Fi };
+    if (opticsCache.size > 400) opticsCache.clear();
+    opticsCache.set(key, out); return out;
+  }
+  /* Straight swimmers seen through the optics, cells with their shape: h_q(s) for a path s = v t,
+   *   h_q(s) = sum_u w_u < F(u, z) F*(u, z + s u_z) e^(-i q s u_x) >_z / sum_u w_u < |F(u, z)|^2 >_z
+   * (z mirrored at the walls of the cell, as the swimmers bounce), and for still cells the axial correlation averaged
+   * over orientations. Same table layout as depthTable, so depthF uses it. */
+  function opticsTable(q) {
+    const O = OPTICS, info = O.info, M = movieApi(), zr = info.cell_z_um, zlo = zr[0], zhi = zr[1], Lz = zhi - zlo;
+    const chans = info.split && info.channels ? [{ K: info.channels.het, w: "het" }, { K: info.channels.hom, w: "hom" }] : [{ K: info.kernel, w: "all" }];
+    const tabs = chans.filter(function (c) { return c.K; }).map(function (c) { return { t: kernelBlockAt(c.K, info.kernel_q, q), w: c.w }; });
+    const interp = function (t, z) { const zg = t.z, n = zg.length; if (z <= zg[0]) return [t.re[0], t.im[0]]; if (z >= zg[n - 1]) return [t.re[n - 1], t.im[n - 1]]; let lo = 0, hi = n - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (zg[m] <= z) lo = m; else hi = m; } const f = (z - zg[lo]) / (zg[hi] - zg[lo]); return [t.re[lo] + f * (t.re[hi] - t.re[lo]), t.im[lo] + f * (t.im[hi] - t.im[lo])]; };
+    // orientations: polar axis along q (x), mu = u.x on 32 Gauss-Legendre nodes over [-1, 1] (a swimmer moves along u),
+    // 12 azimuths over half a turn around q (the image is the same for u_y and -u_y)
+    const G = gaussLegendre(32), us = [];
+    for (let a = 0; a < 32; a++) { const mu = 2 * G.x[a] - 1, sm = Math.sqrt(1 - mu * mu); for (let k = 0; k < 12; k++) { const ph = Math.PI * ((k + 0.5) / 12 - 0.5); us.push({ x: mu, y: sm * Math.cos(ph), z: sm * Math.sin(ph), w: G.w[a] / 12 }); } }
+    const nz = 32, dz = Lz / nz, zc = new Float64Array(nz); for (let j = 0; j < nz; j++) zc[j] = zlo + (j + 0.5) * dz;
+    const nu = us.length, Fr = new Float64Array(nu * nz), Fi = new Float64Array(nu * nz), W = new Float64Array(nu);
+    for (let k = 0; k < nu; k++) {
+      const terms = M.particleTerms(info, us[k].x, us[k].y, us[k].z);
+      for (let j = 0; j < nz; j++) {
+        let fr = 0, fi = 0;
+        for (const p of terms) { const c = Math.cos(q * p.x), sn = -Math.sin(q * p.x); let kr = 0, ki = 0; for (const tb of tabs) { const v = interp(tb.t, zc[j] + p.z), w = p[tb.w]; kr += w * v[0]; ki += w * v[1]; } fr += kr * c - ki * sn; fi += kr * sn + ki * c; }
+        Fr[k * nz + j] = fr; Fi[k * nz + j] = fi; W[k] += (fr * fr + fi * fi) / nz;
+      }
+    }
+    let n0 = 0; for (let k = 0; k < nu; k++) n0 += us[k].w * W[k];
+    // F at a mirrored depth (linear between the grid points)
+    const Fat = function (k, z) {
+      let a = (z - zlo) % (2 * Lz); if (a < 0) a += 2 * Lz; if (a > Lz) a = 2 * Lz - a;
+      const t = Math.max(0, Math.min(nz - 1, a / dz - 0.5)), j = Math.min(nz - 2, Math.floor(t)), f = t - j, o = k * nz;
+      return [Fr[o + j] + f * (Fr[o + j + 1] - Fr[o + j]), Fi[o + j] + f * (Fi[o + j + 1] - Fi[o + j])];
+    };
+    const corr = function (k, dzz) { let sr = 0, si = 0; const o = k * nz; for (let j = 0; j < nz; j++) { const b = Fat(k, zc[j] + dzz), ar = Fr[o + j], ai = Fi[o + j]; sr += ar * b[0] + ai * b[1]; si += ai * b[0] - ar * b[1]; } return [sr / nz, si / nz]; };
+    const ds = 0.2 / q, smax = 60 / q, ns = Math.ceil(smax / ds) + 1, h = new Float64Array(ns);
+    for (let i = 0; i < ns; i++) {
+      const sv = i * ds; let acc = 0;
+      for (let k = 0; k < nu; k++) { const c = corr(k, sv * us[k].z), ph = q * sv * us[k].x; acc += us[k].w * (c[0] * Math.cos(ph) + c[1] * Math.sin(ph)); }
+      h[i] = acc / n0;
+    }
+    // still cells: axial correlation averaged over orientations, on steps of dz over 2 Lz
+    const C = new Float64Array(2 * nz);
+    for (let d = 0; d < 2 * nz; d++) { let acc = 0; for (let k = 0; k < nu; k++) acc += us[k].w * corr(k, d * dz)[0]; C[d] = acc / n0; }
+    const Cat = function (a) { a = Math.abs(a) / dz; a = a % (2 * nz); const i = Math.floor(a), f = a - i; return C[i] + f * (C[(i + 1) % (2 * nz)] - C[i]); };
+    return { q: q, dz: dz, nz: nz, C: C, Cat: Cat, ds: ds, smax: smax, h: h, optics: true };
+  }
+  /* Fading of a cell's image as it turns, from the optics: the depth-averaged image F(u) of the cell at each orientation,
+   * expanded in Legendre polynomials over the sphere (cells in 3D) or in Fourier modes over the angle (cells in the
+   * plane): c_l = (2l+1)/(4 pi) sum_{u,u'} w w' <F(u) F*(u')>_z P_l(u.u') (normalised to sum 1). Under rotational
+   * diffusion D_R the image correlation is sum_l c_l exp(-l(l+1) D_R t) (3D) or sum_m c_m exp(-m^2 D_R t) (plane).
+   * c_0 is the part that does not depend on the orientation. */
+  const turnCache = new Map();
+  function turnSpec(q) {
+    const key = q.toPrecision(6); if (turnCache.has(key)) return turnCache.get(key);
+    const o = opticsAt(q), us = OPTICS.orient, nu = us.length, nz = OPTICS.zs.length, Lmax = 16, c = new Float64Array(Lmax + 1);
+    if (OPTICS.kind === "2d") {
+      for (let mm = 0; mm <= Lmax; mm++) {
+        let acc = 0;
+        for (let iz = 0; iz < nz; iz++) { let ar = 0, ai = 0; for (let k = 0; k < nu; k++) { const ph = Math.atan2(us[k].y, us[k].x) * mm, fr = o.Fr[k * nz + iz], fi = o.Fi[k * nz + iz]; ar += us[k].w * (fr * Math.cos(ph) + fi * Math.sin(ph)); ai += us[k].w * (fi * Math.cos(ph) - fr * Math.sin(ph)); } acc += ar * ar + ai * ai; }
+        c[mm] = (mm === 0 ? 1 : 2) * acc / nz;
+      }
+    } else {
+      const G = new Float64Array(nu * nu);
+      for (let k = 0; k < nu; k++) for (let k2 = k; k2 < nu; k2++) { let g = 0; for (let iz = 0; iz < nz; iz++) g += o.Fr[k * nz + iz] * o.Fr[k2 * nz + iz] + o.Fi[k * nz + iz] * o.Fi[k2 * nz + iz]; G[k * nu + k2] = G[k2 * nu + k] = g / nz; }
+      for (let k = 0; k < nu; k++) for (let k2 = 0; k2 < nu; k2++) {
+        const x = us[k].x * us[k2].x + us[k].y * us[k2].y + us[k].z * us[k2].z, ww = us[k].w * us[k2].w * G[k * nu + k2];
+        let p0 = 1, p1 = x; c[0] += ww; c[1] += 3 * ww * p1;
+        for (let l = 2; l <= Lmax; l++) { const p2 = ((2 * l - 1) * x * p1 - (l - 1) * p0) / l; c[l] += (2 * l + 1) * ww * p2; p0 = p1; p1 = p2; }
+      }
+      // (the orientations cover half the sphere, mu >= 0; a rod looks the same from both ends, F(-u) = F(u), so over the
+      // whole sphere the odd l cancel)
+      for (let l = 1; l <= Lmax; l += 2) c[l] = 0;
+    }
+    let tot = 0; for (let l = 0; l <= Lmax; l++) { c[l] = Math.max(0, c[l]); tot += c[l]; }
+    for (let l = 0; l <= Lmax; l++) c[l] = tot > 0 ? c[l] / tot : (l === 0 ? 1 : 0);
+    const out = { c: c, plane: OPTICS.kind === "2d" };
+    if (turnCache.size > 400) turnCache.clear();
+    turnCache.set(key, out); return out;
+  }
+  // image correlation of a turning cell after t (1 at t = 0, c_0 for long times)
+  function turnCorr(q, t, Dr) {
+    const T = turnSpec(q), c = T.c; let s = c[0];
+    for (let l = 1; l < c.length; l++) if (c[l] > 0) s += c[l] * Math.exp(-(T.plane ? l * l : l * (l + 1)) * Dr * t);
+    return s;
+  }
   function shapeWeights(q, kind) {
+    if (OPTICS && OPTICS.weights) { const o = opticsAt(q); return { mu: o.mu, w: o.w }; }
     const key = kind + ":" + q.toPrecision(6);
     if (shapeCache.has(key)) return shapeCache.get(key);
     const L = SHAPE.L, R = SHAPE.R, aMax = q * L / 2, xMax = q * R;
@@ -132,7 +268,22 @@
   // the pattern that depends on the orientation (to lowest order cos 2 theta) fades at l (l + 1) D_R = 6 D_R for rods that
   // turn in 3D, l^2 D_R = 4 D_R for rods that lie in the plane (2D analysis)
   let ROT = 6;
-  function stillTurn(p, t) { return p.b ? (1 - p.b) + p.b * Math.exp(-ROT * p.Dr * t) : 1; }
+  // turning of the cells that do not swim: share b of the pattern fades; with the optics (and q) its time course is the
+  // decaying part of turnCorr, else one exponential at 6 D_R (3D) or 4 D_R (plane)
+  function stillTurn(p, t, q) {
+    if (!p.b) return 1;
+    if (OPTICS && q > 0) { const c0 = turnSpec(q).c[0], tc = turnCorr(q, t, p.Dr); return (1 - p.b) + p.b * (c0 < 0.999 ? (tc - c0) / (1 - c0) : Math.exp(-ROT * p.Dr * t)); }
+    return (1 - p.b) + p.b * Math.exp(-ROT * p.Dr * t);
+  }
+  // turning of the swimmers themselves (rotational diffusion DRS of their heading): their image fades as they turn
+  let DRS = 0, SWIM_DS_FREE = false, DS_MAX = 3;
+  // the swimmers turn too (rotational diffusion D_s of their heading), and their images fade as those of the cells that
+  // do not swim: the same share b of the pattern (it belongs to the image of a rod at that q), at rate 6 D_s
+  function swimTurn(q, t, p) {
+    const d = p && p.Ds > 0 ? p.Ds : DRS; if (!(d > 0) || !(q > 0)) return 1;
+    if (OPTICS) return turnCorr(q, t, d);
+    return p.b > 0 ? (1 - p.b) + p.b * Math.exp(-ROT * d * t) : 1;
+  }
   // 3D swimmers with a stroke along the axis (Martinez et al. 2012, Chlamydomonas; Jepson et al. 2019, sperm):
   // displacement v t + A [sin(2 pi f t + phi) - sin phi] with a random phase phi. Averaging over phi gives J0(q mu a),
   // a = 2 A |sin(pi f t)|, mu the cosine to q; over the Schulz speeds the cosine averages in closed form, so
@@ -162,7 +313,7 @@
   function swimF(kind, q, t, p) {   // p: { v, alpha, spread, D, b, Dr, A, f }
     const Z = shapeOf(p.spread), X = q * p.v * t, W = SHAPE && (kind === "3d" || kind === "2d") ? shapeWeights(q, kind) : null;
     const S = W ? swimShaped(W, X, Z) : kind === "2d" ? swim2(X, Z) : kind === "stroke" || kind === "strokex" ? swimStroke(q, t, p.v, Z, p.A, p.f, kind === "strokex") : swim3(X, Z);
-    return Math.exp(-p.D * q * q * t) * ((1 - p.alpha) * stillTurn(p, t) + p.alpha * S);
+    return Math.exp(-p.D * q * q * t) * ((1 - p.alpha) * stillTurn(p, t, q) + p.alpha * S * swimTurn(q, t, p));
   }
 
   /* Depth response. A particle at depth z contributes K(q, z) exp(-i q.x) to the image (K from the optics). For a particle
@@ -241,7 +392,7 @@
     let still;
     if (sg < 0.5 * tb.dz) still = 1;
     else { const nn = Math.max(8, Math.ceil(4 * sg / tb.dz)), da = 4 * sg / nn; let acc = 0, wsum = 0; for (let m = -nn; m <= nn; m++) { const a = m * da, w = Math.exp(-0.5 * a * a / (sg * sg)); acc += w * tb.Cat(a); wsum += w; } still = acc / wsum; }
-    return Math.exp(-p.D * q * q * t) * ((1 - p.alpha) * still * stillTurn(p, t) + p.alpha * sw);
+    return Math.exp(-p.D * q * q * t) * ((1 - p.alpha) * still * stillTurn(p, t, q) + p.alpha * sw * swimTurn(q, t, p));
   }
 
   // best A, B for d = A (1 - f) + B (linear least squares, weights 1)
@@ -279,7 +430,7 @@
   //   d = A [1 - e^(-D q^2 t)] + A b e^(-D q^2 t) [1 - e^(-6 D_R t)] + B,  linear in A, A b, B for given D, D_R
   function stillRow(r, taus, D, Dr, g1, g2) {
     const L = taus.length, q2 = r.q * r.q;
-    for (let i = 0; i < L; i++) { const e = Math.exp(-D * q2 * taus[i]); g1[i] = 1 - e; g2[i] = e * (1 - Math.exp(-ROT * Dr * taus[i])); }
+    for (let i = 0; i < L; i++) { const e = Math.exp(-D * q2 * taus[i]); g1[i] = 1 - e; g2[i] = Dr > 0 ? e * (1 - stillTurn({ b: 1, Dr: Dr }, taus[i], r.q)) : 0; }
     return turnAB(r, g1, g2);
   }
   // d = c1 g1 + c2 g2 + B at one q, c1 = A, c2 = A b: least squares in (c1, c2, B) with c2 kept in [0, c1] (b between 0
@@ -343,10 +494,13 @@
     // parameters: ln v, alpha, spread, ln D, turning (b, ln D_R), stroke (ln A, ln f, model "stroke" only); fixed ones
     // are left out of the fit
     if (kind !== "stroke" && kind !== "strokex") fixed = Object.assign({ A: 0, f: 0 }, fixed);
-    const names = ["v", "alpha", "spread", "D", "b", "Dr", "A", "f"], free = names.filter(function (k) { return fixed[k] === undefined; });
+    // Ds: turning of the swimmers' heading (rotational diffusion), free only with the optics of elongated cells
+    // (a fit of one or two q values keeps the value it starts from)
+    if (fixed.Ds === undefined && (!SWIM_DS_FREE || rows.length < 4 || (fixed.b === 0 && !OPTICS))) fixed = Object.assign({ Ds: SWIM_DS_FREE && start.Ds > 0 ? start.Ds : DRS }, fixed);
+    const names = ["v", "alpha", "spread", "D", "b", "Dr", "A", "f", "Ds"], free = names.filter(function (k) { return fixed[k] === undefined; });
     const toP = { v: Math.log(start.v), alpha: start.alpha, spread: start.spread, D: Math.log(Math.max(start.D, 1e-4)), b: start.b === undefined ? 0.5 : start.b, Dr: Math.log(start.Dr === undefined ? 0.2 : Math.max(1e-3, start.Dr)),
-                  A: Math.log(Math.max(0.01, start.A || 1)), f: Math.log(Math.max(0.1, start.f || 10)) };
-    const LOGS = { v: 1, D: 1, Dr: 1, A: 1, f: 1 };
+                  A: Math.log(Math.max(0.01, start.A || 1)), f: Math.log(Math.max(0.1, start.f || 10)), Ds: Math.log(Math.min(DS_MAX, start.Ds > 0 ? start.Ds : 0.1)) };
+    const LOGS = { v: 1, D: 1, Dr: 1, A: 1, f: 1, Ds: 1 };
     const unpack = function (p) {
       const o = {}; names.forEach(function (k) { o[k] = fixed[k] !== undefined ? fixed[k] : null; });
       free.forEach(function (k, i) { o[k] = LOGS[k] ? Math.exp(p[i]) : p[i]; });
@@ -380,6 +534,7 @@
         if (k === "D") p[i] = Math.min(Math.log(D_LIMITS ? D_LIMITS[1] : 1e3), Math.max(Math.log(D_LIMITS ? D_LIMITS[0] : 1e-5), p[i]));
         if (k === "b") p[i] = Math.min(1, Math.max(0, p[i]));
         if (k === "Dr") p[i] = Math.min(Math.log(100), Math.max(Math.log(1e-3), p[i]));
+        if (k === "Ds") p[i] = Math.min(Math.log(DS_MAX), Math.max(Math.log(1e-3), p[i]));
         if (k === "A") p[i] = Math.min(Math.log(50), Math.max(Math.log(0.01), p[i]));
         if (k === "f") p[i] = Math.min(Math.log(0.5 / (taus[0] || 1e-3)), Math.max(Math.log(0.1), p[i]));   // below the Nyquist frequency of the movie
       });
@@ -390,7 +545,7 @@
     const se = function (k) { const i = free.indexOf(k); return i >= 0 && r.cov && r.cov[i][i] > 0 ? Math.sqrt(r.cov[i][i]) : null; };
     const ab = rows.map(function (rw) { return rowAB(rw, par); });
     const bmean = perq ? ab.reduce(function (a, x) { return a + x.b; }, 0) / Math.max(1, ab.length) : par.b;
-    return { kind: kind, v_um_s: par.v, alpha: par.alpha, spread: par.spread, D_um2_s: par.D, turn_share: bmean, turn_perq: perq, D_r_s: par.Dr, stroke_um: par.A, stroke_hz: par.f, cost: r.cost, n_points: rows.length * L,
+    return { kind: kind, v_um_s: par.v, alpha: par.alpha, spread: par.spread, D_um2_s: par.D, turn_share: bmean, turn_perq: perq, D_r_s: par.Dr, swim_dr_s: par.Ds, stroke_um: par.A, stroke_hz: par.f, cost: r.cost, n_points: rows.length * L,
              v_rel_err: se("v"), alpha_err: se("alpha"), spread_err: se("spread"), D_rel_err: se("D"), stroke_rel_err: se("A"), stroke_hz_rel_err: se("f"), ab: ab };
   }
 
@@ -472,6 +627,7 @@
     const kind = opts.kind === "2d" ? "2d" : "3d";
     const S = yield* DDM.structure(movie, opts);
     const taus = S.taus_s, L = taus.length, nb = S.nb;
+    DRS = opts.swim_dr > 0 ? opts.swim_dr : 0; SWIM_DS_FREE = false; DS_MAX = 3; turnCache.clear();
     NOISE_B = null;     // camera noise from the mean count (see NOISE_B)
     if (opts.noise !== "fit" && movie.info && movie.info.detector_kind === "camera" && movie.frames && typeof movie.info.read_noise_e === "number") {
       let s = 0; const F = movie.frames; for (let k = 0; k < F.length; k++) s += F[k];
@@ -548,11 +704,38 @@
     ROT = kind === "2d" ? 4 : 6;
     // size of the cells for the swimmer model (elongated cells only): given, or those of the movie (known to the
     // experimenter from the images, like D from the size and the viscosity)
-    SHAPE = null; shapeCache.clear();
-    if (opts.cell_shape !== false) {
+    SHAPE = null; shapeCache.clear(); OPTICS = null; opticsCache.clear();
+    // image of one cell from the optics of the microscope (default; opts.cell_shape: "cylinder" for the idealized rod)
+    if (opts.cell_shape === "optics" && movie.info && movie.info.particle && movie.info.particle.oriented && movie.info.kernel && movie.info.kernel_q && movieApi()) {
+      const orient = [];
+      if (kind === "2d") { for (let k = 0; k < 48; k++) { const ph = 2 * Math.PI * (k + 0.5) / 48; orient.push({ x: Math.cos(ph), y: Math.sin(ph), z: 0, w: 1 / 48 }); } }
+      // (3D: polar axis along q, which is along x; mu = u.x on Gauss-Legendre nodes over [0, 1], as a rod looks the same
+      // from both ends, and 16 azimuths around q)
+      else { const G = gaussLegendre(24); for (let a = 0; a < 24; a++) { const mu = G.x[a], sm = Math.sqrt(1 - mu * mu); for (let k = 0; k < 16; k++) { const ph = 2 * Math.PI * (k + 0.5) / 16; orient.push({ x: mu, y: sm * Math.cos(ph), z: sm * Math.sin(ph), w: G.w[a] / 16 }); } } }
+      // depths of the centres: spread over the cell (3D), or the height of the cells along the glass (2D)
+      const zr = movie.info.cell_z_um, zs = [];
+      const ts = movie.truth && movie.truth.swim;
+      if (kind === "2d" && ts && ts.n_plane > 0 && ts.height_um !== undefined) zs.push(zr[1] - ts.height_um);     // z = focus - height
+      else for (let k = 0; k < 24; k++) zs.push(zr[0] + (zr[1] - zr[0]) * (k + 0.5) / 24);
+      // weights over the directions of swimming from the optics only when asked (opts.cell_shape "optics"); by default
+      // from the idealized rod below, and the optics give the turning
+      OPTICS = { info: movie.info, kind: kind, orient: orient, zs: zs, weights: opts.optics_weights !== false };
+      if (OPTICS.weights) SHAPE = { L: 0, R: 0, optics: true };
+      // the turning of the swimmers is unknown to the experimenter: fitted, unless given (opts.swim_dr)
+      SWIM_DS_FREE = !(opts.swim_dr > 0) && opts.swim_turning !== false;
+    }
+    if (opts.cell_shape !== false && !(OPTICS && OPTICS.weights)) {
       const pc = movie.info && movie.info.particle, geo = pc && pc.oriented && pc.geometry;
       if (opts.cell_length_um > 0) SHAPE = { L: opts.cell_length_um, R: (opts.cell_width_um > 0 ? opts.cell_width_um : 0) / 2 };
       else if (opts.D_from_cells === true && geo && geo.kind === "cylinder" && geo.a_par > geo.a_perp) SHAPE = { L: 2 * geo.a_par, R: geo.a_perp };
+      // the turning of the swimmers is unknown to the experimenter: fitted, unless given (opts.swim_dr)
+      if (movie.info && movie.info.particle && movie.info.particle.oriented) SWIM_DS_FREE = !(opts.swim_dr > 0) && opts.swim_turning !== false;
+      // at most the rotational diffusion of the body alone (from its size and the viscosity, when known, as D): the
+      // flagella add drag. Without this limit the fading can stand in for the errors of the shape weight of long rods
+      // (B. subtilis: D_s 0.8 rad^2/s and the speed 23 % low)
+      const DrB = opts.Dr_hint > 0 ? opts.Dr_hint : opts.D_from_cells === true && movie.truth && movie.truth.D_r_s > 0 ? movie.truth.D_r_s : 0;
+      DS_MAX = DrB > 0 ? DrB : 3;
+      if (DS_MAX < 2e-3) SWIM_DS_FREE = false;
     }
     // model fits on the used q: the swimmer model (with its safeguards), the depth and stroke models. quick: repeat of
     // the main fits on other data (one block of the movie left out), started from the main result (prev), keeping its
@@ -603,7 +786,7 @@
         // several starts (speeds around the compressed estimate, small and large swimming share); the best fit is kept
         let best = null;
         // v0 of the compressed fit is about the mean speed / 2.2 in 3D and / 1.7 in the plane (narrow speed distributions)
-        if (quick) best = fitSwimGlobal(kind, taus, used, { v: prev.base.v_um_s, alpha: prev.base.alpha, spread: prev.base.spread, D: prev.base.D_um2_s, b: 0.5, Dr: 0.2 }, turnFix);
+        if (quick) best = fitSwimGlobal(kind, taus, used, { v: prev.base.v_um_s, alpha: prev.base.alpha, spread: prev.base.spread, D: prev.base.D_um2_s, b: 0.5, Dr: 0.2, Ds: prev.base.swim_dr_s }, turnFix);
         else for (const fv of [1.2, kind === "2d" ? 1.8 : 2.3, 3.5]) for (const a0 of [0.3, 0.8]) {
           const g = fitSwimGlobal(kind, taus, used, { v: comp.v0_um_s * fv, alpha: a0, spread: 0.3, D: 0.3, b: 0.5, Dr: 0.2 }, turnFix);
           if (best === null || g.cost < best.cost) best = g;
@@ -616,7 +799,7 @@
         // from the size and shape of the cells and the viscosity)
         if (Dh > 0) {
           // first without turning; if that does not describe the data, with the turning of rods (b, D_R) free
-          const st = { v: best.v_um_s, alpha: Math.max(0.05, best.alpha), spread: best.spread, D: Dh, b: 0.3, Dr: 0.3 };
+          const st = { v: best.v_um_s, alpha: Math.max(0.05, best.alpha), spread: best.spread, D: Dh, b: 0.3, Dr: 0.3, Ds: best.swim_dr_s };
           let g = fitSwimGlobal(kind, taus, used, st, Object.assign({ D: Dh }, turnFix));
           if (!(g.cost <= 1.03 * best.cost) && !turns) g = fitSwimGlobal(kind, taus, used, st, Object.assign({ D: Dh }, shareFix));
           if (g.cost <= 1.03 * best.cost) { g.D_fixed = true; g.cost_free_D = best.cost; swim = g; }
@@ -625,10 +808,13 @@
         // describes the data clearly better (5 % lower cost). Phase contrast needs it at the largest spacings, where the
         // halo leaves mostly the part of a rod's image that depends on its orientation
         if (opts.turn_perq !== false && !turns && elongated) {
-          const st = { v: swim.v_um_s, alpha: Math.max(0.05, swim.alpha), spread: swim.spread, D: swim.D_um2_s, Dr: 0.3 };
+          const st = { v: swim.v_um_s, alpha: Math.max(0.05, swim.alpha), spread: swim.spread, D: swim.D_um2_s, Dr: 0.3, Ds: swim.swim_dr_s };
           // D_R from the size of the rods and the viscosity, as D (opts.Dr_hint, or the bulk value when D_from_cells)
           const DrH = opts.Dr_hint > 0 ? opts.Dr_hint : opts.D_from_cells === true && movie.truth && movie.truth.D_r_s > 0 ? movie.truth.D_r_s : 0;
-          const g = fitSwimGlobal(kind, taus, used, st, Object.assign(swim.D_fixed ? { D: swim.D_um2_s } : {}, DrH > 0 ? { Dr: DrH } : {}, { b: "q" }, opts.turn_alpha === "free" ? shareFix : { alpha: swim.alpha }));
+          const fxT = Object.assign(swim.D_fixed ? { D: swim.D_um2_s } : {}, DrH > 0 ? { Dr: DrH } : {}, { b: "q" }, opts.turn_alpha === "free" ? shareFix : { alpha: swim.alpha });
+          let g = fitSwimGlobal(kind, taus, used, st, fxT);
+          // (with the swimmers' turning free, also from no turning: the cost has a second valley there)
+          if (SWIM_DS_FREE) { const g0 = fitSwimGlobal(kind, taus, used, st, Object.assign({ Ds: DRS }, fxT)); if (g0.cost < g.cost) g = g0; }
           if (g.cost < 0.95 * swim.cost) { if (swim.D_fixed) { g.D_fixed = true; g.cost_free_D = swim.cost_free_D; } g.cost_no_turn = swim.cost; swim = g; }
         }
         // cells that do not swim at all (rods also fade as they turn, share b at rate 6 D_R): if this describes the data
@@ -644,7 +830,7 @@
         if (still.cost <= 1.1 * swim.cost || swim.alpha < 0.05 || (comp.slope < 0.5 && swim.alpha < 0.3) || swim.v_um_s > 15 * comp.v_rate_max_um_s || swim.v_um_s < 0.3 * comp.v0_um_s) { still.no_swim = true; still.cost_swim = swim.cost; still.perq = []; swim = still; }
         // per-q speed and fraction with spread and D fixed: the speed should not depend on q
         if (!swim.no_swim && !quick) swim.perq = used.map(function (r, j) {
-          const g = fitSwimGlobal(kind, taus, [r], { v: swim.v_um_s, alpha: swim.alpha, spread: swim.spread, D: swim.D_um2_s }, { spread: swim.spread, D: swim.D_um2_s, b: bOf(swim, j), Dr: swim.D_r_s });
+          const g = fitSwimGlobal(kind, taus, [r], { v: swim.v_um_s, alpha: swim.alpha, spread: swim.spread, D: swim.D_um2_s, Ds: swim.swim_dr_s }, { spread: swim.spread, D: swim.D_um2_s, b: bOf(swim, j), Dr: swim.D_r_s });
           return { q: r.q, v_um_s: g.v_um_s, alpha: g.alpha };
         });
       }
@@ -652,15 +838,23 @@
       let swimDepth = null;
       if (swim && !swim.no_swim && kind === "3d" && opts.depth === true && movie.info && movie.info.kernel && (!quick || prev.depth)) {
         if (!quick) yield { stage: "Depth response of the microscope", frac: 0.95 };
-        used.forEach(function (r) { if (!r.depth) r.depth = depthTable(movie.info, r.q); });
+        used.forEach(function (r) { if (!r.depth) r.depth = OPTICS && OPTICS.weights && OPTICS.kind === "3d" ? opticsTable(r.q) : depthTable(movie.info, r.q); });
         let best = null;
+        const fixD = quick && prev.depth.D_fixed ? { D: prev.depth.D_um2_s } : {};
         for (const st of quick ? [{ v: prev.depth.v_um_s, alpha: prev.depth.alpha }] : [{ v: swim.v_um_s, alpha: swim.alpha }, { v: 0.8 * swim.v_um_s, alpha: Math.min(1, swim.alpha + 0.1) }]) {
-          const g = fitSwimGlobal("depth", taus, used, { v: st.v, alpha: st.alpha, spread: swim.spread, D: swim.D_um2_s, b: swim.turn_share, Dr: swim.D_r_s }, swim.turn_perq ? Object.assign({ b: "q", Dr: swim.D_r_s }, shareFix) : turnFix);
+          const g = fitSwimGlobal("depth", taus, used, { v: st.v, alpha: st.alpha, spread: swim.spread, D: swim.D_um2_s, b: swim.turn_share, Dr: swim.D_r_s, Ds: swim.swim_dr_s }, Object.assign({}, swim.turn_perq ? Object.assign({ b: "q", Dr: swim.D_r_s }, shareFix) : turnFix, fixD));
           if (best === null || g.cost < best.cost) best = g;
+        }
+        if (fixD.D !== undefined) best.D_fixed = true;
+        // D expected from the cells, as for the swimmer model: kept when the data do not ask for another value (a free D
+        // trades against the share of swimmers: in a thin confocal slice it ran to its lower limit, with too many swimmers)
+        if (!quick && Dh > 0) {
+          const g = fitSwimGlobal("depth", taus, used, { v: best.v_um_s, alpha: best.alpha, spread: best.spread, D: Dh, b: swim.turn_share, Dr: swim.D_r_s, Ds: best.swim_dr_s }, Object.assign({}, swim.turn_perq ? Object.assign({ b: "q", Dr: swim.D_r_s }, shareFix) : turnFix, { D: Dh }));
+          if (g.cost <= 1.03 * best.cost) { g.D_fixed = true; g.cost_free_D = best.cost; best = g; }
         }
         swimDepth = best;
         if (!quick) swimDepth.perq = used.map(function (r, j) {
-          const g = fitSwimGlobal("depth", taus, [r], { v: best.v_um_s, alpha: best.alpha, spread: best.spread, D: best.D_um2_s }, { spread: best.spread, D: best.D_um2_s, b: bOf(best, j), Dr: best.D_r_s });
+          const g = fitSwimGlobal("depth", taus, [r], { v: best.v_um_s, alpha: best.alpha, spread: best.spread, D: best.D_um2_s, Ds: best.swim_dr_s }, { spread: best.spread, D: best.D_um2_s, b: bOf(best, j), Dr: best.D_r_s });
           return { q: r.q, v_um_s: g.v_um_s, alpha: g.alpha };
         });
       }
@@ -671,7 +865,10 @@
         if (!quick) yield { stage: "Fitting the stroke", frac: 0.955 };
         // D: the value expected from the cells when given (the straight model may have bent it to mimic the stroke)
         const Dst = Dh > 0 ? Dh : swim.D_um2_s;
-        const base = { v: swim.v_um_s, alpha: swim.alpha, spread: swim.spread, D: Dst, b: swim.turn_share, Dr: swim.D_r_s };
+        // (the fading of the cells that do not swim as in the straight model: for round cells it stands for their contrast
+        // changing as they diffuse up and down through the focus, which no model here describes; without it the stroke
+        // model fitted sperm with many dead cells badly and the straight one read the speed 27 % high)
+        const base = { v: swim.v_um_s, alpha: swim.alpha, spread: swim.spread, D: Dst, b: swim.turn_share, Dr: swim.D_r_s, Ds: swim.swim_dr_s };
         const fb = new Float64Array(L);
         const costAt = function (par) {
           let c = 0;
@@ -682,7 +879,9 @@
         let bestP = null, bestC = Infinity;
         const sub = used.filter(function (r, j) { return j % 3 === 1; });   // the grid on a third of the q is enough to find the valley
         const costSub = function (par) { let c = 0; for (const r of sub) { for (let i = 0; i < L; i++) fb[i] = swimF(sk, r.q, taus[i], par); const ab = boundAB(r, fb); for (let i = 0; i < L; i++) { const e = (ab.A * (1 - fb[i]) + ab.B - r.y[i]) / r.scale; c += e * e; } } return c; };
-        if (quick) bestP = Object.assign({}, base, { v: prev.stroke.v_um_s, alpha: prev.stroke.alpha, spread: prev.stroke.spread, A: prev.stroke.stroke_um, f: prev.stroke.stroke_hz });
+        // (the repeats for the uncertainties start where the main fit started, the best point of its grid: started from the
+        // main result they stay in its valley, and the error came out several times too small)
+        if (quick) bestP = Object.assign({}, prev.stroke.grid_start || Object.assign({}, base, { v: prev.stroke.v_um_s, alpha: prev.stroke.alpha, spread: prev.stroke.spread, A: prev.stroke.stroke_um, f: prev.stroke.stroke_hz }));
         else for (const fz of [2, 3, 5, 8, 12, 16, 20, 25, 32, 40, 50, 63, 80, 100, 130, 160, 200]) {
           if (fz >= 0.9 * fNyq) continue;
           for (const Az of [0.3, 0.7, 1.5, 3, 6, 12]) for (const a0 of [base.alpha, 0.95]) for (const vf of [1, 1.15]) {
@@ -692,14 +891,17 @@
         }
         if (bestP) {
           // fitted on every other q (the stroke model is slow), with D from the straight model; compared on all q
-          const fixS = Object.assign({ D: Dst }, turnFix), half = used.filter(function (r, j) { return j % 2 === 0; });
-          const g = fitSwimGlobal(sk, taus, half.length >= 3 ? half : used, bestP, fixS);
-          g.cost = costAt({ v: g.v_um_s, alpha: g.alpha, spread: g.spread, D: g.D_um2_s, b: g.turn_share, Dr: g.D_r_s, A: g.stroke_um, f: g.stroke_hz });
-          g.ab = used.map(function (r) { for (let i = 0; i < L; i++) fb[i] = swimF(sk, r.q, taus[i], { v: g.v_um_s, alpha: g.alpha, spread: g.spread, D: g.D_um2_s, b: g.turn_share, Dr: g.D_r_s, A: g.stroke_um, f: g.stroke_hz }); return boundAB(r, fb); });
+          // (turning of the cells that do not swim as in the straight model, which the grid used)
+          const fixS = Object.assign({ D: Dst }, turnFix, { b: base.b, Dr: base.Dr }), half = used.filter(function (r, j) { return j % 2 === 0; });
+          const g = fitSwimGlobal(sk, taus, half.length >= 3 ? half : used, bestP, fixS); g.cost_half = g.cost; g.grid_start = Object.assign({}, bestP);
+          g.cost = costAt({ v: g.v_um_s, alpha: g.alpha, spread: g.spread, D: g.D_um2_s, b: g.turn_share, Dr: g.D_r_s, A: g.stroke_um, f: g.stroke_hz, Ds: g.swim_dr_s });
+          g.ab = used.map(function (r) { for (let i = 0; i < L; i++) fb[i] = swimF(sk, r.q, taus[i], { v: g.v_um_s, alpha: g.alpha, spread: g.spread, D: g.D_um2_s, b: g.turn_share, Dr: g.D_r_s, A: g.stroke_um, f: g.stroke_hz, Ds: g.swim_dr_s }); return boundAB(r, fb); });
+          // (kept for the record when the straight model is the better fit)
+          if (!quick) swim.stroke_tried = { cost: g.cost, v_um_s: g.v_um_s, alpha: g.alpha, stroke_um: g.stroke_um, stroke_hz: g.stroke_hz };
           if (quick || g.cost < swim.cost) {
             if (swim.D_fixed) g.D_fixed = true;
             if (!quick) g.perq = used.map(function (r) {
-              const h = fitSwimGlobal(sk, taus, [r], { v: g.v_um_s, alpha: g.alpha, spread: g.spread, D: g.D_um2_s, A: g.stroke_um, f: g.stroke_hz }, { spread: g.spread, D: g.D_um2_s, b: g.turn_share, Dr: g.D_r_s, A: g.stroke_um, f: g.stroke_hz });
+              const h = fitSwimGlobal(sk, taus, [r], { v: g.v_um_s, alpha: g.alpha, spread: g.spread, D: g.D_um2_s, A: g.stroke_um, f: g.stroke_hz, Ds: g.swim_dr_s }, { spread: g.spread, D: g.D_um2_s, b: g.turn_share, Dr: g.D_r_s, A: g.stroke_um, f: g.stroke_hz });
               return { q: r.q, v_um_s: h.v_um_s, alpha: h.alpha };
             });
             swimStrokeFit = g;
@@ -748,7 +950,7 @@
       const pts = [];
       used.forEach(function (r, j) {
         const bq = bOf(head, j), a = head.alpha, e = new Float64Array(L), st = new Float64Array(L);
-        for (let i = 0; i < L; i++) { e[i] = Math.exp(-head.D_um2_s * r.q * r.q * taus[i]); st[i] = (1 - a) * stillTurn({ b: bq, Dr: head.D_r_s }, taus[i]); }
+        for (let i = 0; i < L; i++) { e[i] = Math.exp(-head.D_um2_s * r.q * r.q * taus[i]); st[i] = (1 - a) * stillTurn({ b: bq, Dr: head.D_r_s }, taus[i], r.q); }
         const model = function (p, i) { return r.An * (1 - e[i] * (st[i] + a * Math.exp(-Math.pow(Math.exp(p[0]) * taus[i], p[1])))) + r.Bn; };
         const resid = function (p) { const o = new Float64Array(L); for (let i = 0; i < L; i++) o[i] = (model(p, i) - r.y[i]) / r.scale; return o; };
         const clamp = function (p) { p[1] = Math.min(3, Math.max(0.5, p[1])); p[0] = Math.min(Math.log(1e3 / taus[0]), Math.max(Math.log(0.01 / taus[L - 1]), p[0])); return p; };
@@ -797,7 +999,7 @@
         for (let i = 0; i < m; i++) {
           const p = pts[i], X = p.q * p.t * vgrid[k], W = k > 0 && SHAPE ? shapeWeights(p.q, kind) : null;
           let sw = 0; if (W) for (let j = 0; j < W.mu.length; j++) sw += W.w[j] * Math.cos(X * W.mu[j]);     // long cells: weighted by their shape
-          col[i] = Math.exp(-D * p.q * p.q * p.t) * (k === 0 ? (head ? stillTurn({ b: p.b, Dr: head.D_r_s }, p.t) : 1) : W ? sw : (kind === "2d" ? besselJ0(X) : Math.sin(X) / X));
+          col[i] = Math.exp(-D * p.q * p.q * p.t) * (k === 0 ? (head ? stillTurn({ b: p.b, Dr: head.D_r_s }, p.t, p.q) : 1) : W ? sw : (kind === "2d" ? besselJ0(X) : Math.sin(X) / X));
         }
         cols.push(col);
       }
@@ -837,7 +1039,7 @@
       return { bin: r.bin, q_per_um: r.q, ok: r.ok, reason: r.reason, gamma_fast_hz: r.reason === null && r.gamma_fast ? r.gamma_fast : null, gamma_model_hz: r.reason === null && r.gamma_model ? r.gamma_model : null, gamma_true_hz: r.reason === null && r.gamma_true ? r.gamma_true : null, beta_fast: r.reason === null ? r.beta_fast : null, A: u ? r.An : r.A, B: u ? r.Bn : r.B, gamma_hz: r.gamma_hz, beta: r.fixed.beta, beta_free: r.beta_free, lnGamma_se: r.lnGamma_se, curve: curve };
     });
     const noiseB = NOISE_B;
-    D_LIMITS = null; ROT = 6; SHAPE = null; NOISE_B = null;
+    D_LIMITS = null; ROT = 6; SHAPE = null; NOISE_B = null; OPTICS = null; DRS = 0; SWIM_DS_FREE = false; DS_MAX = 3;
     return { kind: kind, model: head === swimDepth && swimDepth ? "depth" : head === swimStrokeFit && swimStrokeFit ? "stroke" : kind, lags: S.lags, pairs: S.pairs, times_s: S.times_s, taus_s: taus, curve_taus_s: ct, q_per_um: S.q_per_um, dq: S.dq, d2d: S.d2d, varq: S.varq, B_floor: S.B_floor, B_est: S.B_est, A_est: S.A_est,
              fits: fits, share_from_amplitude: alphaDirect, head: head ? { no_swim: head.no_swim === true, D_fixed: head.D_fixed === true, v_um_s: head.no_swim ? null : head.v_um_s, alpha: head.alpha, spread: head.spread, D_um2_s: head.D_um2_s, turn_share: head.turn_share, turn_perq: head.kind === "still" || head.turn_perq === true, turn_b: head.ab ? head.ab.map(function (x) { return x.b === undefined ? head.turn_share : x.b; }) : null, D_r_s: head.D_r_s, v_rel_err: jk && jk.v !== null && head.v_um_s > 0 ? jk.v / head.v_um_s : head.v_rel_err, alpha_err: jk ? jk.alpha : head.alpha_err, spread_err: jk ? jk.spread : head.spread_err, D_err: jk ? jk.D : null, stroke_um_err: jk && head === swimStrokeFit ? jk.stroke_um : null, stroke_hz_err: jk && head === swimStrokeFit ? jk.stroke_hz : null, err_from: jk ? "jackknife" : "fit", jackknife: jk, stroke_um: head === swimStrokeFit ? head.stroke_um : null, stroke_hz: head === swimStrokeFit ? head.stroke_hz : null, perq: head.perq } : null,
              window: { q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, q_opt_per_um: S.q_opt_per_um, q_nyq_per_um: S.q_nyq_per_um, gamma_lo_hz: S.gamma_lo_hz, gamma_hi_hz: S.gamma_hi_hz },
@@ -859,6 +1061,6 @@
     return { fraction: fs / qs.length, v_mean_um_s: nv ? vs / nv : null };
   }
 
-  const api = { fitStill: fitStill, summary: summary, depthTable: depthTable, depthF: depthF, seenOver: seenOver, analyse: analyse, swimF: swimF, swim3: swim3, swim2: swim2, besselJ0: besselJ0, nnls: nnls, invertCurve: invertCurve, fitSwimGlobal: fitSwimGlobal, fitCompressed: fitCompressed, linAB: linAB };
+  const api = { _test: { setOptics: function (o) { OPTICS = o; SHAPE = o ? { optics: true } : null; opticsCache.clear(); }, opticsTable: function (q) { return opticsTable(q); }, opticsAt: function (q) { return opticsAt(q); }, setShape: function (s) { SHAPE = s; shapeCache.clear(); }, shapeWeights: function (q, k) { return shapeWeights(q, k); }, gaussLegendre: function (n) { return gaussLegendre(n); } }, fitStill: fitStill, summary: summary, depthTable: depthTable, depthF: depthF, seenOver: seenOver, analyse: analyse, swimF: swimF, swim3: swim3, swim2: swim2, besselJ0: besselJ0, nnls: nnls, invertCurve: invertCurve, fitSwimGlobal: fitSwimGlobal, fitCompressed: fitCompressed, linAB: linAB };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ACTIVE = api;
 })(this);

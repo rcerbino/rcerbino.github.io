@@ -124,5 +124,14 @@ movieCase("all swim: the share is found (diffusion set from the cell size)", { s
   const ok = r.head && !r.head.no_swim && r.swim_depth, dd = ok ? r.swim_depth.v_um_s / so.v_mean_um_s - 1 : NaN;
   check("spinning disk 60x water: swimmers found, depth model within 15 % (" + (100 * dd).toFixed(1) + " %)", ok && Math.abs(dd) < 0.15, "true " + so.v_mean_um_s.toFixed(1) + " um/s; " + (Date.now() - t0) + " ms");
 }
+// 8. sperm with many dead cells (15 % swim, stroke across the path, round heads at 2x): the dead cells fade as they
+// diffuse through the focus. The stroke model must be chosen, and read the speed within 8 %
+{
+  const cfg = {"seed": 1, "mode": "brightfield", "objective": {"mag": 2, "na": 0.06, "n_imm": 1}, "illum": {"na_in": 0, "na_out": 0.05}, "pupil": {"kind": "none"}, "source": "halogen", "df_light_e": 10000000, "stray_frac": 0.0001, "homodyne": true, "l_ex_um": 0.488, "l_em_um": 0.52, "pinhole_um": 50, "crosstalk": 0.031415926535897934, "pinhole_au": 1, "photons_per_particle": 100, "background_photons": 1, "scan_rate_hz": 200000000, "light_frac": 0.5, "detector": {"kind": "camera", "pixel_um": 6.5, "binning": 1, "bin_charge": false, "qe": 0.82, "read_noise_e": 1.6, "full_well_e": 30000, "timing": "rolling_center", "t_row_s": 9.765625e-06, "rows_total": 256, "crop_row0": 64}, "n_px": 128, "n_frames": 512, "frame_rate_hz": 200, "exposure_s": 0.0005, "log_timing": null, "particle": "bacterium", "diameter_um": 5, "size_distribution": "schulz", "size_spread": 0, "shape": "sphere", "aspect": 1, "birefringence": 0, "polarization": null, "volume_fraction": 0.004, "liquid": {"glycerol_w": 0}, "T_C": 37, "cell_um": 50, "focus_um": 25, "drift_um_s": 0, "gravity": false, "walls": false, "vector": false, "thin_bodies": false, "swim": {"fraction": 0.15, "v_um_s": 76, "v_spread": 0.43, "rot_diff_s": 0.2, "tumble_hz": 0, "plane_fraction": 0, "plane_still": false, "height_um": 2.7, "osc_amp_um": 2.6, "osc_hz": 17, "osc_dir": "across"}, "drag_factor": 1};
+  const t0 = Date.now(), m = DDM.runToEnd(MOVIE.simulate(cfg)), r = DDM.runToEnd(A.analyse(m, {"q_min_per_um": null, "q_max_per_um": null, "beta": null, "kind": "3d", "depth": false, "stroke": true, "stroke_dir": "across", "D_from_cells": true, "jackknife": false}));
+  const so = A.seenOver(m.truth.swim, r.fits.filter(function (f) { return f.reason === null; }).map(function (f) { return f.q_per_um; }));
+  const ok = r.head && !r.head.no_swim && r.model === "stroke", dv = ok ? r.head.v_um_s / so.v_mean_um_s - 1 : NaN;
+  check("sperm with dead cells: the stroke model is chosen, speed within 8 % (" + (100 * dv).toFixed(1) + " %)", ok && Math.abs(dv) < 0.08, "model " + r.model + ", true " + so.v_mean_um_s.toFixed(1) + " um/s; " + (Date.now() - t0) + " ms");
+}
 console.log(failures === 0 ? "\nALL SWIMMER ANALYSIS CHECKS PASSED" : "\n" + failures + " CHECK(S) FAILED");
 process.exit(failures ? 1 : 0);
