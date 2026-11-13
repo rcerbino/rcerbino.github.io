@@ -276,7 +276,7 @@
     return (1 - p.b) + p.b * Math.exp(-ROT * p.Dr * t);
   }
   // turning of the swimmers themselves (rotational diffusion DRS of their heading): their image fades as they turn
-  let DRS = 0, SWIM_DS_FREE = false, DS_MAX = 3, TUMBLE_FREE = false;
+  let DRS = 0, SWIM_DS_FREE = false, DS_MAX = 3, TUMBLE_FREE = false, SWIM_AXIAL = true;
   // the swimmers turn too (rotational diffusion D_s of their heading), and their images fade as those of the cells that
   // do not swim: the same share b of the pattern (it belongs to the image of a rod at that q), at rate 6 D_s
   // (cells that tumble, rate Lt: each tumble gives a new random heading, so the image of a rod is renewed at rate Lt)
@@ -393,7 +393,10 @@
     let still;
     if (sg < 0.5 * tb.dz) still = 1;
     else { const nn = Math.max(8, Math.ceil(4 * sg / tb.dz)), da = 4 * sg / nn; let acc = 0, wsum = 0; for (let m = -nn; m <= nn; m++) { const a = m * da, w = Math.exp(-0.5 * a * a / (sg * sg)); acc += w * tb.Cat(a); wsum += w; } still = acc / wsum; }
-    return Math.exp(-p.D * q * q * t) * ((1 - p.alpha) * still * stillTurn(p, t, q) + p.alpha * sw * swimTurn(q, t, p));
+    // the swimmers also diffuse up and down (Brownian, D): for those swimming along the slice this is all their axial
+    // motion, so their part fades with the same factor (without it, at 60x confocal the fit needed D 3 times too large
+    // with all cells swimming, and with 60 % swimming it read the share 0.76 instead of 0.62)
+    return Math.exp(-p.D * q * q * t) * ((1 - p.alpha) * still * stillTurn(p, t, q) + p.alpha * sw * (SWIM_AXIAL ? still : 1) * swimTurn(q, t, p));
   }
 
   // best A, B for d = A (1 - f) + B (linear least squares, weights 1)
@@ -636,7 +639,7 @@
     const kind = opts.kind === "2d" ? "2d" : "3d";
     const S = yield* DDM.structure(movie, opts);
     const taus = S.taus_s, L = taus.length, nb = S.nb;
-    DRS = opts.swim_dr > 0 ? opts.swim_dr : 0; SWIM_DS_FREE = false; DS_MAX = 3; TUMBLE_FREE = false; turnCache.clear();
+    DRS = opts.swim_dr > 0 ? opts.swim_dr : 0; SWIM_DS_FREE = false; DS_MAX = 3; TUMBLE_FREE = false; SWIM_AXIAL = opts.swim_axial !== false; turnCache.clear();
     NOISE_B = null;     // camera noise from the mean count (see NOISE_B)
     if (opts.noise !== "fit" && movie.info && movie.info.detector_kind === "camera" && movie.frames && typeof movie.info.read_noise_e === "number") {
       let s = 0; const F = movie.frames; for (let k = 0; k < F.length; k++) s += F[k];

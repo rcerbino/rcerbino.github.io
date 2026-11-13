@@ -438,7 +438,7 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
           <p><b>Uncertainties.</b> The points of <i>d</i>(<i>q</i>, &Delta;<i>t</i>) are not independent: all delays come from the same frames, and the same cells make every curve. The covariance of the fit treats them as independent and gives errors several times too small. The page therefore repeats the fits <i>K</i> = 5 times, each time with one fifth of the movie left out (a pair of frames counts in the block of its first frame), and quotes the jackknife error &radic;[(<i>K</i> &minus; 1)/<i>K</i> &Sigma; (<i>x<sub>j</sub></i> &minus; <i>x&#772;</i>)<sup>2</sup>]. In simulations of the standard sample and of wild-type E. coli, six movies each, the speed scattered from movie to movie by 1.2-1.3 times the quoted error (the covariance of the fit gave 5-8 times too little). The error does not include the errors of the model, such as a few % from the shape of the cells in phase contrast; the true values, and "Repeat 5 times with new cells", show those. Nor does it include which cells happen to be in view: the parts of the movie show the same cells. With few cells this matters. In five simulated movies of Chlamydomonas (about 170 cells, all with the stroke frequency found within 0.5 %) the speed scattered by 3.4 % against a quoted 1.2 %, one movie being 7 % off; with 250-340 cells (E. coli, standard sample) the factor was 1.2-1.3. The page adds a note when fewer than 200 cells are in view.</p>
           <p><b>The depth of field.</b> Wilson's model counts only sideways motion. A cell at depth <i>z</i> adds <i>K</i>(<i>q</i>, <i>z</i>) e<sup>&minus;<i>i</i><b>q</b>&middot;<b>x</b></sup> to the image, with <i>K</i> the optical kernel of step 1, so a swimmer that also moves up or down fades from each pattern. With <i>C<sub>q</sub></i>(&delta;<i>z</i>) the overlap of <i>K</i>(<i>q</i>, <i>z</i>) and <i>K</i>(<i>q</i>, <i>z</i> + &delta;<i>z</i>) averaged over the cell, a swimmer that has moved <i>s</i> = <i>v</i>&Delta;<i>t</i> gives</p>
           <div class="eq"><i>h<sub>q</sub></i>(<i>s</i>) = &int;<sub>0</sub><sup>1</sup> d&mu; <i>J</i><sub>0</sub>(<i>qs</i> &radic;(1 &minus; &mu;<sup>2</sup>)) Re <i>C<sub>q</sub></i>(<i>s</i>&mu;)</div>
-          <p>in place of the sine over its argument (they are equal when <i>C</i> = 1), averaged over the speeds; the cells that do not swim get <i>C<sub>q</sub></i> averaged over their axial diffusion. This model is used automatically in the confocal modes. As far as we know it has not been published.</p>
+          <p>in place of the sine over its argument (they are equal when <i>C</i> = 1), averaged over the speeds; the cells that do not swim get <i>C<sub>q</sub></i> averaged over their axial diffusion, and the swimmers get the same factor on top, as they diffuse up and down too (for those swimming along the slice that is all their axial motion). Without it, at 60x with all cells swimming the fit needed a diffusion coefficient three times too large; with it the true one fits and the speed is within 1 %. With 60 % swimming at 60x the share still reads about 0.76 for 0.62 seen. This model is used automatically in the confocal modes. As far as we know it has not been published.</p>
           <p><b>The stroke.</b> Algae and sperm do not glide: each beat moves the cell, or the sperm head, back and forth about its mean path. Martinez et al. (2012) wrote the displacement as <i>v</i>&Delta;<i>t</i> + <i>A</i>[sin(2&pi;<i>f</i>&Delta;<i>t</i> + &phi;) &minus; sin &phi;], with a random phase &phi; for each cell. Averaged over &phi; and over the speeds, the sine over its argument of Wilson's model becomes</p>
           <div class="eq">&int;<sub>0</sub><sup>1</sup> d&mu; &lang;cos(<i>q</i>&mu;<i>v</i>&Delta;<i>t</i>)&rang;<sub><i>v</i></sub> <i>J</i><sub>0</sub>(2<i>q</i>&mu;<i>A</i> |sin(&pi;<i>f</i>&Delta;<i>t</i>)|)</div>
           <p>with &mu; the cosine between the path and <b>q</b>. The curves dip and rise again once per beat, so the camera needs at least two frames per beat. For a stroke across the path (the sperm head) in a random direction about it, the Bessel factor becomes <i>J</i><sub>0</sub>(<i>qA</i> |sin(&pi;<i>f</i>&Delta;<i>t</i>)| &radic;(1 &minus; &mu;<sup>2</sup>))<sup>2</sup>. The page fits <i>A</i> and <i>f</i> with the other parameters, after a search over a grid of beat frequencies.</p>
@@ -3019,11 +3019,11 @@ A_est = 2 * aa.var - B_est
     const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
     need("q_min_per_um" in opts && "q_max_per_um" in opts, "q range missing (use null for the full range)");
     const S = yield* structure(movie, opts);
-    // camera noise: B = 2 (excess-noise factor x mean count + read noise^2) per pixel, the same at every q (white noise),
-    // from the frames and the detector (known to the experimenter). Not for the squared gradient (its noise is not white)
-    // nor for scanners; opts.noise "fit" fits B at each q as before
+    // detector noise: B = 2 (excess-noise factor x mean count + read noise^2) per pixel, the same at every q (white noise),
+    // from the frames and the detector (known to the experimenter): cameras, and point scanners (photon counting, no read
+    // noise). Not for the squared gradient (its noise is not white); opts.noise "fit" fits B at each q as before
     let noiseB = null;
-    if (opts.noise !== "fit" && !S.sg && movie.info && movie.info.detector_kind === "camera" && movie.frames && typeof movie.info.read_noise_e === "number") {
+    if (opts.noise !== "fit" && !S.sg && movie.info && (movie.info.detector_kind === "camera" || movie.info.detector_kind === "scanner") && movie.frames && typeof movie.info.read_noise_e === "number") {
       let sum = 0; const F = movie.frames; for (let k = 0; k < F.length; k++) sum += F[k];
       noiseB = 2 * ((movie.info.excess_noise || 1) * sum / F.length + movie.info.read_noise_e * movie.info.read_noise_e);
       for (let b = 1; b <= S.nb; b++) if (S.nmodes[b] > 0) { S.B_est[b] = noiseB; S.A_est[b] = 2 * S.varq[b] - noiseB; }
@@ -3049,10 +3049,6 @@ A_est = 2 * aa.var - B_est
       const yv = new Float64Array(L);
       for (let li = 0; li < L; li++) yv[li] = dq[li][b];
       let f1 = fitOne(taus_s, yv, varq[b], B_est[b], kind, b, q_per_um[b]);
-      // the depth of field corrects the rate by a modest factor; when the fit with it lands far below the one without
-      // (a curve that has decayed within the first frame, fitted as a slow rise: point scanning at 7 frames/s read 65 um
-      // for 500 nm), the one without is kept for that q
-      if (DEPTH && !rotFit) { const fp = fitOne(taus_s, yv, varq[b], B_est[b], kind, b, q_per_um[b], { noDepth: true }); if (!f1.ok || (fp.ok && f1.gamma_hz < 0.5 * fp.gamma_hz)) { f1 = fp; f1.no_depth = true; } }
       // with the camera noise fixed, a curve whose signal is a few % of the noise still gives a rate with a small error bar,
       // but that rate then hangs on B to a fraction of a percent: such a q is kept only if a fit with B free agrees within
       // a factor 1.5 (ORCA on the full chip, 100 nm: 27 % off with every such q kept)
@@ -3072,6 +3068,10 @@ A_est = 2 * aa.var - B_est
       else if (f.lnGamma_se > MAX_LN_GAMMA_SE || f.weak) f.reason = "signal lost in camera noise";
       else if (f.gamma_hz <= gamma_lo_hz) f.reason = "too slow for this movie";
       else if (f.gamma_hz >= gamma_hi_hz) f.reason = "too fast for this frame rate";
+      // with the noise known, the curve at the first delay shows how much of the decay is left: when less than a fifth of
+      // it, the pattern renewed within one frame and the fitted rate only follows the last bit (point scanning at 14
+      // frames/s: rates at high q read 2-10 times slow, and the size 60 % large)
+      else if (noiseB !== null && 2 * varq[f.bin] > noiseB && 1 - (dq[0][f.bin] - noiseB) / (2 * varq[f.bin] - noiseB) < 0.2) f.reason = "too fast for this frame rate";
       else if (DEPTH && !f.no_depth && DEPTH(f.q_per_um) && depthFade(DEPTH(f.q_per_um), f.gamma_hz / (f.q_per_um * f.q_per_um), taus_s[0]) < 0.3) f.reason = "particles leave the focus within one frame";
       else if (f.q_per_um < qmin || f.q_per_um > qmax) f.reason = "outside the chosen fit range";
     }
@@ -3756,7 +3756,7 @@ A_est = 2 * aa.var - B_est
       return { main_D: r.D ? r.D.D_um2_s : null, cum_D: r.cumulants && r.cumulants.D_um2_s ? r.cumulants.D_um2_s : null, cum_pi: r.cumulants && r.cumulants.pi !== null && r.cumulants.pi !== undefined ? r.cumulants.pi : null, sch_pi: r.cumulants && r.cumulants.schulz_shared ? r.cumulants.schulz_shared.pi : null,
         qs: r.used.map(function (f) { return f.q_per_um; }), truth: mv.truth };
     },
-    _test: { makeFftTables: makeFftTables, fft1d: fft1d, fitOne: fitOne, fitTwo: fitTwo, cumulants: cumulants, sharedSchulz: sharedSchulz, erf: erf, makeRng: makeRng }
+    _test: { makeFftTables: makeFftTables, fft1d: fft1d, fitOne: fitOne, fitTwo: fitTwo, cumulants: cumulants, sharedSchulz: sharedSchulz, erf: erf, makeRng: makeRng, depthC: depthC, depthFade: depthFade }
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.DDM = api;
 })(this);
@@ -4041,7 +4041,7 @@ A_est = 2 * aa.var - B_est
     return (1 - p.b) + p.b * Math.exp(-ROT * p.Dr * t);
   }
   // turning of the swimmers themselves (rotational diffusion DRS of their heading): their image fades as they turn
-  let DRS = 0, SWIM_DS_FREE = false, DS_MAX = 3, TUMBLE_FREE = false;
+  let DRS = 0, SWIM_DS_FREE = false, DS_MAX = 3, TUMBLE_FREE = false, SWIM_AXIAL = true;
   // the swimmers turn too (rotational diffusion D_s of their heading), and their images fade as those of the cells that
   // do not swim: the same share b of the pattern (it belongs to the image of a rod at that q), at rate 6 D_s
   // (cells that tumble, rate Lt: each tumble gives a new random heading, so the image of a rod is renewed at rate Lt)
@@ -4158,7 +4158,10 @@ A_est = 2 * aa.var - B_est
     let still;
     if (sg < 0.5 * tb.dz) still = 1;
     else { const nn = Math.max(8, Math.ceil(4 * sg / tb.dz)), da = 4 * sg / nn; let acc = 0, wsum = 0; for (let m = -nn; m <= nn; m++) { const a = m * da, w = Math.exp(-0.5 * a * a / (sg * sg)); acc += w * tb.Cat(a); wsum += w; } still = acc / wsum; }
-    return Math.exp(-p.D * q * q * t) * ((1 - p.alpha) * still * stillTurn(p, t, q) + p.alpha * sw * swimTurn(q, t, p));
+    // the swimmers also diffuse up and down (Brownian, D): for those swimming along the slice this is all their axial
+    // motion, so their part fades with the same factor (without it, at 60x confocal the fit needed D 3 times too large
+    // with all cells swimming, and with 60 % swimming it read the share 0.76 instead of 0.62)
+    return Math.exp(-p.D * q * q * t) * ((1 - p.alpha) * still * stillTurn(p, t, q) + p.alpha * sw * (SWIM_AXIAL ? still : 1) * swimTurn(q, t, p));
   }
 
   // best A, B for d = A (1 - f) + B (linear least squares, weights 1)
@@ -4401,7 +4404,7 @@ A_est = 2 * aa.var - B_est
     const kind = opts.kind === "2d" ? "2d" : "3d";
     const S = yield* DDM.structure(movie, opts);
     const taus = S.taus_s, L = taus.length, nb = S.nb;
-    DRS = opts.swim_dr > 0 ? opts.swim_dr : 0; SWIM_DS_FREE = false; DS_MAX = 3; TUMBLE_FREE = false; turnCache.clear();
+    DRS = opts.swim_dr > 0 ? opts.swim_dr : 0; SWIM_DS_FREE = false; DS_MAX = 3; TUMBLE_FREE = false; SWIM_AXIAL = opts.swim_axial !== false; turnCache.clear();
     NOISE_B = null;     // camera noise from the mean count (see NOISE_B)
     if (opts.noise !== "fit" && movie.info && movie.info.detector_kind === "camera" && movie.frames && typeof movie.info.read_noise_e === "number") {
       let s = 0; const F = movie.frames; for (let k = 0; k < F.length; k++) s += F[k];
@@ -6384,7 +6387,7 @@ A_est = 2 * aa.var - B_est
       shows: [{ label: "No swimmers, drift 10 " + MU + "m/s", set: { swim_frac: 0, drift_um_s: 10 }, go: "step-rates" }] },
     { lvl: 2, title: "Swimming along the glass", text: "Near a surface many bacteria swim parallel to it. Then each pattern renews faster for the same speed (in 3D most cells swim at an angle to the stripes), and the model must be the one for the plane: analysed as 3D swimmers, the speed comes out about 30 % too high.",
       shows: [{ label: "Along the glass, plane model", set: { swim_geom: "glass", swim_model: "auto" }, go: "step-rates" }, { label: "The same, 3D model", set: { swim_geom: "glass", swim_model: "wilson" }, go: "step-rates" }] },
-    { lvl: 2, title: "Confocal: swimmers leave the slice", text: "A confocal microscope sees a slice one or a few micrometres thick. A swimmer crosses it in a fraction of a second, and a pattern fades as soon as its cells leave the slice, before they have swum across it. Wilson's 3D model knows only sideways motion, so the speed comes out too high. In our simulations of round cells 1 " + MU + "m across with a spinning disk (three movies each): 12-17 % too fast at 20x, and more than twice the true speed at 60x (water immersion). The model that also uses how each pattern fades as a cell moves up or down through the focus, computed from the optics of the microscope, brings the speed within 4 % at 20x. At 60x the slice is about as thin as a cell, and it still reads about 5 % too fast and finds far too many swimmers: it treats each cell as a point, and rods longer than the slice come out too slow with it. Widefield fluorescence shows the same effect, weaker (up to about 10 % at 20x and 25 % at 60x). As far as we know, this has not been published.",
+    { lvl: 2, title: "Confocal: swimmers leave the slice", text: "A confocal microscope sees a slice one or a few micrometres thick. A swimmer crosses it in a fraction of a second, and a pattern fades as soon as its cells leave the slice, before they have swum across it. Wilson's 3D model knows only sideways motion, so the speed comes out too high. In our simulations of round cells 1 " + MU + "m across with a spinning disk (three movies each): 12-17 % too fast at 20x, and more than twice the true speed at 60x (water immersion). The model that also uses how each pattern fades as a cell moves up or down through the focus, computed from the optics of the microscope, brings the speed within 4 % at 20x. At 60x the slice is about as thin as a cell: the speed comes within about 3 %, but the share of swimmers reads about 15 points too high. The model treats each cell as a point, and rods longer than the slice come out too slow with it. Widefield fluorescence shows the same effect, weaker (up to about 10 % at 20x and 25 % at 60x). As far as we know, this has not been published.",
       shows: [{ label: "Spinning disk 20x, Wilson's model", set: SPIN20("wilson"), go: "step-rates" }, { label: "Spinning disk 20x, with the depth of field", set: SPIN20("depth"), go: "step-rates" }, { label: "Spinning disk 60x water, Wilson's model", set: SPIN60("wilson"), go: "step-rates", lvl: 2 }, { label: "Spinning disk 60x water, with the depth of field", set: SPIN60("depth"), go: "step-rates", lvl: 2 }] },
     { lvl: 2, title: "Tumbles", text: "E. coli runs for about a second, then tumbles and swims off in a new direction. Over distances longer than a run the cells get less far than on a straight line, so the widest patterns renew more slowly and the speed from them comes out low. The models here assume straight runs; use the finer patterns, or a model with tumbles (Kurzthaler et al. 2024).",
       shows: [{ label: "One tumble per second", set: { swim_tumble: 1 }, go: "step-rates" }, { label: "Three per second", set: { swim_tumble: 3 }, go: "step-rates" }] },

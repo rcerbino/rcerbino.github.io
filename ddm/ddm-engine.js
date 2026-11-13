@@ -478,11 +478,11 @@
     const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
     need("q_min_per_um" in opts && "q_max_per_um" in opts, "q range missing (use null for the full range)");
     const S = yield* structure(movie, opts);
-    // camera noise: B = 2 (excess-noise factor x mean count + read noise^2) per pixel, the same at every q (white noise),
-    // from the frames and the detector (known to the experimenter). Not for the squared gradient (its noise is not white)
-    // nor for scanners; opts.noise "fit" fits B at each q as before
+    // detector noise: B = 2 (excess-noise factor x mean count + read noise^2) per pixel, the same at every q (white noise),
+    // from the frames and the detector (known to the experimenter): cameras, and point scanners (photon counting, no read
+    // noise). Not for the squared gradient (its noise is not white); opts.noise "fit" fits B at each q as before
     let noiseB = null;
-    if (opts.noise !== "fit" && !S.sg && movie.info && movie.info.detector_kind === "camera" && movie.frames && typeof movie.info.read_noise_e === "number") {
+    if (opts.noise !== "fit" && !S.sg && movie.info && (movie.info.detector_kind === "camera" || movie.info.detector_kind === "scanner") && movie.frames && typeof movie.info.read_noise_e === "number") {
       let sum = 0; const F = movie.frames; for (let k = 0; k < F.length; k++) sum += F[k];
       noiseB = 2 * ((movie.info.excess_noise || 1) * sum / F.length + movie.info.read_noise_e * movie.info.read_noise_e);
       for (let b = 1; b <= S.nb; b++) if (S.nmodes[b] > 0) { S.B_est[b] = noiseB; S.A_est[b] = 2 * S.varq[b] - noiseB; }
@@ -508,10 +508,6 @@
       const yv = new Float64Array(L);
       for (let li = 0; li < L; li++) yv[li] = dq[li][b];
       let f1 = fitOne(taus_s, yv, varq[b], B_est[b], kind, b, q_per_um[b]);
-      // the depth of field corrects the rate by a modest factor; when the fit with it lands far below the one without
-      // (a curve that has decayed within the first frame, fitted as a slow rise: point scanning at 7 frames/s read 65 um
-      // for 500 nm), the one without is kept for that q
-      if (DEPTH && !rotFit) { const fp = fitOne(taus_s, yv, varq[b], B_est[b], kind, b, q_per_um[b], { noDepth: true }); if (!f1.ok || (fp.ok && f1.gamma_hz < 0.5 * fp.gamma_hz)) { f1 = fp; f1.no_depth = true; } }
       // with the camera noise fixed, a curve whose signal is a few % of the noise still gives a rate with a small error bar,
       // but that rate then hangs on B to a fraction of a percent: such a q is kept only if a fit with B free agrees within
       // a factor 1.5 (ORCA on the full chip, 100 nm: 27 % off with every such q kept)
@@ -531,6 +527,10 @@
       else if (f.lnGamma_se > MAX_LN_GAMMA_SE || f.weak) f.reason = "signal lost in camera noise";
       else if (f.gamma_hz <= gamma_lo_hz) f.reason = "too slow for this movie";
       else if (f.gamma_hz >= gamma_hi_hz) f.reason = "too fast for this frame rate";
+      // with the noise known, the curve at the first delay shows how much of the decay is left: when less than a fifth of
+      // it, the pattern renewed within one frame and the fitted rate only follows the last bit (point scanning at 14
+      // frames/s: rates at high q read 2-10 times slow, and the size 60 % large)
+      else if (noiseB !== null && 2 * varq[f.bin] > noiseB && 1 - (dq[0][f.bin] - noiseB) / (2 * varq[f.bin] - noiseB) < 0.2) f.reason = "too fast for this frame rate";
       else if (DEPTH && !f.no_depth && DEPTH(f.q_per_um) && depthFade(DEPTH(f.q_per_um), f.gamma_hz / (f.q_per_um * f.q_per_um), taus_s[0]) < 0.3) f.reason = "particles leave the focus within one frame";
       else if (f.q_per_um < qmin || f.q_per_um > qmax) f.reason = "outside the chosen fit range";
     }
@@ -1215,7 +1215,7 @@
       return { main_D: r.D ? r.D.D_um2_s : null, cum_D: r.cumulants && r.cumulants.D_um2_s ? r.cumulants.D_um2_s : null, cum_pi: r.cumulants && r.cumulants.pi !== null && r.cumulants.pi !== undefined ? r.cumulants.pi : null, sch_pi: r.cumulants && r.cumulants.schulz_shared ? r.cumulants.schulz_shared.pi : null,
         qs: r.used.map(function (f) { return f.q_per_um; }), truth: mv.truth };
     },
-    _test: { makeFftTables: makeFftTables, fft1d: fft1d, fitOne: fitOne, fitTwo: fitTwo, cumulants: cumulants, sharedSchulz: sharedSchulz, erf: erf, makeRng: makeRng }
+    _test: { makeFftTables: makeFftTables, fft1d: fft1d, fitOne: fitOne, fitTwo: fitTwo, cumulants: cumulants, sharedSchulz: sharedSchulz, erf: erf, makeRng: makeRng, depthC: depthC, depthFade: depthFade }
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.DDM = api;
 })(this);
