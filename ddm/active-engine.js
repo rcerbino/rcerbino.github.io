@@ -276,13 +276,14 @@
     return (1 - p.b) + p.b * Math.exp(-ROT * p.Dr * t);
   }
   // turning of the swimmers themselves (rotational diffusion DRS of their heading): their image fades as they turn
-  let DRS = 0, SWIM_DS_FREE = false, DS_MAX = 3;
+  let DRS = 0, SWIM_DS_FREE = false, DS_MAX = 3, TUMBLE_FREE = false;
   // the swimmers turn too (rotational diffusion D_s of their heading), and their images fade as those of the cells that
   // do not swim: the same share b of the pattern (it belongs to the image of a rod at that q), at rate 6 D_s
+  // (cells that tumble, rate Lt: each tumble gives a new random heading, so the image of a rod is renewed at rate Lt)
   function swimTurn(q, t, p) {
-    const d = p && p.Ds > 0 ? p.Ds : DRS; if (!(d > 0) || !(q > 0)) return 1;
+    const d = p && p.Ds > 0 ? p.Ds : DRS, lt = p && p.Lt > 0 ? p.Lt : 0; if (!(d > 0) && !(lt > 0) || !(q > 0)) return 1;
     if (OPTICS) return turnCorr(q, t, d);
-    return p.b > 0 ? (1 - p.b) + p.b * Math.exp(-ROT * d * t) : 1;
+    return p.b > 0 ? (1 - p.b) + p.b * Math.exp(-(ROT * d + lt) * t) : 1;
   }
   // 3D swimmers with a stroke along the axis (Martinez et al. 2012, Chlamydomonas; Jepson et al. 2019, sperm):
   // displacement v t + A [sin(2 pi f t + phi) - sin phi] with a random phase phi. Averaging over phi gives J0(q mu a),
@@ -450,7 +451,7 @@
     };
     let x = g2.some(function (v) { return v !== 0; }) ? solve3() : solve2(0);     // round cells (D_R = 0): no turning
     if (!x || !(x.c1 > 0) || x.c2 < 0 || x.c2 > x.c1) { const a = solve2(0), b = solve2(1); const cost = function (z) { if (!z) return Infinity; let c = 0; for (let i = 0; i < L; i++) { const e = z.c1 * g1[i] + z.c2 * g2[i] + z.B - r.y[i]; c += e * e; } return c; }; x = cost(a) <= cost(b) ? a : b; }
-    const hiA = r.Ahi > 0 ? Math.min(3 * r.scale, r.Ahi) : 3 * r.scale, loA = r.Alo > 0 ? Math.min(r.Alo, hiA) : 0;
+    const hiA = r.Ahi > 0 ? (r.slowStill ? r.Ahi : Math.min(3 * r.scale, r.Ahi)) : 3 * r.scale, loA = r.Alo > 0 ? Math.min(r.Alo, hiA) : 0;
     // A within its bounds and B between 0 and the d at the shortest delays (see boundAB), with the share b kept
     if (x && (x.c1 < loA || x.c1 > hiA || x.B < 0 || x.B > dMin(r) || NOISE_B !== null)) {
       const bq = x.c1 > 0 ? Math.min(1, Math.max(0, x.c2 / x.c1)) : 0, g = new Float64Array(L); for (let i = 0; i < L; i++) g[i] = g1[i] + bq * g2[i];
@@ -497,10 +498,12 @@
     // Ds: turning of the swimmers' heading (rotational diffusion), free only with the optics of elongated cells
     // (a fit of one or two q values keeps the value it starts from)
     if (fixed.Ds === undefined && (!SWIM_DS_FREE || rows.length < 4 || (fixed.b === 0 && !OPTICS))) fixed = Object.assign({ Ds: SWIM_DS_FREE && start.Ds > 0 ? start.Ds : DRS }, fixed);
-    const names = ["v", "alpha", "spread", "D", "b", "Dr", "A", "f", "Ds"], free = names.filter(function (k) { return fixed[k] === undefined; });
+    // Lt: tumble rate, free only for cells known to tumble (opts.tumbles), with the per-q share b of rods
+    if (fixed.Lt === undefined && (!TUMBLE_FREE || rows.length < 4 || (fixed.b === 0 && !OPTICS))) fixed = Object.assign({ Lt: TUMBLE_FREE && start.Lt > 0 ? start.Lt : 0 }, fixed);
+    const names = ["v", "alpha", "spread", "D", "b", "Dr", "A", "f", "Ds", "Lt"], free = names.filter(function (k) { return fixed[k] === undefined; });
     const toP = { v: Math.log(start.v), alpha: start.alpha, spread: start.spread, D: Math.log(Math.max(start.D, 1e-4)), b: start.b === undefined ? 0.5 : start.b, Dr: Math.log(start.Dr === undefined ? 0.2 : Math.max(1e-3, start.Dr)),
-                  A: Math.log(Math.max(0.01, start.A || 1)), f: Math.log(Math.max(0.1, start.f || 10)), Ds: Math.log(Math.min(DS_MAX, start.Ds > 0 ? start.Ds : 0.1)) };
-    const LOGS = { v: 1, D: 1, Dr: 1, A: 1, f: 1, Ds: 1 };
+                  A: Math.log(Math.max(0.01, start.A || 1)), f: Math.log(Math.max(0.1, start.f || 10)), Ds: Math.log(Math.min(DS_MAX, start.Ds > 0 ? start.Ds : 0.1)), Lt: Math.log(start.Lt > 0 ? start.Lt : 0.5) };
+    const LOGS = { v: 1, D: 1, Dr: 1, A: 1, f: 1, Ds: 1, Lt: 1 };
     const unpack = function (p) {
       const o = {}; names.forEach(function (k) { o[k] = fixed[k] !== undefined ? fixed[k] : null; });
       free.forEach(function (k, i) { o[k] = LOGS[k] ? Math.exp(p[i]) : p[i]; });
@@ -535,6 +538,7 @@
         if (k === "b") p[i] = Math.min(1, Math.max(0, p[i]));
         if (k === "Dr") p[i] = Math.min(Math.log(100), Math.max(Math.log(1e-3), p[i]));
         if (k === "Ds") p[i] = Math.min(Math.log(DS_MAX), Math.max(Math.log(1e-3), p[i]));
+        if (k === "Lt") p[i] = Math.min(Math.log(30), Math.max(Math.log(1e-3), p[i]));
         if (k === "A") p[i] = Math.min(Math.log(50), Math.max(Math.log(0.01), p[i]));
         if (k === "f") p[i] = Math.min(Math.log(0.5 / (taus[0] || 1e-3)), Math.max(Math.log(0.1), p[i]));   // below the Nyquist frequency of the movie
       });
@@ -545,7 +549,7 @@
     const se = function (k) { const i = free.indexOf(k); return i >= 0 && r.cov && r.cov[i][i] > 0 ? Math.sqrt(r.cov[i][i]) : null; };
     const ab = rows.map(function (rw) { return rowAB(rw, par); });
     const bmean = perq ? ab.reduce(function (a, x) { return a + x.b; }, 0) / Math.max(1, ab.length) : par.b;
-    return { kind: kind, v_um_s: par.v, alpha: par.alpha, spread: par.spread, D_um2_s: par.D, turn_share: bmean, turn_perq: perq, D_r_s: par.Dr, swim_dr_s: par.Ds, stroke_um: par.A, stroke_hz: par.f, cost: r.cost, n_points: rows.length * L,
+    return { kind: kind, v_um_s: par.v, alpha: par.alpha, spread: par.spread, D_um2_s: par.D, turn_share: bmean, turn_perq: perq, D_r_s: par.Dr, swim_dr_s: par.Ds, tumble_hz: par.Lt, stroke_um: par.A, stroke_hz: par.f, cost: r.cost, n_points: rows.length * L,
              v_rel_err: se("v"), alpha_err: se("alpha"), spread_err: se("spread"), D_rel_err: se("D"), stroke_rel_err: se("A"), stroke_hz_rel_err: se("f"), ab: ab };
   }
 
@@ -553,8 +557,13 @@
   // data must reach); without the bound a model that hardly decays (f near 1) can mimic any rise with a huge A
   // B is kept between 0 and the d measured at the shortest delays (dMin): d = A (1 - f) + B with A (1 - f) >= 0 can never
   // fall below B, so a larger B would only absorb a misfit (and give normalized points below 0)
+  // ceiling for A: 3 x twice the variance in time (scale), and the whole amplitude from the mean power (Ahi). Where the
+  // cells that do not swim hardly move during the movie at every q used (D q^2 x the longest delay below 1, D expected
+  // from the cells: r.slowStill) the variance in time is no ceiling: the whole amplitude is far larger (dead sperm at 2x: capped at 3 x
+  // scale, the still cells looked like slow swimmers). Otherwise it is kept (lifted at the small q only, still rods at
+  // 10x gave a few % of "swimmers")
   function boundAB(r, f) {
-    const L = f.length, hiA = r.Ahi > 0 ? Math.min(3 * r.scale, r.Ahi) : 3 * r.scale, loA = r.Alo > 0 ? Math.min(r.Alo, hiA) : 0;
+    const L = f.length, hiA = r.Ahi > 0 ? (r.slowStill ? r.Ahi : Math.min(3 * r.scale, r.Ahi)) : 3 * r.scale, loA = r.Alo > 0 ? Math.min(r.Alo, hiA) : 0;
     const g = gbuf.length === L ? gbuf : (gbuf = new Float64Array(L)); for (let i = 0; i < L; i++) g[i] = 1 - f[i];
     return NOISE_B !== null ? boxAB(r.y, g, loA, hiA, NOISE_B, NOISE_B) : boxAB(r.y, g, loA, hiA, 0, dMin(r));
   }
@@ -627,7 +636,7 @@
     const kind = opts.kind === "2d" ? "2d" : "3d";
     const S = yield* DDM.structure(movie, opts);
     const taus = S.taus_s, L = taus.length, nb = S.nb;
-    DRS = opts.swim_dr > 0 ? opts.swim_dr : 0; SWIM_DS_FREE = false; DS_MAX = 3; turnCache.clear();
+    DRS = opts.swim_dr > 0 ? opts.swim_dr : 0; SWIM_DS_FREE = false; DS_MAX = 3; TUMBLE_FREE = false; turnCache.clear();
     NOISE_B = null;     // camera noise from the mean count (see NOISE_B)
     if (opts.noise !== "fit" && movie.info && movie.info.detector_kind === "camera" && movie.frames && typeof movie.info.read_noise_e === "number") {
       let s = 0; const F = movie.frames; for (let k = 0; k < F.length; k++) s += F[k];
@@ -653,7 +662,8 @@
       // (and at least that amplitude divided by the same margin: cells that stay put still count in the whole)
       const Atot = S.powq ? 2 * S.powq[b] - (NOISE_B !== null ? NOISE_B : S.B_est[b]) : NaN, kA = Math.max(1.3, 1 + 3 / Math.sqrt(Math.max(1, S.nmodes[b])));
       const Ahi = Atot > 0 ? Atot * kA : NaN, Alo = Atot > 0 && opts.amplitude_floor !== false ? Atot / kA : NaN;
-      rows.push({ bin: b, q: S.q_per_um[b], y: y, A: cx.A, B: cx.B, scale: 2 * S.varq[b], Atot: Atot, Ahi: Ahi, Alo: Alo, free: cf, fixed: cx, gamma_hz: cx.gamma_hz, beta_free: cf.beta, lnGamma_se: cx.lnGamma_se, ok: cx.ok });
+      const DhR = opts.D_hint > 0 ? opts.D_hint : opts.D_from_cells === true && movie.truth && movie.truth.D_um2_s > 0 ? movie.truth.D_um2_s : 0;
+      rows.push({ bin: b, q: S.q_per_um[b], y: y, A: cx.A, B: cx.B, scale: 2 * S.varq[b], Atot: Atot, Ahi: Ahi, Alo: Alo, slowStill: DhR > 0 && DhR * S.q_per_um[b] * S.q_per_um[b] * taus[L - 1] < 1, free: cf, fixed: cx, gamma_hz: cx.gamma_hz, beta_free: cf.beta, lnGamma_se: cx.lnGamma_se, ok: cx.ok });
     }
     // window: measurable q, rates the movie can follow
     const qmin = opts.q_min_per_um === null || opts.q_min_per_um === undefined ? 0 : opts.q_min_per_um;
@@ -673,6 +683,9 @@
       }
     }
     const used = rows.filter(function (r) { return r.reason === null; });
+    // (the amplitude ceiling is lifted only when the still cells hardly move at every q used, see boundAB)
+    const slowAll = used.length > 0 && used.every(function (r) { return r.slowStill; });
+    rows.forEach(function (r) { r.slowStill = slowAll; });
     // ballistic check: Gamma = v0 q (log fit, as the guide), slope of log Gamma vs log q, straight line Gamma = c + v q
     let comp = null;
     const usedC = used.filter(function (r) { return r.ok && r.lnGamma_se <= 0.3; });
@@ -736,6 +749,8 @@
       const DrB = opts.Dr_hint > 0 ? opts.Dr_hint : opts.D_from_cells === true && movie.truth && movie.truth.D_r_s > 0 ? movie.truth.D_r_s : 0;
       DS_MAX = DrB > 0 ? DrB : 3;
       if (DS_MAX < 2e-3) SWIM_DS_FREE = false;
+      // cells known to tumble (wild-type E. coli: the experimenter knows the strain): their tumble rate is fitted
+      if (movie.info && movie.info.particle && movie.info.particle.oriented) TUMBLE_FREE = opts.tumbles === true;
     }
     // model fits on the used q: the swimmer model (with its safeguards), the depth and stroke models. quick: repeat of
     // the main fits on other data (one block of the movie left out), started from the main result (prev), keeping its
@@ -786,7 +801,7 @@
         // several starts (speeds around the compressed estimate, small and large swimming share); the best fit is kept
         let best = null;
         // v0 of the compressed fit is about the mean speed / 2.2 in 3D and / 1.7 in the plane (narrow speed distributions)
-        if (quick) best = fitSwimGlobal(kind, taus, used, { v: prev.base.v_um_s, alpha: prev.base.alpha, spread: prev.base.spread, D: prev.base.D_um2_s, b: 0.5, Dr: 0.2, Ds: prev.base.swim_dr_s }, turnFix);
+        if (quick) best = fitSwimGlobal(kind, taus, used, { v: prev.base.v_um_s, alpha: prev.base.alpha, spread: prev.base.spread, D: prev.base.D_um2_s, b: 0.5, Dr: 0.2, Ds: prev.base.swim_dr_s, Lt: prev.base.tumble_hz }, turnFix);
         else for (const fv of [1.2, kind === "2d" ? 1.8 : 2.3, 3.5]) for (const a0 of [0.3, 0.8]) {
           const g = fitSwimGlobal(kind, taus, used, { v: comp.v0_um_s * fv, alpha: a0, spread: 0.3, D: 0.3, b: 0.5, Dr: 0.2 }, turnFix);
           if (best === null || g.cost < best.cost) best = g;
@@ -799,7 +814,7 @@
         // from the size and shape of the cells and the viscosity)
         if (Dh > 0) {
           // first without turning; if that does not describe the data, with the turning of rods (b, D_R) free
-          const st = { v: best.v_um_s, alpha: Math.max(0.05, best.alpha), spread: best.spread, D: Dh, b: 0.3, Dr: 0.3, Ds: best.swim_dr_s };
+          const st = { v: best.v_um_s, alpha: Math.max(0.05, best.alpha), spread: best.spread, D: Dh, b: 0.3, Dr: 0.3, Ds: best.swim_dr_s, Lt: best.tumble_hz };
           let g = fitSwimGlobal(kind, taus, used, st, Object.assign({ D: Dh }, turnFix));
           if (!(g.cost <= 1.03 * best.cost) && !turns) g = fitSwimGlobal(kind, taus, used, st, Object.assign({ D: Dh }, shareFix));
           if (g.cost <= 1.03 * best.cost) { g.D_fixed = true; g.cost_free_D = best.cost; swim = g; }
@@ -808,13 +823,13 @@
         // describes the data clearly better (5 % lower cost). Phase contrast needs it at the largest spacings, where the
         // halo leaves mostly the part of a rod's image that depends on its orientation
         if (opts.turn_perq !== false && !turns && elongated) {
-          const st = { v: swim.v_um_s, alpha: Math.max(0.05, swim.alpha), spread: swim.spread, D: swim.D_um2_s, Dr: 0.3, Ds: swim.swim_dr_s };
+          const st = { v: swim.v_um_s, alpha: Math.max(0.05, swim.alpha), spread: swim.spread, D: swim.D_um2_s, Dr: 0.3, Ds: swim.swim_dr_s, Lt: swim.tumble_hz };
           // D_R from the size of the rods and the viscosity, as D (opts.Dr_hint, or the bulk value when D_from_cells)
           const DrH = opts.Dr_hint > 0 ? opts.Dr_hint : opts.D_from_cells === true && movie.truth && movie.truth.D_r_s > 0 ? movie.truth.D_r_s : 0;
           const fxT = Object.assign(swim.D_fixed ? { D: swim.D_um2_s } : {}, DrH > 0 ? { Dr: DrH } : {}, { b: "q" }, opts.turn_alpha === "free" ? shareFix : { alpha: swim.alpha });
           let g = fitSwimGlobal(kind, taus, used, st, fxT);
           // (with the swimmers' turning free, also from no turning: the cost has a second valley there)
-          if (SWIM_DS_FREE) { const g0 = fitSwimGlobal(kind, taus, used, st, Object.assign({ Ds: DRS }, fxT)); if (g0.cost < g.cost) g = g0; }
+          if (SWIM_DS_FREE) { const g0 = fitSwimGlobal(kind, taus, used, st, Object.assign({ Ds: DRS, Lt: 0 }, fxT)); if (g0.cost < g.cost) g = g0; }
           if (g.cost < 0.95 * swim.cost) { if (swim.D_fixed) { g.D_fixed = true; g.cost_free_D = swim.cost_free_D; } g.cost_no_turn = swim.cost; swim = g; }
         }
         // cells that do not swim at all (rods also fade as they turn, share b at rate 6 D_R): if this describes the data
@@ -830,7 +845,7 @@
         if (still.cost <= 1.1 * swim.cost || swim.alpha < 0.05 || (comp.slope < 0.5 && swim.alpha < 0.3) || swim.v_um_s > 15 * comp.v_rate_max_um_s || swim.v_um_s < 0.3 * comp.v0_um_s) { still.no_swim = true; still.cost_swim = swim.cost; still.perq = []; swim = still; }
         // per-q speed and fraction with spread and D fixed: the speed should not depend on q
         if (!swim.no_swim && !quick) swim.perq = used.map(function (r, j) {
-          const g = fitSwimGlobal(kind, taus, [r], { v: swim.v_um_s, alpha: swim.alpha, spread: swim.spread, D: swim.D_um2_s, Ds: swim.swim_dr_s }, { spread: swim.spread, D: swim.D_um2_s, b: bOf(swim, j), Dr: swim.D_r_s });
+          const g = fitSwimGlobal(kind, taus, [r], { v: swim.v_um_s, alpha: swim.alpha, spread: swim.spread, D: swim.D_um2_s, Ds: swim.swim_dr_s, Lt: swim.tumble_hz }, { spread: swim.spread, D: swim.D_um2_s, b: bOf(swim, j), Dr: swim.D_r_s });
           return { q: r.q, v_um_s: g.v_um_s, alpha: g.alpha };
         });
       }
@@ -842,19 +857,19 @@
         let best = null;
         const fixD = quick && prev.depth.D_fixed ? { D: prev.depth.D_um2_s } : {};
         for (const st of quick ? [{ v: prev.depth.v_um_s, alpha: prev.depth.alpha }] : [{ v: swim.v_um_s, alpha: swim.alpha }, { v: 0.8 * swim.v_um_s, alpha: Math.min(1, swim.alpha + 0.1) }]) {
-          const g = fitSwimGlobal("depth", taus, used, { v: st.v, alpha: st.alpha, spread: swim.spread, D: swim.D_um2_s, b: swim.turn_share, Dr: swim.D_r_s, Ds: swim.swim_dr_s }, Object.assign({}, swim.turn_perq ? Object.assign({ b: "q", Dr: swim.D_r_s }, shareFix) : turnFix, fixD));
+          const g = fitSwimGlobal("depth", taus, used, { v: st.v, alpha: st.alpha, spread: swim.spread, D: swim.D_um2_s, b: swim.turn_share, Dr: swim.D_r_s, Ds: swim.swim_dr_s, Lt: swim.tumble_hz }, Object.assign({}, swim.turn_perq ? Object.assign({ b: "q", Dr: swim.D_r_s }, shareFix) : turnFix, fixD));
           if (best === null || g.cost < best.cost) best = g;
         }
         if (fixD.D !== undefined) best.D_fixed = true;
         // D expected from the cells, as for the swimmer model: kept when the data do not ask for another value (a free D
         // trades against the share of swimmers: in a thin confocal slice it ran to its lower limit, with too many swimmers)
         if (!quick && Dh > 0) {
-          const g = fitSwimGlobal("depth", taus, used, { v: best.v_um_s, alpha: best.alpha, spread: best.spread, D: Dh, b: swim.turn_share, Dr: swim.D_r_s, Ds: best.swim_dr_s }, Object.assign({}, swim.turn_perq ? Object.assign({ b: "q", Dr: swim.D_r_s }, shareFix) : turnFix, { D: Dh }));
+          const g = fitSwimGlobal("depth", taus, used, { v: best.v_um_s, alpha: best.alpha, spread: best.spread, D: Dh, b: swim.turn_share, Dr: swim.D_r_s, Ds: best.swim_dr_s, Lt: best.tumble_hz }, Object.assign({}, swim.turn_perq ? Object.assign({ b: "q", Dr: swim.D_r_s }, shareFix) : turnFix, { D: Dh }));
           if (g.cost <= 1.03 * best.cost) { g.D_fixed = true; g.cost_free_D = best.cost; best = g; }
         }
         swimDepth = best;
         if (!quick) swimDepth.perq = used.map(function (r, j) {
-          const g = fitSwimGlobal("depth", taus, [r], { v: best.v_um_s, alpha: best.alpha, spread: best.spread, D: best.D_um2_s, Ds: best.swim_dr_s }, { spread: best.spread, D: best.D_um2_s, b: bOf(best, j), Dr: best.D_r_s });
+          const g = fitSwimGlobal("depth", taus, [r], { v: best.v_um_s, alpha: best.alpha, spread: best.spread, D: best.D_um2_s, Ds: best.swim_dr_s, Lt: best.tumble_hz }, { spread: best.spread, D: best.D_um2_s, b: bOf(best, j), Dr: best.D_r_s });
           return { q: r.q, v_um_s: g.v_um_s, alpha: g.alpha };
         });
       }
@@ -868,7 +883,7 @@
         // (the fading of the cells that do not swim as in the straight model: for round cells it stands for their contrast
         // changing as they diffuse up and down through the focus, which no model here describes; without it the stroke
         // model fitted sperm with many dead cells badly and the straight one read the speed 27 % high)
-        const base = { v: swim.v_um_s, alpha: swim.alpha, spread: swim.spread, D: Dst, b: swim.turn_share, Dr: swim.D_r_s, Ds: swim.swim_dr_s };
+        const base = { v: swim.v_um_s, alpha: swim.alpha, spread: swim.spread, D: Dst, b: swim.turn_share, Dr: swim.D_r_s, Ds: swim.swim_dr_s, Lt: swim.tumble_hz };
         const fb = new Float64Array(L);
         const costAt = function (par) {
           let c = 0;
@@ -894,14 +909,14 @@
           // (turning of the cells that do not swim as in the straight model, which the grid used)
           const fixS = Object.assign({ D: Dst }, turnFix, { b: base.b, Dr: base.Dr }), half = used.filter(function (r, j) { return j % 2 === 0; });
           const g = fitSwimGlobal(sk, taus, half.length >= 3 ? half : used, bestP, fixS); g.cost_half = g.cost; g.grid_start = Object.assign({}, bestP);
-          g.cost = costAt({ v: g.v_um_s, alpha: g.alpha, spread: g.spread, D: g.D_um2_s, b: g.turn_share, Dr: g.D_r_s, A: g.stroke_um, f: g.stroke_hz, Ds: g.swim_dr_s });
-          g.ab = used.map(function (r) { for (let i = 0; i < L; i++) fb[i] = swimF(sk, r.q, taus[i], { v: g.v_um_s, alpha: g.alpha, spread: g.spread, D: g.D_um2_s, b: g.turn_share, Dr: g.D_r_s, A: g.stroke_um, f: g.stroke_hz, Ds: g.swim_dr_s }); return boundAB(r, fb); });
+          g.cost = costAt({ v: g.v_um_s, alpha: g.alpha, spread: g.spread, D: g.D_um2_s, b: g.turn_share, Dr: g.D_r_s, A: g.stroke_um, f: g.stroke_hz, Ds: g.swim_dr_s, Lt: g.tumble_hz });
+          g.ab = used.map(function (r) { for (let i = 0; i < L; i++) fb[i] = swimF(sk, r.q, taus[i], { v: g.v_um_s, alpha: g.alpha, spread: g.spread, D: g.D_um2_s, b: g.turn_share, Dr: g.D_r_s, A: g.stroke_um, f: g.stroke_hz, Ds: g.swim_dr_s, Lt: g.tumble_hz }); return boundAB(r, fb); });
           // (kept for the record when the straight model is the better fit)
           if (!quick) swim.stroke_tried = { cost: g.cost, v_um_s: g.v_um_s, alpha: g.alpha, stroke_um: g.stroke_um, stroke_hz: g.stroke_hz };
           if (quick || g.cost < swim.cost) {
             if (swim.D_fixed) g.D_fixed = true;
             if (!quick) g.perq = used.map(function (r) {
-              const h = fitSwimGlobal(sk, taus, [r], { v: g.v_um_s, alpha: g.alpha, spread: g.spread, D: g.D_um2_s, A: g.stroke_um, f: g.stroke_hz, Ds: g.swim_dr_s }, { spread: g.spread, D: g.D_um2_s, b: g.turn_share, Dr: g.D_r_s, A: g.stroke_um, f: g.stroke_hz });
+              const h = fitSwimGlobal(sk, taus, [r], { v: g.v_um_s, alpha: g.alpha, spread: g.spread, D: g.D_um2_s, A: g.stroke_um, f: g.stroke_hz, Ds: g.swim_dr_s, Lt: g.tumble_hz }, { spread: g.spread, D: g.D_um2_s, b: g.turn_share, Dr: g.D_r_s, A: g.stroke_um, f: g.stroke_hz });
               return { q: r.q, v_um_s: h.v_um_s, alpha: h.alpha };
             });
             swimStrokeFit = g;
@@ -1039,7 +1054,7 @@
       return { bin: r.bin, q_per_um: r.q, ok: r.ok, reason: r.reason, gamma_fast_hz: r.reason === null && r.gamma_fast ? r.gamma_fast : null, gamma_model_hz: r.reason === null && r.gamma_model ? r.gamma_model : null, gamma_true_hz: r.reason === null && r.gamma_true ? r.gamma_true : null, beta_fast: r.reason === null ? r.beta_fast : null, A: u ? r.An : r.A, B: u ? r.Bn : r.B, gamma_hz: r.gamma_hz, beta: r.fixed.beta, beta_free: r.beta_free, lnGamma_se: r.lnGamma_se, curve: curve };
     });
     const noiseB = NOISE_B;
-    D_LIMITS = null; ROT = 6; SHAPE = null; NOISE_B = null; OPTICS = null; DRS = 0; SWIM_DS_FREE = false; DS_MAX = 3;
+    D_LIMITS = null; ROT = 6; SHAPE = null; NOISE_B = null; OPTICS = null; DRS = 0; SWIM_DS_FREE = false; DS_MAX = 3; TUMBLE_FREE = false;
     return { kind: kind, model: head === swimDepth && swimDepth ? "depth" : head === swimStrokeFit && swimStrokeFit ? "stroke" : kind, lags: S.lags, pairs: S.pairs, times_s: S.times_s, taus_s: taus, curve_taus_s: ct, q_per_um: S.q_per_um, dq: S.dq, d2d: S.d2d, varq: S.varq, B_floor: S.B_floor, B_est: S.B_est, A_est: S.A_est,
              fits: fits, share_from_amplitude: alphaDirect, head: head ? { no_swim: head.no_swim === true, D_fixed: head.D_fixed === true, v_um_s: head.no_swim ? null : head.v_um_s, alpha: head.alpha, spread: head.spread, D_um2_s: head.D_um2_s, turn_share: head.turn_share, turn_perq: head.kind === "still" || head.turn_perq === true, turn_b: head.ab ? head.ab.map(function (x) { return x.b === undefined ? head.turn_share : x.b; }) : null, D_r_s: head.D_r_s, v_rel_err: jk && jk.v !== null && head.v_um_s > 0 ? jk.v / head.v_um_s : head.v_rel_err, alpha_err: jk ? jk.alpha : head.alpha_err, spread_err: jk ? jk.spread : head.spread_err, D_err: jk ? jk.D : null, stroke_um_err: jk && head === swimStrokeFit ? jk.stroke_um : null, stroke_hz_err: jk && head === swimStrokeFit ? jk.stroke_hz : null, err_from: jk ? "jackknife" : "fit", jackknife: jk, stroke_um: head === swimStrokeFit ? head.stroke_um : null, stroke_hz: head === swimStrokeFit ? head.stroke_hz : null, perq: head.perq } : null,
              window: { q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, q_opt_per_um: S.q_opt_per_um, q_nyq_per_um: S.q_nyq_per_um, gamma_lo_hz: S.gamma_lo_hz, gamma_hi_hz: S.gamma_hi_hz },

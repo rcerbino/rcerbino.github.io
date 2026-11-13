@@ -334,7 +334,7 @@
   // The swimmer model weighs each swimmer by how its image shows the pattern along its direction of travel; finer
   // patterns depend on details of the image of a thick cell (in bright field at low NA) that the model leaves out
   function autoQmax() { return state.shape === "sphere" || state.swim_frac === 0 ? null : 2 * Math.PI / Math.max(0.3, state.diameter_um); }   // long cells only (see the card "Long cells")
-  function analysisOptions() { const m = swimModel(); return { q_min_per_um: state.q_min, q_max_per_um: state.q_max !== null ? state.q_max : autoQmax(), beta: null, kind: m === "plane" ? "2d" : "3d", depth: m === "depth", stroke: m === "stroke" || m === "strokex", stroke_dir: m === "strokex" ? "across" : "along", D_from_cells: true }; }
+  function analysisOptions() { const m = swimModel(); return { q_min_per_um: state.q_min, q_max_per_um: state.q_max !== null ? state.q_max : autoQmax(), beta: null, kind: m === "plane" ? "2d" : "3d", depth: m === "depth", stroke: m === "stroke" || m === "strokex", stroke_dir: m === "strokex" ? "across" : "along", D_from_cells: true, tumbles: state.swim_tumble > 0 }; }
   // centre height of cells lying on the bottom glass: half their thickness plus a 0.2 um gap
   function glassHeight() { const g = geometry(); return Math.min(g.a_par, g.a_perp) + 0.2; }
 
@@ -1342,6 +1342,11 @@
       // and the fast one at others, so its slope is not a clean test of the model (the speed at every q is)
       out.push({ cls: d < 0.15 && state.swim_frac > 0 ? "good" : "info", title: "Rates grow as q (swimming)", text: "On logarithmic axes the rates rise with slope " + e.toFixed(2) + " (1 for straight swimming, 2 for diffusion)." + (d < 0.15 ? "" : e > 1 ? " Between 1 and 2: a mixture of swimmers and cells that only diffuse, tumbles at small q, or cells leaving the focal plane." : " Below 1: one rate per q cannot follow curves that rise in two steps (it picks the slow step at some q and the fast one at others), and the finest patterns may change faster than the frames follow; the speed at every q, below, is the test of the model.") });
     }
+    // few cells in view: the jackknife repeats the fits on parts of the same movie, so it cannot see which cells happen
+    // to be in view (simulated Chlamydomonas, about 170 cells: scatter 3 times the quoted error; standard sample, 340
+    // cells: 1.3 times)
+    const nCells = cache.movie.info.n_particles;
+    if (h && !h.no_swim && h.err_from === "jackknife" && nCells < 200) out.push({ cls: "info", title: "Few cells in view", text: "This movie shows only about " + nCells + " cells. The " + String.fromCharCode(177) + " comes from parts of the same movie, so it does not include which cells happen to be in view and how far from focus each one is: from one movie to the next the speed can scatter several times more. Use \"Repeat 5 times with new cells\", or film more cells (a larger field or a higher concentration)." });
     if (h && h.perq && h.perq.length >= 4) {
       const v = h.perq.map(function (e) { return e.v_um_s; }), m = v.reduce(function (a, b) { return a + b; }, 0) / v.length, sd = Math.sqrt(v.reduce(function (a, b) { return a + (b - m) * (b - m); }, 0) / (v.length - 1)), lo = v.slice(0, Math.max(1, Math.floor(v.length / 3))), hi = v.slice(-Math.max(1, Math.floor(v.length / 3)));
       const ml = lo.reduce(function (a, b) { return a + b; }, 0) / lo.length, mh = hi.reduce(function (a, b) { return a + b; }, 0) / hi.length, tilt = Math.abs(ml / mh - 1);
@@ -1390,6 +1395,7 @@
       html += '<details class="more"><summary>Details</summary><dl>';
       html += '<dt>Diffusion of cells that do not swim</dt><dd>' + fmtSig(h.D_um2_s, 3) + (h.D_err && !h.D_fixed ? ' &plusmn; ' + fmtSig(h.D_err, 2) : '') + ' ' + MU + 'm<sup>2</sup>/s ' + (h.D_fixed ? '(set from the size of the cells and the viscosity: the data agree with it)' : '(fitted; true ' + fmtSig(tr.D_um2_s, 3) + ')') + '</dd>';
       if (h.no_swim && TURNS()) html += '<dt>Turning of the cells</dt><dd>rate 6 D<sub>R</sub> = ' + fmtSig(6 * h.D_r_s, 2) + ' s\u207b\u00b9 (true ' + (cache.movie.truth.rot_rate_s ? fmtSig(cache.movie.truth.rot_rate_s, 2) : '-') + '), seen in ' + Math.round(100 * (h.turn_share || 0)) + ' % of each pattern on average. The turning of rods is only roughly described by one rate, so both numbers come out approximate.</dd>';
+      if (!h.no_swim && h.turn_perq && h.tumble_hz > 0.0011) html += '<dt>Tumbles</dt><dd>' + fmtSig(h.tumble_hz, 2) + ' per second (true ' + fmtSig(swt.tumble_hz || 0, 2) + '): from the fading of the swimmers\' images, as each tumble gives a new heading</dd>';
       if (!h.no_swim && h.turn_perq && h.swim_dr_s > 0.0011) html += '<dt>Turning of the swimmers</dt><dd>D<sub>s</sub> = ' + fmtSig(h.swim_dr_s, 2) + ' rad<sup>2</sup>/s (true ' + (swt.rot_diff_s ? fmtSig(swt.rot_diff_s, 2) : '-') + '): their images fade as they turn, like those of the cells that do not swim, at rate 6 D<sub>s</sub></dd>';
       html += '<dt>Liquid</dt><dd>' + LIQUIDS[state.liquid] + (state.liquid === "glycerol" ? " " + Math.round(100 * state.glycerol_w) + " %" : "") + ', ' + state.T_C.toFixed(0) + ' &deg;C, ' + (mv.viscosity_Pa_s * 1000).toFixed(2) + ' mPa s</dd>';
       html += '<dt>Wave vectors used</dt><dd>' + res.used.length + (res.used.length ? ', ' + res.used[0].q_per_um.toFixed(2) + ' to ' + res.used[res.used.length - 1].q_per_um.toFixed(2) + ' ' + MU + 'm\u207b\u00b9' : '') + '</dd>';

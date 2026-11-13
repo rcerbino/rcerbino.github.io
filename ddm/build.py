@@ -28,16 +28,16 @@ DOC_START = """<!doctype html>
 """
 
 
-# the two pages: sizing (/ddm/) and swimming bacteria (/ddm/swimmers/)
+# the two pages: sizing (/ddm/) and swimming cells (/ddm/swimmers/)
 PAGES = {
     "sizing": {"src": "page.src.html", "out": "static/ddm/index.html", "preview": "ddm-hands-on.html", "title": "DDM, hands on",
                "canonical": "https://rcerbino.github.io/ddm/", "up": "../",
                "description": "Differential dynamic microscopy (DDM) hands on: simulate a microscopy experiment in your browser and size colloidal particles from how they move, step by step, from the raw movie to the result.",
                "parts": {"/*OBJECTIVES*/": "data/objectives.min.json", "/*OPTICS*/": "optics.js", "/*MOVIE*/": "movie.js",
                          "/*ENGINE*/": "ddm-engine.js", "/*WORKER*/": "worker.js", "/*APP*/": "app.js"}},
-    "swimmers": {"src": "swim.src.html", "out": "static/ddm/swimmers/index.html", "preview": "ddm-swimmers.html", "title": "DDM of swimming bacteria",
+    "swimmers": {"src": "swim.src.html", "out": "static/ddm/swimmers/index.html", "preview": "ddm-swimmers.html", "title": "DDM of swimming cells",
                  "canonical": "https://rcerbino.github.io/ddm/swimmers/", "up": "../../",
-                 "description": "Differential dynamic microscopy (DDM) of swimming bacteria: simulate a motility assay in your browser and measure swimming speeds, step by step, from the raw movie to the distribution of speeds.",
+                 "description": "Differential dynamic microscopy (DDM) of swimming cells (bacteria, algae, sperm): simulate a motility assay in your browser and measure swimming speeds, step by step, from the raw movie to the distribution of speeds.",
                  "parts": {"/*OBJECTIVES*/": "data/objectives.min.json", "/*OPTICS*/": "optics.js", "/*MOVIE*/": "movie.js",
                            "/*ENGINE*/": "ddm-engine.js", "/*ACTIVE*/": "active-engine.js", "/*WORKER*/": "worker-swim.js", "/*APP*/": "app-swim.js"}},
 }
