@@ -169,7 +169,9 @@
     sperm_thawed: { label: "Bull sperm, frozen and thawed", set: Object.assign({}, BFOBJ("CFI Plan Achromat 2X", 0.05), { shape: "sphere", diameter_um: 5, phi: 0.004, cell_um: 50, T_C: 37, swim_frac: 0.42, swim_v: 82, swim_spread: 0.43, swim_rot: 0.2, swim_osc_amp: 3.2, swim_osc_hz: 14, swim_osc_dir: "across", roi: 256, frame_rate_hz: 200, exposure_ms: 0.5, n_frames: 512 }),
       text: "42 % swimming, 82 " + MU + "m/s, head 3.2 " + MU + "m at 14 Hz (Jepson et al. 2019)." },
     sperm_dead: { label: "Bull sperm, thawed and mixed with dead cells", set: Object.assign({}, BFOBJ("CFI Plan Achromat 2X", 0.05), { shape: "sphere", diameter_um: 5, phi: 0.004, cell_um: 50, T_C: 37, swim_frac: 0.15, swim_v: 76, swim_spread: 0.43, swim_rot: 0.2, swim_osc_amp: 2.6, swim_osc_hz: 17, swim_osc_dir: "across", roi: 256, frame_rate_hz: 200, exposure_ms: 0.5, n_frames: 512 }),
-      text: "15 % swimming, 76 " + MU + "m/s, head 2.6 " + MU + "m at 17 Hz (Jepson et al. 2019)." }
+      text: "15 % swimming, 76 " + MU + "m/s, head 2.6 " + MU + "m at 17 Hz (Jepson et al. 2019)." },
+    custom: { label: "Your own cells: choose their shape, size and swimming", set: null,
+      text: "Starts from the cells shown now; shape, size and material are then yours to set." },
   };
   let state = Object.assign({}, BASE);
   const LEVEL_RANK = { curious: 1, student: 2, researcher: 3 };
@@ -343,11 +345,20 @@
   const BF = function () { return state.mode === "brightfield" || state.mode === "dic"; };              // condenser aperture in use
   const FL = function () { return !TRANS(); };
   const BODY = function () { return state.shape === "prolate" || state.shape === "oblate" || state.shape === "rod"; };
+  // the shape, size and material of the cells belong to the organism; they are set by hand only for "your own cells"
+  const OWN = function () { return state.organism === "custom"; };
+  function cellText() {
+    const L = state.diameter_um, sp = state.organism.indexOf("sperm") === 0;
+    if (sp) return "Cells: the sperm heads, taken as spheres " + fmtSize(L) + " across (the tail is too thin to show at this magnification).";
+    if (state.shape === "rod") return "Cells: rods " + fmtSize(L) + " long and " + fmtSize(L / Math.max(2, state.aspect)) + " wide.";
+    if (state.shape === "sphere") return "Cells: round, " + fmtSize(L) + " across.";
+    return "";
+  }
   const TURNS = function () { return state.shape !== "sphere"; };
   const objOptions = function () { return OBJECTIVES.map(function (o, i) { return [i, o.n.replace(/^CFI /, "") + "  (" + o.m + "x, NA " + o.na + (o.im !== "dry" ? ", " + o.im : "") + ")", o.s]; }); };
   const CONTROLS = [
-    { key: "organism", group: "Sample", lvl: 1, label: "Organism", kind: "select", options: Object.keys(ORGANISMS).map(function (k) { return [k, ORGANISMS[k].label]; }), hint: function () { const o = ORGANISMS[state.organism]; return (o ? o.text : "") + " You can change every setting afterwards."; } },
-    { key: "shape", group: "Sample", lvl: 1, label: "Cell shape", kind: "select", options: function () { return Object.keys(SHAPES).filter(function (k) { return state.mode !== "dic" || k === "sphere"; }).map(function (k) { return [k, SHAPES[k]]; }); }, hint: function () { return state.mode === "dic" ? "DIC is simulated for spheres only." : shapeHint(); } },
+    { key: "organism", group: "Sample", lvl: 1, label: "Organism", kind: "select", options: Object.keys(ORGANISMS).map(function (k) { return [k, ORGANISMS[k].label]; }), hint: function () { const o = ORGANISMS[state.organism]; return (o ? o.text : "") + (OWN() ? "" : " " + cellText() + " The shape and size come with the organism (choose \"Your own cells\" to change them); the swimming and the microscope can be changed freely.") + " " + shapeHint(); } },
+    { key: "shape", group: "Sample", lvl: 1, label: "Cell shape", kind: "select", when: OWN, options: function () { return Object.keys(SHAPES).filter(function (k) { return state.mode !== "dic" || k === "sphere"; }).map(function (k) { return [k, SHAPES[k]]; }); }, hint: function () { return state.mode === "dic" ? "DIC is simulated for spheres only." : shapeHint(); } },
     { key: "swim_frac", group: "Sample", lvl: 1, label: "Share of cells that swim", kind: "lin", min: 0, max: 1, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, hint: "The others only diffuse (dead or non-motile cells)." },
     { key: "swim_v", group: "Sample", lvl: 1, label: "Mean swimming speed", kind: "log", min: 1, max: 200, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m/s"; } },
     { key: "swim_spread", group: "Sample", lvl: 2, label: "Spread of speeds (relative standard deviation)", kind: "lin", min: 0.05, max: 0.9, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, hint: "Schulz (gamma) distribution of speeds, as in Wilson et al. 2011." },
@@ -358,10 +369,10 @@
     { key: "swim_osc_hz", group: "Sample", lvl: 2, label: "Stroke: beats per second", kind: "log", min: 1, max: 100, fmt: function (v) { return fmtSig(v, 3) + " Hz"; }, when: function () { return state.swim_osc_amp > 0; }, hint: function () { return state.frame_rate_hz < 2.2 * state.swim_osc_hz ? "The camera takes fewer than two frames per beat: the stroke cannot be seen." : ""; } },
     { key: "swim_osc_dir", group: "Sample", lvl: 3, label: "Stroke: direction", kind: "select", options: [["along", "Along the swimming direction (Chlamydomonas)"], ["across", "Across it (sperm head)"]], when: function () { return state.swim_osc_amp > 0; } },
     { key: "drag", group: "Sample", lvl: 3, label: "Drag relative to a plain rod of this size", kind: "log", min: 0.5, max: 3, fmt: function (v) { return fmtSig(v, 2) + "x"; }, hint: function () { return "Diffusion of the cells: " + fmtSig(hydro().D_t / state.drag, 2) + " " + MU + "m\u00b2/s. Flagella, turning or not, add drag."; } },
-    { key: "particle", group: "Sample", lvl: 3, label: "Material", kind: "select", options: function () { return SHAPE_MATERIALS[state.shape].map(function (k) { return [k, MATERIALS[k]]; }); } },
+    { key: "particle", group: "Sample", lvl: 3, label: "Material", kind: "select", when: OWN, options: function () { return SHAPE_MATERIALS[state.shape].map(function (k) { return [k, MATERIALS[k]]; }); } },
     { key: "n_custom", group: "Sample", lvl: 1, label: function () { return state.shape === "bisphere" ? "Ordinary refractive index (n_o)" : "Particle refractive index"; }, kind: "lin", min: 1.3, max: 2.6, step: 0.01, fmt: function (v) { return v.toFixed(2); }, when: function () { return state.particle === "custom"; } },
-    { key: "diameter_um", group: "Sample", lvl: 2, label: function () { return SIZE_LABEL[state.shape]; }, kind: "log", min: 0.3, max: 60, fmt: fmtSize },
-    { key: "aspect", group: "Sample", lvl: 2, label: function () { return ASPECT_LABEL[state.shape] || "Aspect ratio"; }, kind: "log", min: 1.2, max: 20, fmt: function (v) { return fmtSig(Math.max(state.shape === "rod" ? 2 : 1, v), 2); }, when: BODY, hint: function () { return state.shape === "rod" && state.aspect < 2 ? "Rods are simulated from aspect ratio 2 (the friction formulas hold from there)." : ""; } },
+    { key: "diameter_um", group: "Sample", lvl: 2, label: function () { return SIZE_LABEL[state.shape]; }, kind: "log", when: OWN, min: 0.3, max: 60, fmt: fmtSize },
+    { key: "aspect", group: "Sample", lvl: 2, label: function () { return ASPECT_LABEL[state.shape] || "Aspect ratio"; }, kind: "log", min: 1.2, max: 20, fmt: function (v) { return fmtSig(Math.max(state.shape === "rod" ? 2 : 1, v), 2); }, when: function () { return OWN() && BODY(); }, hint: function () { return state.shape === "rod" && state.aspect < 2 ? "Rods are simulated from aspect ratio 2 (the friction formulas hold from there)." : ""; } },
     { key: "phi", group: "Sample", lvl: 2, label: "Concentration (volume fraction)", kind: "log", min: 1e-6, max: 5e-2, fmt: fmtPhi, hint: function () { return particleCount() + " cells in the simulated volume." + (phiCapped ? " Lowered to fit what the browser can follow (" + MAX_PARTICLES + " cells even in the smallest simulated field)." : "") + (phiRaised ? " Raised so that a few cells are in the simulated field." : ""); } },
     { key: "liquid", group: "Sample", lvl: 2, label: "Liquid", kind: "select", options: Object.keys(LIQUIDS).map(function (k) { return [k, LIQUIDS[k]]; }) },
     { key: "glycerol_w", group: "Sample", lvl: 2, label: "Glycerol (by mass)", kind: "lin", min: 0, max: 0.95, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, when: function () { return state.liquid === "glycerol"; } },
@@ -572,7 +583,7 @@
       if (state.exposure_ms < tmin) state.exposure_ms = tmin;
     }
     if (state.sim_px > outPx()) state.sim_px = Math.max(32, outPx());
-    if (state.mode === "dic") { if (state.shape !== "sphere") state.shape = "sphere"; if (state.cell_um > 200) state.cell_um = 200; }   // limits of the DIC model
+    if (state.mode === "dic") { if (state.shape !== "sphere") { state.shape = "sphere"; if (!OWN()) state.organism = "custom"; } if (state.cell_um > 200) state.cell_um = 200; }   // limits of the DIC model
     if (state.shape === "rod" && state.aspect < 2) state.aspect = 2;
     if (SHAPE_MATERIALS[state.shape].indexOf(state.particle) < 0) state.particle = SHAPE_MATERIALS[state.shape][0];
     // memory limit (pixels x frames): the setting the reader changed last wins
@@ -598,7 +609,10 @@
   let lastKey = null;
   function onChange(key) {
     lastKey = key;
-    if (key === "organism") { applyPreset(Object.assign({ organism: state.organism }, ORGANISMS[state.organism].set)); return; }
+    if (key === "organism") {
+      if (state.organism === "custom") { syncControls(); return; }   // the cells shown now become the starting point
+      applyPreset(Object.assign({ organism: state.organism }, ORGANISMS[state.organism].set)); return;
+    }
     // switching to phase contrast with an objective that has no phase ring: take the phase objective of the same
     // magnification with the closest NA (Plan Fluor 20X -> Plan Fluor DLL 20X Ph1), so phase contrast is really on
     if (key === "mode" && state.mode === "phase" && !objRing()) {
@@ -627,12 +641,15 @@
     document.documentElement.setAttribute("data-level", lv);
     $("lv-" + lv).checked = true;
     document.querySelectorAll("details.math[data-open-at]").forEach(function (d) { d.open = (lv === d.getAttribute("data-open-at")); });
-    // controls hidden at this level go back to the standard value, so the bench shows what is simulated
+    // controls hidden at this level go back to the standard value of the chosen organism (its size and shape, not those of
+    // the example cells), so the bench shows what is simulated
     let changed = false;
+    const std = Object.assign({}, BASE, state.organism !== "custom" && ORGANISMS[state.organism] ? ORGANISMS[state.organism].set : {});
     CONTROLS.forEach(function (c) {
-      if (c.lvl <= LEVEL_RANK[lv]) return;
-      if (c.kind === "qrange") { if (state.q_min !== null || state.q_max !== null) { state.q_min = null; state.q_max = null; changed = true; } return; }
-      if (state[c.key] !== BASE[c.key]) { state[c.key] = BASE[c.key]; changed = true; }
+      if (c.lvl <= LEVEL_RANK[lv] || c.key === "organism") return;
+      if (c.kind === "qrange") { if (state.q_min !== std.q_min || state.q_max !== std.q_max) { state.q_min = std.q_min; state.q_max = std.q_max; changed = true; } return; }
+      if (state.organism === "custom" && (c.key === "diameter_um" || c.key === "aspect" || c.key === "particle")) return;   // your own cells keep their size
+      if (state[c.key] !== std[c.key]) { state[c.key] = std[c.key]; changed = true; }
     });
     if (lv !== "researcher" && state.seed !== BASE.seed) { state.seed = BASE.seed; changed = true; }
     if (curveView === "d" && lv === "curious") setCurveView("change");
@@ -1464,7 +1481,7 @@
       if (r.compressed) L.push("  Compressed exponential: v0 = " + fmtSig(r.compressed.v0_um_s, 3) + " um/s from Gamma = v0 q (not the mean speed), mean exponent " + r.compressed.beta_free_mean.toFixed(2));
     } else L.push("  No result: too few usable wave vectors.");
     L.push("");
-    L.push("Organism: " + ORGANISMS[state.organism].label + (state.organism === "model" ? "" : " (settings after the cited paper; see the page)"));
+    L.push("Organism: " + ORGANISMS[state.organism].label + (state.organism === "model" || state.organism === "custom" ? "" : " (settings after the cited paper; see the page)"));
     L.push("Sample (simulated): " + (state.shape === "rod" ? "rods " + fmtSize(cfg.diameter_um) + " long, aspect ratio " + fmtSig(cfg.aspect, 2) : "spheres " + fmtSize(cfg.diameter_um)) + "; " + mv.info.n_particles + " cells, " + tr.swim.n_swimmers + " swimming" + (state.swim_geom === "glass" ? " along the glass" : " in 3D") + (state.swim_tumble > 0 ? ", " + fmtSig(state.swim_tumble, 2) + " tumbles per second" : ", straight runs") + "; " + LIQUIDS[state.liquid] + ", " + state.T_C.toFixed(0) + " C, cell " + cfg.cell_um + " um, focus " + fmtSig(cfg.focus_um, 2) + " um above the bottom");
     L.push("Microscope (simulated): Nikon Ti2-E, " + objective().n + ", " + ($("c-mode").selectedOptions[0].textContent) + "; " + mv.n + " x " + mv.n + " pixels of " + fmtSig(mv.pixel_um, 3) + " um, " + mv.T + " frames at " + fmtNum(mv.frame_rate_hz) + " frames/s" + (mv.times_s ? ", taken at log-spaced times in repeating cycles (" + fmtDur(mv.times_s[mv.T - 1] + 1 / mv.frame_rate_hz) + " in all); structure function from pairs of frames grouped by their delay, up to " + mv.T + " pairs per delay" : ""));
     L.push("True values: mean speed " + fmtSig(tr.swim.v_mean_um_s, 3) + " um/s (relative spread " + Math.round(100 * tr.swim.v_sd_um_s / Math.max(1e-9, tr.swim.v_mean_um_s)) + " %), " + Math.round(100 * tr.swim.fraction) + " % swimming; as seen by the microscope over the q used: " + fmtSig(seenTruth().v, 3) + " um/s, " + Math.round(100 * seenTruth().share) + " %.");
@@ -1524,7 +1541,9 @@
   }
   function applyPreset(set) {
     const keep = state.seed, sp = state.sim_px;
-    state = Object.assign({}, BASE, set); state.seed = level === "researcher" ? keep : BASE.seed; state.sim_px = set.sim_px || sp;
+    state = Object.assign({}, BASE, set);
+    if (!set.organism && (set.shape !== undefined || set.diameter_um !== undefined || set.aspect !== undefined || set.particle !== undefined)) state.organism = "custom";
+    state.seed = level === "researcher" ? keep : BASE.seed; state.sim_px = set.sim_px || sp;
     if (state.mode === "phase" && !objRing()) onChangeQuiet("mode");
     if (state.mode === "phase" && objRing()) state.annulus = objRing();
     if (state.swim_geom === "glass") state.focus_frac = Math.min(1, glassHeight() / state.cell_um);
