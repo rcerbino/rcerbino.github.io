@@ -208,7 +208,10 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Its so
 `python3 ddm/build.py` assembles them into `static/ddm/index.html`, which is committed and copied to the
 site; `build.py` then writes the main menu into it (marker `<!--SITE-NAV-->`, entry in `EXTRA_PAGES`).
 After any change to the sources: run `python3 ddm/build.py`, then `python3 build.py --check`, and commit
-both. Checks: `cd ddm && node test-optics.js data/mie_ref.json && node test-engine.js && node test-movie.js`
+both. The same build also writes the second DDM page, "Swimming cells" (/ddm/swimmers/, `static/ddm/swimmers/index.html`),
+from `swim.src.html`, `app-swim.js`, `active-engine.js` and `worker-swim.js`; it shares the optics, movie and engine files,
+gets the menu with "DDM" marked (`EXTRA_PAGES` entry with None) and is reached from a switch under each title. Its checks:
+`node test-swim.js && node test-active.js`. Checks: `cd ddm && node test-optics.js data/mie_ref.json && node test-engine.js && node test-movie.js`
 (the last takes several minutes). `python3 ddm/build.py --preview` writes a stand-alone copy with Google
 Fonts for previews outside the site; do not commit it. The page text follows the writing style below; it
 must stay ASCII (the build refuses other characters).
