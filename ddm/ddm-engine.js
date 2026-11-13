@@ -492,7 +492,7 @@
     // image is not linear in the particles, nor with two image channels)
     const info = movie.info, useDepth = opts.depth !== false && !S.sg && info && info.kernel && info.kernel_q && info.cell_z_um && !info.split;
     if (useDepth) { const cache = new Map(); DEPTH = function (q) { const k = q.toPrecision(6); if (!cache.has(k)) cache.set(k, depthC(info, q)); return cache.get(k); }; }
-    try { const r = yield* analyseFits(movie, opts, S, noiseB); r.depth_model = !!useDepth; return r; } finally { BFIX = null; DEPTH = null; }
+    try { const r = yield* analyseFits(movie, opts, S, noiseB); r.depth_model = !!useDepth && r.used.some(function (f) { return !f.no_depth; }); return r; } finally { BFIX = null; DEPTH = null; }
   }
   function* analyseFits(movie, opts, S, noiseB) {
     const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
@@ -506,7 +506,11 @@
       if (!(nmodes[b] > 0)) { fits.push(null); continue; }
       const yv = new Float64Array(L);
       for (let li = 0; li < L; li++) yv[li] = dq[li][b];
-      const f1 = fitOne(taus_s, yv, varq[b], B_est[b], kind, b, q_per_um[b]);
+      let f1 = fitOne(taus_s, yv, varq[b], B_est[b], kind, b, q_per_um[b]);
+      // the depth of field corrects the rate by a modest factor; when the fit with it lands far below the one without
+      // (a curve that has decayed within the first frame, fitted as a slow rise: point scanning at 7 frames/s read 65 um
+      // for 500 nm), the one without is kept for that q
+      if (DEPTH && !rotFit) { const fp = fitOne(taus_s, yv, varq[b], B_est[b], kind, b, q_per_um[b], { noDepth: true }); if (!f1.ok || (fp.ok && f1.gamma_hz < 0.5 * fp.gamma_hz)) { f1 = fp; f1.no_depth = true; } }
       fits.push(rotFit ? fitTwo(taus_s, yv, f1) : f1);
       if ((b & 7) === 0) yield { stage: "Fitting", frac: b / nb };
     }
@@ -522,10 +526,18 @@
       else if (f.lnGamma_se > MAX_LN_GAMMA_SE) f.reason = "signal lost in camera noise";
       else if (f.gamma_hz <= gamma_lo_hz) f.reason = "too slow for this movie";
       else if (f.gamma_hz >= gamma_hi_hz) f.reason = "too fast for this frame rate";
-      else if (DEPTH && DEPTH(f.q_per_um) && depthFade(DEPTH(f.q_per_um), f.gamma_hz / (f.q_per_um * f.q_per_um), taus_s[0]) < 0.3) f.reason = "particles leave the focus within one frame";
+      else if (DEPTH && !f.no_depth && DEPTH(f.q_per_um) && depthFade(DEPTH(f.q_per_um), f.gamma_hz / (f.q_per_um * f.q_per_um), taus_s[0]) < 0.3) f.reason = "particles leave the focus within one frame";
       else if (f.q_per_um < qmin || f.q_per_um > qmax) f.reason = "outside the chosen fit range";
     }
     let used = rows.filter(function (f) { return f.reason === null; });
+    // a q whose Gamma / q^2 is more than 3 times away from the median of the others is an outlier (a curve lost in noise
+    // that passed the other tests by chance); for sizes, even broad spreads keep Gamma / q^2 within that range
+    if (used.length >= 5) {
+      const lv = used.map(function (f) { return Math.log(f.gamma_hz / (f.q_per_um * f.q_per_um)); }).sort(function (a, b) { return a - b; });
+      const med = lv[Math.floor(lv.length / 2)];
+      used.forEach(function (f) { if (Math.abs(Math.log(f.gamma_hz / (f.q_per_um * f.q_per_um)) - med) > Math.log(3)) f.reason = "rate far from the other q"; });
+      used = rows.filter(function (f) { return f.reason === null; });
+    }
     let D = weightedD(used);
     if (D !== null) {   // tutorial step: drop points where D q^2 is already below the slowest measurable rate
       for (const f of used) if (D.D_um2_s * f.q_per_um * f.q_per_um < gamma_lo_hz) f.reason = "too slow for this movie";
@@ -557,7 +569,7 @@
         const dj = S.jackDq(j), fj = [];
         used.forEach(function (f) {
           const yv = new Float64Array(L); for (let i = 0; i < L; i++) yv[i] = dj[i][f.bin];
-          const g = fitOne(taus_s, yv, varq[f.bin], B_est[f.bin], kind, f.bin, f.q_per_um, { start: { A: f.A, B: f.B, G: f.gamma_hz } });
+          const g = fitOne(taus_s, yv, varq[f.bin], B_est[f.bin], kind, f.bin, f.q_per_um, { start: { A: f.A, B: f.B, G: f.gamma_hz }, noDepth: !!f.no_depth });
           if (g.ok && g.lnGamma_se <= MAX_LN_GAMMA_SE) fj.push(g);
         });
         const Dj = weightedD(fj); if (Dj) Ds.push(Dj.D_um2_s);
@@ -1075,7 +1087,7 @@
     // shortest delay plus 2 % of the amplitude (d rises with the delay, so it is at least B; a free B ran below 0 or
     // above the data, and the normalised curves then left [0, 1])
     const Bfix = opt && opt.Bfix !== undefined ? opt.Bfix : BFIX;
-    const dtb = DEPTH && q > 0 ? DEPTH(q) : null;   // depth of field (see depthC): D = Gamma / q^2 in the axial step
+    const dtb = DEPTH && q > 0 && !(opt && opt.noDepth) ? DEPTH(q) : null;   // depth of field (see depthC): D = Gamma / q^2 in the axial step
     let p = [Math.log(A0), (Bfix !== null ? Bfix : opt && opt.start ? opt.start.B : B0) / scale, Math.log(G0), schulz ? 0.02 : 1];
     const free = [0].concat(Bfix !== null ? [] : [1], [2], (stretched || schulz) && fixPI === null ? [3] : []), np = free.length, iG = free.indexOf(2);
     const model = function (pp, t) {
