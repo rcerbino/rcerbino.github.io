@@ -1,0 +1,609 @@
+<title>DDM of swimming cells</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  [hidden] { display: none !important; }
+/* Layout: the site's own page frame (header, measure, fluorescence palette); a two-column
+   "bench" where the controls stay in view and the analysis runs down as numbered steps. */
+:root {
+  --paper: #fafbfc;
+  --ink: #18202b;
+  --muted: #5a6472;
+  --rule: #dde2e8;
+  --accent: #2f45c5;      /* nuclei (DAPI) blue */
+  --accent-2: #b8233f;    /* actin red */
+  --tint: #eef1fb;
+  --panel: #ffffff;
+  --good: #1f7a4d; --good-bg: #dff3e8;
+  --warn: #8a5a00; --warn-bg: #fcefd6;
+  --bad: #a8322d;  --bad-bg: #f9e3e1;
+  --serif: "Spectral", Georgia, "Times New Roman", serif;
+  --sans: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --measure: 40rem;
+  --wide: 76rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0d1119; --ink: #e4e8ee; --muted: #98a2b3; --rule: #283040;
+    --accent: #93a1ff; --accent-2: #ff7a90; --tint: #161c2a; --panel: #121826;
+    --good: #6fd39a; --good-bg: #12301f; --warn: #f2b75c; --warn-bg: #3a2a10; --bad: #ff8f86; --bad-bg: #3a1714;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0d1119; --ink: #e4e8ee; --muted: #98a2b3; --rule: #283040;
+  --accent: #93a1ff; --accent-2: #ff7a90; --tint: #161c2a; --panel: #121826;
+  --good: #6fd39a; --good-bg: #12301f; --warn: #f2b75c; --warn-bg: #3a2a10; --bad: #ff8f86; --bad-bg: #3a1714;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--serif); font-size: 1.125rem; line-height: 1.65;
+}
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+.wrap { max-width: var(--wide); margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+@media (min-width: 40rem) { .wrap { padding-left: max(2rem, env(safe-area-inset-left, 0px)); padding-right: max(2rem, env(safe-area-inset-right, 0px)); } }
+
+/* site header (as on rcerbino.github.io) */
+.site-header { border-bottom: 1px solid var(--rule); }
+.header-inner { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 2rem; padding-block: 1.1rem 1rem; }
+.site-name { font-size: 1.35rem; font-weight: 500; color: var(--ink); text-decoration: none; }
+.site-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.2rem 1.25rem; }
+.site-nav a { font-family: var(--sans); font-size: 0.95rem; color: var(--muted); text-decoration: none; padding: 0.2rem 0; border-bottom: 2px solid transparent; }
+.site-nav a:hover { color: var(--ink); }
+.site-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+.ddm-switch { font-family: var(--sans); font-size: 0.9rem; margin: 0 0 0.6rem; color: var(--muted); }
+.ddm-switch a, .ddm-switch span { margin-right: 0.9rem; }
+.ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
+.proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
+
+h1, h2, h3 { font-weight: 500; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem); margin: 0 0 1rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; margin: 0 0 0.75rem; }
+h3 { font-size: 1.2rem; margin: 0 0 0.5rem; }
+p { margin: 0 0 1rem; }
+.lede { font-size: 1.25rem; line-height: 1.6; max-width: var(--measure); }
+.prose { max-width: var(--measure); }
+.small { font-family: var(--sans); font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
+.eyebrow { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 0.35rem; }
+
+/* reader levels: what each reader sees */
+html[data-level="curious"] .lvl-2, html[data-level="curious"] .lvl-3, html[data-level="student"] .lvl-3 { display: none !important; }
+html[data-level="student"] .only-1, html[data-level="researcher"] .only-1 { display: none !important; }
+html[data-level="curious"] details.math { display: none; }
+
+/* opening */
+.intro { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; padding-block: 2.5rem 1.5rem; align-items: center; }
+.intro > * { min-width: 0; }
+@media (min-width: 56rem) { .intro { grid-template-columns: minmax(0, 1fr) 19rem; gap: 3.5rem; } }
+.porthole { margin: 0; justify-self: center; display: grid; gap: 0.75rem; justify-items: center; }
+.porthole .lens { width: min(19rem, 78vw); aspect-ratio: 1; border-radius: 50%; overflow: hidden; border: 1px solid var(--rule); box-shadow: 0 0 0 10px var(--tint); background: #000; max-width: 100%; }
+.porthole canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+.porthole figcaption { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); text-align: center; max-width: 18rem; }
+
+.levels { margin: 1.5rem 0 0; border: 0; padding: 0; min-width: 0; }
+.levels legend { font-family: var(--sans); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; padding: 0; }
+.level-opts { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); max-width: 44rem; }
+.level-opts label { display: grid; gap: 0.1rem; padding: 0.6rem 0.8rem; border: 1px solid var(--rule); border-radius: 6px; cursor: pointer; font-family: var(--sans); background: var(--panel); }
+.level-opts input { position: absolute; opacity: 0; pointer-events: none; }
+.level-opts .t { font-weight: 600; font-size: 0.98rem; }
+.level-opts .d { font-size: 0.82rem; color: var(--muted); line-height: 1.35; }
+.level-opts label:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--tint); }
+.level-opts label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* result card */
+.result { font-family: var(--sans); border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); padding: 1rem 1.1rem; display: grid; gap: 0.5rem; }
+.result .big { font-family: var(--serif); font-size: 2.1rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.result .big small { font-size: 1rem; color: var(--muted); }
+.result dl { display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 1rem; margin: 0; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.result dt { color: var(--muted); }
+.result dd { margin: 0; }
+.chip { display: inline-block; font-family: var(--sans); font-size: 0.8rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 999px; justify-self: start; }
+.chip.good { color: var(--good); background: var(--good-bg); }
+.chip.warn { color: var(--warn); background: var(--warn-bg); }
+.chip.bad { color: var(--bad); background: var(--bad-bg); }
+.chip.info { color: var(--muted); background: var(--tint); }
+.tscroll { overflow-x: auto; min-width: 0; }
+.result, .result > *, .predict, .step-body > *, .steps > * { min-width: 0; }
+table.sizing { width: 100%; border-collapse: collapse; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+table.sizing td { white-space: nowrap; }
+table.sizing th, table.sizing td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--rule); text-align: right; vertical-align: top; }
+table.sizing th[scope="row"], table.sizing thead th:first-child { text-align: left; font-weight: 500; }
+table.sizing thead th { color: var(--muted); font-weight: 500; font-size: 0.8rem; }
+table.sizing tr.main th, table.sizing tr.main td { font-weight: 700; }
+table.sizing tr.truth th, table.sizing tr.truth td { color: var(--accent-2); }
+table.sizing .note { white-space: normal; display: block; font-size: 0.76rem; font-weight: 400; color: var(--muted); }
+.checks ul { list-style: none; margin: 0.3rem 0 0; padding: 0; display: grid; gap: 0.45rem; }
+.checks li { display: grid; grid-template-columns: 4.2rem 1fr; gap: 0.6rem; align-items: start; font-size: 0.86rem; line-height: 1.45; }
+.checks li .chip { justify-self: stretch; text-align: center; }
+details.more summary { cursor: pointer; font-size: 0.85rem; color: var(--muted); }
+details.more dl { margin-top: 0.4rem; }
+.hero-result { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1rem; font-family: var(--sans); margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--rule); max-width: 44rem; }
+.hero-result .n { font-family: var(--serif); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+
+/* bench */
+.bench-head { padding-block: 2rem 1rem; border-top: 1px solid var(--rule); }
+.bench { display: grid; gap: 2rem; padding-bottom: 3rem; }
+@media (min-width: 64rem) { .bench { grid-template-columns: 17.5rem minmax(0, 1fr); gap: 2.5rem; align-items: start; } .controls { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); max-height: calc(100vh - 5rem); overflow: auto; } }
+.controls { font-family: var(--sans); font-size: 0.9rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 1rem; display: grid; gap: 1rem; }
+.controls h3 { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.cgroup { display: grid; gap: 0.7rem; }
+.ctl { display: grid; gap: 0.2rem; }
+.ctl .row { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
+.ctl label { font-weight: 500; }
+.ctl output { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; white-space: nowrap; }
+.ctl input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
+.ctl select, .ctl input[type="number"] { font: inherit; padding: 0.3rem 0.4rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink); width: 100%; }
+.ctl .hint { font-size: 0.78rem; color: var(--muted); line-height: 1.35; }
+.qrange { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+.btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+button { font: 500 0.88rem var(--sans); padding: 0.45rem 0.8rem; border-radius: 5px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.status { font-size: 0.82rem; color: var(--muted); min-height: 1.3em; }
+.runbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--panel); border-top: 1px solid var(--rule); box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06); font-family: var(--sans); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.runbar-inner { display: flex; align-items: center; gap: 0.9rem; padding-block: 0.5rem; }
+.runbar .bar { flex: 0 0 min(16rem, 38%); height: 6px; border-radius: 3px; }
+.runbar .status { flex: 1 1 auto; min-width: 0; min-height: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.runbar.busy .status { color: var(--ink); font-weight: 500; }
+.runbar.busy .bar span { background: var(--accent); }
+.runbar:not(.busy) .bar span { background: var(--good); }
+body { padding-bottom: 3.2rem; }
+.bar { height: 4px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.1s linear; }
+.error { color: var(--bad); background: var(--bad-bg); border-radius: 6px; padding: 0.6rem 0.8rem; font-family: var(--sans); font-size: 0.9rem; }
+
+.steps { display: grid; gap: 3rem; min-width: 0; }
+.step { display: grid; gap: 1rem; min-width: 0; scroll-margin-top: 1rem; }
+.step-title { display: flex; gap: 0.75rem; align-items: baseline; }
+.step-title .num { font-family: var(--sans); font-size: 0.85rem; font-weight: 600; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; min-width: 1.7rem; height: 1.7rem; display: inline-grid; place-items: center; flex: none; }
+.step-title h2 { margin: 0; }
+.step-body { display: grid; gap: 1.25rem; min-width: 0; }
+@media (min-width: 48rem) { .step-body.split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+.text { min-width: 0; max-width: var(--measure); }
+.text p:last-child { margin-bottom: 0; }
+
+figure.viz { margin: 0; display: grid; gap: 0.5rem; min-width: 0; }
+.imgbox { position: relative; background: #000; border-radius: 4px; overflow: hidden; aspect-ratio: 1; max-width: 100%; }
+.imgbox canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.imgbox canvas.overlay { image-rendering: auto; }
+.imgbox .scale { position: absolute; left: 8px; bottom: 8px; font: 600 0.75rem var(--sans); color: #fff; text-shadow: 0 0 3px #000; }
+.imgbox .scale i { display: block; height: 3px; background: #fff; margin-bottom: 3px; box-shadow: 0 0 2px #000; }
+.pair { display: grid; gap: 0.75rem; grid-template-columns: 1fr 1fr; }
+.pair .cap { font-family: var(--sans); font-size: 0.8rem; color: var(--muted); }
+figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); line-height: 1.45; font-variant-numeric: tabular-nums; }
+.readout b { color: var(--ink); font-weight: 600; }
+.chart { position: relative; width: 100%; height: 300px; }
+.chart canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.chart.short { height: 220px; }
+.ctitle { font: 500 0.85rem var(--sans); color: var(--muted); margin-bottom: 0.2rem; }
+.twin { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+@media (max-width: 720px) { .twin { grid-template-columns: 1fr; } }
+.motion .mkey { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.85rem; color: var(--muted); }
+.motion .mkey i { display: inline-block; width: 0.9rem; height: 0.9rem; border-radius: 2px; vertical-align: -0.12rem; margin-right: 0.35rem; }
+.motion .mbar { display: grid; grid-template-columns: 5.5rem 1fr auto; align-items: center; gap: 0.6rem; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+.motion .mtrack { display: flex; height: 0.95rem; border-radius: 3px; overflow: hidden; border: 1px solid var(--rule); }
+.motion .msw { background: var(--accent); }
+.motion .mdf { background: var(--rule); }
+.motion .mkey i.msw { background: var(--accent); } .motion .mkey i.mdf { background: var(--rule); }
+.toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-family: var(--sans); font-size: 0.88rem; }
+.toolbar input[type="range"] { flex: 1 1 10rem; accent-color: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 0.3rem 0.7rem; background: var(--panel); }
+.seg button[aria-pressed="true"] { background: var(--tint); color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-family: var(--sans); font-size: 0.8rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.reasons { font-family: var(--sans); font-size: 0.82rem; color: var(--muted); margin: 0; padding-left: 1.1rem; }
+
+details.math { min-width: 0; font-family: var(--sans); font-size: 0.92rem; border-left: 2px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; padding: 0.55rem 0.9rem; max-width: var(--measure); }
+details.math summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+details.math .eq { font-family: var(--serif); font-size: 1.05rem; margin: 0.6rem 0; overflow-x: auto; white-space: nowrap; }
+details.math p { margin: 0.5rem 0; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--paper); border: 1px solid var(--rule); border-radius: 3px; padding: 0.05em 0.3em; }
+pre.code { font-family: var(--mono); font-size: 0.8rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 0.6rem; overflow-x: auto; margin: 0.5rem 0; line-height: 1.45; }
+
+.predict { font-family: var(--sans); font-size: 0.92rem; border: 1px dashed var(--accent); border-radius: 6px; padding: 0.7rem 0.9rem; display: grid; gap: 0.5rem; max-width: var(--measure); }
+.predict .q { font-weight: 600; }
+.predict .a { color: var(--ink); }
+.predict .verdict { font-weight: 600; }
+.predict button:disabled { cursor: default; opacity: 0.55; }
+.predict button[aria-pressed="true"] { opacity: 1; border-color: var(--accent); font-weight: 600; }
+
+/* what matters */
+.matters { border-top: 1px solid var(--rule); padding-block: 2.5rem 1rem; }
+.cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); margin-top: 1.25rem; }
+.card { border: 1px solid var(--rule); border-radius: 8px; padding: 1rem; display: grid; gap: 0.5rem; align-content: start; background: var(--panel); }
+.card h3 { margin: 0; font-size: 1.1rem; }
+.card p { font-size: 0.98rem; margin: 0; }
+.card .btns { margin-top: 0.25rem; }
+.further { border-top: 1px solid var(--rule); padding-block: 2.5rem 3rem; }
+.further ul { padding-left: 1.2rem; max-width: var(--measure); }
+.further li { margin-bottom: 0.5rem; }
+footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-size: 0.85rem; color: var(--muted); padding-block: 1.2rem 2rem; }
+
+.fovbox { height: 300px; }
+.pstrip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.5rem; max-width: 34rem; }
+.pstrip figure { margin: 0; display: grid; gap: 0.25rem; }
+.pstrip canvas { width: 100%; aspect-ratio: 1; image-rendering: pixelated; border-radius: 3px; background: #000; max-width: 100%; }
+.pstrip figcaption { font-family: var(--sans); font-size: 0.75rem; color: var(--muted); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+</style>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="site-name" href="https://rcerbino.github.io/">Roberto Cerbino</a>
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="https://rcerbino.github.io/">Home</a></li>
+        <li><a href="https://rcerbino.github.io/about/">About</a></li>
+        <li><a href="https://rcerbino.github.io/research/">Research</a></li>
+        <li><a href="#" aria-current="page">DDM</a></li>
+        <li><a href="https://rcerbino.github.io/publications/">Publications</a></li>
+        <li><a href="https://rcerbino.github.io/talks/">Talks</a></li>
+        <li><a href="https://rcerbino.github.io/teaching/">Teaching</a></li>
+        <li><a href="https://rcerbino.github.io/contact/">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<div class="proto-note"><div class="wrap">This web page is a divertissement. For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the cells do not interact) and rely on many approximations. Found something wrong or not working? Please let us know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</div></div>
+
+<main>
+  <section class="wrap intro">
+    <div>
+      <p class="eyebrow">Differential dynamic microscopy</p>
+      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">Sizing particles</a><span aria-current="page">Swimming cells</span></nav>
+      <h1>How fast do cells swim?</h1>
+      <p class="lede">Many bacteria swim, and so do algae and sperm. How fast they swim and how many of them do it tells a biologist whether they are healthy, hungry or poisoned, and a clinician whether sperm are fit to fertilise. Following cells one by one is slow and gives a few hundred tracks at best. Differential dynamic microscopy (DDM) reads the swimming speeds and the share of swimmers from an ordinary microscope movie of thousands of cells in a few minutes, without following any of them (Wilson et al. 2011). Here a simulated microscope lets you run this motility assay yourself, from the raw movie to the distribution of swimming speeds, and see where it can go wrong.</p>
+      <fieldset class="levels">
+        <legend>How deep do you want to go?</legend>
+        <div class="level-opts" role="radiogroup">
+          <label><input type="radio" name="level" id="lv-curious" value="curious"><span class="t">Curious</span><span class="d">The idea in words and pictures, no equations.</span></label>
+          <label><input type="radio" name="level" id="lv-student" value="student"><span class="t">Student</span><span class="d">The method step by step, equations folded away.</span></label>
+          <label><input type="radio" name="level" id="lv-researcher" value="researcher"><span class="t">Researcher</span><span class="d">All controls, equations open, and the matching fastDDM calls.</span></label>
+        </div>
+      </fieldset>
+      <div class="hero-result" id="hero-result" aria-live="polite">
+        <span>Simulating the movie...</span>
+      </div>
+    </div>
+    <figure class="porthole">
+      <div class="lens"><canvas id="hero-canvas" width="128" height="128" aria-label="Simulated microscope movie"></canvas></div>
+      <figcaption id="hero-cap">Live simulated phase-contrast movie</figcaption>
+    </figure>
+  </section>
+
+  <section class="wrap bench-head" aria-labelledby="bench-title">
+    <p class="eyebrow">Hands on</p>
+    <h2 id="bench-title">The bench</h2>
+    <p class="prose">Change the cells, the microscope or the camera with the controls (on the left, or just below on a phone). The movie is recorded again and every step below updates. A run takes from a few seconds to about a minute, because every cell is imaged through a detailed model of the microscope's optics.</p>
+  </section>
+
+  <div class="wrap bench">
+    <aside class="controls" id="controls" aria-label="Experiment settings">
+      <div id="ctl-groups" class="cgroup" style="gap:1.1rem"></div>
+      <div class="btns">
+        <button type="button" id="btn-reset">Back to the standard sample</button>
+        <button type="button" id="btn-seed" class="lvl-3">New random sample</button>
+      </div>
+      <div class="error" id="error" hidden></div>
+    </aside>
+
+    <div class="steps">
+      <!-- 1 -->
+      <section class="step" id="step-setup" aria-labelledby="h-setup">
+        <div class="step-title"><span class="num">1</span><h2 id="h-setup">Set up the microscope</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="chart fovbox"><canvas id="fov" aria-label="Field of view of the microscope, camera sensor and region of interest"></canvas></div>
+            <div class="legend" id="fov-legend"></div>
+          </figure>
+          <div class="text">
+            <p>The microscope sees a round field 25 mm across in its image plane. A camera chip covers a rectangle in it, and you choose which part of the chip to read out: a smaller region can be read faster. A point-scanning confocal instead sweeps a laser spot over a square, line by line.</p>
+            <p class="readout" id="fov-specs"></p>
+          </div>
+        </div>
+        <div class="text lvl-2"><h3>How one particle looks</h3></div>
+        <figure class="viz lvl-2">
+          <div class="pstrip" id="particle-strip"></div>
+          <figcaption id="particle-text"></figcaption>
+        </figure>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: how each image is computed</summary>
+          <p><b>Bright field.</b> The condenser fills its aperture with mutually incoherent plane waves (spatial coherence) at the wavelengths of the lamp spectrum (temporal coherence). For each of them, the light scattered by the sphere, computed exactly with Mie theory from the particle and liquid refractive indices, interferes with the transmitted light after passing the objective pupil. The intensities are then added. The same formula covers the other transmitted-light methods by changing the illumination and the pupil: <b>phase contrast</b> lights the sample through a thin annulus and gives the objective pupil a ring that dims the direct light and shifts its phase by a quarter wave; <b>dark field</b> uses illumination steeper than the objective can collect, so only the |<i>E</i><sub>s</sub>|<sup>2</sup> term is left; <b>DIC</b> multiplies the pupil by <i>i</i> sin((<b>&kappa;</b>&middot;<b>s</b> + &phi;)/2), with <b>s</b> the shear and &phi; the bias, so the image depends on the direction of <b>q</b>. For a particle at distance <i>z</i> from focus, the Fourier transform of its image is</p>
+          <div class="eq"><i>K</i>(<b>q</b>, <i>z</i>) = &lang; &minus;(2&pi;/<i>k</i>) <i>P</i>(<b>&kappa;</b>)<i>P</i>(<b>&kappa;</b>+<b>q</b>) <i>S</i>(&theta;) e<sup><i>i</i>(<i>k<sub>z</sub></i>(<b>&kappa;</b>) &minus; <i>k<sub>z</sub></i>(<b>&kappa;</b>+<b>q</b>))<i>z</i></sup> / <i>k<sub>z</sub></i> + c.c.(&minus;<b>q</b>) &rang;<sub>source, &lambda;</sub> + |<i>E</i><sub>s</sub>|<sup>2</sup> term</div>
+          <p>with <i>S</i> = (<i>S</i><sub>1</sub> + <i>S</i><sub>2</sub>)/2 the Mie amplitude at the scattering angle &theta; and <i>P</i> the pupil with aplanatic apodization. At <i>q</i> = 0 the interference term equals minus the extinction cross-section (optical theorem), which the code checks.</p>
+          <p><b>Fluorescence.</b> Emission is incoherent: the image is the dyed sphere convolved with the Debye point spread function (scalar, or vector at high NA). <b>Confocal</b> (spinning disk or point scanning): excitation spread times emission spread convolved with the pinhole projected on the sample; cross-talk between the disk pinholes is neglected.</p>
+          <p><b>Swimmers.</b> A chosen share of the cells swims along its own axis at a speed drawn from a Schulz (gamma) distribution, keeps its Brownian motion, turns slowly by rotational diffusion and, if asked, tumbles at random times into a new direction. Swimmers bounce off the walls of the cell by mirroring the vertical part of their direction. Along the glass all cells lie flat and move only within the plane. The cells do not interact and are not slowed down near the glass.</p>
+          <p><b>Movie.</b> Dilute particles diffuse in 3D (Stokes-Einstein, reflecting walls); each frame is the sum of their images, recorded with the detector's pixel size, quantum efficiency, shot noise, read noise and full well. Each particle is imaged when its row is exposed (rolling shutters) or scanned (point scanners). Included: spherical aberration from focusing into the liquid; optionally vector (high-NA) optics, settling under gravity and slower translation near the glass. Neglected: multiple scattering, interference between light scattered by different particles, other aberrations (for example a wrong cover-glass thickness), polarizers acting on rods and ellipsoids beyond the paraxial approximation, imperfect DIC prisms, stray light in dark field other than a fixed share of the illumination, slower rotation near the glass.</p>
+          <p><b>Particles that turn.</b> Each particle carries an axis <b>u</b> that diffuses on the sphere (rotational diffusion D<sub>R</sub>), and moves with D<sub>&#8741;</sub> along it and D<sub>&#8869;</sub> across it in its own frame (Perrin's formulas for ellipsoids, Tirado and Garcia de la Torre for rods). Its polarizability is a tensor &alpha; = &alpha;<sub>&#8869;</sub> I + (&alpha;<sub>&#8741;</sub> &minus; &alpha;<sub>&#8869;</sub>) <b>u u</b>, from the material's birefringence and from the shape. With a polarizer along <b>e</b><sub>P</sub> and an analyzer along <b>e</b><sub>A</sub>, the interference term is weighted by (<b>e</b><sub>A</sub>&middot;<b>e</b><sub>P</sub>)(<b>e</b><sub>A</sub>&middot;&alpha;&middot;<b>e</b><sub>P</sub>) and the scattered intensity by |<b>e</b><sub>A</sub>&middot;&alpha;&middot;<b>e</b><sub>P</sub>|<sup>2</sup>. Spheres keep their exact Mie field, scaled by these weights. Rods and ellipsoids are filled with small scatterers (Rayleigh-Gans), which also gives their shape in the image; in the scattered intensity the shape sets a tilt-dependent brightness &lang;|F(<b>Q</b>)|<sup>2</sup>&rang; over the illumination and collection angles.</p>
+          <p class="small">Checked against miepython (amplitudes to 1e-10), the optical theorem, a brute-force sum over 3000 source points, and the amplitude formula of fastDDM tutorial 6 in its range of validity.</p>
+        </details>
+      </section>
+
+      <!-- 2 -->
+      <section class="step" id="step-movie" aria-labelledby="h-movie">
+        <div class="step-title"><span class="num">2</span><h2 id="h-movie">Record a movie</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="imgbox"><canvas id="movie" width="128" height="128" aria-label="Microscope movie"></canvas><div class="scale" id="movie-scale"><i></i><span></span></div></div>
+            <div class="toolbar"><button type="button" id="btn-play">Pause</button><span class="readout" id="movie-time"></span></div>
+          </figure>
+          <div class="text">
+            <p id="movie-text"></p>
+            <p class="readout lvl-2" id="movie-specs"></p>
+          </div>
+        </div>
+        <details class="math" data-open-at="researcher">
+          <summary>In fastDDM</summary>
+          <p>The analysis below uses the same steps as fastDDM. With your own movie you would start from the image files:</p>
+          <pre class="code">import fastddm as fd
+img_seq = fd.read_images(file_names)</pre>
+        </details>
+        <details class="math lvl-2" data-open-at="researcher">
+          <summary>Log-spaced frames: long movies from few frames</summary>
+          <p>A camera can also be triggered at chosen times. With "Frame timing: log-spaced" the page takes the frames in cycles of <i>M</i> = 32 frames. In each cycle the first frames follow one frame interval &delta;<i>t</i> apart; after that each gap is a factor <i>r</i> longer than the one before (rounded to whole intervals):</p>
+          <div class="eq"><i>o</i><sub>0</sub> = 0, &nbsp; <i>o</i><sub><i>m</i>+1</sub> = max(<i>o<sub>m</sub></i> + 1, round(<i>r o<sub>m</sub></i>)), &nbsp; frame <i>k</i> at <i>t<sub>k</sub></i> = &delta;<i>t</i> [floor(<i>k</i>/<i>M</i>) <i>P</i> + <i>o</i><sub><i>k</i> mod <i>M</i></sub>], &nbsp; <i>P</i> = 2 <i>o</i><sub><i>M</i>&minus;1</sub></div>
+          <p>The page chooses <i>r</i> (about 1.1 to 1.2) so that the movie lasts 5, 10, 20 or 50 times longer than with evenly spaced frames. Pairs inside a cycle give the delays from &delta;<i>t</i> to <i>o</i><sub><i>M</i>&minus;1</sub> &delta;<i>t</i>; pairs in cycles <i>k</i> apart give <i>k P</i> &plusmn; <i>o</i><sub><i>M</i>&minus;1</sub>, so the delays follow one another without gaps, as the channels of a multi-tau correlator do. The structure function is computed from pairs of frames grouped by delay (one group per frame interval up to 10, then 12 groups per factor of ten), with up to as many pairs per group as there are frames. Each group has fewer pairs at the shortest delays than with evenly spaced frames, so those points scatter more. The movie in step 2 is played one frame after the other, so the longer gaps show as sudden changes.</p>
+        </details>
+      </section>
+
+      <!-- 2 -->
+      <section class="step" id="step-diff" aria-labelledby="h-diff">
+        <div class="step-title"><span class="num">3</span><h2 id="h-diff">Subtract two frames</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="imgbox"><canvas id="diff" width="128" height="128" aria-label="Difference between two frames"></canvas></div>
+            <div class="toolbar"><label for="lag">Delay</label><input type="range" id="lag" min="0" max="10" value="5"><output id="lag-out" class="readout"></output></div>
+          </figure>
+          <div class="text">
+            <p>Subtract a frame from one taken a little later. Everything that stays still, such as dust or uneven light, cancels out. What is left is what moved, plus the camera noise.</p>
+            <p>Move the delay slider. With a short delay the difference is faint. With a longer one it grows, until the two frames have nothing left in common.</p>
+            <p id="diff-note"></p>
+          </div>
+        </div>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: the difference image</summary>
+          <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
+          <p>Anything that does not change in time disappears from &Delta;<i>I</i>. This is why DDM tolerates dirty optics and uneven illumination.</p>
+        </details>
+      </section>
+
+      <!-- 3 -->
+      <section class="step" id="step-map" aria-labelledby="h-map">
+        <div class="step-title"><span class="num">4</span><h2 id="h-map">Split it into stripe patterns</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="pair">
+              <div><div class="imgbox"><canvas id="map" width="128" height="128" aria-label="Power spectrum of the differences; click to choose a pattern"></canvas><canvas id="map-ov" class="overlay" width="512" height="512" style="cursor:crosshair"></canvas></div><div class="cap">Strength of each pattern (click it)</div></div>
+              <div><div class="imgbox"><canvas id="stripes" width="128" height="128" aria-label="The stripe pattern you selected"></canvas></div><div class="cap">The pattern you picked</div></div>
+            </div>
+            <div class="readout" id="pick-out"></div>
+          </figure>
+          <div class="text">
+            <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie.</p>
+            <p>The centre of the map holds wide stripes, the edge holds fine ones. Click the map to see which pattern a point stands for. The map uses the same delay as step 3.</p>
+            <p class="lvl-2">Distance from the centre is the size of the wave vector, <i>q</i> = 2&pi; / spacing. The particles have no preferred direction, so the map is round (DIC and drift are exceptions), and we average it along circles to get one value for each <i>q</i>. The dashed circle marks the finest pattern the objective can resolve.</p>
+          </div>
+        </div>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: image structure function</summary>
+          <div class="eq"><i>d</i>(<b>q</b>, &Delta;<i>t</i>) = &lang; |<i>F</i>[&Delta;<i>I</i>](<b>q</b>; <i>t</i>, &Delta;<i>t</i>)|<sup>2</sup> &rang;<sub><i>t</i></sub></div>
+          <p>Here <i>F</i> is the two-dimensional Fourier transform and the average runs over all start times <i>t</i>. For motion with no preferred direction, <i>d</i> depends only on <i>q</i> = |<b>q</b>|, and the azimuthal average gives <i>d</i>(<i>q</i>, &Delta;<i>t</i>). The cross <i>q<sub>x</sub></i> = 0 or <i>q<sub>y</sub></i> = 0 is left out because image edges add artefacts there.</p>
+          <div class="lvl-3"><pre class="code">dqt = fd.ddm(img_seq, range(1, len(img_seq) // 2))
+dqt.pixel_size = pixel_size        # um
+dqt.set_frame_rate(frame_rate)     # frames per second
+ccm = fd.mask.central_cross_mask(dqt.shape[1:])
+aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
+                          range=(0, dqt.ky[-1]), mask=ccm)</pre></div>
+        </details>
+      </section>
+
+      <!-- 4 -->
+      <section class="step" id="step-curves" aria-labelledby="h-curves">
+        <div class="step-title"><span class="num">5</span><h2 id="h-curves">Watch each pattern change</h2></div>
+        <div class="step-body">
+          <div class="text">
+            <p>For each stripe spacing, ask how different the movie looks after a given delay. Fine stripes (red) change quickly, because a cell only has to move a little to shift them. Wide stripes (blue) take longer. Each curve rises in two steps: first quickly, because the swimmers carry the pattern away, then slowly, as the cells that only jiggle wander off.</p>
+            <p class="only-1">Each curve rises from 0, nothing has changed, to 1, the pattern is completely renewed. The points are the measurement, the lines a fit.</p>
+            <p class="lvl-2">Each curve is the structure function <i>d</i>(<i>q</i>, &Delta;<i>t</i>) for one <i>q</i>. It rises from the camera noise level <i>B</i>(<i>q</i>) to <i>A</i>(<i>q</i>) + <i>B</i>(<i>q</i>). The lines are one swimmer model fitted to all <i>q</i> at once, with a shared speed distribution, share of swimmers and diffusion coefficient. The "Change" view removes <i>A</i> and <i>B</i> so all curves share one scale. Camera noise is white, so <i>B</i> is the same at every <i>q</i>: with a camera the page takes it from the frames themselves, <i>B</i> = 2(&lang;<i>N</i>&rang; + &sigma;<sub>read</sub><sup>2</sup>), with &lang;<i>N</i>&rang; the mean count in electrons and &sigma;<sub>read</sub> the read noise, instead of fitting it at each <i>q</i>, where it would soak up any misfit of the model.</p>
+          </div>
+          <figure class="viz">
+            <div class="toolbar lvl-2"><span>Show</span><div class="seg" role="group" aria-label="Curve view"><button type="button" id="view-change" aria-pressed="true">Change, 0 to 1</button><button type="button" id="view-d" aria-pressed="false">Structure function</button></div></div>
+            <div class="chart"><canvas id="chart-curves" aria-label="Curves for several wave vectors"></canvas></div>
+            <div class="legend" id="curves-legend"></div>
+          </figure>
+          <div class="predict" data-predict="faster" data-right="left">
+            <div class="q">Predict first: the bacteria swim twice as fast. Do the curves move to the left or to the right?</div>
+            <div class="btns"><button type="button" data-guess="left">Left, faster</button><button type="button" data-guess="right">Right, slower</button></div>
+            <div class="a" hidden><span class="verdict"></span> To the left, but only the first, fast step: twice the speed renews each pattern in half the time. The slow step of the cells that do not swim stays where it was. The bench now runs with the faster bacteria so you can check.</div>
+          </div>
+        </div>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: the swimmer model</summary>
+          <div class="eq"><i>d</i>(<i>q</i>, &Delta;<i>t</i>) = <i>A</i>(<i>q</i>) [1 &minus; <i>f</i>(<i>q</i>, &Delta;<i>t</i>)] + <i>B</i>(<i>q</i>)</div>
+          <p>For independent cells <i>f</i> is the average of e<sup>&minus;<i>i</i><b>q</b>&middot;&Delta;<b>r</b></sup> over all cells. A share &alpha; swims in straight lines, in random directions, at speeds <i>v</i> from a Schulz distribution of mean <i>v&#772;</i> and relative spread &sigma; (shape <i>Z</i> = 1/&sigma;<sup>2</sup> &minus; 1); all cells also diffuse with <i>D</i> (Wilson et al. 2011):</p>
+          <div class="eq"><i>f</i> = e<sup>&minus;<i>Dq</i><sup>2</sup>&Delta;<i>t</i></sup> [ (1 &minus; &alpha;) + &alpha; &lang;sin(<i>qv</i>&Delta;<i>t</i>) / (<i>qv</i>&Delta;<i>t</i>)&rang;<sub><i>v</i></sub> ]</div>
+          <div class="eq">&lang;sin(<i>qv</i>&Delta;<i>t</i>) / (<i>qv</i>&Delta;<i>t</i>)&rang;<sub><i>v</i></sub> = (<i>Z</i> + 1) sin(<i>Z</i> arctan &Lambda;) / [<i>Z</i> <i>qv&#772;</i>&Delta;<i>t</i> (1 + &Lambda;<sup>2</sup>)<sup><i>Z</i>/2</sup>], &nbsp; &Lambda; = <i>qv&#772;</i>&Delta;<i>t</i> / (<i>Z</i> + 1)</div>
+          <p>The sine over its argument is the average of e<sup>&minus;<i>i</i><b>q</b>&middot;<b>v</b>&Delta;<i>t</i></sup> over directions in 3D. For cells swimming in the image plane the average over directions in the plane is the Bessel function <i>J</i><sub>0</sub>(<i>qv</i>&Delta;<i>t</i>) instead. The page fits &alpha;, <i>v&#772;</i>, &sigma; and <i>D</i> to all <i>q</i> at once; <i>A</i> and <i>B</i> of each <i>q</i> follow by linear least squares. Several starting points are tried and the best fit is kept.</p>
+          <p><b>The shape of the cells.</b> Wilson's model treats each cell as a point. A rod swims along its own axis <b>u</b>, and its image at <b>q</b> depends on the angle between the two: for a cylinder of length <i>L</i> and radius <i>R</i> the weight is |<i>F</i>|<sup>2</sup> = sinc<sup>2</sup>(<i>q&mu;L</i>/2) [2<i>J</i><sub>1</sub>(<i>x</i>)/<i>x</i>]<sup>2</sup>, with &mu; the cosine of the angle between <b>q</b> and <b>u</b> and <i>x</i> = <i>qR</i>(1 &minus; &mu;<sup>2</sup>)<sup>1/2</sup>. A swimmer moves along <b>u</b>, so <b>q</b>&middot;&Delta;<b>r</b> = <i>qv</i>&Delta;<i>t</i>&mu;, and the page averages over directions with this weight:</p>
+          <div class="eq">&lang;&hellip;&rang; = &int; d&mu; |<i>F</i>|<sup>2</sup> &lang;cos(<i>qv</i>&Delta;<i>t</i>&mu;)&rang;<sub><i>v</i></sub> / &int; d&mu; |<i>F</i>|<sup>2</sup>, &nbsp; &lang;cos(<i>k v</i>)&rang;<sub><i>v</i></sub> = cos((<i>Z</i> + 1) arctan &Lambda;) / (1 + &Lambda;<sup>2</sup>)<sup>(<i>Z</i>+1)/2</sup>, &nbsp; &Lambda; = <i>kv&#772;</i>/(<i>Z</i> + 1)</div>
+          <p>&mu; is spread evenly over [0, 1] for cells swimming in 3D, and &mu; = cos &phi; with &phi; spread evenly for cells in the plane; with |<i>F</i>|<sup>2</sup> = 1 this gives back the sine over its argument and <i>J</i><sub>0</sub>. When <i>qL</i> is large, the swimmers moving across <b>q</b>, which renew the pattern slowly, dominate. The length and width are those of the simulated cells, which an experimenter measures in the images. In a simulation with fluorescent 50 &mu;m Euglena the point model reads the speed 40 % low and the weighted model is within 1 %. In bright field at very low aperture the image of a thick cell is not its flat outline at patterns finer than its length, so the page keeps by default to patterns at least as wide as a cell is long.</p>
+          <p><b>Two safeguards.</b> When the cells that do not swim barely move during the movie, a smaller &alpha; with a larger <i>A</i> describes the curves just as well (cells that stay put add nothing to the changes from frame to frame). So the page also tries <i>D</i> fixed at the value expected from the size and shape of the cells and the viscosity of the liquid, and keeps it when the data do not ask for another one (cost at most 3 % higher); for rods it may add the fading of the still cells as they turn, a share <i>b</i> at rate 6<i>D<sub>R</sub></i>. The swimmers turn too, and their images fade in the same way: the same share <i>b</i> (it belongs to the image of a rod at that <i>q</i>, whatever the rod does), at rate 6<i>D<sub>s</sub></i>, with <i>D<sub>s</sub></i> the rotational diffusion of their heading, fitted, at most that of the body alone (from its size and the viscosity, as <i>D</i>; the flagella only add drag). Without this term the share of swimmers came out about 8 % low in a sample where all cells swim (the fading of the swimmers was taken for still cells that turn) and the speed of the standard sample 5 % high instead of 3-4 %. Without the limit, for long rods the fading stood in for the errors of the shape weight and the speed came out up to 23 % low. And it fits cells that do not swim at all (&alpha; = 0, with <i>b</i> and <i>D<sub>R</sub></i> free): if that is about as good (cost at most 10 % higher), it reports no swimming, because turning rods alone can pass for slow swimmers. Last, <i>A</i> of each <i>q</i> stays below the whole amplitude from the mean power of the images, and below three times twice the variance in time of that pattern. The second limit is dropped when the cells that do not swim hardly move during the movie at every <i>q</i> used (<i>Dq</i><sup>2</sup> times the longest delay below 1): then most of their amplitude never shows up in the variance in time, and with it a sample of dead sperm passed for 40 % slow swimmers.</p>
+          <p><b>Uncertainties.</b> The points of <i>d</i>(<i>q</i>, &Delta;<i>t</i>) are not independent: all delays come from the same frames, and the same cells make every curve. The covariance of the fit treats them as independent and gives errors several times too small. The page therefore repeats the fits <i>K</i> = 5 times, each time with one fifth of the movie left out (a pair of frames counts in the block of its first frame), and quotes the jackknife error &radic;[(<i>K</i> &minus; 1)/<i>K</i> &Sigma; (<i>x<sub>j</sub></i> &minus; <i>x&#772;</i>)<sup>2</sup>]. In simulations of the standard sample and of wild-type E. coli, six movies each, the speed scattered from movie to movie by 1.2-1.3 times the quoted error (the covariance of the fit gave 5-8 times too little). The error does not include the errors of the model, such as a few % from the shape of the cells in phase contrast; the true values, and "Repeat 5 times with new cells", show those. Nor does it include which cells happen to be in view: the parts of the movie show the same cells. With few cells this matters. In five simulated movies of Chlamydomonas (about 170 cells, all with the stroke frequency found within 0.5 %) the speed scattered by 3.4 % against a quoted 1.2 %, one movie being 7 % off; with 250-340 cells (E. coli, standard sample) the factor was 1.2-1.3. The page adds a note when fewer than 200 cells are in view.</p>
+          <p><b>The depth of field.</b> Wilson's model counts only sideways motion. A cell at depth <i>z</i> adds <i>K</i>(<i>q</i>, <i>z</i>) e<sup>&minus;<i>i</i><b>q</b>&middot;<b>x</b></sup> to the image, with <i>K</i> the optical kernel of step 1, so a swimmer that also moves up or down fades from each pattern. With <i>C<sub>q</sub></i>(&delta;<i>z</i>) the overlap of <i>K</i>(<i>q</i>, <i>z</i>) and <i>K</i>(<i>q</i>, <i>z</i> + &delta;<i>z</i>) averaged over the cell, a swimmer that has moved <i>s</i> = <i>v</i>&Delta;<i>t</i> gives</p>
+          <div class="eq"><i>h<sub>q</sub></i>(<i>s</i>) = &int;<sub>0</sub><sup>1</sup> d&mu; <i>J</i><sub>0</sub>(<i>qs</i> &radic;(1 &minus; &mu;<sup>2</sup>)) Re <i>C<sub>q</sub></i>(<i>s</i>&mu;)</div>
+          <p>in place of the sine over its argument (they are equal when <i>C</i> = 1), averaged over the speeds; the cells that do not swim get <i>C<sub>q</sub></i> averaged over their axial diffusion, and the swimmers get the same factor on top, as they diffuse up and down too (for those swimming along the slice that is all their axial motion). Without it, at 60x with all cells swimming the fit needed a diffusion coefficient three times too large; with it the true one fits and the speed is within 1 %. With 60 % swimming at 60x the share still reads about 0.76 for 0.62 seen. This model is used automatically in the confocal modes. As far as we know it has not been published.</p>
+          <p><b>The stroke.</b> Algae and sperm do not glide: each beat moves the cell, or the sperm head, back and forth about its mean path. Martinez et al. (2012) wrote the displacement as <i>v</i>&Delta;<i>t</i> + <i>A</i>[sin(2&pi;<i>f</i>&Delta;<i>t</i> + &phi;) &minus; sin &phi;], with a random phase &phi; for each cell. Averaged over &phi; and over the speeds, the sine over its argument of Wilson's model becomes</p>
+          <div class="eq">&int;<sub>0</sub><sup>1</sup> d&mu; &lang;cos(<i>q</i>&mu;<i>v</i>&Delta;<i>t</i>)&rang;<sub><i>v</i></sub> <i>J</i><sub>0</sub>(2<i>q</i>&mu;<i>A</i> |sin(&pi;<i>f</i>&Delta;<i>t</i>)|)</div>
+          <p>with &mu; the cosine between the path and <b>q</b>. The curves dip and rise again once per beat, so the camera needs at least two frames per beat. For a stroke across the path (the sperm head) in a random direction about it, the Bessel factor becomes <i>J</i><sub>0</sub>(<i>qA</i> |sin(&pi;<i>f</i>&Delta;<i>t</i>)| &radic;(1 &minus; &mu;<sup>2</sup>))<sup>2</sup>. The page fits <i>A</i> and <i>f</i> with the other parameters, after a search over a grid of beat frequencies.</p>
+          <div class="lvl-3"><pre class="code">B_est, _ = fd.noise_est.estimate_camera_noise(aa, mode='polyfit', num_points=5)
+A_est = 2 * aa.var - B_est
+# swimmer model: write it as an lmfit model and fit all q together, as in
+# fastDDM tutorial 8a (there with a compressed exponential at each q)</pre></div>
+        </details>
+      </section>
+
+      <!-- 6 -->
+      <section class="step" id="step-rates" aria-labelledby="h-rates">
+        <div class="step-title"><span class="num">6</span><h2 id="h-rates">Who swims, who only diffuses, and how fast</h2></div>
+        <div class="step-body">
+          <div class="text">
+            <p>Each curve of step 5 falls in two steps when only some cells swim. Two ways of plotting the same curves tell the two kinds of motion apart. A swimmer at constant speed covers a distance in a time proportional to it, so a pattern renews when <i>q</i>&Delta;<i>t</i> reaches a fixed value: against <i>q</i>&Delta;<i>t</i> (first chart) the fast first steps of all patterns fall on one curve. A cell that only diffuses needs four times as long to go twice as far, so against <i>q</i><sup>2</sup>&Delta;<i>t</i> (second chart) the slow last steps fall on one curve instead. The level between the two steps is the share of cells that do not swim.</p>
+          </div>
+          <div class="result motion" id="motion" aria-live="polite"></div>
+          <figure class="viz">
+            <div class="twin"><div><div class="ctitle">Test for straight swimming: against <i>q</i>&Delta;<i>t</i></div><div class="chart short"><canvas id="chart-ballistic" aria-label="Curves against q times delay"></canvas></div></div><div><div class="ctitle">Test for diffusion: against <i>q</i><sup>2</sup>&Delta;<i>t</i></div><div class="chart short"><canvas id="chart-diffusive" aria-label="Curves against q squared times delay"></canvas></div></div></div>
+            <figcaption>Coloured lines: the measured curves of the patterns used, from wide (blue) to fine (red), as in step 5. Thick line: what the fitted model predicts for straight swimming (first chart) and for diffusion (second chart). Dashed: the level of the cells that do not swim. The thick line of the first chart is the model for the middle pattern: for long cells the finest patterns fall a little later, because the cells moving across the stripes, which renew them slowly, count more there (see the shape of the cells).</figcaption>
+          </figure>
+          <div class="text">
+            <p>Now plot how fast each pattern changes against how fine it is. A swimmer covers twice the distance in twice the time, so halving the stripe spacing makes the change twice as fast: on these logarithmic axes the points fall on a line of slope 1. Cells that only jiggle need four times as long to wander twice as far, which gives slope 2.</p>
+            <p>The speed itself comes from fitting one swimmer model to all the curves of step 5 at once. It gives the mean swimming speed, how much the speeds spread, the share of cells that swim and how fast the others diffuse.</p>
+            <p>Hollow grey points are outside what this movie can measure: patterns as large as the image or finer than the microscope resolves, changes faster than one frame or too slow for the movie, signal lost in the camera noise. They are left out of the result.</p>
+          </div>
+          <figure class="viz">
+            <div class="chart"><canvas id="chart-rates" aria-label="Rate against wave vector"></canvas></div>
+            <ul class="reasons" id="reasons"></ul>
+          </figure>
+          <div class="step-body">
+            <div class="result" id="result" aria-live="polite"></div>
+            <div class="predict" data-predict="fewer" data-right="no">
+              <div class="q">Predict first: half of the swimmers stop swimming. Does the measured mean speed change?</div>
+              <div class="btns"><button type="button" data-guess="yes">Yes</button><button type="button" data-guess="no">No</button></div>
+              <div class="a" hidden><span class="verdict"></span> No. The fast step of each curve gets smaller, so the share of swimmers drops, but the swimmers that are left are as fast as before. The bench now runs with half as many swimmers.</div>
+            </div>
+          </div>
+          <figure class="viz lvl-2">
+            <figcaption>Speed from each <i>q</i> alone (dots: the swimmer model fitted to that <i>q</i>, with the spread of speeds and the diffusion of all <i>q</i>). When the model fits, the dots scatter around a flat line. They bend when something the model leaves out matters: tumbles at small <i>q</i>, cells moving through the focus, long cells at large <i>q</i>. Solid line: the result. Dashed red: the true mean speed of the simulated swimmers. Hollow dots at the edge: beyond the axis (below 0.3 or above 2.5 times the result).</figcaption>
+            <div class="chart short"><canvas id="chart-size" aria-label="Speed against wave vector"></canvas></div>
+          </figure>
+          <figure class="viz lvl-2">
+            <figcaption>Distribution of swimming speeds. The red steps are the true speeds of the simulated swimmers. The thick line is the Schulz distribution of the model. The bars come from the data without assuming any shape: every speed between 0 and three times the mean gets a weight, all weights positive, chosen so that together they reproduce the curves of all <i>q</i>.</figcaption>
+            <div class="chart short"><canvas id="chart-pv" aria-label="Distribution of swimming speeds"></canvas></div>
+            <div class="legend" id="pv-legend"></div>
+          </figure>
+          <figure class="viz lvl-3">
+            <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>). <i>A</i> falls at high <i>q</i> because the optics blur fine patterns; where it sinks into <i>B</i> the rates can no longer be read.</figcaption>
+            <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
+            <div class="legend" id="amp-legend"></div>
+          </figure>
+        </div>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: rates, v&#8320; and the distribution of speeds</summary>
+          <p>The points of the plot come from fitting each <i>q</i> on its own with a compressed exponential, <i>f</i> = exp[&minus;(&Gamma;&Delta;<i>t</i>)<sup>&beta;</sup>], as fastDDM tutorial 8a does for swimming bacteria (Lu et al. 2012). For swimmers &Gamma; = <i>v</i>&#8320; <i>q</i>. This <i>v</i>&#8320; is a speed scale, not the mean speed: in 3D the sine over its argument falls to 1/e at <i>qv</i>&Delta;<i>t</i> &asymp; 2.2, the compressed exponential at <i>qv</i>&#8320;&Delta;<i>t</i> = 1, so <i>v&#772;</i> &asymp; 2.2 <i>v</i>&#8320; for a narrow distribution of speeds and 2.4-2.8 <i>v</i>&#8320; for broad ones (in the plane 1.7-2.0 <i>v</i>&#8320;). A compressed exponent &beta; &asymp; 1.35 corresponds to a broad distribution, with a relative spread of about 70 %.</p>
+          <p>When only part of the cells swim, each curve rises in two steps, and one compressed exponential per <i>q</i> follows the swimmers at small <i>q</i> but the slow step of the other cells at large <i>q</i>, where the swimmers' step is over within a frame or two: its rate levels off and the slope falls well below 1. When the swimmer model has found swimmers, the dots therefore show the rate of the swimmers' step alone: <i>d</i> = <i>A</i>{1 &minus; e<sup>&minus;<i>Dq</i><sup>2</sup>&Delta;<i>t</i></sup>[(1 &minus; &alpha;)<i>T</i>(&Delta;<i>t</i>) + &alpha; exp(&minus;(&Gamma;&Delta;<i>t</i>)<sup>&beta;</sup>)]} + <i>B</i>, with &alpha;, <i>D</i>, the turning <i>T</i> of the still cells and <i>A</i>, <i>B</i> from the swimmer fit, and only &Gamma; and &beta; fitted at each <i>q</i>. The solid line is the same rate from the fitted model (where its swimmer part has fallen to 1/e). For long cells it bends below a straight line at large <i>q</i> (see the shape of the cells), so the line is not <i>v</i>&#8320;<i>q</i>.</p>
+          <p>The distribution of speeds can be found without a model: for swimmers in 3D <i>f</i>(<i>x</i>) = &int; d<i>v</i> <i>P</i>(<i>v</i>) sin(<i>xv</i>)/(<i>xv</i>) with <i>x</i> = <i>q</i>&Delta;<i>t</i>, which inverts to <i>P</i>(<i>v</i>) = (2<i>v</i>/&pi;) &int; d<i>x</i> <i>x f</i>(<i>x</i>) sin(<i>xv</i>) (Lattuada et al. 2025, Eq. 58). Applied to the measured curves the integral is noisy, so the page instead finds non-negative weights on a grid of speeds (with one weight at zero speed for the cells that do not swim) that reproduce the curves of all <i>q</i> together, with a small penalty on sharp wiggles.</p>
+        </details>
+        <details class="lvl-2 math">
+          <summary>Motility report</summary>
+          <pre class="code" id="iso-report" style="white-space: pre-wrap; overflow-wrap: anywhere;"></pre>
+          <div class="btns"><button type="button" id="btn-copy-report">Copy report</button></div>
+        </details>
+        <details class="lvl-3 math" open>
+          <summary>Settings used for this run</summary>
+          <pre class="code" id="settings-json"></pre>
+          <div class="btns"><button type="button" id="btn-copy">Copy settings</button></div>
+        </details>
+      </section>
+    </div>
+  </div>
+
+  <section class="wrap matters" aria-labelledby="h-matters">
+    <p class="eyebrow">In a real experiment</p>
+    <h2 id="h-matters">What matters</h2>
+    <p class="prose">Each card sets the bench to a typical problem and shows where to look. Use "Back to the standard sample" to start again.</p>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-organisms">
+    <h2 id="h-organisms">The organisms on this page</h2>
+    <p class="prose">The <i>Organism</i> menu in step 1 sets up the bacteria, algae and sperm that have been measured with DDM, with the speeds, shares and strokes the papers report. Where a paper gives no value the page assumes one, and says so. Every setting can be changed afterwards.</p>
+    <ul class="lvl-2">
+      <li><b>E. coli</b>, wild type, smooth swimmers and paralysed cells: L. G. Wilson et al., <a href="https://doi.org/10.1103/PhysRevLett.106.018101">Phys. Rev. Lett. 106, 018101 (2011)</a>; V. A. Martinez et al., <a href="https://doi.org/10.1016/j.bpj.2012.08.045">Biophys. J. 103, 1637 (2012)</a>. Cells without flagella, and with glucose: A. Jepson et al., <a href="https://doi.org/10.1103/PhysRevE.88.041002">Enhanced diffusion of nonswimmers in a three-dimensional bath of motile bacteria</a>, Phys. Rev. E 88, 041002 (2013). Cell size and strains: J. Schwarz-Linek et al., <a href="https://doi.org/10.1016/j.colsurfb.2015.07.048">Escherichia coli as a model active colloid: a practical introduction</a>, Colloids Surf. B 137, 2 (2016).</li>
+      <li><b>E. coli in polymer solutions</b>: V. A. Martinez, J. Schwarz-Linek, M. Reufer, L. G. Wilson, A. N. Morozov and W. C. K. Poon, <a href="https://doi.org/10.1073/pnas.1415460111">Flagellated bacterial motility in polymer solutions</a>, PNAS 111, 17771 (2014).</li>
+      <li><b>E. coli powered by light</b>: J. Arlt, V. A. Martinez, A. Dawson, T. Pilizota and W. C. K. Poon, <a href="https://doi.org/10.1038/s41467-018-03161-8">Painting with light-powered bacteria</a>, Nat. Commun. 9, 768 (2018).</li>
+      <li><b>E. coli with tunable tumbling</b>: C. Kurzthaler et al., <a href="https://doi.org/10.1103/PhysRevLett.132.038302">Phys. Rev. Lett. 132, 038302 (2024)</a>.</li>
+      <li><b>E. coli seen turning in dark field</b>: R. Cerbino et al., <a href="https://doi.org/10.1088/1361-648X/aa9bc5">Dark field differential dynamic microscopy enables accurate characterization of the roto-translational dynamics of bacteria and colloidal clusters</a>, J. Phys.: Condens. Matter 30, 025901 (2018).</li>
+      <li><b>Salmonella Typhimurium</b>: D. Germain et al., <a href="https://arxiv.org/abs/1511.00923">Differential dynamic microscopy to characterize Brownian motion and bacteria motility</a>, Am. J. Phys. (2016).</li>
+      <li><b>Bacillus subtilis</b>: P. J. Lu et al., <a href="https://doi.org/10.1103/PhysRevLett.108.218103">Phys. Rev. Lett. 108, 218103 (2012)</a>, in a dense suspension, and the guide by E. Lattuada et al. (2025) below.</li>
+      <li><b>Chlamydomonas reinhardtii</b>: Martinez et al. (2012) above; for its helical path, O. A. Croze et al., <a href="https://arxiv.org/abs/1904.05183">Helical and oscillatory microswimmer motility statistics from differential dynamic microscopy</a>, New J. Phys. 21, 063012 (2019).</li>
+      <li><b>Euglena gracilis</b>: M.-Y. Li et al., <a href="https://arxiv.org/abs/2511.00775">Detecting active Levy particles using differential dynamic microscopy</a>, Phys. Rev. E (2025).</li>
+      <li><b>Bull sperm</b>: A. Jepson et al., <a href="https://doi.org/10.1371/journal.pone.0202720">High-throughput characterisation of bull semen motility using differential dynamic microscopy</a>, PLoS ONE 14, e0202720 (2019).</li>
+    </ul>
+    <p class="prose lvl-2">Not simulated: the helical paths of algae, the Levy walks of Euglena, the time a tumble takes, and swimmers whose shape changes as they swim (the sperm tail, the flagella of the alga). We found no DDM study of deflagellated algae.</p>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-beyond">
+    <h2 id="h-beyond">Beyond dilute swimmers</h2>
+    <p class="prose">The cells on this page swim alone. DDM also studies swimmers that crowd, collide or move together:</p>
+    <ul>
+      <li><b>Dense and turbid suspensions.</b> Confocal DDM looks inside samples too dense and turbid for an ordinary microscope; for swimming B. subtilis it found ballistic motion in the bulk and a different behaviour near the glass: P. J. Lu, F. Giavazzi, T. E. Angelini, E. Zaccarelli, F. Jargstorff, A. B. Schofield, J. N. Wilking, M. B. Romanowsky, D. A. Weitz and R. Cerbino, <a href="https://doi.org/10.1103/PhysRevLett.108.218103">Characterizing concentrated, multiply scattering, and actively driven fluorescent systems with confocal differential dynamic microscopy</a>, Phys. Rev. Lett. 108, 218103 (2012).</li>
+      <li><b>Active colloids.</b> Self-propelled Janus particles near a wall, with an exact model that includes their rotational diffusion: C. Kurzthaler, C. Devailly, J. Arlt, T. Franosch, W. C. K. Poon, V. A. Martinez and A. T. Brown, <a href="https://doi.org/10.1103/PhysRevLett.121.078001">Probing the spatiotemporal dynamics of catalytic Janus particles with single-particle tracking and differential dynamic microscopy</a>, Phys. Rev. Lett. 121, 078001 (2018).</li>
+      <li><b>Run and tumble.</b> The tumbles of E. coli measured from the patterns at small q: C. Kurzthaler, Y. Zhao, N. Zhou, J. Schwarz-Linek, C. Devailly, J. Arlt, J.-D. Huang, W. C. K. Poon, T. Franosch, J. Tailleur and V. A. Martinez, <a href="https://doi.org/10.1103/PhysRevLett.132.038302">Characterization and control of the run-and-tumble dynamics of Escherichia coli</a>, Phys. Rev. Lett. 132, 038302 (2024).</li>
+      <li><b>Collective motion.</b> Swarming bacteria and moving cell sheets, whose motion is shared by many cells over large distances.</li>
+    </ul>
+    <p class="prose">None of these is simulated here: they need cells that interact, or models the page does not include.</p>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-about">
+    <h2 id="h-about">About this tool</h2>
+    <p class="prose">This page is a simple tool, generated with Claude Opus 5.5, that simulates a realistic motility assay in which DDM measures how fast cells swim. The microscope, light sources, cameras, spinning disk and point scanner are modelled mostly on the instruments of our SoMeX lab. The cells do not interact with each other: each one swims or diffuses on its own, so every sample is a dilute suspension. The aim is not to produce accurate, research-quality data, but to give anyone thinking of using DDM an idea of the many options and of how each one affects a DDM experiment.</p>
+    <p class="prose">If you find something that looks wrong or does not work, please let us know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-further">
+    <h2 id="h-further">Go further</h2>
+    <ul class="only-1">
+      <li><a href="https://rcerbino.github.io/research/">Research</a>: what the SoMeX group measures with DDM, from colloids to living cells and experiments in space.</li>
+      <li><a href="https://rcerbino.github.io/talks/">Talks</a>, including public lectures.</li>
+      <li>Switch to <a href="#student" data-level-link="student">Student</a> above for the equations behind each step.</li>
+    </ul>
+    <ul class="lvl-2">
+      <li>L. G. Wilson, V. A. Martinez, J. Schwarz-Linek, J. Tailleur, G. Bryant, P. N. Pusey and W. C. K. Poon, <a href="https://doi.org/10.1103/PhysRevLett.106.018101">Differential dynamic microscopy of bacterial motility</a>, Phys. Rev. Lett. 106, 018101 (2011). The motility assay simulated here.</li>
+      <li>V. A. Martinez, R. Besseling, O. A. Croze, J. Tailleur, M. Reufer, J. Schwarz-Linek, L. G. Wilson, M. A. Bees and W. C. K. Poon, <a href="https://doi.org/10.1016/j.bpj.2012.08.045">Differential dynamic microscopy: a high-throughput method for characterizing the motility of microorganisms</a>, Biophys. J. 103, 1637 (2012). The method in detail, with its limits.</li>
+      <li>R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope</a>, Phys. Rev. Lett. 100, 188102 (2008). The paper that introduced DDM.</li>
+      <li>E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a>, J. Chem. Phys. 163, 161501 (2025). A practical guide with the notation used here, including swimming bacteria (section V B).</li>
+      <li><a href="https://github.com/somexlab/fastddm-tutorials">fastDDM tutorials</a>: Jupyter notebooks that run DDM on real movies; tutorial 8 is about bacteria.</li>
+    </ul>
+    <ul class="lvl-3">
+      <li><a href="https://github.com/somexlab/fastddm">fastDDM</a> (Python, CPU and GPU, GPL 3.0): <code>pip install fastddm</code>. <a href="https://fastddm.readthedocs.io/">Documentation</a>.</li>
+      <li>Planned for this page: load your own movie and analyse it here, on your computer, with nothing uploaded.</li>
+      <li>For collaborations or questions about applying DDM to your samples, see <a href="https://rcerbino.github.io/contact/">Contact</a>.</li>
+    </ul>
+  </section>
+</main>
+<!-- progress of the simulation, pinned to the bottom of the window so it is always in view -->
+<div class="runbar" id="runbar">
+  <div class="wrap runbar-inner">
+    <div class="bar" aria-hidden="true"><span id="bar"></span></div>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+  </div>
+</div>
+<footer class="site"><div class="wrap">Roberto Cerbino, University of Vienna. The simulation and the analysis run entirely in your browser; nothing is uploaded.</div></footer>
+
+<script type="application/json" id="objectives-data">/*OBJECTIVES*/</script>
+<script id="optics-src">
+/*OPTICS*/
+</script>
+<script id="movie-src">
+/*MOVIE*/
+</script>
+<script id="engine-src">
+/*ENGINE*/
+</script>
+<script id="active-src">
+/*ACTIVE*/
+</script>
+<script type="text/plain" id="worker-src">
+/*WORKER*/
+</script>
+<script>
+/*APP*/
+</script>

@@ -21,6 +21,16 @@
   const TWO_PI = 2 * Math.PI;
   const KB = 1.380649e-23;
   function fail(msg) { throw new Error("Movie: " + msg); }
+  // the optical kernels depend only on the optics, the liquid and the depth range, not on the particles' motion:
+  // kept for the next movie (new cells, other swimming), which then skips the slowest part of the set-up
+  const kernelMemo = new Map();
+  function memoKernel(name, fn, args) {
+    const key = name + JSON.stringify(args, function (k, v) { return ArrayBuffer.isView(v) ? Array.from(v) : v; });
+    if (kernelMemo.has(key)) return kernelMemo.get(key);
+    const r = fn(args);
+    if (kernelMemo.size >= 8) kernelMemo.delete(kernelMemo.keys().next().value);
+    kernelMemo.set(key, r); return r;
+  }
   function need(c, msg) { if (!c) fail(msg); }
   function num(o, k, lo, hi) { const v = o[k]; need(typeof v === "number" && Number.isFinite(v), "missing setting '" + k + "'"); need(v >= lo && v <= hi, "setting '" + k + "' = " + v + " outside [" + lo + ", " + hi + "]"); return v; }
 
@@ -113,6 +123,18 @@
    *  drift_um_s, homodyne (transmitted light),
    *  gravity (optional, default false): sedimentation with the material and liquid densities,
    *  walls (optional, default false): particles keep their size away from the walls and diffuse more slowly near them
+   *  swim (optional): self-propelled particles (swimming bacteria, active colloids)
+   *    { fraction (0..1, share that swims), v_um_s (mean speed), v_spread (0..1, relative SD of a Schulz distribution
+   *      of speeds), plane_fraction (0..1, share of the swimmers that swim along the bottom glass, axis parallel to it,
+   *      at centre height height_um, or spread uniformly within +- height_spread_um of it, each keeping its height; the
+   *      others swim in 3D), height_um (needed when plane_fraction > 0), height_spread_um (optional),
+   *      rot_diff_s (optional: rotational diffusion of swimmers; default the passive value of the body),
+   *      tumble_hz (optional: rate of tumbles, each a new random direction), circle_rad_s (optional: angular
+   *      velocity of plane swimmers, positive counter-clockwise seen from the objective), plane_still (optional: the
+   *      particles that do not swim also lie in the plane at height_um and move only within it) }
+   *    Swimmers move along their axis (spheres carry a direction that does not change their image), keep their
+   *    Brownian motion, are not slowed near the walls and bounce off them by mirroring the vertical part of their
+   *    direction. Plane swimmers keep their height and turn only within the plane.
    */
   const SHAPES = ["sphere", "bisphere", "prolate", "oblate", "rod"];
   const TINY_UM = 0.03, TINY_M = 1.1;          // reference dipole for non-spherical bodies
@@ -135,14 +157,38 @@
     const fr = num(cfg, "frame_rate_hz", 0.01, 30000), expo = det.kind === "scanner" ? 0 : num(cfg, "exposure_s", 0, 10);
     need(expo <= 1 / fr * 1.0000001, "exposure longer than the frame interval");
     num(det, "qe", 0.01, 1); num(det, "t_row_s", 0, 1); num(det, "rows_total", 1, 20000); num(det, "crop_row0", 0, 20000);
+    // frame times: evenly spaced at 1 / frame rate, unless log-spaced cycles or a list of times are asked for. Uneven times keep
+    // 1 / frame rate as the shortest interval, so the exposure and read-out checks below still hold.
+    const times = frameTimes(cfg, T, fr);
     const timing = det.kind === "scanner" ? "scan" : det.timing;
     need(timing === "scan" || timing === "global" || timing === "rolling" || timing === "rolling_center", "unknown shutter timing");
     const readout = timing === "rolling_center" ? det.rows_total / 2 * det.t_row_s : timing === "global" ? 0 : det.rows_total * det.t_row_s;
     need(readout <= 1.001 / fr, "the " + (timing === "scan" ? "scan" : "read-out") + " of one frame takes longer than the frame interval");
-    const d0 = num(cfg, "diameter_um", 0.01, 20), spread = num(cfg, "size_spread", 0, 0.5);
+    const d0 = num(cfg, "diameter_um", 0.01, 100), spread = num(cfg, "size_spread", 0, 0.5);
     const phi = num(cfg, "volume_fraction", 1e-9, 0.05);
     const T_C = num(cfg, "T_C", 0, 90), Lz = num(cfg, "cell_um", 1, 2000), hf = num(cfg, "focus_um", -50, 2050);
     const drift = num(cfg, "drift_um_s", 0, 1000);
+    // swimmers (optional)
+    const sw = cfg.swim || null;
+    let swFrac = 0, swV = 0, swSpread = 0, swPlane = 0, swH = 0, swHs = 0, swDr = null, swTumble = 0, swOmega = 0;
+    if (sw) {
+      swFrac = num(sw, "fraction", 0, 1); swV = num(sw, "v_um_s", 0, 1000); swSpread = num(sw, "v_spread", 0, 1);
+      swPlane = sw.plane_fraction === undefined ? 0 : num(sw, "plane_fraction", 0, 1);
+      if (swPlane > 0) { swH = num(sw, "height_um", 0, 2000); swHs = sw.height_spread_um === undefined ? 0 : num(sw, "height_spread_um", 0, 2000); }
+      if (sw.rot_diff_s !== undefined) swDr = num(sw, "rot_diff_s", 0, 1000);
+      if (sw.tumble_hz !== undefined) swTumble = num(sw, "tumble_hz", 0, 1000);
+      if (sw.circle_rad_s !== undefined) swOmega = num(sw, "circle_rad_s", -100, 100);
+    }
+    // swimming stroke (optional): each swimmer's image moves back and forth by A sin(2 pi f t + phase) about its mean
+    // path, along its axis (Chlamydomonas breaststroke) or across it (sperm head), with a random phase per cell
+    let oscA = 0, oscF = 0, oscAcross = false;
+    if (sw && sw.osc_amp_um !== undefined) {
+      oscA = num(sw, "osc_amp_um", 0, 100); oscF = num(sw, "osc_hz", 0, 1000);
+      need(sw.osc_dir === undefined || sw.osc_dir === "along" || sw.osc_dir === "across", "osc_dir must be along or across");
+      oscAcross = sw.osc_dir === "across";
+    }
+    // cells with paralysed flagella and the like: all diffusion slowed by this factor (extra drag of the flagella)
+    const dragF = cfg.drag_factor === undefined ? 1 : num(cfg, "drag_factor", 0.3, 100);
     const a = det.kind === "camera" ? num(det, "pixel_um", 0.5, 30) * b / mag : num(det, "pixel_um", 0.005, 50);   // pixel at the sample (um)
     const L = N * a;                             // simulated field (um)
     const eta_mPa_s = cfg.liquid.viscosity_mPa_s !== undefined ? cfg.liquid.viscosity_mPa_s : O.viscosityWaterGlycerol_mPa_s(cfg.liquid.glycerol_w, T_C);
@@ -179,7 +225,10 @@
       const W = gw.reduce(function (p, v) { return p + v; }, 0);
       for (let i = 0; i < 5; i++) classes.push({ d: d0 * Math.exp(Math.SQRT2 * s * gx[i] - s2 / 2), w: gw[i] / W });
     } else classes.push({ d: d0, w: 1 });
-    classes.forEach(function (c) { c.geo = O.shapeGeometry(shape, c.d, pAsp); c.hyd = O.hydrodynamics(c.geo, kT, eta); });
+    classes.forEach(function (c) {
+      c.geo = O.shapeGeometry(shape, c.d, pAsp); c.hyd = O.hydrodynamics(c.geo, kT, eta);
+      if (dragF !== 1) { const h0 = c.hyd, hh = Object.assign({}, h0); ["D_t", "D_par", "D_perp", "D_r"].forEach(function (k) { if (typeof h0[k] === "number") hh[k] = h0[k] / dragF; }); c.hyd = hh; }
+    });
     let meanVol = 0; classes.forEach(function (c) { meanVol += c.w * c.geo.volume; });
     const nTot = Math.round(phi / meanVol * L * L * Lz);
     need(nTot >= 1, "no particle in the simulated volume: raise the concentration");
@@ -216,7 +265,7 @@
     let Cext = null, dark = false;
     const lamC = lamRef, nLc = trans ? O.liquidIndex(cfg.liquid, lamC) : 1;
     const tKern = function (diam, particle, homOnly) {
-      return O.transmittedKernel({ diameter_um: diam, particle: particle, liquid: cfg.liquid, na_obj: na, illum: cfg.illum, pupil: cfg.pupil || { kind: "none" }, source: cfg.source, q_per_um: qk, z_lo: zlo - 0.5 - ext, z_hi: zhi + 0.5 + ext, homodyne: homOnly ? false : (!split && cfg.homodyne), homodyne_only: !!homOnly, aberration: abr, scalar: scalar });
+      return memoKernel("t", O.transmittedKernel, { diameter_um: diam, particle: particle, liquid: cfg.liquid, na_obj: na, illum: cfg.illum, pupil: cfg.pupil || { kind: "none" }, source: cfg.source, q_per_um: qk, z_lo: zlo - 0.5 - ext, z_hi: zhi + 0.5 + ext, homodyne: homOnly ? false : (!split && cfg.homodyne), homodyne_only: !!homOnly, aberration: abr, scalar: scalar });
     };
     const push = function (Kr, Ki, nd, z) { blocks.push({ Kr: Kr, Ki: Ki, nd: nd, z_um: z }); return blocks.length - 1; };
     if (trans) need(typeof cfg.homodyne === "boolean", "say whether to include the scattered-intensity term");
@@ -265,7 +314,7 @@
       need(zz.length <= 3000, "cell too thick for the fluorescence kernel");
       // pinhole projected on the sample: spinning disk through a 1x relay (assumed), scanner in Airy units
       const pin = mode === "spinning" ? num(cfg, "pinhole_um", 5, 200) / mag : mode === "scanning" ? num(cfg, "pinhole_au", 0.1, 10) * 1.22 * cfg.l_em_um / Math.min(na, 1.34) : 0;
-      const fk = function (diam) { return O.fluorescenceKernel({ na_obj: na, liquid: cfg.liquid, l_ex: cfg.l_ex_um, l_em: cfg.l_em_um, diameter_um: diam, q_per_um: qk, z_um: zz, confocal: confocal, pinhole_um_sample: pin, crosstalk: mode === "spinning" ? num(cfg, "crosstalk", 0, 0.49) : 0, aberration: abr, scalar: scalar }).K; };
+      const fk = function (diam) { return memoKernel("f", O.fluorescenceKernel, { na_obj: na, liquid: cfg.liquid, l_ex: cfg.l_ex_um, l_em: cfg.l_em_um, diameter_um: diam, q_per_um: qk, z_um: zz, confocal: confocal, pinhole_um_sample: pin, crosstalk: mode === "spinning" ? num(cfg, "crosstalk", 0, 0.49) : 0, aberration: abr, scalar: scalar }).K; };
       if (body) { const K = fk(TINY_UM), ib = push(K, new Float64Array(K.length), 1, zz); classes.forEach(function (c, ci) { chans[ci].all = ib; }); }
       else for (let ci = 0; ci < classes.length; ci++) { const K = fk(classes[ci].d); chans[ci].all = push(K, new Float64Array(K.length), 1, zz); yield { stage: "Computing how one particle looks", frac: 0.02 + 0.1 * (ci + 1) / classes.length }; }
     }
@@ -277,6 +326,14 @@
     if (body) {
       const qPts = trans && dark ? 2 * TWO_PI / lamC * Math.min(na, 1.34) * 1.1 : qcut;
       classes.forEach(function (c) { c.pts = O.bodyPoints(c.geo, 0.7 * Math.PI / qPts, 64); });
+      // thin bodies (cfg.thin_bodies, for cells narrower than the optics resolve): the points of each cross-section
+      // merged onto the axis, so a rod is a line of points (about 8 times fewer); its width then shows only at large q
+      if (cfg.thin_bodies === true) classes.forEach(function (c) {
+        const P = c.pts, xs = [];
+        for (let k = 0; k < P.n; k++) { const x = P.xyz[3 * k]; if (!xs.some(function (u) { return Math.abs(u - x) < 1e-9; })) xs.push(x); }
+        const xyz = new Float64Array(3 * xs.length); xs.forEach(function (x, k) { xyz[3 * k] = x; });
+        c.pts = { xyz: xyz, n: xs.length, spacing: P.spacing };
+      });
       ptsTotal = 0; classes.forEach(function (c) { ptsTotal += c.w * nTot * c.pts.n; });
       need(ptsTotal <= 60000, "too many particles for the browser with these elongated particles: lower the concentration or use a smaller field");
     }
@@ -357,10 +414,42 @@
       if (oriented) randomAxis(i);
       fParMean += fWall(classes[c], H[i])[0] / nTot;
     }
+    // swimmers: speeds from a Schulz (gamma) distribution with mean swV and relative SD swSpread
+    const SP = new Float64Array(nTot), PL = new Uint8Array(nTot);
+    const gammaDraw = function (k) {      // Marsaglia and Tsang, mean k, for shape k >= 1 (k < 1 by the boost u^(1/k))
+      const kk = k < 1 ? k + 1 : k, d = kk - 1 / 3, c3 = 1 / Math.sqrt(9 * d);
+      let v;
+      for (;;) { let x, w; do { x = rng.g(); w = 1 + c3 * x; } while (w <= 0); w = w * w * w; const u = rng.u(); if (u < 1 - 0.0331 * x * x * x * x || Math.log(u) < 0.5 * x * x + d * (1 - w + Math.log(w))) { v = d * w; break; } }
+      return k < 1 ? v * Math.pow(rng.u(), 1 / k) : v;
+    };
+    const swList = [];
+    const SW = new Uint8Array(nTot);     // moved by swimAdvance (swimmers, and particles kept in the plane)
+    const stillPlane = sw && sw.plane_still === true;
+    if (stillPlane) need(swPlane > 0, "plane_still needs plane swimmers (plane_fraction > 0)");
+    if (sw) for (let i = 0; i < nTot; i++) {
+      if (rng.u() >= swFrac) {
+        if (stillPlane) { SW[i] = 1; PL[i] = 1; H[i] = Math.min(Lz - classes[cls[i]].aex, Math.max(classes[cls[i]].aex, swH)); const ph = TWO_PI * rng.u(); UX[i] = Math.cos(ph); UY[i] = Math.sin(ph); UZ[i] = 0; }
+        continue;
+      }
+      SW[i] = 1;
+      const k = swSpread > 0 ? 1 / (swSpread * swSpread) : 0;
+      SP[i] = swSpread > 0 ? swV * gammaDraw(k) / k : swV;
+      if (!(SP[i] > 0)) { SP[i] = 0; SW[i] = stillPlane ? 1 : 0; if (!stillPlane) continue; }
+      if (swPlane > 0 && rng.u() < swPlane) {
+        PL[i] = 1; H[i] = Math.min(Lz - classes[cls[i]].aex, Math.max(classes[cls[i]].aex, swH + swHs * (2 * rng.u() - 1)));
+        const ph = TWO_PI * rng.u(); UX[i] = Math.cos(ph); UY[i] = Math.sin(ph); UZ[i] = 0;
+      } else if (!oriented) randomAxis(i);
+      swList.push(SP[i]);
+    }
+    let vMax = 0; for (let i = 0; i < nTot; i++) vMax = Math.max(vMax, SP[i]);
+    // stroke phases and directions from their own random stream (the main stream, and so every other movie, unchanged)
+    const PH = new Float64Array(nTot), PSI = new Float64Array(nTot);
+    if (oscA > 0) { const r2 = makeRng((cfg.seed >>> 0) + 7919); for (let i = 0; i < nTot; i++) { PH[i] = TWO_PI * r2.u(); PSI[i] = TWO_PI * r2.u(); } vMax += TWO_PI * oscF * oscA; }
+    const oscW = TWO_PI * oscF;
     // exposure blur: sub-steps when particles move or turn noticeably during the exposure
     // (D q^2 t_exp at the finest pattern imaged, 6 D_r t_exp); otherwise the exposure is treated as instantaneous
     let Dmax = 0, Drmax = 0; classes.forEach(function (c) { Dmax = Math.max(Dmax, c.hyd.D_par, c.hyd.D_perp); Drmax = Math.max(Drmax, c.hyd.D_r); });
-    const blur = Math.max(Dmax * qcut * qcut * expo, oriented ? 6 * Drmax * expo : 0);
+    const blur = Math.max(Dmax * qcut * qcut * expo, oriented ? 6 * Drmax * expo : 0, Math.pow(vMax * qcut * expo, 2));
     const nsub = blur < 0.05 ? 1 : Math.min(8, Math.ceil(4 * Math.sqrt(blur)));
     const dtFrame = 1 / fr;
 
@@ -538,6 +627,51 @@
       X[i] += drift * dt;
       reflect(i);
     };
+    // swimmers: Brownian translation (in the body frame for particles with an axis), swimming along the axis,
+    // rotational diffusion (in 3D, or within the plane for plane swimmers, plus circling), tumbles; walls mirror the
+    // vertical part of the direction. Steps: D_r h <= 0.03, at most 0.5 um of swimming, tumble chance <= 5 %.
+    const swimAdvance = function (i, dt) {
+      if (dt <= 0) return;
+      const c = classes[cls[i]], hy = c.hyd, v = SP[i], pl = PL[i] === 1;
+      const Dr = swDr !== null ? swDr : hy.D_r;
+      const nst = Math.max(1, Math.min(4000, Math.ceil(Math.max(Dr * dt / 0.03, v * dt / 0.5, swTumble * dt / 0.05, Math.abs(swOmega) * dt / 0.1))));
+      const hh = dt / nst;
+      const Dpa = oriented ? hy.D_par : hy.D_t, Dpe = oriented ? hy.D_perp : hy.D_t;
+      const sPar = Math.sqrt(2 * Dpa * hh), sPer = Math.sqrt(2 * Dpe * hh), sRot = Math.sqrt(2 * Dr * hh);
+      const lo = c.aex, hi = Lz - c.aex;
+      let ux = UX[i], uy = UY[i], uz = UZ[i];
+      for (let k = 0; k < nst; k++) {
+        frame(ux, uy, uz);
+        const g0 = sPar * rng.g(), g1 = sPer * rng.g(), g2 = sPer * rng.g();
+        X[i] += g0 * ux + g1 * e1[0] + g2 * e2[0] + v * ux * hh + drift * hh;
+        Y[i] += g0 * uy + g1 * e1[1] + g2 * e2[1] + v * uy * hh;
+        if (!pl && !freezeZ) {
+          H[i] -= g0 * uz + g1 * e1[2] + g2 * e2[2] + v * uz * hh;      // z points down: height decreases with uz
+          // the height falls when uz > 0: at the bottom the swimmer turns to uz < 0 (up), at the top to uz > 0 (down)
+          if (H[i] < lo) { H[i] = 2 * lo - H[i]; uz = -Math.abs(uz); }
+          if (H[i] > hi) { H[i] = 2 * hi - H[i]; uz = Math.abs(uz); }
+          if (H[i] < lo || H[i] > hi) H[i] = Math.min(hi, Math.max(lo, H[i]));
+        }
+        if (swTumble > 0 && rng.u() < swTumble * hh) {
+          if (pl) { const ph = TWO_PI * rng.u(); ux = Math.cos(ph); uy = Math.sin(ph); uz = 0; }
+          else { const z = 2 * rng.u() - 1, ph = TWO_PI * rng.u(), r = Math.sqrt(1 - z * z); ux = r * Math.cos(ph); uy = r * Math.sin(ph); uz = z; }
+          continue;
+        }
+        if (pl) {
+          const th = Math.atan2(uy, ux) + sRot * rng.g() + swOmega * hh;
+          ux = Math.cos(th); uy = Math.sin(th); uz = 0;
+        } else if (sRot > 0) {
+          const w1 = sRot * rng.g(), w2 = sRot * rng.g(), om = Math.hypot(w1, w2);
+          if (om > 0) {
+            const cc = Math.cos(om), sn = Math.sin(om) / om;
+            ux = cc * ux + sn * (w1 * e1[0] + w2 * e2[0]); uy = cc * uy + sn * (w1 * e1[1] + w2 * e2[1]); uz = cc * uz + sn * (w1 * e1[2] + w2 * e2[2]);
+            const nn = Math.hypot(ux, uy, uz); ux /= nn; uy /= nn; uz /= nn;
+          }
+        }
+      }
+      UX[i] = ux; UY[i] = uy; UZ[i] = uz;
+      X[i] -= L * Math.floor(X[i] / L); Y[i] -= L * Math.floor(Y[i] / L);
+    };
     // depth interpolation in one kernel block
     const zw = { col: 0, f: 0 };
     const zLocate = function (B, zp) {
@@ -550,14 +684,19 @@
       const B = blocks[bi]; zLocate(B, zp); const col = zw.col, f = zw.f; wgt /= B.scale;
       for (let m = 0; m < M; m++) wm[m] += wgt * (Vm[m][col] + f * (Vm[m][col + 1] - Vm[m][col]));
     };
+    // (column offsets computed once per point; the rank-M weights added in one pass per grid cell)
+    const colOff = new Int32Array(tabN), rowM = G * M;
     const splat = function (xp, yp) {
       const px = xp / h, py = yp / h, cx = Math.round(px), cy = Math.round(py);
       for (let j = -R; j <= R; j++) { const dx = cx + j - px, dy = cy + j - py; gx[j + R] = Math.exp(-dx * dx * inv2s2); gy[j + R] = Math.exp(-dy * dy * inv2s2); }
+      for (let jx = 0; jx < tabN; jx++) { let c = (cx - R + jx) % G; if (c < 0) c += G; colOff[jx] = c * M; }
+      const g = grid, w0 = wm;
       for (let jy = 0; jy < tabN; jy++) {
-        const row = ((cy - R + jy) % G + G) % G, wy = gy[jy];
+        let row = (cy - R + jy) % G; if (row < 0) row += G;
+        const rb = row * rowM, wy = gy[jy];
         for (let jx = 0; jx < tabN; jx++) {
-          const col2 = ((cx - R + jx) % G + G) % G, w = wy * gx[jx], base = (row * G + col2) * M;
-          for (let m = 0; m < M; m++) grid[base + m] += w * wm[m];
+          const w = wy * gx[jx], base = rb + colOff[jx];
+          for (let m = 0; m < M; m++) g[base + m] += w * w0[m];
         }
       }
     };
@@ -569,22 +708,35 @@
       if (c.Wtab) { const t = Math.acos(Math.min(1, Math.abs(uz))) / (Math.PI / 2) * (c.Wtab.length - 1), j = Math.min(c.Wtab.length - 2, Math.floor(t)); cw.hom *= c.Wtab[j] + (t - j) * (c.Wtab[j + 1] - c.Wtab[j]); }
     };
     const subDt = nsub > 1 ? expo / nsub : 0;
+    // test only: positions of the first particles at every frame
+    const nTrack = cfg.test_track === true ? Math.min(nTot, 400) : 0;
+    const track = nTrack ? { X: new Float64Array(nTrack * T), Y: new Float64Array(nTrack * T), H: new Float64Array(nTrack * T), SP: SP.slice(0, nTrack), PL: PL.slice(0, nTrack), n: nTrack, L: L } : null;
     const seenAcc = (!split && !body && classes.length > 1) ? classes.map(function () { return new Float64Array(nq); }) : null;
     const seenEvery = Math.max(1, Math.floor(T / 32));
+    const swSeen = { ws: new Float64Array(nq), wn: new Float64Array(nq), wv: new Float64Array(nq), wv2: new Float64Array(nq) };
     for (let t = 0; t < T; t++) {
       grid.fill(0);
-      const t0 = t * dtFrame;
+      const t0 = times ? times[t] : t * dtFrame;
       for (let i = 0; i < nTot; i++) {
         const del = delay(Y[i]), ci = cls[i], c = classes[ci], ch = chans[ci];
         for (let sub = 0; sub < nsub; sub++) {
           const when = t0 + del + (nsub > 1 ? (sub + 0.5) * subDt : 0);
-          advance(i, when - tp[i]); if (when > tp[i]) tp[i] = when;
+          if (SW[i]) swimAdvance(i, when - tp[i]); else advance(i, when - tp[i]);
+          if (when > tp[i]) tp[i] = when;
           let wHet = 0, wHom = 0;
           if (split) { channelWeights(c, UX[i], UY[i], UZ[i]); wHet = cw.het; wHom = cfg.test_no_hom === true ? 0 : cw.hom; }   // test_no_hom: test-only switch
+          // where the cell is drawn: its mean path plus the stroke (swimmers only)
+          let xr = X[i], yr = Y[i], hr = H[i];
+          if (oscA > 0 && SP[i] > 0) {
+            const sv = oscA * Math.sin(oscW * when + PH[i]);
+            let dx = UX[i], dy = UY[i], dz = UZ[i];
+            if (oscAcross) { frame(dx, dy, dz); const cp = Math.cos(PSI[i]), spp = PL[i] ? 0 : Math.sin(PSI[i]); dx = cp * e1[0] + spp * e2[0]; dy = cp * e1[1] + spp * e2[1]; dz = cp * e1[2] + spp * e2[2]; }
+            xr += sv * dx; yr += sv * dy; hr -= sv * dz;
+          }
           if (!body) {
-            wm.fill(0); const zp = hf - H[i];
+            wm.fill(0); const zp = hf - hr;
             if (split) { addBlock(ch.het, zp, wHet / nsub); addBlock(ch.hom, zp, wHom / nsub); } else addBlock(ch.all, zp, 1 / nsub);
-            splat(X[i], Y[i]);
+            splat(xr, yr);
           } else {
             const P = c.pts, np = P.n, ux = UX[i], uy = UY[i], uz = UZ[i];
             frame(ux, uy, uz);
@@ -592,13 +744,27 @@
             for (let k = 0; k < np; k++) {
               const bx = P.xyz[3 * k], by = P.xyz[3 * k + 1], bz = P.xyz[3 * k + 2];
               const lx = bx * ux + by * e1[0] + bz * e2[0], ly = bx * uy + by * e1[1] + bz * e2[1], lz = bx * uz + by * e1[2] + bz * e2[2];
-              wm.fill(0); const zp = hf - H[i] + lz;      // lz along +z (the light): further from the condenser
+              wm.fill(0); const zp = hf - hr + lz;      // lz along +z (the light): further from the condenser
               if (split) { addBlock(ch.het, zp, wHet * sc); addBlock(ch.hom, zp, wHom * sc); } else addBlock(ch.all, zp, sc);
-              splat(X[i] + lx, Y[i] + ly);
+              splat(xr + lx, yr + ly);
             }
           }
         }
       }
+      // swimmers: share of the signal from swimmers and their mean speed as seen (weights |K|^2 at a mid wave vector,
+      // at each particle's depth), every few frames
+      if (sw && t % seenEvery === 0) {
+        for (let i = 0; i < nTot; i++) {
+          const ch = chans[cls[i]], bi = ch.all !== undefined ? ch.all : ch.het !== undefined ? ch.het : ch.hom; if (bi === undefined) continue;
+          const B = blocks[bi], nzb = B.z_um.length; zLocate(B, hf - H[i]);
+          const lo = zw.col - B.off, f = zw.f, sv = SP[i] > 0;
+          for (let iq = 0; iq < nq; iq++) {
+            const o = iq * nzb + lo, vr = B.Kr[o] + f * (B.Kr[o + 1] - B.Kr[o]), vi = B.Ki[o] + f * (B.Ki[o + 1] - B.Ki[o]), w = vr * vr + vi * vi;
+            if (sv) { swSeen.ws[iq] += w; swSeen.wv[iq] += w * SP[i]; swSeen.wv2[iq] += w * SP[i] * SP[i]; } else swSeen.wn[iq] += w;
+          }
+        }
+      }
+      if (track) for (let i = 0; i < nTrack; i++) { const o = t * nTrack + i; track.X[o] = X[i]; track.Y[o] = Y[i]; track.H[o] = H[i]; }
       // signal weight of each size class from where its particles actually are (every few frames)
       if (seenAcc && t % seenEvery === 0) {
         for (let i = 0; i < nTot; i++) {
@@ -679,20 +845,35 @@
     }
     const cm = classes[Math.floor(classes.length / 2)], chm = chans[Math.floor(classes.length / 2)];
     const kInfo = function (bi) { if (bi === undefined) return null; const B = blocks[bi]; return { Kr: B.Kr, Ki: B.Ki, nd: B.nd, z_um: B.z_um }; };
-    const h0 = classes[0].hyd, hd0 = O.hydrodynamics(O.shapeGeometry(shape, d0, pAsp), kT, eta);
+    const h0 = classes[0].hyd, hd0 = (function () { const h = O.hydrodynamics(O.shapeGeometry(shape, d0, pAsp), kT, eta), o = Object.assign({}, h); if (dragF !== 1) ["D_t", "D_par", "D_perp", "D_r"].forEach(function (k) { if (typeof h[k] === "number") o[k] = h[k] / dragF; }); return o; })();
     return {
+      test_track: track || undefined,
       test_heights: cfg.test_return_heights === true ? { H: Float64Array.from(H), lg: classes[0].lg, aex: classes[0].aex, ah: classes[0].ah } : undefined,   // test only
-      n: N, T: T, frames: frames, fft: fft,
-      pixel_um: a, L_um: L, frame_rate_hz: fr, T_C: T_C, viscosity_Pa_s: eta,
+      n: N, T: T, frames: frames, fft: fft, times_s: times || undefined,
+      pixel_um: a, L_um: L, frame_rate_hz: fr, exposure_s: expo, T_C: T_C, viscosity_Pa_s: eta,
       q_opt_per_um: trans ? TWO_PI * Math.min(na, 1.34) / lamRef : 2 * TWO_PI * Math.min(na, 1.34) / lamRef,
       q_signal_max_per_um: qcut,
-      info: { mode: mode, dark: dark, directions: nd, n_particles: nTot, n_points: Math.round(ptsTotal), exposure_substeps: nsub, timing: timing, readout_s: readout, read_noise_e: readE, full_well_e: fullWell, oversampling: s, truncated_q_per_um: truncated ? qKmax : null, rank: M, rank_residual: LR.residual, Cext_um2: Cext, background_e: bgE, wavelength_um: lamRef, kernel_q: qk,
+      info: { mode: mode, cell_z_um: [zlo, zhi], dark: dark, directions: nd, n_particles: nTot, n_points: Math.round(ptsTotal), exposure_substeps: nsub, timing: timing, readout_s: readout, read_noise_e: readE, excess_noise: enf, detector_kind: det.kind, full_well_e: fullWell, oversampling: s, truncated_q_per_um: truncated ? qKmax : null, rank: M, rank_residual: LR.residual, Cext_um2: Cext, background_e: bgE, wavelength_um: lamRef, kernel_q: qk,
               kernel: chm.all !== undefined ? kInfo(chm.all) : (chm.het !== undefined ? kInfo(chm.het) : kInfo(chm.hom)), classes: classes.map(function (c) { return { d: c.d, w: c.w }; }),
               split: split, channels: split ? { het: kInfo(chm.het), hom: kInfo(chm.hom) } : null,
               particle: { shape: shape, oriented: oriented, body: body, aspect: pAsp, birefringence: dn, geometry: cm.geo, points: body ? { xyz: cm.pts.xyz, n: cm.pts.n, spacing: cm.pts.spacing } : null,
                           alpha_perp: cm.aPerp, dalpha: cm.dA, alpha_ref: cm.aRef, Wtab: cm.Wtab || null, polarization: pol, background_share: bgf } },
       truth: { diameter_um: d0, mean_diameter_um: dnum, D_um2_s: hd0.D_t, D_seen_um2_s: Dseen, seen_table: seenTable, diameter_seen_um: kT / (3 * Math.PI * eta * Dseen * 1e-12) * 1e6, drift_um_s: drift,
                D_plane_um2_s: hd0.D_t * fParFocus, D_plane_all_um2_s: hd0.D_t * fParMean, walls: walls, gravity: gravity, gravitational_length_um: isFinite(classes[0].lg) ? classes[0].lg : null,
+               swim: sw ? (function () {
+                 const n = swList.length, m = n ? swList.reduce(function (p, v) { return p + v; }, 0) / n : 0;
+                 const sd = n > 1 ? Math.sqrt(swList.reduce(function (p, v) { return p + (v - m) * (v - m); }, 0) / (n - 1)) : 0;
+                 let nPl = 0; for (let i = 0; i < nTot; i++) if (PL[i]) nPl++;
+                 // as seen by the microscope, per kernel wave vector (the signal of each particle at its depth); headline at
+                 // a mid wave vector, the reader can average over the q actually used with seen_table
+                 const iqm = Math.round(0.35 * (nq - 2)), tab = { q_per_um: Array.from(qk), fraction: [], v_mean_um_s: [] };
+                 for (let iq = 0; iq < nq; iq++) { const W = swSeen.ws[iq] + swSeen.wn[iq]; tab.fraction.push(W > 0 ? swSeen.ws[iq] / W : null); tab.v_mean_um_s.push(swSeen.ws[iq] > 0 ? swSeen.wv[iq] / swSeen.ws[iq] : null); }
+                 const vs = swSeen.ws[iqm] > 0 ? swSeen.wv[iqm] / swSeen.ws[iqm] : null;
+                 return { fraction: n / nTot, v_mean_um_s: m, v_sd_um_s: sd, seen_table: tab,
+                          fraction_seen: tab.fraction[iqm], v_mean_seen_um_s: vs,
+                          v_sd_seen_um_s: vs !== null ? Math.sqrt(Math.max(0, swSeen.wv2[iqm] / swSeen.ws[iqm] - vs * vs)) : null, v_list: Float32Array.from(swList), n_swimmers: n, n_plane: nPl,
+                          v_set_um_s: swV, v_spread_set: swSpread, fraction_set: swFrac, plane_fraction_set: swPlane, rot_diff_s: swDr !== null ? swDr : hd0.D_r, tumble_hz: swTumble, circle_rad_s: swOmega, osc_amp_um: oscA, osc_hz: oscF, osc_dir: oscAcross ? "across" : "along" };
+               })() : null,
                shape: shape, oriented: oriented, D_r_s: oriented ? hd0.D_r : null, D_par_um2_s: hd0.D_par, D_perp_um2_s: hd0.D_perp, rot_rate_s: oriented ? 6 * hd0.D_r : null, first_class_D_um2_s: h0.D_t }
     };
   }
@@ -718,6 +899,42 @@
     return out;
   }
 
-  const api = { simulate: simulate, particleTerms: particleTerms };
+  /** Log-spaced frame times in a repeating cycle, so that a fixed number of frames lasts G times longer (G >= 2).
+   *  Each cycle has M frames (32, or a quarter of the movie if shorter): the first ones one frame interval apart, then
+   *  each gap a factor r longer than the previous one (rounded, never shorter than one interval). The cycle repeats
+   *  every 2 o_max intervals (o_max: the last offset), and r is chosen for the length asked for. Delays within a
+   *  cycle cover 1 to o_max intervals, delays between cycles k cycles apart k P - o_max to k P + o_max: no gaps. */
+  function logTimes(T, dt, G) {
+    const M = Math.max(4, Math.min(32, Math.floor(T / 4))), K = Math.ceil(T / M);
+    const offs = function (r) { const o = [0]; for (let m = 1; m < M; m++) o.push(Math.max(o[m - 1] + 1, Math.round(o[m - 1] * r))); return o; };
+    const span = function (r) { const o = offs(r); return (K - 1) * 2 * o[M - 1] + o[(T - 1) % M] + 1; };
+    let lo = 1, hi = 4;
+    for (let it = 0; it < 60; it++) { const mid = (lo + hi) / 2; if (span(mid) < G * T) lo = mid; else hi = mid; }
+    const o = offs(hi), P = 2 * o[M - 1], t = new Float64Array(T);
+    for (let k = 0; k < T; k++) t[k] = dt * (Math.floor(k / M) * P + o[k % M]);
+    return t;
+  }
+  // null for evenly spaced frames; otherwise the time of each frame from the first one, in s
+  function frameTimes(cfg, T, fr) {
+    let t = null;
+    if (cfg.log_timing) {
+      const G = num(cfg.log_timing, "factor", 1, 1000);
+      if (G < 2) return null;
+      t = logTimes(T, 1 / fr, G);
+    } else if (cfg.frame_times_s) {
+      need(cfg.frame_times_s.length === T, "frame_times_s needs one time per frame");
+      t = Float64Array.from(cfg.frame_times_s, function (v, k) { need(isFinite(v), "frame time " + k + " is not a number"); return v; });
+      const t0 = t[0]; for (let k = 0; k < T; k++) t[k] -= t0;
+    } else return null;
+    let even = true;
+    for (let k = 1; k < T; k++) {
+      const g = t[k] - t[k - 1];
+      need(g >= (1 - 1e-9) / fr, "frames " + (k - 1) + " and " + k + " are closer than 1 / frame rate");
+      if (Math.abs(g - 1 / fr) > 1e-9 / fr) even = false;
+    }
+    return even ? null : t;
+  }
+
+  const api = { simulate: simulate, particleTerms: particleTerms, logTimes: logTimes };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.MOVIE = api;
 })(this);

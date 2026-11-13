@@ -63,6 +63,9 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .site-nav a { font-family: var(--sans); font-size: 0.95rem; color: var(--muted); text-decoration: none; padding: 0.2rem 0; border-bottom: 2px solid transparent; }
 .site-nav a:hover { color: var(--ink); }
 .site-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+.ddm-switch { font-family: var(--sans); font-size: 0.9rem; margin: 0 0 0.6rem; color: var(--muted); }
+.ddm-switch a, .ddm-switch span { margin-right: 0.9rem; }
+.ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
 .proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
 
 h1, h2, h3 { font-weight: 500; line-height: 1.2; text-wrap: balance; }
@@ -244,6 +247,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap intro">
     <div>
       <p class="eyebrow">Differential dynamic microscopy</p>
+      <nav class="ddm-switch" aria-label="DDM pages"><span aria-current="page">Sizing particles</span><a href="swimmers/">Swimming cells</a></nav>
       <h1>Sizing particles from how they move</h1>
       <p class="lede">Particles in a liquid jiggle because the molecules around them keep kicking them, and small particles jiggle faster than large ones. Differential dynamic microscopy (DDM) measures this motion from an ordinary microscope movie without following any single particle, so it works even when the particles are too small, too faint or too crowded to be followed one by one. From how fast they wander follows their size: the same principle as dynamic light scattering (DLS), but with a microscope, many scattering angles at once, and in samples where DLS struggles (turbid or fluorescent ones, or a drop too small for a cuvette). Particle sizing is one use of DDM among many (see "Beyond sizing" below). Here a simulated microscope lets you run the whole analysis yourself, from the raw movie to a particle size.</p>
       <fieldset class="levels">
@@ -407,7 +411,10 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
           <summary>The math: fitting the curves</summary>
           <div class="eq"><i>d</i>(<i>q</i>, &Delta;<i>t</i>) = <i>A</i>(<i>q</i>) [1 &minus; <i>f</i>(<i>q</i>, &Delta;<i>t</i>)] + <i>B</i>(<i>q</i>)</div>
           <p><i>A</i>(<i>q</i>) holds the sample's signal seen through the microscope, <i>B</i>(<i>q</i>) the camera noise. For particles in Brownian motion the intermediate scattering function is a simple exponential, <i>f</i> = exp(&minus;&Gamma;&Delta;<i>t</i>). For a mixture of sizes a stretched exponential, <i>f</i> = exp[&minus;(&Gamma;&Delta;<i>t</i>)<sup>&beta;</sup>] with &beta; &lt; 1, describes the data better.</p>
-          <p>First guesses as in fastDDM: <i>B</i> from the flat noise floor beyond the optical cut-off when the image reaches it, otherwise from the zero-delay intercept of a quadratic fit to the first five delays, <i>A</i> + <i>B</i> from twice the temporal variance of each Fourier mode, &Gamma; from the delay where <i>f</i> falls to 1/e. Then a least-squares fit for every <i>q</i>.</p>
+          <p>First guesses as in fastDDM: <i>A</i> + <i>B</i> from twice the temporal variance of each Fourier mode, &Gamma; from the delay where <i>f</i> falls to 1/e. Then a least-squares fit for every <i>q</i>. A <i>q</i> whose &Gamma;/<i>q</i><sup>2</sup> lies more than 3 times away from the median of the others is left out as an outlier. <i>D</i> is the weighted mean of &Gamma;/<i>q</i><sup>2</sup> (on a log scale), each <i>q</i> weighted by the inverse variance of its rate, but no variance taken below a quarter of the median one: in noisy movies a few rates with error bars small by chance otherwise set the result.</p>
+          <p><b>Exposure.</b> Each frame averages the image over the exposure time <i>T</i><sub>e</sub>. For a mode that decays as e<sup>&minus;&Gamma;|<i>t</i>|</sup> the frames then vary less, by <i>S</i>(<i>x</i>) = 2(<i>x</i> &minus; 1 + e<sup>&minus;<i>x</i></sup>)/<i>x</i><sup>2</sup>, and frames &Delta;<i>t</i> apart keep the correlation <i>K</i>(<i>x</i>) e<sup>&minus;&Gamma;&Delta;<i>t</i></sup>, <i>K</i>(<i>x</i>) = 2(cosh <i>x</i> &minus; 1)/<i>x</i><sup>2</sup>, with <i>x</i> = &Gamma;<i>T</i><sub>e</sub>. The fit uses <i>d</i> = <i>A</i>[<i>S</i> &minus; <i>K</i> e<sup>&minus;&Gamma;&Delta;<i>t</i></sup>] + <i>B</i>. At 50 ms exposure and 20 frames/s the size of 200 nm beads read 16 % large without it once <i>B</i> was fixed (a free <i>B</i> had absorbed the difference).</p>
+          <p><b>Camera noise.</b> For a camera the noise <i>B</i> is known: twice the variance per pixel, 2 (<i>F</i> &times; mean count in electrons + read noise<sup>2</sup>), with <i>F</i> the excess-noise factor (1, or 2 for an electron-multiplying camera). The same holds for a point scanner, which counts photons with no read noise. It is white, so the same at every <i>q</i>, and the fits keep it fixed. Where the signal is below a tenth of the noise, a <i>q</i> is kept only if a fit with <i>B</i> free gives a rate within a factor 1.5: otherwise its rate hangs on <i>B</i> to a fraction of a percent. With <i>B</i> known, the first point of each curve also shows how much of the decay is left at the shortest delay: when less than a fifth, the pattern renewed within one frame and the fit could only follow the tail, so that <i>q</i> is left out as too fast. With the point scanner at 14 frames/s this took the size of 500 nm beads from 800 nm (and 323 nm on the earlier version of this page) to 440-560 nm over three movies. Fitted at each <i>q</i> instead, <i>B</i> trades against the amplitude and the rate. For the squared gradient (whose noise is not white), <i>B</i> is fitted, kept between 0 and the first point of the curve plus 2 % of the amplitude (the curve rises with the delay, so it starts at <i>B</i> or above): the normalised curves then stay within [0, 1].</p>
+          <p><b>Depth of field.</b> A particle at depth <i>z</i> adds <i>K</i>(<i>q</i>, <i>z</i>) e<sup>&minus;<i>i</i><b>q</b>&middot;<b>x</b></sup> to the image, <i>K</i> being the optical kernel of step 1. A particle that diffuses up or down therefore also fades from each pattern, and that alone would make the particles look smaller. With <i>C<sub>q</sub></i>(<i>a</i>) the overlap of <i>K</i>(<i>q</i>, <i>z</i>) and <i>K</i>(<i>q</i>, <i>z</i> + <i>a</i>) averaged over the cell (mirrored at its walls), <i>f</i> = e<sup>&minus;<i>Dq</i><sup>2</sup>&Delta;<i>t</i></sup> &lang;<i>C<sub>q</sub></i>(<i>a</i>)&rang;, averaged over a Gaussian step <i>a</i> of variance 2<i>D</i>&Delta;<i>t</i>, with the same <i>D</i>. In simulations of 200 nm beads in a spinning-disk confocal at 60x NA 1.2 the size read 14 % small without it and within 3 % with it; in DIC at 60x NA 1.2 13 % small without it, 3 % with it; in bright field at 20x it moved the result by 2 %. It is not used with two image channels (scattered light included) nor with the squared gradient.</p>
           <div class="lvl-3"><pre class="code">B_est, _ = fd.noise_est.estimate_camera_noise(aa, mode='polyfit', num_points=5)
 A_est = 2 * aa.var - B_est
 from fastddm.fit import fit_multik
@@ -474,7 +481,8 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
           <div class="eq"><i>f</i>(<i>q</i>, &Delta;<i>t</i>) = (1 + PI &Gamma;&#772; &Delta;<i>t</i>)<sup>&minus;1/PI</sup></div>
           <p>which becomes the simple exponential as PI &rarr; 0. The table fits it to all <i>q</i> at once with <b>one PI shared by all</b> (each <i>q</i> keeps its own amplitude, noise and mean rate), which is much less noisy than a PI fitted at each <i>q</i> separately. Both PIs may come out below zero: the same formula is continued there so that noise is not pushed up against a bound at zero; only a PI clearly above zero means a spread of sizes. Its uncertainty comes from repeating the shared fit on four interleaved groups of <i>q</i>. For broad distributions the second-order cumulants read low, as in DLS (for example 0.14 for a true PI of 0.2, because the third cumulant is left out); third-order cumulants are less biased but noisier (researcher level, under Details).</p>
           <p><b>What a spread of sizes means for PI.</b> PI is the relative variance of the decay rates, not of the sizes. For a narrow distribution PI &asymp; (relative spread)<sup>2</sup>; for small particles, whose signal grows as <i>d</i><sup>6</sup>, a Schulz spread <i>s</i> gives PI = <i>s</i><sup>2</sup>/(1 + 4<i>s</i><sup>2</sup>): 0.0025 for 5 %, 0.035 for 20 %, 0.066 for 30 %, 0.125 for 50 % (a little less in practice, as the optics weighs large particles down at high <i>q</i>). The width shown next to each PI is &radic;PI. With the movies simulated here (256 frames, a few thousand particles) one movie fixes PI to about &plusmn; 0.02-0.04, so spreads below about 20-35 % cannot be told from identical particles (the PI check gives the limit for each run), and broad distributions read low (about 0.03-0.08 for a true 0.1). A DLS run averages over far more particles and time; averaging five repeated movies helps. In the simulation a Schulz size distribution of mean <i>d</i>&#772; and relative standard deviation &sigma; is <i>p</i>(<i>d</i>) &prop; <i>d</i><sup><i>z</i></sup> exp[&minus;(<i>z</i>+1)<i>d</i>/<i>d</i>&#772;] with <i>z</i> = 1/&sigma;<sup>2</sup> &minus; 1, represented by five sizes (generalised Gauss-Laguerre quadrature, exact moments up to the ninth). The true PI shown is computed from the simulated particles and their actual brightness at each <i>q</i>.</p>
-          <p><b>Repeatability and bias.</b> Everything below uses the fit chosen under Analysis (the headline). A quick estimate cuts the movie into 4 parts (2 below 256 frames), analyses each at the same <i>q</i> and takes their spread divided by &radic;<i>N</i>; it is a lower bound, because the parts share the same particles. "Repeat 5 times" does what ISO 22412 (10.3) asks: five new movies with the same settings and new particles; their relative standard deviation should be below 2 % for monodisperse particles of 50-200 nm. The mean of the five is then compared with the true size as in the reference-material test of ISO 10.1: the difference must stay within the expanded uncertainty, 2 &times; 1.5 % = 3 % here (the simulation's true value has no uncertainty of its own). The uncertainty quoted with the headline is the larger of the scatter between <i>q</i> and the quick estimate.</p>
+          <p><b>Repeatability and bias.</b> Everything below uses the fit chosen under Analysis (the headline). A quick estimate repeats the fits at the same <i>q</i> five times, each time with one fifth of the movie left out (a pair of frames counts in the part of its first frame, so every delay is kept), and quotes the jackknife error &radic;[(<i>K</i> &minus; 1)/<i>K</i> &Sigma; (<i>D<sub>j</sub></i> &minus; <i>D&#772;</i>)<sup>2</sup>]. Analysing short parts of the movie separately, as before, loses the long delays that slow particles need. In simulations (six movies each: 200 nm beads in bright field, fluorescence and spinning disk, 500 nm in glycerol) the quoted error matched or exceeded the scatter from movie to movie. The parts still share the same particles, so it is no substitute for new movies. "Repeat 5 times" does what ISO 22412 (10.3) asks: five new movies with the same settings and new particles; their relative standard deviation should be below 2 % for monodisperse particles of 50-200 nm. The mean of the five is then compared with the true size as in the reference-material test of ISO 10.1: the difference must stay within the expanded uncertainty, 2 &times; 1.5 % = 3 % here (the simulation's true value has no uncertainty of its own). The uncertainty quoted with the headline is the larger of the scatter between <i>q</i> and the quick estimate.</p>
+          <p><b>Log-spaced frames.</b> Under Camera and recording (student and researcher levels) the frames can be taken at log-spaced times in a repeating cycle, as a multi-tau correlator does: the first frames of each cycle follow at the frame rate, then the gaps grow by a fixed factor. The same number of frames then covers 5 to 50 times more time, so slow particles (large beads, glycerol) and fast ones fit in one movie. Pairs of frames are grouped by how far apart they are.</p>
           <p><b>Other checks.</b> The size from the lower and the upper half of the <i>q</i> used must agree (ISO 10.2: the result must not depend on the range analysed); a free power law must give an exponent near 2; cumulants and the fit at each <i>q</i> must agree.</p>
         </details>
         <details class="lvl-2 math">
@@ -1579,6 +1587,16 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   const TWO_PI = 2 * Math.PI;
   const KB = 1.380649e-23;
   function fail(msg) { throw new Error("Movie: " + msg); }
+  // the optical kernels depend only on the optics, the liquid and the depth range, not on the particles' motion:
+  // kept for the next movie (new cells, other swimming), which then skips the slowest part of the set-up
+  const kernelMemo = new Map();
+  function memoKernel(name, fn, args) {
+    const key = name + JSON.stringify(args, function (k, v) { return ArrayBuffer.isView(v) ? Array.from(v) : v; });
+    if (kernelMemo.has(key)) return kernelMemo.get(key);
+    const r = fn(args);
+    if (kernelMemo.size >= 8) kernelMemo.delete(kernelMemo.keys().next().value);
+    kernelMemo.set(key, r); return r;
+  }
   function need(c, msg) { if (!c) fail(msg); }
   function num(o, k, lo, hi) { const v = o[k]; need(typeof v === "number" && Number.isFinite(v), "missing setting '" + k + "'"); need(v >= lo && v <= hi, "setting '" + k + "' = " + v + " outside [" + lo + ", " + hi + "]"); return v; }
 
@@ -1671,6 +1689,18 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
    *  drift_um_s, homodyne (transmitted light),
    *  gravity (optional, default false): sedimentation with the material and liquid densities,
    *  walls (optional, default false): particles keep their size away from the walls and diffuse more slowly near them
+   *  swim (optional): self-propelled particles (swimming bacteria, active colloids)
+   *    { fraction (0..1, share that swims), v_um_s (mean speed), v_spread (0..1, relative SD of a Schulz distribution
+   *      of speeds), plane_fraction (0..1, share of the swimmers that swim along the bottom glass, axis parallel to it,
+   *      at centre height height_um, or spread uniformly within +- height_spread_um of it, each keeping its height; the
+   *      others swim in 3D), height_um (needed when plane_fraction > 0), height_spread_um (optional),
+   *      rot_diff_s (optional: rotational diffusion of swimmers; default the passive value of the body),
+   *      tumble_hz (optional: rate of tumbles, each a new random direction), circle_rad_s (optional: angular
+   *      velocity of plane swimmers, positive counter-clockwise seen from the objective), plane_still (optional: the
+   *      particles that do not swim also lie in the plane at height_um and move only within it) }
+   *    Swimmers move along their axis (spheres carry a direction that does not change their image), keep their
+   *    Brownian motion, are not slowed near the walls and bounce off them by mirroring the vertical part of their
+   *    direction. Plane swimmers keep their height and turn only within the plane.
    */
   const SHAPES = ["sphere", "bisphere", "prolate", "oblate", "rod"];
   const TINY_UM = 0.03, TINY_M = 1.1;          // reference dipole for non-spherical bodies
@@ -1693,14 +1723,38 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const fr = num(cfg, "frame_rate_hz", 0.01, 30000), expo = det.kind === "scanner" ? 0 : num(cfg, "exposure_s", 0, 10);
     need(expo <= 1 / fr * 1.0000001, "exposure longer than the frame interval");
     num(det, "qe", 0.01, 1); num(det, "t_row_s", 0, 1); num(det, "rows_total", 1, 20000); num(det, "crop_row0", 0, 20000);
+    // frame times: evenly spaced at 1 / frame rate, unless log-spaced cycles or a list of times are asked for. Uneven times keep
+    // 1 / frame rate as the shortest interval, so the exposure and read-out checks below still hold.
+    const times = frameTimes(cfg, T, fr);
     const timing = det.kind === "scanner" ? "scan" : det.timing;
     need(timing === "scan" || timing === "global" || timing === "rolling" || timing === "rolling_center", "unknown shutter timing");
     const readout = timing === "rolling_center" ? det.rows_total / 2 * det.t_row_s : timing === "global" ? 0 : det.rows_total * det.t_row_s;
     need(readout <= 1.001 / fr, "the " + (timing === "scan" ? "scan" : "read-out") + " of one frame takes longer than the frame interval");
-    const d0 = num(cfg, "diameter_um", 0.01, 20), spread = num(cfg, "size_spread", 0, 0.5);
+    const d0 = num(cfg, "diameter_um", 0.01, 100), spread = num(cfg, "size_spread", 0, 0.5);
     const phi = num(cfg, "volume_fraction", 1e-9, 0.05);
     const T_C = num(cfg, "T_C", 0, 90), Lz = num(cfg, "cell_um", 1, 2000), hf = num(cfg, "focus_um", -50, 2050);
     const drift = num(cfg, "drift_um_s", 0, 1000);
+    // swimmers (optional)
+    const sw = cfg.swim || null;
+    let swFrac = 0, swV = 0, swSpread = 0, swPlane = 0, swH = 0, swHs = 0, swDr = null, swTumble = 0, swOmega = 0;
+    if (sw) {
+      swFrac = num(sw, "fraction", 0, 1); swV = num(sw, "v_um_s", 0, 1000); swSpread = num(sw, "v_spread", 0, 1);
+      swPlane = sw.plane_fraction === undefined ? 0 : num(sw, "plane_fraction", 0, 1);
+      if (swPlane > 0) { swH = num(sw, "height_um", 0, 2000); swHs = sw.height_spread_um === undefined ? 0 : num(sw, "height_spread_um", 0, 2000); }
+      if (sw.rot_diff_s !== undefined) swDr = num(sw, "rot_diff_s", 0, 1000);
+      if (sw.tumble_hz !== undefined) swTumble = num(sw, "tumble_hz", 0, 1000);
+      if (sw.circle_rad_s !== undefined) swOmega = num(sw, "circle_rad_s", -100, 100);
+    }
+    // swimming stroke (optional): each swimmer's image moves back and forth by A sin(2 pi f t + phase) about its mean
+    // path, along its axis (Chlamydomonas breaststroke) or across it (sperm head), with a random phase per cell
+    let oscA = 0, oscF = 0, oscAcross = false;
+    if (sw && sw.osc_amp_um !== undefined) {
+      oscA = num(sw, "osc_amp_um", 0, 100); oscF = num(sw, "osc_hz", 0, 1000);
+      need(sw.osc_dir === undefined || sw.osc_dir === "along" || sw.osc_dir === "across", "osc_dir must be along or across");
+      oscAcross = sw.osc_dir === "across";
+    }
+    // cells with paralysed flagella and the like: all diffusion slowed by this factor (extra drag of the flagella)
+    const dragF = cfg.drag_factor === undefined ? 1 : num(cfg, "drag_factor", 0.3, 100);
     const a = det.kind === "camera" ? num(det, "pixel_um", 0.5, 30) * b / mag : num(det, "pixel_um", 0.005, 50);   // pixel at the sample (um)
     const L = N * a;                             // simulated field (um)
     const eta_mPa_s = cfg.liquid.viscosity_mPa_s !== undefined ? cfg.liquid.viscosity_mPa_s : O.viscosityWaterGlycerol_mPa_s(cfg.liquid.glycerol_w, T_C);
@@ -1737,7 +1791,10 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       const W = gw.reduce(function (p, v) { return p + v; }, 0);
       for (let i = 0; i < 5; i++) classes.push({ d: d0 * Math.exp(Math.SQRT2 * s * gx[i] - s2 / 2), w: gw[i] / W });
     } else classes.push({ d: d0, w: 1 });
-    classes.forEach(function (c) { c.geo = O.shapeGeometry(shape, c.d, pAsp); c.hyd = O.hydrodynamics(c.geo, kT, eta); });
+    classes.forEach(function (c) {
+      c.geo = O.shapeGeometry(shape, c.d, pAsp); c.hyd = O.hydrodynamics(c.geo, kT, eta);
+      if (dragF !== 1) { const h0 = c.hyd, hh = Object.assign({}, h0); ["D_t", "D_par", "D_perp", "D_r"].forEach(function (k) { if (typeof h0[k] === "number") hh[k] = h0[k] / dragF; }); c.hyd = hh; }
+    });
     let meanVol = 0; classes.forEach(function (c) { meanVol += c.w * c.geo.volume; });
     const nTot = Math.round(phi / meanVol * L * L * Lz);
     need(nTot >= 1, "no particle in the simulated volume: raise the concentration");
@@ -1774,7 +1831,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     let Cext = null, dark = false;
     const lamC = lamRef, nLc = trans ? O.liquidIndex(cfg.liquid, lamC) : 1;
     const tKern = function (diam, particle, homOnly) {
-      return O.transmittedKernel({ diameter_um: diam, particle: particle, liquid: cfg.liquid, na_obj: na, illum: cfg.illum, pupil: cfg.pupil || { kind: "none" }, source: cfg.source, q_per_um: qk, z_lo: zlo - 0.5 - ext, z_hi: zhi + 0.5 + ext, homodyne: homOnly ? false : (!split && cfg.homodyne), homodyne_only: !!homOnly, aberration: abr, scalar: scalar });
+      return memoKernel("t", O.transmittedKernel, { diameter_um: diam, particle: particle, liquid: cfg.liquid, na_obj: na, illum: cfg.illum, pupil: cfg.pupil || { kind: "none" }, source: cfg.source, q_per_um: qk, z_lo: zlo - 0.5 - ext, z_hi: zhi + 0.5 + ext, homodyne: homOnly ? false : (!split && cfg.homodyne), homodyne_only: !!homOnly, aberration: abr, scalar: scalar });
     };
     const push = function (Kr, Ki, nd, z) { blocks.push({ Kr: Kr, Ki: Ki, nd: nd, z_um: z }); return blocks.length - 1; };
     if (trans) need(typeof cfg.homodyne === "boolean", "say whether to include the scattered-intensity term");
@@ -1823,7 +1880,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       need(zz.length <= 3000, "cell too thick for the fluorescence kernel");
       // pinhole projected on the sample: spinning disk through a 1x relay (assumed), scanner in Airy units
       const pin = mode === "spinning" ? num(cfg, "pinhole_um", 5, 200) / mag : mode === "scanning" ? num(cfg, "pinhole_au", 0.1, 10) * 1.22 * cfg.l_em_um / Math.min(na, 1.34) : 0;
-      const fk = function (diam) { return O.fluorescenceKernel({ na_obj: na, liquid: cfg.liquid, l_ex: cfg.l_ex_um, l_em: cfg.l_em_um, diameter_um: diam, q_per_um: qk, z_um: zz, confocal: confocal, pinhole_um_sample: pin, crosstalk: mode === "spinning" ? num(cfg, "crosstalk", 0, 0.49) : 0, aberration: abr, scalar: scalar }).K; };
+      const fk = function (diam) { return memoKernel("f", O.fluorescenceKernel, { na_obj: na, liquid: cfg.liquid, l_ex: cfg.l_ex_um, l_em: cfg.l_em_um, diameter_um: diam, q_per_um: qk, z_um: zz, confocal: confocal, pinhole_um_sample: pin, crosstalk: mode === "spinning" ? num(cfg, "crosstalk", 0, 0.49) : 0, aberration: abr, scalar: scalar }).K; };
       if (body) { const K = fk(TINY_UM), ib = push(K, new Float64Array(K.length), 1, zz); classes.forEach(function (c, ci) { chans[ci].all = ib; }); }
       else for (let ci = 0; ci < classes.length; ci++) { const K = fk(classes[ci].d); chans[ci].all = push(K, new Float64Array(K.length), 1, zz); yield { stage: "Computing how one particle looks", frac: 0.02 + 0.1 * (ci + 1) / classes.length }; }
     }
@@ -1835,6 +1892,14 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     if (body) {
       const qPts = trans && dark ? 2 * TWO_PI / lamC * Math.min(na, 1.34) * 1.1 : qcut;
       classes.forEach(function (c) { c.pts = O.bodyPoints(c.geo, 0.7 * Math.PI / qPts, 64); });
+      // thin bodies (cfg.thin_bodies, for cells narrower than the optics resolve): the points of each cross-section
+      // merged onto the axis, so a rod is a line of points (about 8 times fewer); its width then shows only at large q
+      if (cfg.thin_bodies === true) classes.forEach(function (c) {
+        const P = c.pts, xs = [];
+        for (let k = 0; k < P.n; k++) { const x = P.xyz[3 * k]; if (!xs.some(function (u) { return Math.abs(u - x) < 1e-9; })) xs.push(x); }
+        const xyz = new Float64Array(3 * xs.length); xs.forEach(function (x, k) { xyz[3 * k] = x; });
+        c.pts = { xyz: xyz, n: xs.length, spacing: P.spacing };
+      });
       ptsTotal = 0; classes.forEach(function (c) { ptsTotal += c.w * nTot * c.pts.n; });
       need(ptsTotal <= 60000, "too many particles for the browser with these elongated particles: lower the concentration or use a smaller field");
     }
@@ -1915,10 +1980,42 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       if (oriented) randomAxis(i);
       fParMean += fWall(classes[c], H[i])[0] / nTot;
     }
+    // swimmers: speeds from a Schulz (gamma) distribution with mean swV and relative SD swSpread
+    const SP = new Float64Array(nTot), PL = new Uint8Array(nTot);
+    const gammaDraw = function (k) {      // Marsaglia and Tsang, mean k, for shape k >= 1 (k < 1 by the boost u^(1/k))
+      const kk = k < 1 ? k + 1 : k, d = kk - 1 / 3, c3 = 1 / Math.sqrt(9 * d);
+      let v;
+      for (;;) { let x, w; do { x = rng.g(); w = 1 + c3 * x; } while (w <= 0); w = w * w * w; const u = rng.u(); if (u < 1 - 0.0331 * x * x * x * x || Math.log(u) < 0.5 * x * x + d * (1 - w + Math.log(w))) { v = d * w; break; } }
+      return k < 1 ? v * Math.pow(rng.u(), 1 / k) : v;
+    };
+    const swList = [];
+    const SW = new Uint8Array(nTot);     // moved by swimAdvance (swimmers, and particles kept in the plane)
+    const stillPlane = sw && sw.plane_still === true;
+    if (stillPlane) need(swPlane > 0, "plane_still needs plane swimmers (plane_fraction > 0)");
+    if (sw) for (let i = 0; i < nTot; i++) {
+      if (rng.u() >= swFrac) {
+        if (stillPlane) { SW[i] = 1; PL[i] = 1; H[i] = Math.min(Lz - classes[cls[i]].aex, Math.max(classes[cls[i]].aex, swH)); const ph = TWO_PI * rng.u(); UX[i] = Math.cos(ph); UY[i] = Math.sin(ph); UZ[i] = 0; }
+        continue;
+      }
+      SW[i] = 1;
+      const k = swSpread > 0 ? 1 / (swSpread * swSpread) : 0;
+      SP[i] = swSpread > 0 ? swV * gammaDraw(k) / k : swV;
+      if (!(SP[i] > 0)) { SP[i] = 0; SW[i] = stillPlane ? 1 : 0; if (!stillPlane) continue; }
+      if (swPlane > 0 && rng.u() < swPlane) {
+        PL[i] = 1; H[i] = Math.min(Lz - classes[cls[i]].aex, Math.max(classes[cls[i]].aex, swH + swHs * (2 * rng.u() - 1)));
+        const ph = TWO_PI * rng.u(); UX[i] = Math.cos(ph); UY[i] = Math.sin(ph); UZ[i] = 0;
+      } else if (!oriented) randomAxis(i);
+      swList.push(SP[i]);
+    }
+    let vMax = 0; for (let i = 0; i < nTot; i++) vMax = Math.max(vMax, SP[i]);
+    // stroke phases and directions from their own random stream (the main stream, and so every other movie, unchanged)
+    const PH = new Float64Array(nTot), PSI = new Float64Array(nTot);
+    if (oscA > 0) { const r2 = makeRng((cfg.seed >>> 0) + 7919); for (let i = 0; i < nTot; i++) { PH[i] = TWO_PI * r2.u(); PSI[i] = TWO_PI * r2.u(); } vMax += TWO_PI * oscF * oscA; }
+    const oscW = TWO_PI * oscF;
     // exposure blur: sub-steps when particles move or turn noticeably during the exposure
     // (D q^2 t_exp at the finest pattern imaged, 6 D_r t_exp); otherwise the exposure is treated as instantaneous
     let Dmax = 0, Drmax = 0; classes.forEach(function (c) { Dmax = Math.max(Dmax, c.hyd.D_par, c.hyd.D_perp); Drmax = Math.max(Drmax, c.hyd.D_r); });
-    const blur = Math.max(Dmax * qcut * qcut * expo, oriented ? 6 * Drmax * expo : 0);
+    const blur = Math.max(Dmax * qcut * qcut * expo, oriented ? 6 * Drmax * expo : 0, Math.pow(vMax * qcut * expo, 2));
     const nsub = blur < 0.05 ? 1 : Math.min(8, Math.ceil(4 * Math.sqrt(blur)));
     const dtFrame = 1 / fr;
 
@@ -2096,6 +2193,51 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       X[i] += drift * dt;
       reflect(i);
     };
+    // swimmers: Brownian translation (in the body frame for particles with an axis), swimming along the axis,
+    // rotational diffusion (in 3D, or within the plane for plane swimmers, plus circling), tumbles; walls mirror the
+    // vertical part of the direction. Steps: D_r h <= 0.03, at most 0.5 um of swimming, tumble chance <= 5 %.
+    const swimAdvance = function (i, dt) {
+      if (dt <= 0) return;
+      const c = classes[cls[i]], hy = c.hyd, v = SP[i], pl = PL[i] === 1;
+      const Dr = swDr !== null ? swDr : hy.D_r;
+      const nst = Math.max(1, Math.min(4000, Math.ceil(Math.max(Dr * dt / 0.03, v * dt / 0.5, swTumble * dt / 0.05, Math.abs(swOmega) * dt / 0.1))));
+      const hh = dt / nst;
+      const Dpa = oriented ? hy.D_par : hy.D_t, Dpe = oriented ? hy.D_perp : hy.D_t;
+      const sPar = Math.sqrt(2 * Dpa * hh), sPer = Math.sqrt(2 * Dpe * hh), sRot = Math.sqrt(2 * Dr * hh);
+      const lo = c.aex, hi = Lz - c.aex;
+      let ux = UX[i], uy = UY[i], uz = UZ[i];
+      for (let k = 0; k < nst; k++) {
+        frame(ux, uy, uz);
+        const g0 = sPar * rng.g(), g1 = sPer * rng.g(), g2 = sPer * rng.g();
+        X[i] += g0 * ux + g1 * e1[0] + g2 * e2[0] + v * ux * hh + drift * hh;
+        Y[i] += g0 * uy + g1 * e1[1] + g2 * e2[1] + v * uy * hh;
+        if (!pl && !freezeZ) {
+          H[i] -= g0 * uz + g1 * e1[2] + g2 * e2[2] + v * uz * hh;      // z points down: height decreases with uz
+          // the height falls when uz > 0: at the bottom the swimmer turns to uz < 0 (up), at the top to uz > 0 (down)
+          if (H[i] < lo) { H[i] = 2 * lo - H[i]; uz = -Math.abs(uz); }
+          if (H[i] > hi) { H[i] = 2 * hi - H[i]; uz = Math.abs(uz); }
+          if (H[i] < lo || H[i] > hi) H[i] = Math.min(hi, Math.max(lo, H[i]));
+        }
+        if (swTumble > 0 && rng.u() < swTumble * hh) {
+          if (pl) { const ph = TWO_PI * rng.u(); ux = Math.cos(ph); uy = Math.sin(ph); uz = 0; }
+          else { const z = 2 * rng.u() - 1, ph = TWO_PI * rng.u(), r = Math.sqrt(1 - z * z); ux = r * Math.cos(ph); uy = r * Math.sin(ph); uz = z; }
+          continue;
+        }
+        if (pl) {
+          const th = Math.atan2(uy, ux) + sRot * rng.g() + swOmega * hh;
+          ux = Math.cos(th); uy = Math.sin(th); uz = 0;
+        } else if (sRot > 0) {
+          const w1 = sRot * rng.g(), w2 = sRot * rng.g(), om = Math.hypot(w1, w2);
+          if (om > 0) {
+            const cc = Math.cos(om), sn = Math.sin(om) / om;
+            ux = cc * ux + sn * (w1 * e1[0] + w2 * e2[0]); uy = cc * uy + sn * (w1 * e1[1] + w2 * e2[1]); uz = cc * uz + sn * (w1 * e1[2] + w2 * e2[2]);
+            const nn = Math.hypot(ux, uy, uz); ux /= nn; uy /= nn; uz /= nn;
+          }
+        }
+      }
+      UX[i] = ux; UY[i] = uy; UZ[i] = uz;
+      X[i] -= L * Math.floor(X[i] / L); Y[i] -= L * Math.floor(Y[i] / L);
+    };
     // depth interpolation in one kernel block
     const zw = { col: 0, f: 0 };
     const zLocate = function (B, zp) {
@@ -2108,14 +2250,19 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       const B = blocks[bi]; zLocate(B, zp); const col = zw.col, f = zw.f; wgt /= B.scale;
       for (let m = 0; m < M; m++) wm[m] += wgt * (Vm[m][col] + f * (Vm[m][col + 1] - Vm[m][col]));
     };
+    // (column offsets computed once per point; the rank-M weights added in one pass per grid cell)
+    const colOff = new Int32Array(tabN), rowM = G * M;
     const splat = function (xp, yp) {
       const px = xp / h, py = yp / h, cx = Math.round(px), cy = Math.round(py);
       for (let j = -R; j <= R; j++) { const dx = cx + j - px, dy = cy + j - py; gx[j + R] = Math.exp(-dx * dx * inv2s2); gy[j + R] = Math.exp(-dy * dy * inv2s2); }
+      for (let jx = 0; jx < tabN; jx++) { let c = (cx - R + jx) % G; if (c < 0) c += G; colOff[jx] = c * M; }
+      const g = grid, w0 = wm;
       for (let jy = 0; jy < tabN; jy++) {
-        const row = ((cy - R + jy) % G + G) % G, wy = gy[jy];
+        let row = (cy - R + jy) % G; if (row < 0) row += G;
+        const rb = row * rowM, wy = gy[jy];
         for (let jx = 0; jx < tabN; jx++) {
-          const col2 = ((cx - R + jx) % G + G) % G, w = wy * gx[jx], base = (row * G + col2) * M;
-          for (let m = 0; m < M; m++) grid[base + m] += w * wm[m];
+          const w = wy * gx[jx], base = rb + colOff[jx];
+          for (let m = 0; m < M; m++) g[base + m] += w * w0[m];
         }
       }
     };
@@ -2127,22 +2274,35 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       if (c.Wtab) { const t = Math.acos(Math.min(1, Math.abs(uz))) / (Math.PI / 2) * (c.Wtab.length - 1), j = Math.min(c.Wtab.length - 2, Math.floor(t)); cw.hom *= c.Wtab[j] + (t - j) * (c.Wtab[j + 1] - c.Wtab[j]); }
     };
     const subDt = nsub > 1 ? expo / nsub : 0;
+    // test only: positions of the first particles at every frame
+    const nTrack = cfg.test_track === true ? Math.min(nTot, 400) : 0;
+    const track = nTrack ? { X: new Float64Array(nTrack * T), Y: new Float64Array(nTrack * T), H: new Float64Array(nTrack * T), SP: SP.slice(0, nTrack), PL: PL.slice(0, nTrack), n: nTrack, L: L } : null;
     const seenAcc = (!split && !body && classes.length > 1) ? classes.map(function () { return new Float64Array(nq); }) : null;
     const seenEvery = Math.max(1, Math.floor(T / 32));
+    const swSeen = { ws: new Float64Array(nq), wn: new Float64Array(nq), wv: new Float64Array(nq), wv2: new Float64Array(nq) };
     for (let t = 0; t < T; t++) {
       grid.fill(0);
-      const t0 = t * dtFrame;
+      const t0 = times ? times[t] : t * dtFrame;
       for (let i = 0; i < nTot; i++) {
         const del = delay(Y[i]), ci = cls[i], c = classes[ci], ch = chans[ci];
         for (let sub = 0; sub < nsub; sub++) {
           const when = t0 + del + (nsub > 1 ? (sub + 0.5) * subDt : 0);
-          advance(i, when - tp[i]); if (when > tp[i]) tp[i] = when;
+          if (SW[i]) swimAdvance(i, when - tp[i]); else advance(i, when - tp[i]);
+          if (when > tp[i]) tp[i] = when;
           let wHet = 0, wHom = 0;
           if (split) { channelWeights(c, UX[i], UY[i], UZ[i]); wHet = cw.het; wHom = cfg.test_no_hom === true ? 0 : cw.hom; }   // test_no_hom: test-only switch
+          // where the cell is drawn: its mean path plus the stroke (swimmers only)
+          let xr = X[i], yr = Y[i], hr = H[i];
+          if (oscA > 0 && SP[i] > 0) {
+            const sv = oscA * Math.sin(oscW * when + PH[i]);
+            let dx = UX[i], dy = UY[i], dz = UZ[i];
+            if (oscAcross) { frame(dx, dy, dz); const cp = Math.cos(PSI[i]), spp = PL[i] ? 0 : Math.sin(PSI[i]); dx = cp * e1[0] + spp * e2[0]; dy = cp * e1[1] + spp * e2[1]; dz = cp * e1[2] + spp * e2[2]; }
+            xr += sv * dx; yr += sv * dy; hr -= sv * dz;
+          }
           if (!body) {
-            wm.fill(0); const zp = hf - H[i];
+            wm.fill(0); const zp = hf - hr;
             if (split) { addBlock(ch.het, zp, wHet / nsub); addBlock(ch.hom, zp, wHom / nsub); } else addBlock(ch.all, zp, 1 / nsub);
-            splat(X[i], Y[i]);
+            splat(xr, yr);
           } else {
             const P = c.pts, np = P.n, ux = UX[i], uy = UY[i], uz = UZ[i];
             frame(ux, uy, uz);
@@ -2150,13 +2310,27 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
             for (let k = 0; k < np; k++) {
               const bx = P.xyz[3 * k], by = P.xyz[3 * k + 1], bz = P.xyz[3 * k + 2];
               const lx = bx * ux + by * e1[0] + bz * e2[0], ly = bx * uy + by * e1[1] + bz * e2[1], lz = bx * uz + by * e1[2] + bz * e2[2];
-              wm.fill(0); const zp = hf - H[i] + lz;      // lz along +z (the light): further from the condenser
+              wm.fill(0); const zp = hf - hr + lz;      // lz along +z (the light): further from the condenser
               if (split) { addBlock(ch.het, zp, wHet * sc); addBlock(ch.hom, zp, wHom * sc); } else addBlock(ch.all, zp, sc);
-              splat(X[i] + lx, Y[i] + ly);
+              splat(xr + lx, yr + ly);
             }
           }
         }
       }
+      // swimmers: share of the signal from swimmers and their mean speed as seen (weights |K|^2 at a mid wave vector,
+      // at each particle's depth), every few frames
+      if (sw && t % seenEvery === 0) {
+        for (let i = 0; i < nTot; i++) {
+          const ch = chans[cls[i]], bi = ch.all !== undefined ? ch.all : ch.het !== undefined ? ch.het : ch.hom; if (bi === undefined) continue;
+          const B = blocks[bi], nzb = B.z_um.length; zLocate(B, hf - H[i]);
+          const lo = zw.col - B.off, f = zw.f, sv = SP[i] > 0;
+          for (let iq = 0; iq < nq; iq++) {
+            const o = iq * nzb + lo, vr = B.Kr[o] + f * (B.Kr[o + 1] - B.Kr[o]), vi = B.Ki[o] + f * (B.Ki[o + 1] - B.Ki[o]), w = vr * vr + vi * vi;
+            if (sv) { swSeen.ws[iq] += w; swSeen.wv[iq] += w * SP[i]; swSeen.wv2[iq] += w * SP[i] * SP[i]; } else swSeen.wn[iq] += w;
+          }
+        }
+      }
+      if (track) for (let i = 0; i < nTrack; i++) { const o = t * nTrack + i; track.X[o] = X[i]; track.Y[o] = Y[i]; track.H[o] = H[i]; }
       // signal weight of each size class from where its particles actually are (every few frames)
       if (seenAcc && t % seenEvery === 0) {
         for (let i = 0; i < nTot; i++) {
@@ -2237,20 +2411,35 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     }
     const cm = classes[Math.floor(classes.length / 2)], chm = chans[Math.floor(classes.length / 2)];
     const kInfo = function (bi) { if (bi === undefined) return null; const B = blocks[bi]; return { Kr: B.Kr, Ki: B.Ki, nd: B.nd, z_um: B.z_um }; };
-    const h0 = classes[0].hyd, hd0 = O.hydrodynamics(O.shapeGeometry(shape, d0, pAsp), kT, eta);
+    const h0 = classes[0].hyd, hd0 = (function () { const h = O.hydrodynamics(O.shapeGeometry(shape, d0, pAsp), kT, eta), o = Object.assign({}, h); if (dragF !== 1) ["D_t", "D_par", "D_perp", "D_r"].forEach(function (k) { if (typeof h[k] === "number") o[k] = h[k] / dragF; }); return o; })();
     return {
+      test_track: track || undefined,
       test_heights: cfg.test_return_heights === true ? { H: Float64Array.from(H), lg: classes[0].lg, aex: classes[0].aex, ah: classes[0].ah } : undefined,   // test only
-      n: N, T: T, frames: frames, fft: fft,
-      pixel_um: a, L_um: L, frame_rate_hz: fr, T_C: T_C, viscosity_Pa_s: eta,
+      n: N, T: T, frames: frames, fft: fft, times_s: times || undefined,
+      pixel_um: a, L_um: L, frame_rate_hz: fr, exposure_s: expo, T_C: T_C, viscosity_Pa_s: eta,
       q_opt_per_um: trans ? TWO_PI * Math.min(na, 1.34) / lamRef : 2 * TWO_PI * Math.min(na, 1.34) / lamRef,
       q_signal_max_per_um: qcut,
-      info: { mode: mode, dark: dark, directions: nd, n_particles: nTot, n_points: Math.round(ptsTotal), exposure_substeps: nsub, timing: timing, readout_s: readout, read_noise_e: readE, full_well_e: fullWell, oversampling: s, truncated_q_per_um: truncated ? qKmax : null, rank: M, rank_residual: LR.residual, Cext_um2: Cext, background_e: bgE, wavelength_um: lamRef, kernel_q: qk,
+      info: { mode: mode, cell_z_um: [zlo, zhi], dark: dark, directions: nd, n_particles: nTot, n_points: Math.round(ptsTotal), exposure_substeps: nsub, timing: timing, readout_s: readout, read_noise_e: readE, excess_noise: enf, detector_kind: det.kind, full_well_e: fullWell, oversampling: s, truncated_q_per_um: truncated ? qKmax : null, rank: M, rank_residual: LR.residual, Cext_um2: Cext, background_e: bgE, wavelength_um: lamRef, kernel_q: qk,
               kernel: chm.all !== undefined ? kInfo(chm.all) : (chm.het !== undefined ? kInfo(chm.het) : kInfo(chm.hom)), classes: classes.map(function (c) { return { d: c.d, w: c.w }; }),
               split: split, channels: split ? { het: kInfo(chm.het), hom: kInfo(chm.hom) } : null,
               particle: { shape: shape, oriented: oriented, body: body, aspect: pAsp, birefringence: dn, geometry: cm.geo, points: body ? { xyz: cm.pts.xyz, n: cm.pts.n, spacing: cm.pts.spacing } : null,
                           alpha_perp: cm.aPerp, dalpha: cm.dA, alpha_ref: cm.aRef, Wtab: cm.Wtab || null, polarization: pol, background_share: bgf } },
       truth: { diameter_um: d0, mean_diameter_um: dnum, D_um2_s: hd0.D_t, D_seen_um2_s: Dseen, seen_table: seenTable, diameter_seen_um: kT / (3 * Math.PI * eta * Dseen * 1e-12) * 1e6, drift_um_s: drift,
                D_plane_um2_s: hd0.D_t * fParFocus, D_plane_all_um2_s: hd0.D_t * fParMean, walls: walls, gravity: gravity, gravitational_length_um: isFinite(classes[0].lg) ? classes[0].lg : null,
+               swim: sw ? (function () {
+                 const n = swList.length, m = n ? swList.reduce(function (p, v) { return p + v; }, 0) / n : 0;
+                 const sd = n > 1 ? Math.sqrt(swList.reduce(function (p, v) { return p + (v - m) * (v - m); }, 0) / (n - 1)) : 0;
+                 let nPl = 0; for (let i = 0; i < nTot; i++) if (PL[i]) nPl++;
+                 // as seen by the microscope, per kernel wave vector (the signal of each particle at its depth); headline at
+                 // a mid wave vector, the reader can average over the q actually used with seen_table
+                 const iqm = Math.round(0.35 * (nq - 2)), tab = { q_per_um: Array.from(qk), fraction: [], v_mean_um_s: [] };
+                 for (let iq = 0; iq < nq; iq++) { const W = swSeen.ws[iq] + swSeen.wn[iq]; tab.fraction.push(W > 0 ? swSeen.ws[iq] / W : null); tab.v_mean_um_s.push(swSeen.ws[iq] > 0 ? swSeen.wv[iq] / swSeen.ws[iq] : null); }
+                 const vs = swSeen.ws[iqm] > 0 ? swSeen.wv[iqm] / swSeen.ws[iqm] : null;
+                 return { fraction: n / nTot, v_mean_um_s: m, v_sd_um_s: sd, seen_table: tab,
+                          fraction_seen: tab.fraction[iqm], v_mean_seen_um_s: vs,
+                          v_sd_seen_um_s: vs !== null ? Math.sqrt(Math.max(0, swSeen.wv2[iqm] / swSeen.ws[iqm] - vs * vs)) : null, v_list: Float32Array.from(swList), n_swimmers: n, n_plane: nPl,
+                          v_set_um_s: swV, v_spread_set: swSpread, fraction_set: swFrac, plane_fraction_set: swPlane, rot_diff_s: swDr !== null ? swDr : hd0.D_r, tumble_hz: swTumble, circle_rad_s: swOmega, osc_amp_um: oscA, osc_hz: oscF, osc_dir: oscAcross ? "across" : "along" };
+               })() : null,
                shape: shape, oriented: oriented, D_r_s: oriented ? hd0.D_r : null, D_par_um2_s: hd0.D_par, D_perp_um2_s: hd0.D_perp, rot_rate_s: oriented ? 6 * hd0.D_r : null, first_class_D_um2_s: h0.D_t }
     };
   }
@@ -2276,7 +2465,43 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     return out;
   }
 
-  const api = { simulate: simulate, particleTerms: particleTerms };
+  /** Log-spaced frame times in a repeating cycle, so that a fixed number of frames lasts G times longer (G >= 2).
+   *  Each cycle has M frames (32, or a quarter of the movie if shorter): the first ones one frame interval apart, then
+   *  each gap a factor r longer than the previous one (rounded, never shorter than one interval). The cycle repeats
+   *  every 2 o_max intervals (o_max: the last offset), and r is chosen for the length asked for. Delays within a
+   *  cycle cover 1 to o_max intervals, delays between cycles k cycles apart k P - o_max to k P + o_max: no gaps. */
+  function logTimes(T, dt, G) {
+    const M = Math.max(4, Math.min(32, Math.floor(T / 4))), K = Math.ceil(T / M);
+    const offs = function (r) { const o = [0]; for (let m = 1; m < M; m++) o.push(Math.max(o[m - 1] + 1, Math.round(o[m - 1] * r))); return o; };
+    const span = function (r) { const o = offs(r); return (K - 1) * 2 * o[M - 1] + o[(T - 1) % M] + 1; };
+    let lo = 1, hi = 4;
+    for (let it = 0; it < 60; it++) { const mid = (lo + hi) / 2; if (span(mid) < G * T) lo = mid; else hi = mid; }
+    const o = offs(hi), P = 2 * o[M - 1], t = new Float64Array(T);
+    for (let k = 0; k < T; k++) t[k] = dt * (Math.floor(k / M) * P + o[k % M]);
+    return t;
+  }
+  // null for evenly spaced frames; otherwise the time of each frame from the first one, in s
+  function frameTimes(cfg, T, fr) {
+    let t = null;
+    if (cfg.log_timing) {
+      const G = num(cfg.log_timing, "factor", 1, 1000);
+      if (G < 2) return null;
+      t = logTimes(T, 1 / fr, G);
+    } else if (cfg.frame_times_s) {
+      need(cfg.frame_times_s.length === T, "frame_times_s needs one time per frame");
+      t = Float64Array.from(cfg.frame_times_s, function (v, k) { need(isFinite(v), "frame time " + k + " is not a number"); return v; });
+      const t0 = t[0]; for (let k = 0; k < T; k++) t[k] -= t0;
+    } else return null;
+    let even = true;
+    for (let k = 1; k < T; k++) {
+      const g = t[k] - t[k - 1];
+      need(g >= (1 - 1e-9) / fr, "frames " + (k - 1) + " and " + k + " are closer than 1 / frame rate");
+      if (Math.abs(g - 1 / fr) > 1e-9 / fr) even = false;
+    }
+    return even ? null : t;
+  }
+
+  const api = { simulate: simulate, particleTerms: particleTerms, logTimes: logTimes };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.MOVIE = api;
 })(this);
 
@@ -2592,19 +2817,47 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
    *   q_min_per_um, q_max_per_um (fit range chosen by the user; null = full measurable range),
    *   images (optional): "recorded" (default) or "squared_gradient"
    */
-  function* analyse(movie, opts) {
-    need(["simple", "stretched", "schulz", "two", "three"].indexOf(opts.fit_model) >= 0, "fit_model must be simple, stretched, schulz, two or three");
-    const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
-    need("q_min_per_um" in opts && "q_max_per_um" in opts, "q range missing (use null for the full range)");
+  /* Structure function d(q, dt) of a movie (2D per lag and azimuthally averaged), temporal variance, measurable
+   * window and noise estimate B(q) (A = 2 var - B). Shared by the sizing analysis and the swimmer analysis. */
+  /** Pairs of frames grouped by how far apart in time they are, for uneven frame times (sorted, from 0).
+   *  Groups: one per whole number of shortest intervals up to 10, then 12 per decade; delays up to half the movie, as with
+   *  evenly spaced frames. Each group keeps at most cap pairs, taken evenly through the movie, and needs at least 4.
+   *  Returns the mean delay of the pairs kept (taus_s), that delay in shortest intervals, rounded (lags), and the pairs. */
+  function pairBins(times, dt, cap) {
+    const T = times.length, half = (times[T - 1] - times[0]) / 2, PER = 12;
+    const group = function (u) { return u < 10.5 ? Math.max(0, Math.round(u) - 1) : 10 + Math.floor(PER * Math.log10(u / 10.5)); };
+    const G = group(half / dt) + 1, cnt = new Int32Array(G);
+    for (let i = 0; i < T; i++) for (let j = i + 1; j < T; j++) { const g = times[j] - times[i]; if (g > half * (1 + 1e-12)) break; cnt[group(g / dt)]++; }
+    const stride = Array.from(cnt, function (c) { return Math.max(1, Math.ceil(c / cap)); });
+    const seen = new Int32Array(G), sum = new Float64Array(G), list = [];
+    for (let k = 0; k < G; k++) list.push([]);
+    for (let i = 0; i < T; i++) for (let j = i + 1; j < T; j++) {
+      const g = times[j] - times[i]; if (g > half * (1 + 1e-12)) break;
+      const b = group(g / dt);
+      if (seen[b]++ % stride[b] === 0) { list[b].push(i, j); sum[b] += g; }
+    }
+    const lags = [], taus_s = [], pairs = [];
+    for (let b = 0; b < G; b++) {
+      const n = list[b].length / 2; if (n < 4) continue;
+      const tau = sum[b] / n; taus_s.push(tau); lags.push(Math.max(1, Math.round(tau / dt))); pairs.push(Int32Array.from(list[b]));
+    }
+    need(lags.length >= 3, "too few delays between the frames");
+    return { lags: lags, taus_s: taus_s, pairs: pairs };
+  }
+
+  function* structure(movie, opts) {
     const images = opts.images === undefined ? "recorded" : opts.images;
     need(images === "recorded" || images === "squared_gradient", "images must be recorded or squared_gradient");
     const sg = images === "squared_gradient";
     if (sg) yield { stage: "Squared gradient of each frame", frac: 0 };
     const n = movie.n, T = movie.T, P = n * n, fft = sg ? squaredGradientFft(movie) : movie.fft;
-    const lags = logspaceLags(Math.floor(T / 2), 40);
-    const L = lags.length;
     const dt_s = 1 / movie.frame_rate_hz;
-    const taus_s = lags.map(function (m) { return m * dt_s; });
+    // evenly spaced frames: integer lags, every pair at each lag. Uneven frame times (log-spaced cycles): pairs grouped by their
+    // time apart (pairBins), at most T pairs per group. lags are then in units of the shortest interval, rounded.
+    const PB = movie.times_s ? pairBins(movie.times_s, dt_s, T) : null;
+    const lags = PB ? PB.lags : logspaceLags(Math.floor(T / 2), 40);
+    const L = lags.length;
+    const taus_s = PB ? PB.taus_s : lags.map(function (m) { return m * dt_s; });
 
     // wave vector of every Fourier pixel, bin = nearest integer |k|
     const nb = n / 2;
@@ -2626,33 +2879,55 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     // structure function d(q, dt), kept in 2D (for the map) and azimuthally averaged
     const d2d = [];                                   // per lag: Float32Array(P), normalised by P
     const dq = [];                                    // per lag: Float64Array(nb + 1)
+    // the sums are also kept apart for K blocks of the movie (a pair counts in the block of its first frame), so that
+    // fits can be repeated with one block left out (jackknife estimate of the uncertainty, see jackDq)
+    const K = Math.max(1, Math.min(opts.blocks === undefined ? 5 : opts.blocks, Math.floor(T / 8)));
+    const blockOf = function (t) { return Math.min(K - 1, Math.floor(t * K / T)); };
+    const accK = []; for (let k = 0; k < K; k++) accK.push(new Float64Array(P));
+    const bSum = [], bCnt = [];                       // per lag: K x (nb + 1) sums over the modes of each bin, K counts
     for (let li = 0; li < L; li++) {
-      const m = lags[li];
-      const acc = new Float64Array(P);
+      const m = lags[li], pr = PB ? PB.pairs[li] : null, np = pr ? pr.length / 2 : T - m;
+      for (let k = 0; k < K; k++) accK[k].fill(0);
+      const cnt = new Float64Array(K);
       let count = 0;
-      for (let t = 0; t + m < T; t++) {
-        const o1 = 2 * P * t, o2 = 2 * P * (t + m);
+      for (let k = 0; k < np; k++) {
+        const t1 = pr ? pr[2 * k] : k, t2 = pr ? pr[2 * k + 1] : k + m;
+        const o1 = 2 * P * t1, o2 = 2 * P * t2, kb = blockOf(t1), acc = accK[kb];
         for (let p = 0; p < P; p++) {
           const dr = fft[o2 + 2 * p] - fft[o1 + 2 * p], di = fft[o2 + 2 * p + 1] - fft[o1 + 2 * p + 1];
           acc[p] += dr * dr + di * di;
         }
-        count++;
+        cnt[kb]++; count++;
       }
       need(count > 0, "lag longer than the movie");
       const map = new Float32Array(P);
-      const avg = new Float64Array(nb + 1);
+      const avg = new Float64Array(nb + 1), sums = [];
+      for (let k = 0; k < K; k++) sums.push(new Float64Array(nb + 1));
       for (let p = 0; p < P; p++) {
-        const v = acc[p] / count / P;               // per-pixel normalisation: B = 2 x noise variance
+        let tot = 0; const b = binOf[p];
+        for (let k = 0; k < K; k++) { const a = accK[k][p]; tot += a; if (b > 0) sums[k][b] += a; }
+        const v = tot / count / P;                  // per-pixel normalisation: B = 2 x noise variance
         map[p] = v;
-        const b = binOf[p]; if (b > 0) avg[b] += v;
+        if (b > 0) avg[b] += v;
       }
       for (let b = 1; b <= nb; b++) avg[b] = nmodes[b] > 0 ? avg[b] / nmodes[b] : NaN;
-      d2d.push(map); dq.push(avg);
+      d2d.push(map); dq.push(avg); bSum.push(sums); bCnt.push(cnt);
       yield { stage: "Comparing frames", frac: (li + 1) / L };
     }
+    // structure function with block j left out (same normalisation as dq); a lag with no pair outside block j keeps all
+    const jackDq = K < 2 ? null : function (j) {
+      return dq.map(function (avg, li) {
+        const sums = bSum[li], cnt = bCnt[li]; let c = 0; for (let k = 0; k < K; k++) if (k !== j) c += cnt[k];
+        if (!(c > 0)) return avg;
+        const out = new Float64Array(nb + 1);
+        for (let b = 1; b <= nb; b++) { if (!(nmodes[b] > 0)) { out[b] = NaN; continue; } let s = 0; for (let k = 0; k < K; k++) if (k !== j) s += sums[k][b]; out[b] = s / c / P / nmodes[b]; }
+        return out;
+      });
+    };
 
-    // temporal variance per mode: A + B = 2 var
-    const varq = new Float64Array(nb + 1);
+    // temporal variance per mode: A + B = 2 var. Also the mean power per mode (it includes what does not change during
+    // the movie, so 2 pow - B is the whole amplitude even when part of the sample stays put)
+    const varq = new Float64Array(nb + 1), powq = new Float64Array(nb + 1);
     {
       const mr = new Float64Array(P), mi = new Float64Array(P), m2 = new Float64Array(P);
       for (let t = 0; t < T; t++) {
@@ -2665,9 +2940,9 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       for (let p = 0; p < P; p++) {
         const b = binOf[p]; if (b <= 0) continue;
         const v = (m2[p] / T - (mr[p] * mr[p] + mi[p] * mi[p]) / (T * T)) / P;
-        varq[b] += v;
+        varq[b] += v; powq[b] += m2[p] / T / P;
       }
-      for (let b = 1; b <= nb; b++) varq[b] = nmodes[b] > 0 ? varq[b] / nmodes[b] : NaN;
+      for (let b = 1; b <= nb; b++) { varq[b] = nmodes[b] > 0 ? varq[b] / nmodes[b] : NaN; powq[b] = nmodes[b] > 0 ? powq[b] / nmodes[b] : NaN; }
     }
 
     // measurable window (fastDDM tutorial 1, section 2.C)
@@ -2703,6 +2978,37 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       if (B_floor !== null) Bq = Math.min(B_floor, dq[0][b]);
       B_est[b] = Bq; A_est[b] = 2 * varq[b] - Bq;
     }
+    return { images: images, sg: sg, n: n, T: T, P: P, fft: fft, lags: lags, L: L, dt_s: dt_s, taus_s: taus_s, pairs: PB ? PB.pairs : null, times_s: movie.times_s || null, nb: nb, binOf: binOf, nmodes: nmodes, blocks: K, jackDq: jackDq,
+             q_per_um: q_per_um, d2d: d2d, dq: dq, varq: varq, powq: powq, q_lo_per_um: q_lo_per_um, q_nyq_per_um: q_nyq_per_um, q_opt_per_um: q_opt_per_um,
+             q_sig_per_um: q_sig_per_um, q_hi_per_um: q_hi_per_um, gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz, B_floor: B_floor, B_est: B_est, A_est: A_est };
+  }
+  function* analyse(movie, opts) {
+    need(["simple", "stretched", "schulz", "two", "three"].indexOf(opts.fit_model) >= 0, "fit_model must be simple, stretched, schulz, two or three");
+    const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
+    need("q_min_per_um" in opts && "q_max_per_um" in opts, "q range missing (use null for the full range)");
+    const S = yield* structure(movie, opts);
+    // detector noise: B = 2 (excess-noise factor x mean count + read noise^2) per pixel, the same at every q (white noise),
+    // from the frames and the detector (known to the experimenter): cameras, and point scanners (photon counting, no read
+    // noise). Not for the squared gradient (its noise is not white); opts.noise "fit" fits B at each q as before
+    let noiseB = null;
+    if (opts.noise !== "fit" && !S.sg && movie.info && (movie.info.detector_kind === "camera" || movie.info.detector_kind === "scanner") && movie.frames && typeof movie.info.read_noise_e === "number") {
+      let sum = 0; const F = movie.frames; for (let k = 0; k < F.length; k++) sum += F[k];
+      noiseB = 2 * ((movie.info.excess_noise || 1) * sum / F.length + movie.info.read_noise_e * movie.info.read_noise_e);
+      for (let b = 1; b <= S.nb; b++) if (S.nmodes[b] > 0) { S.B_est[b] = noiseB; S.A_est[b] = 2 * S.varq[b] - noiseB; }
+    }
+    BFIX = noiseB;
+    EXPO = opts.exposure !== false && movie.info && movie.info.detector_kind === "camera" && movie.exposure_s > 0 ? movie.exposure_s : 0;
+    // depth of field (opts.depth, on by default when the movie carries its optics; not with the squared gradient, whose
+    // image is not linear in the particles, nor with two image channels)
+    const info = movie.info, useDepth = opts.depth !== false && !S.sg && info && info.kernel && info.kernel_q && info.cell_z_um && !info.split;
+    if (useDepth) { const cache = new Map(); DEPTH = function (q) { const k = q.toPrecision(6); if (!cache.has(k)) cache.set(k, depthC(info, q)); return cache.get(k); }; }
+    try { const r = yield* analyseFits(movie, opts, S, noiseB); r.depth_model = !!useDepth && r.used.some(function (f) { return !f.no_depth; }); return r; } finally { BFIX = null; DEPTH = null; EXPO = 0; }
+  }
+  function* analyseFits(movie, opts, S, noiseB) {
+    const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
+    const images = S.images, n = S.n, T = S.T, P = S.P, fft = S.fft, lags = S.lags, L = S.L, taus_s = S.taus_s, nb = S.nb, binOf = S.binOf, nmodes = S.nmodes,
+      q_per_um = S.q_per_um, d2d = S.d2d, dq = S.dq, varq = S.varq, q_lo_per_um = S.q_lo_per_um, q_nyq_per_um = S.q_nyq_per_um, q_opt_per_um = S.q_opt_per_um,
+      q_hi_per_um = S.q_hi_per_um, gamma_lo_hz = S.gamma_lo_hz, gamma_hi_hz = S.gamma_hi_hz, B_floor = S.B_floor, B_est = S.B_est, A_est = S.A_est;
     // fit every q
     const stretched = opts.fit_model === "stretched", kind = opts.fit_model === "stretched" || opts.fit_model === "schulz" ? opts.fit_model : "simple";
     const fits = [];
@@ -2710,7 +3016,11 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       if (!(nmodes[b] > 0)) { fits.push(null); continue; }
       const yv = new Float64Array(L);
       for (let li = 0; li < L; li++) yv[li] = dq[li][b];
-      const f1 = fitOne(taus_s, yv, varq[b], B_est[b], kind, b, q_per_um[b]);
+      let f1 = fitOne(taus_s, yv, varq[b], B_est[b], kind, b, q_per_um[b]);
+      // with the camera noise fixed, a curve whose signal is a few % of the noise still gives a rate with a small error bar,
+      // but that rate then hangs on B to a fraction of a percent: such a q is kept only if a fit with B free agrees within
+      // a factor 1.5 (ORCA on the full chip, 100 nm: 27 % off with every such q kept)
+      if (BFIX !== null && f1.ok && f1.A < 0.1 * BFIX && !rotFit) { const ff = fitOne(taus_s, yv, varq[b], B_est[b], kind, b, q_per_um[b], { Bfix: null, noDepth: !!f1.no_depth }); if (!ff.ok || Math.abs(Math.log(ff.gamma_hz / f1.gamma_hz)) > Math.log(1.5)) f1.weak = true; }
       fits.push(rotFit ? fitTwo(taus_s, yv, f1) : f1);
       if ((b & 7) === 0) yield { stage: "Fitting", frac: b / nb };
     }
@@ -2723,12 +3033,25 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       if (f.q_per_um < 2 * q_lo_per_um) f.reason = "pattern as large as the image";
       else if (f.q_per_um > q_hi_per_um) f.reason = "finer than the microscope can see";
       else if (!f.ok) f.reason = "fit failed";
-      else if (f.lnGamma_se > MAX_LN_GAMMA_SE) f.reason = "signal lost in camera noise";
+      else if (f.lnGamma_se > MAX_LN_GAMMA_SE || f.weak) f.reason = "signal lost in camera noise";
       else if (f.gamma_hz <= gamma_lo_hz) f.reason = "too slow for this movie";
       else if (f.gamma_hz >= gamma_hi_hz) f.reason = "too fast for this frame rate";
+      // with the noise known, the curve at the first delay shows how much of the decay is left: when less than a fifth of
+      // it, the pattern renewed within one frame and the fitted rate only follows the last bit (point scanning at 14
+      // frames/s: rates at high q read 2-10 times slow, and the size 60 % large)
+      else if (noiseB !== null && 2 * varq[f.bin] > noiseB && 1 - (dq[0][f.bin] - noiseB) / (2 * varq[f.bin] - noiseB) < 0.2) f.reason = "too fast for this frame rate";
+      else if (DEPTH && !f.no_depth && DEPTH(f.q_per_um) && depthFade(DEPTH(f.q_per_um), f.gamma_hz / (f.q_per_um * f.q_per_um), taus_s[0]) < 0.3) f.reason = "particles leave the focus within one frame";
       else if (f.q_per_um < qmin || f.q_per_um > qmax) f.reason = "outside the chosen fit range";
     }
     let used = rows.filter(function (f) { return f.reason === null; });
+    // a q whose Gamma / q^2 is more than 3 times away from the median of the others is an outlier (a curve lost in noise
+    // that passed the other tests by chance); for sizes, even broad spreads keep Gamma / q^2 within that range
+    if (used.length >= 5) {
+      const lv = used.map(function (f) { return Math.log(f.gamma_hz / (f.q_per_um * f.q_per_um)); }).sort(function (a, b) { return a - b; });
+      const med = lv[Math.floor(lv.length / 2)];
+      used.forEach(function (f) { if (Math.abs(Math.log(f.gamma_hz / (f.q_per_um * f.q_per_um)) - med) > Math.log(3)) f.reason = "rate far from the other q"; });
+      used = rows.filter(function (f) { return f.reason === null; });
+    }
     let D = weightedD(used);
     if (D !== null) {   // tutorial step: drop points where D q^2 is already below the slowest measurable rate
       for (const f of used) if (D.D_um2_s * f.q_per_um * f.q_per_um < gamma_lo_hz) f.reason = "too slow for this movie";
@@ -2747,9 +3070,31 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       const h = Math.floor(used.length / 2), lo = weightedD(used.slice(0, h)), hi = weightedD(used.slice(h));
       if (lo && hi) halves = { low: lo, high: hi, q_split_per_um: used[h].q_per_um };
     }
-    // repeatability: the same analysis on separate parts of the movie
-    yield { stage: "Repeating the analysis on parts of the movie", frac: 0.97 };
-    const blocks = rotFit ? null : blockAnalysis(fft, T, P, binOf, nb, lags, taus_s, used, B_est, kind);
+    // uncertainty: the points of d(q, dt) are not independent (all delays come from the same frames), so the scatter of
+    // Gamma / q^2 between q understates the scatter from movie to movie. Jackknife: the fits of the used q repeated with one
+    // of K blocks of the movie left out (a pair counts in the block of its first frame, so every delay is kept);
+    // error = sqrt((K - 1)/K sum (D_j - mean)^2). Separate short parts of the movie (blockAnalysis, the old way) lose the
+    // long delays, which slow particles and wide patterns need.
+    yield { stage: "Uncertainty: the fits repeated with parts of the movie left out", frac: 0.97 };
+    let jk = null;
+    if (!rotFit && D !== null && S.jackDq && used.length >= 3 && opts.jackknife !== false) {
+      const Ds = [];
+      for (let j = 0; j < S.blocks; j++) {
+        const dj = S.jackDq(j), fj = [];
+        used.forEach(function (f) {
+          const yv = new Float64Array(L); for (let i = 0; i < L; i++) yv[i] = dj[i][f.bin];
+          const g = fitOne(taus_s, yv, varq[f.bin], B_est[f.bin], kind, f.bin, f.q_per_um, { start: { A: f.A, B: f.B, G: f.gamma_hz }, noDepth: !!f.no_depth });
+          if (g.ok && g.lnGamma_se <= MAX_LN_GAMMA_SE) fj.push(g);
+        });
+        const Dj = weightedD(fj); if (Dj) Ds.push(Dj.D_um2_s);
+      }
+      if (Ds.length >= 3) {
+        const K = Ds.length, m = Ds.reduce(function (a, b) { return a + b; }, 0) / K;
+        let s2 = 0; Ds.forEach(function (x) { s2 += (x - m) * (x - m); });
+        jk = { blocks: K, D_um2_s: Ds, rel_err: Math.sqrt((K - 1) / K * s2) / D.D_um2_s };
+      }
+    }
+    const blocks = rotFit || jk ? null : blockAnalysis(fft, T, P, binOf, nb, lags, taus_s, used, B_est, kind);
     let rot = null;
     if (rotFit) {
       // global fit over all measurable q (shared D_T and D_R); per-q two-mode fits only give the starting values
@@ -2790,19 +3135,19 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       } else rot = { D_r_s: null, n_points: 0, reason: "too few wave vectors to fit" };
     }
     const result = {
-      lags: lags, taus_s: taus_s, q_per_um: q_per_um, nmodes: nmodes,
+      lags: lags, taus_s: taus_s, pairs: S.pairs, times_s: S.times_s, q_per_um: q_per_um, nmodes: nmodes,
       dq: dq, d2d: d2d, varq: varq, fits: rows, used: used,
       window: { q_lo_per_um: q_lo_per_um, q_opt_per_um: q_opt_per_um, q_nyq_per_um: q_nyq_per_um, q_hi_per_um: q_hi_per_um,
                 gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz },
       B_floor: B_floor, B_est: B_est, A_est: A_est, fit_model: opts.fit_model,
       D: D, slope: slope,
       diameter_um: D === null ? null : diameterFromD_um(D.D_um2_s, movie.T_C, movie.viscosity_Pa_s),
-      diameter_rel_err: D === null ? null : (blocks ? Math.max(D.rel_err, blocks.rel_err_full) : D.rel_err),
+      diameter_rel_err: D === null ? null : (jk ? Math.max(D.rel_err, jk.rel_err) : blocks ? Math.max(D.rel_err, blocks.rel_err_full) : D.rel_err),
       diameter_rel_err_points: D === null ? null : D.rel_err,
       beta_mean: stretched && used.length ? used.reduce(function (s, f) { return s + f.beta; }, 0) / used.length : null,
       // mean over q weighted like D (by the precision of each rate): PI is poorly fixed where the rate is
       pi_mean: opts.fit_model === "schulz" && used.length ? (function () { let sw = 0, sp = 0; used.forEach(function (f) { const w = 1 / (f.lnGamma_se * f.lnGamma_se + 1e-4); sw += w; sp += w * f.pi; }); return sp / sw; })() : null,
-      cumulants: cum, blocks: blocks, halves: halves,
+      cumulants: cum, blocks: blocks, jackknife: jk, noise_B: noiseB, halves: halves,
       images: images, rot: rot
     };
     return result;
@@ -2810,6 +3155,52 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
 
   // a q is used only if its rate is known to better than about 20 %
   const MAX_LN_GAMMA_SE = 0.2;
+  // camera noise B while one analysis runs (null: fitted at each q), see analyse
+  let BFIX = null;
+  /* Depth of field. A particle at depth z adds K(q, z) exp(-i q.x) to the image (K: the optical kernel of the movie), so a
+   * particle that diffuses up or down also fades from each pattern. With C_q(a) the overlap of K(q, z) and K(q, z + a)
+   * averaged over the cell (z + a mirrored at its walls), f(q, dt) = exp(-D q^2 dt) <C_q(a)>, a Gaussian of variance
+   * 2 D dt. Without it D reads high where K changes over the distance a particle diffuses during the decay (thin
+   * confocal slices: +16 % at 60x NA 1.2). DEPTH: q -> table, while one analysis runs (null: off). */
+  let DEPTH = null;
+  // exposure time while one analysis runs (camera, set by analyse): each frame averages the image over it. For a mode with
+  // correlation exp(-G |t|) the frames then have variance factor S(x) = 2 (x - 1 + e^-x)/x^2 and correlation K(x) e^(-G dt)
+  // between frames dt >= T_e apart, K(x) = 2 (cosh x - 1)/x^2, x = G T_e: d = A (S - K e^(-G dt)) + B. Without it, at 50 ms
+  // exposure and 20 frames/s, 200 nm beads read 16 % large once B was fixed (a free B had absorbed the difference)
+  let EXPO = 0;
+  function depthC(info, q) {
+    const K = info.kernel, qk = info.kernel_q, nq = qk.length, nzk = K.z_um.length, zg = K.z_um;
+    const tq = Math.min(nq - 2, Math.max(0, q / qk[nq - 2] * (nq - 2))), iq = Math.floor(tq), fq = tq - iq;
+    const zlo = info.cell_z_um[0], zhi = info.cell_z_um[1], Lz = zhi - zlo;
+    const nz = Math.min(1500, Math.max(200, Math.ceil(Lz / 0.05))), dz = Lz / nz;
+    const kr = new Float64Array(nz), ki = new Float64Array(nz);
+    let j = 0;
+    for (let k = 0; k < nz; k++) {
+      const z = zlo + (k + 0.5) * dz;
+      while (j < nzk - 2 && zg[j + 1] < z) j++;
+      const f = Math.max(0, Math.min(1, (z - zg[j]) / (zg[j + 1] - zg[j])));
+      const at = function (arr, jj) { return arr ? arr[iq * nzk + jj] + fq * (arr[(iq + 1) * nzk + jj] - arr[iq * nzk + jj]) : 0; };
+      kr[k] = at(K.Kr, j) + f * (at(K.Kr, j + 1) - at(K.Kr, j)); ki[k] = at(K.Ki, j) + f * (at(K.Ki, j + 1) - at(K.Ki, j));
+    }
+    let n0 = 0; for (let k = 0; k < nz; k++) n0 += kr[k] * kr[k] + ki[k] * ki[k];
+    if (!(n0 > 0)) return null;
+    const C = new Float64Array(2 * nz);
+    for (let d = 0; d < 2 * nz; d++) {
+      let sr = 0;
+      for (let k = 0; k < nz; k++) { let m = (k + d) % (2 * nz); if (m >= nz) m = 2 * nz - 1 - m; sr += kr[k] * kr[m] + ki[k] * ki[m]; }
+      C[d] = sr / n0;
+    }
+    return { dz: dz, nz: nz, C: C };
+  }
+  // <C_q(a)> over a Gaussian step of variance 2 D t
+  function depthFade(tb, D, t) {
+    const sg = Math.sqrt(2 * D * t);
+    if (!(sg >= 0.5 * tb.dz)) return 1;
+    const nn = Math.min(64, Math.max(8, Math.ceil(4 * sg / tb.dz))), da = 4 * sg / nn, C = tb.C, n2 = C.length;
+    let acc = 0, ws = 0;
+    for (let m = -nn; m <= nn; m++) { const a = m * da, w = Math.exp(-0.5 * a * a / (sg * sg)); let x = Math.abs(a) / tb.dz; x = x % n2; const i = Math.floor(x), f = x - i; acc += w * (C[i] + f * (C[(i + 1) % n2] - C[i])); ws += w; }
+    return acc / ws;
+  }
   let DEBUG_TWO = typeof process !== "undefined" && process.env && process.env.DDM_DEBUG_TWO === "1";
 
   /* Cumulants per q on f(dt) = 1 - (d - B) / A (A + B = 2 var, B as for the fits): ln f = -G dt + (mu2 / 2) dt^2,
@@ -2955,13 +3346,18 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     return { method: kind, n_blocks: res.length, frames_per_block: Tb, D_um2_s: res, mean_D_um2_s: mean, rel_sd: sd / mean, rel_err_full: sd / mean / Math.sqrt(res.length) };
   }
   // weighted mean of ln(Gamma / q^2); uncertainty from the scatter of the points
+  // weighted mean of ln(Gamma / q^2). The variance of a point is floored at a quarter of the median variance: in noisy
+  // movies the error of a single fit is itself poorly known, and a few points with errors small by chance set the result
+  // (dim light, 2 x 2 binning: 13 % off before)
   function weightedD(used) {
     if (used.length < 3) return null;
+    const x = used.map(function (f) { return Math.log(f.gamma_hz) - 2 * Math.log(f.q_per_um); }), v0 = used.map(function (f) { return f.lnGamma_se * f.lnGamma_se + 1e-4; });
+    const vm = v0.slice().sort(function (a, b) { return a - b; })[Math.floor(v0.length / 2)], v = v0.map(function (z) { return Math.max(z, vm / 4); });
     let sw = 0, sx = 0;
-    for (const f of used) { const wgt = 1 / (f.lnGamma_se * f.lnGamma_se + 1e-4); sw += wgt; sx += wgt * (Math.log(f.gamma_hz) - 2 * Math.log(f.q_per_um)); }
+    for (let i = 0; i < x.length; i++) { const wgt = 1 / v[i]; sw += wgt; sx += wgt * x[i]; }
     const mean = sx / sw;
     let ss = 0;
-    for (const f of used) { const wgt = 1 / (f.lnGamma_se * f.lnGamma_se + 1e-4); const r = Math.log(f.gamma_hz) - 2 * Math.log(f.q_per_um) - mean; ss += wgt * r * r; }
+    for (let i = 0; i < x.length; i++) { const wgt = 1 / v[i]; const r = x[i] - mean; ss += wgt * r * r; }
     const se = Math.sqrt(ss / ((used.length - 1) * sw));
     return { D_um2_s: Math.exp(mean), rel_err: se, n_points: used.length };
   }
@@ -3041,8 +3437,8 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     let c1 = 0; for (let i = 0; i < L; i++) { const v = (f1.model(taus[i]) - y[i]) / scale; c1 += v * v; }
     const G = f1.gamma_hz;
     let best = null;
-    for (const st of [[0.5, 4, 0], [1, 20, 0], [0.2, 2, 0], [0.05, 1, 0], [0.5, 4, 1.5], [0.5, 4, -1.5], [1, 100, 1]]) {
-      const fit = lm(resid, [Math.log(f1.A), f1.B / scale, Math.log(G * st[0]), Math.log(G * st[1]), st[2]], clamp);
+    for (const B0 of [f1.B]) for (const st of [[0.5, 4, 0], [1, 20, 0], [0.2, 2, 0], [0.05, 1, 0], [0.5, 4, 1.5], [0.5, 4, -1.5], [1, 100, 1]]) {
+      const fit = lm(resid, [Math.log(f1.A), B0 / scale, Math.log(G * st[0]), Math.log(G * st[1]), st[2]], clamp);
       if (best === null || fit.cost < best.cost) best = fit;
     }
     const p = best.p, c2 = best.cost, dof = L - 5;
@@ -3050,9 +3446,9 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const Fstat = ((c1 - c2) / 2) / (c2 / dof + 1e-300);
     const G1 = Math.exp(p[2]), Dl = Math.exp(p[3]), G2 = G1 + Dl, aa = 1 / (1 + Math.exp(-p[4]));
     const v11 = best.cov[2][2], v22 = best.cov[3][3], v12 = best.cov[2][3];
-    const se1 = v11 > 0 ? Math.sqrt(v11) : Infinity;
+    const se1 = v11 >= 0 ? Math.sqrt(v11) : Infinity;   // (0 for an exact fit)
     const var2 = (G1 * G1 * v11 + 2 * G1 * Dl * v12 + Dl * Dl * v22) / (G2 * G2);
-    const se2 = var2 > 0 ? Math.sqrt(var2) : Infinity;
+    const se2 = var2 >= 0 ? Math.sqrt(var2) : Infinity;
     if (!(Fstat > 10 && aa >= 0.03 && aa <= 0.97 && G2 >= 1.5 * G1 && se1 < 0.3 && se2 < 0.3)) return out;
     return Object.assign(out, {
       A: Math.exp(p[0]), B: p[1] * scale, gamma_hz: G1, lnGamma_se: se1, two: true, gamma2_hz: G2, lnGamma2_se: se2, frac_slow: aa,
@@ -3211,21 +3607,32 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     // parameters: ln A, B / scale, ln Gamma, beta  (B linear: it may legitimately be near zero)
     // Schulz: PI enters linearly and may go below 0 (the same form continued: f = max(0, 1 + PI G t)^(-1/PI)), so that
     // noise does not push the estimate up against a bound at 0; only PI >= 0 is a real spread of rates
-    let p = [Math.log(A0), (opt && opt.start ? opt.start.B : B0) / scale, Math.log(G0), schulz ? 0.02 : 1];
-    const np = (stretched || schulz) && fixPI === null ? 4 : 3;
+    // B: fixed when the camera noise is known (opt.Bfix, or BFIX set by analyse), else free between 0 and d at the
+    // shortest delay plus 2 % of the amplitude (d rises with the delay, so it is at least B; a free B ran below 0 or
+    // above the data, and the normalised curves then left [0, 1])
+    const Bfix = opt && opt.Bfix !== undefined ? opt.Bfix : BFIX;
+    const dtb = DEPTH && q > 0 && !(opt && opt.noDepth) ? DEPTH(q) : null;   // depth of field (see depthC): D = Gamma / q^2 in the axial step
+    let p = [Math.log(A0), (Bfix !== null ? Bfix : opt && opt.start ? opt.start.B : B0) / scale, Math.log(G0), schulz ? 0.02 : 1];
+    const free = [0].concat(Bfix !== null ? [] : [1], [2], (stretched || schulz) && fixPI === null ? [3] : []), np = free.length, iG = free.indexOf(2);
     const model = function (pp, t) {
       const A = Math.exp(pp[0]), B = pp[1] * scale, G = Math.exp(pp[2]);
-      if (schulz) { const PI = fixPI !== null ? fixPI : pp[3]; return Math.abs(PI) < 1e-6 ? A * (1 - Math.exp(-G * t)) + B : A * (1 - Math.pow(Math.max(0, 1 + PI * G * t), -1 / PI)) + B; }
+      let df = dtb ? depthFade(dtb, G / (q * q), t) : 1, S1 = 1;
+      if (EXPO > 0) { const x = G * EXPO; if (x > 1e-4) { S1 = 2 * (x - 1 + Math.exp(-x)) / (x * x); df *= 2 * (Math.cosh(Math.min(x, 300)) - 1) / (x * x); } }
+      if (S1 !== 1) {
+        const decay = schulz ? (function () { const PI = fixPI !== null ? fixPI : pp[3]; return Math.abs(PI) < 1e-6 ? Math.exp(-G * t) : Math.pow(Math.max(0, 1 + PI * G * t), -1 / PI); })() : Math.exp(-Math.pow(G * t, stretched ? pp[3] : 1));
+        return A * (S1 - df * decay) + B;
+      }
+      if (schulz) { const PI = fixPI !== null ? fixPI : pp[3]; return Math.abs(PI) < 1e-6 ? A * (1 - df * Math.exp(-G * t)) + B : A * (1 - df * Math.pow(Math.max(0, 1 + PI * G * t), -1 / PI)) + B; }
       const be = stretched ? pp[3] : 1;
-      return A * (1 - Math.exp(-Math.pow(G * t, be))) + B;
+      return A * (1 - df * Math.exp(-Math.pow(G * t, be))) + B;
     };
     const resid = function (pp) { const r = new Float64Array(L); for (let i = 0; i < L; i++) r[i] = (model(pp, taus[i]) - y[i]) / scale; return r; };
     const cost = function (r) { let s = 0; for (let i = 0; i < L; i++) s += r[i] * r[i]; return s; };
     let r = resid(p), c = cost(r), lambda = 1e-3, J = null;
     for (let it = 0; it < 200; it++) {
       J = [];
-      for (let k = 0; k < np; k++) {
-        const h = 1e-6 * Math.max(1, Math.abs(p[k]));
+      for (let kk = 0; kk < np; kk++) {
+        const k = free[kk], h = 1e-6 * Math.max(1, Math.abs(p[k]));
         const pp = p.slice(); pp[k] += h;
         const r2 = resid(pp); const col = new Float64Array(L);
         for (let i = 0; i < L; i++) col[i] = (r2[i] - r[i]) / h;
@@ -3242,7 +3649,8 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
         const M = JTJ.map(function (row, a) { const rr = Float64Array.from(row); rr[a] *= (1 + lambda); return rr; });
         const delta = solve(M, JTr.map(function (v) { return -v; }));
         if (delta === null) { lambda *= 10; continue; }
-        const pn = p.slice(); for (let k = 0; k < np; k++) pn[k] += delta[k];
+        const pn = p.slice(); for (let kk = 0; kk < np; kk++) pn[free[kk]] += delta[kk];
+        if (Bfix === null) pn[1] = Math.max(0, Math.min((y[0] + 0.02 * Math.exp(pn[0])) / scale, pn[1]));
         if (stretched) pn[3] = Math.min(2, Math.max(0.2, pn[3]));
         if (schulz && fixPI === null) pn[3] = Math.min(2, Math.max(-0.3, pn[3]));
         const rn = resid(pn), cn = cost(rn);
@@ -3258,7 +3666,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       const JTJ = [];
       for (let a = 0; a < np; a++) { JTJ.push(new Float64Array(np)); for (let bb = 0; bb < np; bb++) { let t = 0; for (let i = 0; i < L; i++) t += J[a][i] * J[bb][i]; JTJ[a][bb] = t; } }
       const inv = invert(JTJ);
-      if (inv !== null && inv[2][2] > 0) lnG_se = Math.sqrt(inv[2][2] * c / dof);
+      if (inv !== null && inv[iG][iG] > 0) lnG_se = Math.sqrt(inv[iG][iG] * c / dof);
     }
     const ok = Number.isFinite(p[2]) && Number.isFinite(lnG_se) && Number.isFinite(c);
     return {
@@ -3290,6 +3698,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   function structureMap(movie, lag) {
     const n = movie.n, T = movie.T, P = n * n, fft = movie.fft;
     need(lag >= 1 && lag < T, "lag out of range");
+    need(!movie.times_s, "structureMap needs evenly spaced frames");
     const acc = new Float64Array(P); let count = 0;
     for (let t = 0; t + lag < T; t++) {
       const o1 = 2 * P * t, o2 = 2 * P * (t + lag);
@@ -3309,13 +3718,13 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   const api = {
     CAMERA_PIXEL_UM: CAMERA_PIXEL_UM, WAVELENGTH_UM: WAVELENGTH_UM,
     waterViscosity_Pa_s: waterViscosity_Pa_s, diffusion_um2_s: diffusion_um2_s, diameterFromD_um: diameterFromD_um,
-    simulate: simulate, analyse: analyse, structureMap: structureMap, runToEnd: runToEnd,
+    simulate: simulate, analyse: analyse, structure: structure, structureMap: structureMap, lm: lm, solve: solve, invert: invert, logspaceLags: logspaceLags, pairBins: pairBins, runToEnd: runToEnd,
     // compact result of one analysis for repeated measurements: D from the main fit and the cumulants, the q used and the truth
     repeatSummary: function (r, mv) {
       return { main_D: r.D ? r.D.D_um2_s : null, cum_D: r.cumulants && r.cumulants.D_um2_s ? r.cumulants.D_um2_s : null, cum_pi: r.cumulants && r.cumulants.pi !== null && r.cumulants.pi !== undefined ? r.cumulants.pi : null, sch_pi: r.cumulants && r.cumulants.schulz_shared ? r.cumulants.schulz_shared.pi : null,
         qs: r.used.map(function (f) { return f.q_per_um; }), truth: mv.truth };
     },
-    _test: { makeFftTables: makeFftTables, fft1d: fft1d, fitOne: fitOne, fitTwo: fitTwo, cumulants: cumulants, sharedSchulz: sharedSchulz, erf: erf, makeRng: makeRng }
+    _test: { makeFftTables: makeFftTables, fft1d: fft1d, fitOne: fitOne, fitTwo: fitTwo, cumulants: cumulants, sharedSchulz: sharedSchulz, erf: erf, makeRng: makeRng, depthC: depthC, depthFade: depthFade }
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.DDM = api;
 })(this);
@@ -3488,7 +3897,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     camera: "orca", cam_mode: "standard", iface: "cameralink", binning: 1, roi: 512, sim_px: 128, n_frames: 256,
     annulus: "Ph2", ring_T: 0.25, df_kind: "dry", df_light_e: 1e7, stray_frac: 1e-4, dic_shear_um: 0.24, dic_bias_deg: 90, dic_angle_deg: 45,
     scanner: "resonant", scan_px: 512, zoom: 1, line_avg: 2, pinhole_au: 1, scan_rate: 2e7,
-    frame_rate_hz: 100, exposure_ms: 0.2,
+    frame_rate_hz: 100, exposure_ms: 0.2, frame_timing: "even", log_factor: 20,
     shape: "sphere", aspect: 3, dn: 0.1, dn_body: 0, polarizer: "off", analyzer: "off", pol_angle_deg: 90, extinction: 1e-4,
     fit_model: "auto", images: "recorded", q_min: null, q_max: null, seed: 1
   };
@@ -3540,6 +3949,13 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     return 1000 * t;
   }
   function maxFrames(n) { return Math.floor((1 << 23) / (n * n)); }
+  // frame timing: log-spaced frames in a repeating cycle, the movie log_factor times longer (movie.js logTimes)
+  function BURSTS() { return state.frame_timing === "log" && state.log_factor > 1; }
+  function movieSpanS(stretch) {
+    const T = Math.min(state.n_frames, maxFrames(simPx())), dt = 1 / state.frame_rate_hz, k = stretch === undefined ? (BURSTS() ? state.log_factor : 1) : stretch;
+    return k > 1 ? MOVIE.logTimes(T, dt, k)[T - 1] + dt : T * dt;
+  }
+  function fmtDur(s) { return s < 120 ? fmtTime(s) : s < 7200 ? fmtSig(s / 60, 2) + " min" : fmtSig(s / 3600, 2) + " h"; }
   function liquidSpec() {
     if (state.liquid === "water") return { glycerol_w: 0 };
     if (state.liquid === "glycerol") return { glycerol_w: state.glycerol_w };
@@ -3620,7 +4036,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       photons_per_particle: Math.max(0.01, state.rate_ph_ms * state.exposure_ms), background_photons: SCANNING() ? 0.01 : state.bg_e_ms * state.exposure_ms * state.binning * state.binning,
       scan_rate_hz: state.scan_rate, light_frac: state.light_frac,
       detector: detectorConfig(), n_px: simPx(), n_frames: Math.min(state.n_frames, maxFrames(simPx())),
-      frame_rate_hz: state.frame_rate_hz, exposure_s: SCANNING() ? 0 : state.exposure_ms / 1000,
+      frame_rate_hz: state.frame_rate_hz, exposure_s: SCANNING() ? 0 : state.exposure_ms / 1000, log_timing: BURSTS() ? { factor: state.log_factor } : null,
       particle: state.particle === "custom" ? { n: state.n_custom, rho: state.rho_custom } : state.particle, diameter_um: state.diameter_um, size_distribution: state.size_dist, size_spread: state.size_spread,
       shape: state.shape, aspect: BODY() ? Math.max(state.shape === "rod" ? 2 : 1, state.aspect) : 1, birefringence: state.shape === "sphere" || !TRANS() ? 0 : state.shape === "bisphere" ? state.dn : state.dn_body, polarization: polarization(),
       volume_fraction: state.phi, liquid: liquidSpec(), T_C: state.T_C, cell_um: state.cell_um, focus_um: state.focus_frac * state.cell_um,
@@ -3698,6 +4114,10 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     { key: "light_frac", group: "Camera and recording", lvl: 2, label: "Lamp brightness (background as a share of the full well)", kind: "log", min: 0.002, max: 0.9, fmt: function (v) { return fmtSig(100 * v, 2) + " %"; }, when: function () { return TRANS() && state.mode !== "darkfield"; }, hint: function () { const fw = detFullWell(); return "Background " + Math.round(state.light_frac * fw) + " electrons per pixel; shot noise " + fmtSig(100 / Math.sqrt(state.light_frac * fw), 2) + " %."; } },
     { key: "n_frames", group: "Camera and recording", lvl: 2, label: "Number of frames", kind: "select", num: true, options: [[128, "128"], [256, "256"], [512, "512"], [1024, "1024"], [2048, "2048"]],
       hint: function () { return "The browser holds up to " + maxFrames(simPx()) + " frames at " + simPx() + " x " + simPx() + " pixels; asking for more makes the simulated image smaller."; } },
+    { key: "frame_timing", group: "Camera and recording", lvl: 2, label: "Frame timing", kind: "select", options: [["even", "Evenly spaced"], ["log", "Log-spaced, in a repeating cycle (like a multi-tau correlator)"]],
+      hint: function () { return BURSTS() ? "The same frames cover " + fmtDur(movieSpanS()) + " instead of " + fmtDur(Math.min(state.n_frames, maxFrames(simPx())) / state.frame_rate_hz) + ". In each cycle the first frames follow at the frame rate, then the gaps grow by a fixed factor; the cycle repeats. Slow and fast particles then fit in one movie." : "All frames one frame interval apart: " + fmtDur(Math.min(state.n_frames, maxFrames(simPx())) / state.frame_rate_hz) + " of movie."; } },
+    { key: "log_factor", group: "Camera and recording", lvl: 2, label: "Log-spaced: how much longer the movie lasts", kind: "select", num: true, when: function () { return state.frame_timing === "log"; },
+      options: function () { return [5, 10, 20, 50].map(function (k) { return [k, k + " times (" + fmtDur(movieSpanS(k)) + ")"]; }); } },
     { key: "sim_px", group: "Camera and recording", lvl: 3, label: "Simulated part of the image", kind: "select", num: true, options: [[64, "64 x 64 pixels (fast)"], [128, "128 x 128 pixels"], [256, "256 x 256 pixels (slow)"]] },
 
     { key: "fit_model", group: "Analysis", lvl: 2, label: "Fit at each q (sets the headline size)", kind: "select", options: [["auto", "Automatic: simple exponential, or modes for particles that turn"], ["simple", "Simple exponential (identical particles)"], ["schulz", "Schulz distribution of rates (mixed sizes)"], ["stretched", "Stretched exponential"], ["two", "Two modes: translation, translation + rotation"], ["three", "Three modes: adds 20 D_R (crossed polarizers)"]], hint: "Cumulants (as in DLS) and a Schulz fit are always computed too and shown next to the headline, so the methods can be compared. Repeatability and the other checks use the fit chosen here." },
@@ -3711,7 +4131,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     ["Sample", ["shape", "particle", "n_custom", "diameter_um", "aspect", "dn", "dn_body", "size_spread", "size_dist", "phi", "dye", "liquid", "glycerol_w", "n_liquid", "visc_mPa_s", "rho_liquid", "T_C", "cell_um", "settle", "rho_custom", "drift_um_s"]],
     ["Illumination", ["source", "condenser", "na_c", "df_kind", "annulus", "polarizer", "light_frac", "df_light_e", "stray_frac", "rate_ph_ms", "bg_e_ms", "scan_rate"]],
     ["Detection", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg", "analyzer", "pol_angle_deg", "extinction",
-      "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "sim_px"]],
+      "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "log_factor", "sim_px"]],
     ["Analysis", ["images", "fit_model", "qrange"]]
   ];
   (function () {
@@ -3925,7 +4345,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     });
     if (lv !== "researcher" && state.seed !== BASE.seed) { state.seed = BASE.seed; changed = true; }
     if (curveView === "d" && lv === "curious") setCurveView("change");
-    if (fromUser && location.hash !== "#" + lv) history.replaceState(null, "", "#" + lv);
+    if (fromUser && location.hash !== "#" + lv) { try { history.replaceState(null, "", "#" + lv); } catch (e) { /* sandboxed previews (about:srcdoc) refuse it */ } }
     constrain(); syncControls(); drawFov();
     if (changed) schedule(); else if (cache.res) renderAll();
   }
@@ -4234,14 +4654,15 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   function lagFrames() { return cache.res.lags[lagIndex()]; }
   let diffScale = null;
   function drawDiff(t) {
-    const movie = cache.movie, n = movie.n, m = lagFrames();
-    const t0 = t % (movie.T - m), c = $("diff");
+    const movie = cache.movie, n = movie.n, m = lagFrames(), pr = cache.res.pairs ? cache.res.pairs[lagIndex()] : null;
+    // evenly spaced frames: frame t and frame t + lag; log-spaced: the pairs of frames that are this far apart, in turn
+    const k = pr ? t % (pr.length / 2) : 0, f1 = pr ? pr[2 * k] : t % (movie.T - m), f2 = pr ? pr[2 * k + 1] : f1 + m, c = $("diff");
     if (c.width !== n) { c.width = n; c.height = n; }
     const ctx = c.getContext("2d"), img = ctx.createImageData(n, n), d = img.data;
-    const o1 = t0 * n * n, o2 = (t0 + m) * n * n;
+    const o1 = f1 * n * n, o2 = f2 * n * n;
     if (diffScale === null) {
-      const M = cache.res.lags[cache.res.lags.length - 1]; let s = 0;
-      for (let p = 0; p < n * n; p++) { const v = movie.frames[M * n * n + p] - movie.frames[p]; s += v * v; }
+      const pl = cache.res.pairs ? cache.res.pairs[cache.res.pairs.length - 1] : null, M1 = pl ? pl[0] : 0, M2 = pl ? pl[1] : cache.res.lags[cache.res.lags.length - 1]; let s = 0;
+      for (let p = 0; p < n * n; p++) { const v = movie.frames[M2 * n * n + p] - movie.frames[M1 * n * n + p]; s += v * v; }
       diffScale = 3 * Math.sqrt(s / (n * n)) || 1;
     }
     for (let p = 0; p < n * n; p++) { const v = 128 + 127 * (movie.frames[o2 + p] - movie.frames[o1 + p]) / diffScale; d[4 * p] = d[4 * p + 1] = d[4 * p + 2] = Math.max(0, Math.min(255, v)); d[4 * p + 3] = 255; }
@@ -4260,7 +4681,8 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     drawFrame($("movie"), cache.movie, frameIdx);
     drawFrame($("hero-canvas"), cache.movie, frameIdx);
     drawDiff(frameIdx);
-    const dt = 1 / cache.movie.frame_rate_hz, fps = Math.max(8, Math.min(60, cache.movie.frame_rate_hz)), speed = fps / cache.movie.frame_rate_hz;
+    const dt = 1 / cache.movie.frame_rate_hz, fps = Math.max(8, Math.min(60, cache.movie.frame_rate_hz)), speed = fps / cache.movie.frame_rate_hz, tt = cache.movie.times_s;
+    if (tt) { $("movie-time").textContent = "Frame " + (frameIdx + 1) + " of " + cache.movie.T + ", taken at t = " + fmtSig(tt[frameIdx], 3) + " s of " + fmtDur(tt[cache.movie.T - 1] + dt) + ". Frames taken at log-spaced times, shown one after the other."; return; }
     $("movie-time").textContent = "t = " + (frameIdx * dt).toFixed(dt < 0.01 ? 3 : dt < 0.1 ? 2 : 1) + " s of " + fmtSig(cache.movie.T * dt, 3) + " s" +
       (Math.abs(speed - 1) > 0.01 ? (speed < 1 ? ", slowed down " + fmtNum(1 / speed) + " times" : ", sped up " + fmtNum(speed) + " times") : ", real time");
   }
@@ -4494,7 +4916,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     });
     ctx.setLineDash([5, 4]); ctx.strokeStyle = C.muted; ctx.lineWidth = 1; const xq = a.fx(w.q_opt_per_um); ctx.beginPath(); ctx.moveTo(xq, a.m.t); ctx.lineTo(xq, a.m.t + a.ph); ctx.stroke(); ctx.setLineDash([]);
     a.done();
-    $("amp-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>A: fit (dots), 2 var - B from the data (line)</span><span><i style="background:' + C.muted + '"></i>B: fit (dots), zero-delay intercept (dashed)</span><span>Hollow: point not used. Points beyond the axis are drawn at its edge.</span>';
+    $("amp-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>A: fit (dots), 2 var - B from the data (line)</span><span><i style="background:' + C.muted + '"></i>' + (res.noise_B ? 'B: camera noise from the mean count (dashed), the same at every q' : 'B: fit (dots), zero-delay intercept (dashed)') + '</span><span>Hollow: point not used. Points beyond the axis are drawn at its edge.</span>';
   }
 
   // ---- result -------------------------------------------------------------------------------
@@ -4600,6 +5022,8 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       const st = repeatStats(rp.runs.map(function (r) { return r.main_d; }));
       const ok = st.rsd < 0.02;
       out.push({ cls: iso ? (ok ? "good" : "bad") : "info", title: "Repeatability (ISO 22412, 10.3)", text: "Five new movies, sizes from " + mainTxt + ": relative standard deviation " + pctTxt(st.rsd) + "; ISO asks below 2 % for monodisperse particles of 50-200 nm" + (iso ? "." : " (these particles are outside that range, so the figure is only indicative).") + (ok ? "" : " To improve: more frames, a larger field (more particles), or a longer movie; DLS averages over far more particles and much longer times.") });
+    } else if (res.jackknife) {
+      out.push({ cls: "info", title: "Repeatability (estimate)", text: "The fits repeated " + res.jackknife.blocks + " times, each time with one " + ["", "", "half", "third", "quarter", "fifth", "sixth"][res.jackknife.blocks] + " of the movie left out (every delay is kept), give " + pctTxt(res.jackknife.rel_err) + " for the size from " + mainTxt + ". In simulations this matched or exceeded the scatter from movie to movie, but the parts share the same particles. Use \"Repeat 5 times\" below for the ISO test (target below 2 %" + (iso ? "" : "; strictly for monodisperse 50-200 nm") + ")." });
     } else if (res.blocks) {
       const est = res.blocks.rel_err_full;
       out.push({ cls: "info", title: "Repeatability (estimate)", text: "From " + res.blocks.n_blocks + " parts of this movie (" + res.blocks.frames_per_block + " frames each), sizes from " + mainTxt + ": a full movie should repeat within about " + pctTxt(est) + ". This is a lower bound, because the parts share the same particles. Use \"Repeat 5 times\" below for the ISO test (target below 2 %" + (iso ? "" : "; strictly for monodisperse 50-200 nm") + ")." });
@@ -4677,7 +5101,9 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       h += '<dt>Diffusion coefficient</dt><dd>' + (res.D ? fmtSig(res.D.D_um2_s, 3) : "-") + ' ' + MU + 'm<sup>2</sup>/s (true ' + (cfg.size_spread > 0 ? fmtSig(trueD(tr) / wallFactor(tr), 3) + ' weighted by the signal' : fmtSig(tr.D_um2_s, 3)) + (fw < 0.97 ? ' in open liquid, ' + fmtSig(trueD(tr), 3) + ' averaged near the glass' : '') + ')</dd>';
       h += '<dt>Liquid</dt><dd>' + LIQUIDS[state.liquid] + (state.liquid === "glycerol" ? " " + Math.round(100 * state.glycerol_w) + " %" : "") + ', ' + state.T_C.toFixed(0) + ' &deg;C, ' + (mv.viscosity_Pa_s * 1000).toFixed(2) + ' mPa s</dd>';
       h += '<dt>Wave vectors used</dt><dd>' + (res.D ? res.D.n_points : 0) + (res.used.length ? ', ' + res.used[0].q_per_um.toFixed(2) + ' to ' + res.used[res.used.length - 1].q_per_um.toFixed(2) + ' ' + MU + 'm\u207b\u00b9' : '') + '</dd>';
-      h += '<dt>Uncertainty</dt><dd>larger of the scatter between q (' + pctTxt(res.diameter_rel_err_points) + ')' + (res.blocks ? ' and the spread of ' + res.blocks.n_blocks + ' parts of the movie / &radic;' + res.blocks.n_blocks + ' (' + pctTxt(res.blocks.rel_err_full) + ')' : '') + '</dd>';
+      h += '<dt>Uncertainty</dt><dd>larger of the scatter between q (' + pctTxt(res.diameter_rel_err_points) + ')' + (res.jackknife ? ' and the jackknife: the fits repeated with one of ' + res.jackknife.blocks + ' parts of the movie left out (' + pctTxt(res.jackknife.rel_err) + ')' : res.blocks ? ' and the spread of ' + res.blocks.n_blocks + ' parts of the movie / &radic;' + res.blocks.n_blocks + ' (' + pctTxt(res.blocks.rel_err_full) + ')' : '') + '</dd>';
+      h += '<dt>Camera noise</dt><dd>' + (res.noise_B ? 'B = ' + fmtSig(res.noise_B, 3) + ' from the mean count, the read noise and the excess-noise factor of the camera, the same at every q' : 'B fitted at each q, between 0 and the first point of the curve') + '</dd>';
+      h += '<dt>Depth of field</dt><dd>' + (res.depth_model ? 'included: a particle that diffuses up or down fades from each pattern through the optics of step 1, and the fit allows for it' : 'not included') + '</dd>';
       if (res.beta_mean !== null) h += '<dt>Mean stretching &beta;</dt><dd>' + res.beta_mean.toFixed(2) + '</dd>';
       if (cu && cu.third) h += '<dt>Cumulants, 3rd order</dt><dd>' + fmtSize(sizeFromD(cu.third.D_um2_s)) + ', PI ' + cu.third.pi.toFixed(3) + ' &plusmn; ' + cu.third.pi_err.toFixed(3) + ' (less biased for broad distributions, but noisier)</dd>';
       h += '</dl></details>';
@@ -4725,7 +5151,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const shapeTxt = state.shape === "sphere" ? "" : { bisphere: "birefringent spherical ", prolate: "cigar-shaped ", oblate: "disc-shaped ", rod: "rod-shaped " }[state.shape];
     $("movie-text").textContent = "The movie shows " + fmtSize(cfg.diameter_um) + " " + shapeTxt + MATERIALS[state.particle].toLowerCase().replace(" (set the index)", "") + " particles in " + (LIQUIDS[state.liquid].toLowerCase()) + ", filmed through " + modeTxt + " " + fmtNum(cfg.frame_rate_hz) + " times a second. " +
       visibilityText(cfg, m) + " Particles above and below the focal plane add wider, fainter blurs." + (TURNS() ? " They also turn, which changes how they look" + (cfg.polarization ? " between the polarizers." : state.mode === "darkfield" ? " in dark field." : ".") : "");
-    $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s = " + fmtSig(m.T / m.frame_rate_hz, 3) + " s. Cell " + cfg.cell_um + " " + MU + "m thick, focus " + fmtSig(cfg.focus_um, 2) + " " + MU + "m above the bottom, " + m.info.n_particles + " particles.";
+    $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + (m.times_s ? m.T + " frames at log-spaced times, shortest interval 1/" + fmtNum(m.frame_rate_hz) + " s, over " + fmtDur(m.times_s[m.T - 1] + 1 / m.frame_rate_hz) : m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s = " + fmtSig(m.T / m.frame_rate_hz, 3) + " s") + ". Cell " + cfg.cell_um + " " + MU + "m thick, focus " + fmtSig(cfg.focus_um, 2) + " " + MU + "m above the bottom, " + m.info.n_particles + " particles.";
     if ($("turn-note")) $("turn-note").hidden = !TURNS();
     $("diff-note").textContent = "A particle that moved leaves a pair of spots, one darker and one brighter, at its old and its new place. Their arrangement looks random; the order hidden in it appears in the next step.";
     const sb = $("movie-scale"), target = m.L_um / 4, nice = niceStep(target) > target ? niceStep(target) / 2 : niceStep(target);
@@ -4752,12 +5178,13 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       L.push("  Mean hydrodynamic diameter (fit of each q, Gamma = D q^2): " + fmtSize(r.diameter_um) + ", relative uncertainty " + pc(r.diameter_rel_err));
       if (r.cumulants && r.cumulants.D_um2_s) L.push("  Cumulants: mean diameter " + fmtSize(sizeFromD(r.cumulants.D_um2_s)) + ", polydispersity index PI " + r.cumulants.pi.toFixed(3) + " +- " + r.cumulants.pi_err.toFixed(3) + " (" + r.cumulants.n_points + " q)");
       if (r.cumulants && r.cumulants.schulz_shared) L.push("  Schulz fit with one PI for all q: mean diameter " + fmtSize(sizeFromD(r.cumulants.schulz_shared.D_um2_s)) + ", PI " + r.cumulants.schulz_shared.pi.toFixed(3) + (r.cumulants.schulz_shared.pi_err !== null ? " +- " + r.cumulants.schulz_shared.pi_err.toFixed(3) : ""));
+      if (r.jackknife) L.push("  Uncertainty: jackknife over " + r.jackknife.blocks + " blocks of the movie (each left out in turn, all delays kept), relative " + pc(r.jackknife.rel_err));
       if (r.blocks) L.push("  Repeatability: " + r.blocks.n_blocks + " parts of " + r.blocks.frames_per_block + " frames, diameters " + r.blocks.D_um2_s.map(function (D) { return fmtSize(sizeFromD(D)); }).join(", ") + ", relative SD " + pc(r.blocks.rel_sd));
       L.push("  Number of individual measurements: 1 movie (" + mv.T + " frames), " + r.D.n_points + " wave vectors");
     } else L.push("  No result: too few usable wave vectors.");
     L.push("");
     L.push("Evaluation");
-    L.push("  Algorithm: differential dynamic microscopy; structure function azimuthally averaged (central cross masked); " + (r.B_floor !== null && r.B_floor !== undefined ? "noise B from the flat floor beyond the optical cut-off" : "noise B from the zero-delay intercept of the first five delays") + ", A + B = 2 var; " + MODEL_NAME[r.fit_model] + " fit at each q; D as the weighted mean of Gamma / q^2 (geometric mean, logarithmic scale); cumulants to second order on f(q, dt) from f = 1 down to f1/10.");
+    L.push("  Algorithm: differential dynamic microscopy; structure function azimuthally averaged (central cross masked); " + (r.noise_B ? "camera noise B from the mean count, read noise and excess-noise factor, the same at every q" : r.B_floor !== null && r.B_floor !== undefined ? "noise B from the flat floor beyond the optical cut-off" : "noise B from the zero-delay intercept of the first five delays") + (r.depth_model ? "; depth of field included (axial diffusion through the optical kernel)" : "") + ", A + B = 2 var; " + MODEL_NAME[r.fit_model] + " fit at each q; D as the weighted mean of Gamma / q^2 (geometric mean, logarithmic scale); cumulants to second order on f(q, dt) from f = 1 down to f1/10.");
     L.push("  Wave vectors used: " + (r.used.length ? r.used[0].q_per_um.toFixed(2) + " to " + r.used[r.used.length - 1].q_per_um.toFixed(2) + " um^-1" : "none") + "; delays " + fmtTime(r.taus_s[0]) + " to " + fmtTime(r.taus_s[r.taus_s.length - 1]) + ".");
     L.push("  Results are weighted by the signal of each particle in the images (the counterpart of intensity weighting in DLS); no conversion to volume or number distributions.");
     L.push("");
@@ -4768,12 +5195,12 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     L.push("");
     L.push("Measurement conditions (simulated)");
     L.push("  Microscope: Nikon Ti2-E, " + objective().n + ", " + ($("c-mode").selectedOptions[0].textContent) + "; detector " + (SCANNING() ? "Nikon AX R" : cam().label));
-    L.push("  Movie: " + mv.n + " x " + mv.n + " pixels of " + fmtSig(mv.pixel_um, 3) + " um, " + mv.T + " frames at " + fmtNum(mv.frame_rate_hz) + " frames/s (duration " + fmtSig(mv.T / mv.frame_rate_hz, 3) + " s)");
+    L.push("  Movie: " + mv.n + " x " + mv.n + " pixels of " + fmtSig(mv.pixel_um, 3) + " um, " + (mv.times_s ? mv.T + " frames at log-spaced times (shortest interval 1/" + fmtNum(mv.frame_rate_hz) + " s, duration " + fmtSig(mv.times_s[mv.T - 1] + 1 / mv.frame_rate_hz, 3) + " s)" : mv.T + " frames at " + fmtNum(mv.frame_rate_hz) + " frames/s (duration " + fmtSig(mv.T / mv.frame_rate_hz, 3) + " s)"));
     L.push("");
     L.push("True values of the simulation: diameter " + fmtSize(tr.diameter_um) + (cfg.size_spread > 0 ? ", signal-weighted " + fmtSize(seenDiameter(tr, r)) : "") + ".");
     el.textContent = L.join("\n");
   }
-  function renderLag() { const res = cache.res, li = lagIndex(); $("lag").max = res.lags.length - 1; $("lag-out").textContent = fmtTime(res.taus_s[li]) + " (" + res.lags[li] + (res.lags[li] === 1 ? " frame)" : " frames)"); }
+  function renderLag() { const res = cache.res, li = lagIndex(); $("lag").max = res.lags.length - 1; $("lag-out").textContent = fmtDur(res.taus_s[li]) + (res.pairs ? " (" + res.lags[li] + (res.lags[li] === 1 ? " frame interval, " : " frame intervals, ") + res.pairs[li].length / 2 + " pairs of frames)" : " (" + res.lags[li] + (res.lags[li] === 1 ? " frame)" : " frames)")); }
   function renderAll() {
     if (!cache.res) return;
     readColors(); grey = greyRange(cache.movie); diffScale = null;
@@ -4912,6 +5339,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       return { key: c.key, kind: c.kind, lvl: c.lvl, min: c.min, max: c.max, options: opts };
     }); },
     truth: function () { return cache && cache.movie ? cache.movie.truth : null; },
+    cfg: function () { return cache && cache.cfg ? JSON.parse(JSON.stringify(cache.cfg)) : null; },
     result: function () { return cache && cache.res ? { D: cache.res.D ? cache.res.D.D_um2_s : null, d: cache.res.diameter_um, rot: cache.res.rot && cache.res.rot.D_r_s ? cache.res.rot.D_r_s : null, reasons: cache.res.fits.map(function (f) { return f.reason; }) } : null; }
   };
 })();

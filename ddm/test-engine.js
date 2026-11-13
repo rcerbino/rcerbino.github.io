@@ -75,6 +75,46 @@ function check(name, cond, info) { console.log((cond ? "ok   " : "FAIL ") + name
   check("one-mode curve with noise is kept as one mode", !g2.two, g2.two ? "split into " + g2.gamma_hz.toFixed(2) + " and " + g2.gamma2_hz.toFixed(2) : "");
 }
 
+// log-spaced frames: every Fourier mode an Ornstein-Uhlenbeck process with rate G(q) = D q^2, sampled exactly at uneven
+// times (movie.js logTimes). The structure function from grouped pairs must equal 2 var (1 - exp(-G tau)), and the
+// evenly spaced frames must give the same groups as before (no times: the integer-lag path)
+{
+  const MOVIE = require("./movie.js");
+  const n = 32, T = 256, P = n * n, dt = 0.02, L_um = 50, D = 0.4, rng = DDM._test.makeRng(11);
+  const times = MOVIE.logTimes(T, dt, 20);
+  let gaps = Infinity; for (let k = 1; k < T; k++) gaps = Math.min(gaps, times[k] - times[k - 1]);
+  const span = (times[T - 1] + dt) / (T * dt);
+  check("log-spaced frames: no two frames closer than the frame interval, movie about 20 times longer", gaps >= dt * (1 - 1e-9) && Math.abs(span / 20 - 1) < 0.1, "shortest gap " + (gaps / dt).toFixed(3) + " frame intervals, movie " + span.toFixed(1) + " times longer");
+  const fft = new Float32Array(2 * P * T), rate = new Float64Array(P);
+  for (let iy = 0; iy < n; iy++) for (let ix = 0; ix < n; ix++) {
+    const kx = ix < n / 2 ? ix : ix - n, ky = iy < n / 2 ? iy : iy - n, q = 2 * Math.PI * Math.hypot(kx, ky) / L_um, p = iy * n + ix;
+    rate[p] = D * q * q;
+    let re = rng.gauss(), im = rng.gauss();
+    for (let t = 0; t < T; t++) {
+      if (t > 0) { const e = Math.exp(-rate[p] * (times[t] - times[t - 1])), s = Math.sqrt(1 - e * e); re = e * re + s * rng.gauss(); im = e * im + s * rng.gauss(); }
+      fft[2 * P * t + 2 * p] = re * Math.sqrt(P); fft[2 * P * t + 2 * p + 1] = im * Math.sqrt(P);   // variance per mode 2 after the 1/P normalisation
+    }
+  }
+  const movie = { n: n, T: T, fft: fft, L_um: L_um, pixel_um: L_um / n, frame_rate_hz: 1 / dt, q_opt_per_um: 10, q_signal_max_per_um: 10, times_s: times };
+  const S = DDM.runToEnd(DDM.structure(movie, {}));
+  // wave vectors whose modes relax many times during the movie (the scatter of slower ones is set by the few
+  // independent stretches of movie, not by the method)
+  let worst = 0, mean = 0, nb = 0;
+  for (const b of [8, 11, 14]) {
+    const q = S.q_per_um[b], G = D * q * q;
+    for (let i = 0; i < S.L; i++) {
+      const th = 4 * (1 - Math.exp(-G * S.taus_s[i]));
+      if (th > 0.2) { const r = S.dq[i][b] / th - 1; worst = Math.max(worst, Math.abs(r)); mean += r; nb++; }
+    }
+  }
+  mean /= nb;
+  let ratio = 0; for (let i = 1; i < S.L; i++) ratio = Math.max(ratio, S.taus_s[i] / S.taus_s[i - 1]);
+  check("log-spaced frames: delays without gaps (no two next delays more than a factor 2 apart)", ratio <= 2.0001, S.L + " delays, largest ratio " + ratio.toFixed(2));
+  check("log-spaced frames: structure function from grouped pairs follows 2 var (1 - exp(-D q^2 tau))", worst < 0.12 && Math.abs(mean) < 0.04, S.L + " delays from " + (S.taus_s[0] / dt).toFixed(0) + " to " + (S.taus_s[S.L - 1] / dt).toFixed(0) + " frame intervals; mean relative difference " + (100 * mean).toFixed(1) + " %, largest " + (100 * worst).toFixed(1) + " % over " + nb + " points");
+  let nmax = 0; for (const pr of S.pairs) nmax = Math.max(nmax, pr.length / 2);
+  check("log-spaced frames: at most as many pairs per delay as frames", nmax <= T, "most pairs in one group " + nmax);
+}
+
 // (the full pipeline is tested in test-movie.js with the optical simulator)
 console.log(failures === 0 ? "\nALL CHECKS PASSED" : "\n" + failures + " CHECK(S) FAILED");
 process.exit(failures === 0 ? 0 : 1);
