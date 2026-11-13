@@ -117,7 +117,7 @@
     camera: "orca", cam_mode: "standard", iface: "cameralink", binning: 1, roi: 512, sim_px: 128, n_frames: 256,
     annulus: "Ph2", ring_T: 0.25, df_kind: "dry", df_light_e: 1e7, stray_frac: 1e-4, dic_shear_um: 0.24, dic_bias_deg: 90, dic_angle_deg: 45,
     scanner: "resonant", scan_px: 512, zoom: 1, line_avg: 2, pinhole_au: 1, scan_rate: 2e7,
-    frame_rate_hz: 100, exposure_ms: 0.2,
+    frame_rate_hz: 100, exposure_ms: 0.2, frame_timing: "even", log_factor: 20,
     shape: "sphere", aspect: 3, dn: 0.1, dn_body: 0, polarizer: "off", analyzer: "off", pol_angle_deg: 90, extinction: 1e-4,
     fit_model: "auto", images: "recorded", q_min: null, q_max: null, seed: 1
   };
@@ -169,6 +169,13 @@
     return 1000 * t;
   }
   function maxFrames(n) { return Math.floor((1 << 23) / (n * n)); }
+  // frame timing: log-spaced frames in a repeating cycle, the movie log_factor times longer (movie.js logTimes)
+  function BURSTS() { return state.frame_timing === "log" && state.log_factor > 1; }
+  function movieSpanS(stretch) {
+    const T = Math.min(state.n_frames, maxFrames(simPx())), dt = 1 / state.frame_rate_hz, k = stretch === undefined ? (BURSTS() ? state.log_factor : 1) : stretch;
+    return k > 1 ? MOVIE.logTimes(T, dt, k)[T - 1] + dt : T * dt;
+  }
+  function fmtDur(s) { return s < 120 ? fmtTime(s) : s < 7200 ? fmtSig(s / 60, 2) + " min" : fmtSig(s / 3600, 2) + " h"; }
   function liquidSpec() {
     if (state.liquid === "water") return { glycerol_w: 0 };
     if (state.liquid === "glycerol") return { glycerol_w: state.glycerol_w };
@@ -249,7 +256,7 @@
       photons_per_particle: Math.max(0.01, state.rate_ph_ms * state.exposure_ms), background_photons: SCANNING() ? 0.01 : state.bg_e_ms * state.exposure_ms * state.binning * state.binning,
       scan_rate_hz: state.scan_rate, light_frac: state.light_frac,
       detector: detectorConfig(), n_px: simPx(), n_frames: Math.min(state.n_frames, maxFrames(simPx())),
-      frame_rate_hz: state.frame_rate_hz, exposure_s: SCANNING() ? 0 : state.exposure_ms / 1000,
+      frame_rate_hz: state.frame_rate_hz, exposure_s: SCANNING() ? 0 : state.exposure_ms / 1000, log_timing: BURSTS() ? { factor: state.log_factor } : null,
       particle: state.particle === "custom" ? { n: state.n_custom, rho: state.rho_custom } : state.particle, diameter_um: state.diameter_um, size_distribution: state.size_dist, size_spread: state.size_spread,
       shape: state.shape, aspect: BODY() ? Math.max(state.shape === "rod" ? 2 : 1, state.aspect) : 1, birefringence: state.shape === "sphere" || !TRANS() ? 0 : state.shape === "bisphere" ? state.dn : state.dn_body, polarization: polarization(),
       volume_fraction: state.phi, liquid: liquidSpec(), T_C: state.T_C, cell_um: state.cell_um, focus_um: state.focus_frac * state.cell_um,
@@ -327,6 +334,10 @@
     { key: "light_frac", group: "Camera and recording", lvl: 2, label: "Lamp brightness (background as a share of the full well)", kind: "log", min: 0.002, max: 0.9, fmt: function (v) { return fmtSig(100 * v, 2) + " %"; }, when: function () { return TRANS() && state.mode !== "darkfield"; }, hint: function () { const fw = detFullWell(); return "Background " + Math.round(state.light_frac * fw) + " electrons per pixel; shot noise " + fmtSig(100 / Math.sqrt(state.light_frac * fw), 2) + " %."; } },
     { key: "n_frames", group: "Camera and recording", lvl: 2, label: "Number of frames", kind: "select", num: true, options: [[128, "128"], [256, "256"], [512, "512"], [1024, "1024"], [2048, "2048"]],
       hint: function () { return "The browser holds up to " + maxFrames(simPx()) + " frames at " + simPx() + " x " + simPx() + " pixels; asking for more makes the simulated image smaller."; } },
+    { key: "frame_timing", group: "Camera and recording", lvl: 2, label: "Frame timing", kind: "select", options: [["even", "Evenly spaced"], ["log", "Log-spaced, in a repeating cycle (like a multi-tau correlator)"]],
+      hint: function () { return BURSTS() ? "The same frames cover " + fmtDur(movieSpanS()) + " instead of " + fmtDur(Math.min(state.n_frames, maxFrames(simPx())) / state.frame_rate_hz) + ". In each cycle the first frames follow at the frame rate, then the gaps grow by a fixed factor; the cycle repeats. Slow and fast particles then fit in one movie." : "All frames one frame interval apart: " + fmtDur(Math.min(state.n_frames, maxFrames(simPx())) / state.frame_rate_hz) + " of movie."; } },
+    { key: "log_factor", group: "Camera and recording", lvl: 2, label: "Log-spaced: how much longer the movie lasts", kind: "select", num: true, when: function () { return state.frame_timing === "log"; },
+      options: function () { return [5, 10, 20, 50].map(function (k) { return [k, k + " times (" + fmtDur(movieSpanS(k)) + ")"]; }); } },
     { key: "sim_px", group: "Camera and recording", lvl: 3, label: "Simulated part of the image", kind: "select", num: true, options: [[64, "64 x 64 pixels (fast)"], [128, "128 x 128 pixels"], [256, "256 x 256 pixels (slow)"]] },
 
     { key: "fit_model", group: "Analysis", lvl: 2, label: "Fit at each q (sets the headline size)", kind: "select", options: [["auto", "Automatic: simple exponential, or modes for particles that turn"], ["simple", "Simple exponential (identical particles)"], ["schulz", "Schulz distribution of rates (mixed sizes)"], ["stretched", "Stretched exponential"], ["two", "Two modes: translation, translation + rotation"], ["three", "Three modes: adds 20 D_R (crossed polarizers)"]], hint: "Cumulants (as in DLS) and a Schulz fit are always computed too and shown next to the headline, so the methods can be compared. Repeatability and the other checks use the fit chosen here." },
@@ -340,7 +351,7 @@
     ["Sample", ["shape", "particle", "n_custom", "diameter_um", "aspect", "dn", "dn_body", "size_spread", "size_dist", "phi", "dye", "liquid", "glycerol_w", "n_liquid", "visc_mPa_s", "rho_liquid", "T_C", "cell_um", "settle", "rho_custom", "drift_um_s"]],
     ["Illumination", ["source", "condenser", "na_c", "df_kind", "annulus", "polarizer", "light_frac", "df_light_e", "stray_frac", "rate_ph_ms", "bg_e_ms", "scan_rate"]],
     ["Detection", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg", "analyzer", "pol_angle_deg", "extinction",
-      "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "sim_px"]],
+      "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "log_factor", "sim_px"]],
     ["Analysis", ["images", "fit_model", "qrange"]]
   ];
   (function () {
@@ -863,14 +874,15 @@
   function lagFrames() { return cache.res.lags[lagIndex()]; }
   let diffScale = null;
   function drawDiff(t) {
-    const movie = cache.movie, n = movie.n, m = lagFrames();
-    const t0 = t % (movie.T - m), c = $("diff");
+    const movie = cache.movie, n = movie.n, m = lagFrames(), pr = cache.res.pairs ? cache.res.pairs[lagIndex()] : null;
+    // evenly spaced frames: frame t and frame t + lag; log-spaced: the pairs of frames that are this far apart, in turn
+    const k = pr ? t % (pr.length / 2) : 0, f1 = pr ? pr[2 * k] : t % (movie.T - m), f2 = pr ? pr[2 * k + 1] : f1 + m, c = $("diff");
     if (c.width !== n) { c.width = n; c.height = n; }
     const ctx = c.getContext("2d"), img = ctx.createImageData(n, n), d = img.data;
-    const o1 = t0 * n * n, o2 = (t0 + m) * n * n;
+    const o1 = f1 * n * n, o2 = f2 * n * n;
     if (diffScale === null) {
-      const M = cache.res.lags[cache.res.lags.length - 1]; let s = 0;
-      for (let p = 0; p < n * n; p++) { const v = movie.frames[M * n * n + p] - movie.frames[p]; s += v * v; }
+      const pl = cache.res.pairs ? cache.res.pairs[cache.res.pairs.length - 1] : null, M1 = pl ? pl[0] : 0, M2 = pl ? pl[1] : cache.res.lags[cache.res.lags.length - 1]; let s = 0;
+      for (let p = 0; p < n * n; p++) { const v = movie.frames[M2 * n * n + p] - movie.frames[M1 * n * n + p]; s += v * v; }
       diffScale = 3 * Math.sqrt(s / (n * n)) || 1;
     }
     for (let p = 0; p < n * n; p++) { const v = 128 + 127 * (movie.frames[o2 + p] - movie.frames[o1 + p]) / diffScale; d[4 * p] = d[4 * p + 1] = d[4 * p + 2] = Math.max(0, Math.min(255, v)); d[4 * p + 3] = 255; }
@@ -889,7 +901,8 @@
     drawFrame($("movie"), cache.movie, frameIdx);
     drawFrame($("hero-canvas"), cache.movie, frameIdx);
     drawDiff(frameIdx);
-    const dt = 1 / cache.movie.frame_rate_hz, fps = Math.max(8, Math.min(60, cache.movie.frame_rate_hz)), speed = fps / cache.movie.frame_rate_hz;
+    const dt = 1 / cache.movie.frame_rate_hz, fps = Math.max(8, Math.min(60, cache.movie.frame_rate_hz)), speed = fps / cache.movie.frame_rate_hz, tt = cache.movie.times_s;
+    if (tt) { $("movie-time").textContent = "Frame " + (frameIdx + 1) + " of " + cache.movie.T + ", taken at t = " + fmtSig(tt[frameIdx], 3) + " s of " + fmtDur(tt[cache.movie.T - 1] + dt) + ". Frames taken at log-spaced times, shown one after the other."; return; }
     $("movie-time").textContent = "t = " + (frameIdx * dt).toFixed(dt < 0.01 ? 3 : dt < 0.1 ? 2 : 1) + " s of " + fmtSig(cache.movie.T * dt, 3) + " s" +
       (Math.abs(speed - 1) > 0.01 ? (speed < 1 ? ", slowed down " + fmtNum(1 / speed) + " times" : ", sped up " + fmtNum(speed) + " times") : ", real time");
   }
@@ -1123,7 +1136,7 @@
     });
     ctx.setLineDash([5, 4]); ctx.strokeStyle = C.muted; ctx.lineWidth = 1; const xq = a.fx(w.q_opt_per_um); ctx.beginPath(); ctx.moveTo(xq, a.m.t); ctx.lineTo(xq, a.m.t + a.ph); ctx.stroke(); ctx.setLineDash([]);
     a.done();
-    $("amp-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>A: fit (dots), 2 var - B from the data (line)</span><span><i style="background:' + C.muted + '"></i>B: fit (dots), zero-delay intercept (dashed)</span><span>Hollow: point not used. Points beyond the axis are drawn at its edge.</span>';
+    $("amp-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>A: fit (dots), 2 var - B from the data (line)</span><span><i style="background:' + C.muted + '"></i>' + (res.noise_B ? 'B: camera noise from the mean count (dashed), the same at every q' : 'B: fit (dots), zero-delay intercept (dashed)') + '</span><span>Hollow: point not used. Points beyond the axis are drawn at its edge.</span>';
   }
 
   // ---- result -------------------------------------------------------------------------------
@@ -1229,6 +1242,8 @@
       const st = repeatStats(rp.runs.map(function (r) { return r.main_d; }));
       const ok = st.rsd < 0.02;
       out.push({ cls: iso ? (ok ? "good" : "bad") : "info", title: "Repeatability (ISO 22412, 10.3)", text: "Five new movies, sizes from " + mainTxt + ": relative standard deviation " + pctTxt(st.rsd) + "; ISO asks below 2 % for monodisperse particles of 50-200 nm" + (iso ? "." : " (these particles are outside that range, so the figure is only indicative).") + (ok ? "" : " To improve: more frames, a larger field (more particles), or a longer movie; DLS averages over far more particles and much longer times.") });
+    } else if (res.jackknife) {
+      out.push({ cls: "info", title: "Repeatability (estimate)", text: "The fits repeated " + res.jackknife.blocks + " times, each time with one " + ["", "", "half", "third", "quarter", "fifth", "sixth"][res.jackknife.blocks] + " of the movie left out (every delay is kept), give " + pctTxt(res.jackknife.rel_err) + " for the size from " + mainTxt + ". In simulations this matched or exceeded the scatter from movie to movie, but the parts share the same particles. Use \"Repeat 5 times\" below for the ISO test (target below 2 %" + (iso ? "" : "; strictly for monodisperse 50-200 nm") + ")." });
     } else if (res.blocks) {
       const est = res.blocks.rel_err_full;
       out.push({ cls: "info", title: "Repeatability (estimate)", text: "From " + res.blocks.n_blocks + " parts of this movie (" + res.blocks.frames_per_block + " frames each), sizes from " + mainTxt + ": a full movie should repeat within about " + pctTxt(est) + ". This is a lower bound, because the parts share the same particles. Use \"Repeat 5 times\" below for the ISO test (target below 2 %" + (iso ? "" : "; strictly for monodisperse 50-200 nm") + ")." });
@@ -1306,7 +1321,9 @@
       h += '<dt>Diffusion coefficient</dt><dd>' + (res.D ? fmtSig(res.D.D_um2_s, 3) : "-") + ' ' + MU + 'm<sup>2</sup>/s (true ' + (cfg.size_spread > 0 ? fmtSig(trueD(tr) / wallFactor(tr), 3) + ' weighted by the signal' : fmtSig(tr.D_um2_s, 3)) + (fw < 0.97 ? ' in open liquid, ' + fmtSig(trueD(tr), 3) + ' averaged near the glass' : '') + ')</dd>';
       h += '<dt>Liquid</dt><dd>' + LIQUIDS[state.liquid] + (state.liquid === "glycerol" ? " " + Math.round(100 * state.glycerol_w) + " %" : "") + ', ' + state.T_C.toFixed(0) + ' &deg;C, ' + (mv.viscosity_Pa_s * 1000).toFixed(2) + ' mPa s</dd>';
       h += '<dt>Wave vectors used</dt><dd>' + (res.D ? res.D.n_points : 0) + (res.used.length ? ', ' + res.used[0].q_per_um.toFixed(2) + ' to ' + res.used[res.used.length - 1].q_per_um.toFixed(2) + ' ' + MU + 'm\u207b\u00b9' : '') + '</dd>';
-      h += '<dt>Uncertainty</dt><dd>larger of the scatter between q (' + pctTxt(res.diameter_rel_err_points) + ')' + (res.blocks ? ' and the spread of ' + res.blocks.n_blocks + ' parts of the movie / &radic;' + res.blocks.n_blocks + ' (' + pctTxt(res.blocks.rel_err_full) + ')' : '') + '</dd>';
+      h += '<dt>Uncertainty</dt><dd>larger of the scatter between q (' + pctTxt(res.diameter_rel_err_points) + ')' + (res.jackknife ? ' and the jackknife: the fits repeated with one of ' + res.jackknife.blocks + ' parts of the movie left out (' + pctTxt(res.jackknife.rel_err) + ')' : res.blocks ? ' and the spread of ' + res.blocks.n_blocks + ' parts of the movie / &radic;' + res.blocks.n_blocks + ' (' + pctTxt(res.blocks.rel_err_full) + ')' : '') + '</dd>';
+      h += '<dt>Camera noise</dt><dd>' + (res.noise_B ? 'B = ' + fmtSig(res.noise_B, 3) + ' from the mean count, the read noise and the excess-noise factor of the camera, the same at every q' : 'B fitted at each q, between 0 and the first point of the curve') + '</dd>';
+      h += '<dt>Depth of field</dt><dd>' + (res.depth_model ? 'included: a particle that diffuses up or down fades from each pattern through the optics of step 1, and the fit allows for it' : 'not included') + '</dd>';
       if (res.beta_mean !== null) h += '<dt>Mean stretching &beta;</dt><dd>' + res.beta_mean.toFixed(2) + '</dd>';
       if (cu && cu.third) h += '<dt>Cumulants, 3rd order</dt><dd>' + fmtSize(sizeFromD(cu.third.D_um2_s)) + ', PI ' + cu.third.pi.toFixed(3) + ' &plusmn; ' + cu.third.pi_err.toFixed(3) + ' (less biased for broad distributions, but noisier)</dd>';
       h += '</dl></details>';
@@ -1354,7 +1371,7 @@
     const shapeTxt = state.shape === "sphere" ? "" : { bisphere: "birefringent spherical ", prolate: "cigar-shaped ", oblate: "disc-shaped ", rod: "rod-shaped " }[state.shape];
     $("movie-text").textContent = "The movie shows " + fmtSize(cfg.diameter_um) + " " + shapeTxt + MATERIALS[state.particle].toLowerCase().replace(" (set the index)", "") + " particles in " + (LIQUIDS[state.liquid].toLowerCase()) + ", filmed through " + modeTxt + " " + fmtNum(cfg.frame_rate_hz) + " times a second. " +
       visibilityText(cfg, m) + " Particles above and below the focal plane add wider, fainter blurs." + (TURNS() ? " They also turn, which changes how they look" + (cfg.polarization ? " between the polarizers." : state.mode === "darkfield" ? " in dark field." : ".") : "");
-    $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s = " + fmtSig(m.T / m.frame_rate_hz, 3) + " s. Cell " + cfg.cell_um + " " + MU + "m thick, focus " + fmtSig(cfg.focus_um, 2) + " " + MU + "m above the bottom, " + m.info.n_particles + " particles.";
+    $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + (m.times_s ? m.T + " frames at log-spaced times, shortest interval 1/" + fmtNum(m.frame_rate_hz) + " s, over " + fmtDur(m.times_s[m.T - 1] + 1 / m.frame_rate_hz) : m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s = " + fmtSig(m.T / m.frame_rate_hz, 3) + " s") + ". Cell " + cfg.cell_um + " " + MU + "m thick, focus " + fmtSig(cfg.focus_um, 2) + " " + MU + "m above the bottom, " + m.info.n_particles + " particles.";
     if ($("turn-note")) $("turn-note").hidden = !TURNS();
     $("diff-note").textContent = "A particle that moved leaves a pair of spots, one darker and one brighter, at its old and its new place. Their arrangement looks random; the order hidden in it appears in the next step.";
     const sb = $("movie-scale"), target = m.L_um / 4, nice = niceStep(target) > target ? niceStep(target) / 2 : niceStep(target);
@@ -1381,12 +1398,13 @@
       L.push("  Mean hydrodynamic diameter (fit of each q, Gamma = D q^2): " + fmtSize(r.diameter_um) + ", relative uncertainty " + pc(r.diameter_rel_err));
       if (r.cumulants && r.cumulants.D_um2_s) L.push("  Cumulants: mean diameter " + fmtSize(sizeFromD(r.cumulants.D_um2_s)) + ", polydispersity index PI " + r.cumulants.pi.toFixed(3) + " +- " + r.cumulants.pi_err.toFixed(3) + " (" + r.cumulants.n_points + " q)");
       if (r.cumulants && r.cumulants.schulz_shared) L.push("  Schulz fit with one PI for all q: mean diameter " + fmtSize(sizeFromD(r.cumulants.schulz_shared.D_um2_s)) + ", PI " + r.cumulants.schulz_shared.pi.toFixed(3) + (r.cumulants.schulz_shared.pi_err !== null ? " +- " + r.cumulants.schulz_shared.pi_err.toFixed(3) : ""));
+      if (r.jackknife) L.push("  Uncertainty: jackknife over " + r.jackknife.blocks + " blocks of the movie (each left out in turn, all delays kept), relative " + pc(r.jackknife.rel_err));
       if (r.blocks) L.push("  Repeatability: " + r.blocks.n_blocks + " parts of " + r.blocks.frames_per_block + " frames, diameters " + r.blocks.D_um2_s.map(function (D) { return fmtSize(sizeFromD(D)); }).join(", ") + ", relative SD " + pc(r.blocks.rel_sd));
       L.push("  Number of individual measurements: 1 movie (" + mv.T + " frames), " + r.D.n_points + " wave vectors");
     } else L.push("  No result: too few usable wave vectors.");
     L.push("");
     L.push("Evaluation");
-    L.push("  Algorithm: differential dynamic microscopy; structure function azimuthally averaged (central cross masked); " + (r.B_floor !== null && r.B_floor !== undefined ? "noise B from the flat floor beyond the optical cut-off" : "noise B from the zero-delay intercept of the first five delays") + ", A + B = 2 var; " + MODEL_NAME[r.fit_model] + " fit at each q; D as the weighted mean of Gamma / q^2 (geometric mean, logarithmic scale); cumulants to second order on f(q, dt) from f = 1 down to f1/10.");
+    L.push("  Algorithm: differential dynamic microscopy; structure function azimuthally averaged (central cross masked); " + (r.noise_B ? "camera noise B from the mean count, read noise and excess-noise factor, the same at every q" : r.B_floor !== null && r.B_floor !== undefined ? "noise B from the flat floor beyond the optical cut-off" : "noise B from the zero-delay intercept of the first five delays") + (r.depth_model ? "; depth of field included (axial diffusion through the optical kernel)" : "") + ", A + B = 2 var; " + MODEL_NAME[r.fit_model] + " fit at each q; D as the weighted mean of Gamma / q^2 (geometric mean, logarithmic scale); cumulants to second order on f(q, dt) from f = 1 down to f1/10.");
     L.push("  Wave vectors used: " + (r.used.length ? r.used[0].q_per_um.toFixed(2) + " to " + r.used[r.used.length - 1].q_per_um.toFixed(2) + " um^-1" : "none") + "; delays " + fmtTime(r.taus_s[0]) + " to " + fmtTime(r.taus_s[r.taus_s.length - 1]) + ".");
     L.push("  Results are weighted by the signal of each particle in the images (the counterpart of intensity weighting in DLS); no conversion to volume or number distributions.");
     L.push("");
@@ -1397,12 +1415,12 @@
     L.push("");
     L.push("Measurement conditions (simulated)");
     L.push("  Microscope: Nikon Ti2-E, " + objective().n + ", " + ($("c-mode").selectedOptions[0].textContent) + "; detector " + (SCANNING() ? "Nikon AX R" : cam().label));
-    L.push("  Movie: " + mv.n + " x " + mv.n + " pixels of " + fmtSig(mv.pixel_um, 3) + " um, " + mv.T + " frames at " + fmtNum(mv.frame_rate_hz) + " frames/s (duration " + fmtSig(mv.T / mv.frame_rate_hz, 3) + " s)");
+    L.push("  Movie: " + mv.n + " x " + mv.n + " pixels of " + fmtSig(mv.pixel_um, 3) + " um, " + (mv.times_s ? mv.T + " frames at log-spaced times (shortest interval 1/" + fmtNum(mv.frame_rate_hz) + " s, duration " + fmtSig(mv.times_s[mv.T - 1] + 1 / mv.frame_rate_hz, 3) + " s)" : mv.T + " frames at " + fmtNum(mv.frame_rate_hz) + " frames/s (duration " + fmtSig(mv.T / mv.frame_rate_hz, 3) + " s)"));
     L.push("");
     L.push("True values of the simulation: diameter " + fmtSize(tr.diameter_um) + (cfg.size_spread > 0 ? ", signal-weighted " + fmtSize(seenDiameter(tr, r)) : "") + ".");
     el.textContent = L.join("\n");
   }
-  function renderLag() { const res = cache.res, li = lagIndex(); $("lag").max = res.lags.length - 1; $("lag-out").textContent = fmtTime(res.taus_s[li]) + " (" + res.lags[li] + (res.lags[li] === 1 ? " frame)" : " frames)"); }
+  function renderLag() { const res = cache.res, li = lagIndex(); $("lag").max = res.lags.length - 1; $("lag-out").textContent = fmtDur(res.taus_s[li]) + (res.pairs ? " (" + res.lags[li] + (res.lags[li] === 1 ? " frame interval, " : " frame intervals, ") + res.pairs[li].length / 2 + " pairs of frames)" : " (" + res.lags[li] + (res.lags[li] === 1 ? " frame)" : " frames)")); }
   function renderAll() {
     if (!cache.res) return;
     readColors(); grey = greyRange(cache.movie); diffScale = null;

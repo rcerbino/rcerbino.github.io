@@ -478,6 +478,24 @@
     const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
     need("q_min_per_um" in opts && "q_max_per_um" in opts, "q range missing (use null for the full range)");
     const S = yield* structure(movie, opts);
+    // camera noise: B = 2 (excess-noise factor x mean count + read noise^2) per pixel, the same at every q (white noise),
+    // from the frames and the detector (known to the experimenter). Not for the squared gradient (its noise is not white)
+    // nor for scanners; opts.noise "fit" fits B at each q as before
+    let noiseB = null;
+    if (opts.noise !== "fit" && !S.sg && movie.info && movie.info.detector_kind === "camera" && movie.frames && typeof movie.info.read_noise_e === "number") {
+      let sum = 0; const F = movie.frames; for (let k = 0; k < F.length; k++) sum += F[k];
+      noiseB = 2 * ((movie.info.excess_noise || 1) * sum / F.length + movie.info.read_noise_e * movie.info.read_noise_e);
+      for (let b = 1; b <= S.nb; b++) if (S.nmodes[b] > 0) { S.B_est[b] = noiseB; S.A_est[b] = 2 * S.varq[b] - noiseB; }
+    }
+    BFIX = noiseB;
+    // depth of field (opts.depth, on by default when the movie carries its optics; not with the squared gradient, whose
+    // image is not linear in the particles, nor with two image channels)
+    const info = movie.info, useDepth = opts.depth !== false && !S.sg && info && info.kernel && info.kernel_q && info.cell_z_um && !info.split;
+    if (useDepth) { const cache = new Map(); DEPTH = function (q) { const k = q.toPrecision(6); if (!cache.has(k)) cache.set(k, depthC(info, q)); return cache.get(k); }; }
+    try { const r = yield* analyseFits(movie, opts, S, noiseB); r.depth_model = !!useDepth; return r; } finally { BFIX = null; DEPTH = null; }
+  }
+  function* analyseFits(movie, opts, S, noiseB) {
+    const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
     const images = S.images, n = S.n, T = S.T, P = S.P, fft = S.fft, lags = S.lags, L = S.L, taus_s = S.taus_s, nb = S.nb, binOf = S.binOf, nmodes = S.nmodes,
       q_per_um = S.q_per_um, d2d = S.d2d, dq = S.dq, varq = S.varq, q_lo_per_um = S.q_lo_per_um, q_nyq_per_um = S.q_nyq_per_um, q_opt_per_um = S.q_opt_per_um,
       q_hi_per_um = S.q_hi_per_um, gamma_lo_hz = S.gamma_lo_hz, gamma_hi_hz = S.gamma_hi_hz, B_floor = S.B_floor, B_est = S.B_est, A_est = S.A_est;
@@ -504,6 +522,7 @@
       else if (f.lnGamma_se > MAX_LN_GAMMA_SE) f.reason = "signal lost in camera noise";
       else if (f.gamma_hz <= gamma_lo_hz) f.reason = "too slow for this movie";
       else if (f.gamma_hz >= gamma_hi_hz) f.reason = "too fast for this frame rate";
+      else if (DEPTH && DEPTH(f.q_per_um) && depthFade(DEPTH(f.q_per_um), f.gamma_hz / (f.q_per_um * f.q_per_um), taus_s[0]) < 0.3) f.reason = "particles leave the focus within one frame";
       else if (f.q_per_um < qmin || f.q_per_um > qmax) f.reason = "outside the chosen fit range";
     }
     let used = rows.filter(function (f) { return f.reason === null; });
@@ -525,9 +544,31 @@
       const h = Math.floor(used.length / 2), lo = weightedD(used.slice(0, h)), hi = weightedD(used.slice(h));
       if (lo && hi) halves = { low: lo, high: hi, q_split_per_um: used[h].q_per_um };
     }
-    // repeatability: the same analysis on separate parts of the movie
-    yield { stage: "Repeating the analysis on parts of the movie", frac: 0.97 };
-    const blocks = rotFit ? null : blockAnalysis(fft, T, P, binOf, nb, lags, taus_s, used, B_est, kind);
+    // uncertainty: the points of d(q, dt) are not independent (all delays come from the same frames), so the scatter of
+    // Gamma / q^2 between q understates the scatter from movie to movie. Jackknife: the fits of the used q repeated with one
+    // of K blocks of the movie left out (a pair counts in the block of its first frame, so every delay is kept);
+    // error = sqrt((K - 1)/K sum (D_j - mean)^2). Separate short parts of the movie (blockAnalysis, the old way) lose the
+    // long delays, which slow particles and wide patterns need.
+    yield { stage: "Uncertainty: the fits repeated with parts of the movie left out", frac: 0.97 };
+    let jk = null;
+    if (!rotFit && D !== null && S.jackDq && used.length >= 3 && opts.jackknife !== false) {
+      const Ds = [];
+      for (let j = 0; j < S.blocks; j++) {
+        const dj = S.jackDq(j), fj = [];
+        used.forEach(function (f) {
+          const yv = new Float64Array(L); for (let i = 0; i < L; i++) yv[i] = dj[i][f.bin];
+          const g = fitOne(taus_s, yv, varq[f.bin], B_est[f.bin], kind, f.bin, f.q_per_um, { start: { A: f.A, B: f.B, G: f.gamma_hz } });
+          if (g.ok && g.lnGamma_se <= MAX_LN_GAMMA_SE) fj.push(g);
+        });
+        const Dj = weightedD(fj); if (Dj) Ds.push(Dj.D_um2_s);
+      }
+      if (Ds.length >= 3) {
+        const K = Ds.length, m = Ds.reduce(function (a, b) { return a + b; }, 0) / K;
+        let s2 = 0; Ds.forEach(function (x) { s2 += (x - m) * (x - m); });
+        jk = { blocks: K, D_um2_s: Ds, rel_err: Math.sqrt((K - 1) / K * s2) / D.D_um2_s };
+      }
+    }
+    const blocks = rotFit || jk ? null : blockAnalysis(fft, T, P, binOf, nb, lags, taus_s, used, B_est, kind);
     let rot = null;
     if (rotFit) {
       // global fit over all measurable q (shared D_T and D_R); per-q two-mode fits only give the starting values
@@ -568,19 +609,19 @@
       } else rot = { D_r_s: null, n_points: 0, reason: "too few wave vectors to fit" };
     }
     const result = {
-      lags: lags, taus_s: taus_s, q_per_um: q_per_um, nmodes: nmodes,
+      lags: lags, taus_s: taus_s, pairs: S.pairs, times_s: S.times_s, q_per_um: q_per_um, nmodes: nmodes,
       dq: dq, d2d: d2d, varq: varq, fits: rows, used: used,
       window: { q_lo_per_um: q_lo_per_um, q_opt_per_um: q_opt_per_um, q_nyq_per_um: q_nyq_per_um, q_hi_per_um: q_hi_per_um,
                 gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz },
       B_floor: B_floor, B_est: B_est, A_est: A_est, fit_model: opts.fit_model,
       D: D, slope: slope,
       diameter_um: D === null ? null : diameterFromD_um(D.D_um2_s, movie.T_C, movie.viscosity_Pa_s),
-      diameter_rel_err: D === null ? null : (blocks ? Math.max(D.rel_err, blocks.rel_err_full) : D.rel_err),
+      diameter_rel_err: D === null ? null : (jk ? Math.max(D.rel_err, jk.rel_err) : blocks ? Math.max(D.rel_err, blocks.rel_err_full) : D.rel_err),
       diameter_rel_err_points: D === null ? null : D.rel_err,
       beta_mean: stretched && used.length ? used.reduce(function (s, f) { return s + f.beta; }, 0) / used.length : null,
       // mean over q weighted like D (by the precision of each rate): PI is poorly fixed where the rate is
       pi_mean: opts.fit_model === "schulz" && used.length ? (function () { let sw = 0, sp = 0; used.forEach(function (f) { const w = 1 / (f.lnGamma_se * f.lnGamma_se + 1e-4); sw += w; sp += w * f.pi; }); return sp / sw; })() : null,
-      cumulants: cum, blocks: blocks, halves: halves,
+      cumulants: cum, blocks: blocks, jackknife: jk, noise_B: noiseB, halves: halves,
       images: images, rot: rot
     };
     return result;
@@ -588,6 +629,47 @@
 
   // a q is used only if its rate is known to better than about 20 %
   const MAX_LN_GAMMA_SE = 0.2;
+  // camera noise B while one analysis runs (null: fitted at each q), see analyse
+  let BFIX = null;
+  /* Depth of field. A particle at depth z adds K(q, z) exp(-i q.x) to the image (K: the optical kernel of the movie), so a
+   * particle that diffuses up or down also fades from each pattern. With C_q(a) the overlap of K(q, z) and K(q, z + a)
+   * averaged over the cell (z + a mirrored at its walls), f(q, dt) = exp(-D q^2 dt) <C_q(a)>, a Gaussian of variance
+   * 2 D dt. Without it D reads high where K changes over the distance a particle diffuses during the decay (thin
+   * confocal slices: +16 % at 60x NA 1.2). DEPTH: q -> table, while one analysis runs (null: off). */
+  let DEPTH = null;
+  function depthC(info, q) {
+    const K = info.kernel, qk = info.kernel_q, nq = qk.length, nzk = K.z_um.length, zg = K.z_um;
+    const tq = Math.min(nq - 2, Math.max(0, q / qk[nq - 2] * (nq - 2))), iq = Math.floor(tq), fq = tq - iq;
+    const zlo = info.cell_z_um[0], zhi = info.cell_z_um[1], Lz = zhi - zlo;
+    const nz = Math.min(1500, Math.max(200, Math.ceil(Lz / 0.05))), dz = Lz / nz;
+    const kr = new Float64Array(nz), ki = new Float64Array(nz);
+    let j = 0;
+    for (let k = 0; k < nz; k++) {
+      const z = zlo + (k + 0.5) * dz;
+      while (j < nzk - 2 && zg[j + 1] < z) j++;
+      const f = Math.max(0, Math.min(1, (z - zg[j]) / (zg[j + 1] - zg[j])));
+      const at = function (arr, jj) { return arr ? arr[iq * nzk + jj] + fq * (arr[(iq + 1) * nzk + jj] - arr[iq * nzk + jj]) : 0; };
+      kr[k] = at(K.Kr, j) + f * (at(K.Kr, j + 1) - at(K.Kr, j)); ki[k] = at(K.Ki, j) + f * (at(K.Ki, j + 1) - at(K.Ki, j));
+    }
+    let n0 = 0; for (let k = 0; k < nz; k++) n0 += kr[k] * kr[k] + ki[k] * ki[k];
+    if (!(n0 > 0)) return null;
+    const C = new Float64Array(2 * nz);
+    for (let d = 0; d < 2 * nz; d++) {
+      let sr = 0;
+      for (let k = 0; k < nz; k++) { let m = (k + d) % (2 * nz); if (m >= nz) m = 2 * nz - 1 - m; sr += kr[k] * kr[m] + ki[k] * ki[m]; }
+      C[d] = sr / n0;
+    }
+    return { dz: dz, nz: nz, C: C };
+  }
+  // <C_q(a)> over a Gaussian step of variance 2 D t
+  function depthFade(tb, D, t) {
+    const sg = Math.sqrt(2 * D * t);
+    if (!(sg >= 0.5 * tb.dz)) return 1;
+    const nn = Math.min(64, Math.max(8, Math.ceil(4 * sg / tb.dz))), da = 4 * sg / nn, C = tb.C, n2 = C.length;
+    let acc = 0, ws = 0;
+    for (let m = -nn; m <= nn; m++) { const a = m * da, w = Math.exp(-0.5 * a * a / (sg * sg)); let x = Math.abs(a) / tb.dz; x = x % n2; const i = Math.floor(x), f = x - i; acc += w * (C[i] + f * (C[(i + 1) % n2] - C[i])); ws += w; }
+    return acc / ws;
+  }
   let DEBUG_TWO = typeof process !== "undefined" && process.env && process.env.DDM_DEBUG_TWO === "1";
 
   /* Cumulants per q on f(dt) = 1 - (d - B) / A (A + B = 2 var, B as for the fits): ln f = -G dt + (mu2 / 2) dt^2,
@@ -819,8 +901,8 @@
     let c1 = 0; for (let i = 0; i < L; i++) { const v = (f1.model(taus[i]) - y[i]) / scale; c1 += v * v; }
     const G = f1.gamma_hz;
     let best = null;
-    for (const st of [[0.5, 4, 0], [1, 20, 0], [0.2, 2, 0], [0.05, 1, 0], [0.5, 4, 1.5], [0.5, 4, -1.5], [1, 100, 1]]) {
-      const fit = lm(resid, [Math.log(f1.A), f1.B / scale, Math.log(G * st[0]), Math.log(G * st[1]), st[2]], clamp);
+    for (const B0 of [f1.B]) for (const st of [[0.5, 4, 0], [1, 20, 0], [0.2, 2, 0], [0.05, 1, 0], [0.5, 4, 1.5], [0.5, 4, -1.5], [1, 100, 1]]) {
+      const fit = lm(resid, [Math.log(f1.A), B0 / scale, Math.log(G * st[0]), Math.log(G * st[1]), st[2]], clamp);
       if (best === null || fit.cost < best.cost) best = fit;
     }
     const p = best.p, c2 = best.cost, dof = L - 5;
@@ -828,9 +910,9 @@
     const Fstat = ((c1 - c2) / 2) / (c2 / dof + 1e-300);
     const G1 = Math.exp(p[2]), Dl = Math.exp(p[3]), G2 = G1 + Dl, aa = 1 / (1 + Math.exp(-p[4]));
     const v11 = best.cov[2][2], v22 = best.cov[3][3], v12 = best.cov[2][3];
-    const se1 = v11 > 0 ? Math.sqrt(v11) : Infinity;
+    const se1 = v11 >= 0 ? Math.sqrt(v11) : Infinity;   // (0 for an exact fit)
     const var2 = (G1 * G1 * v11 + 2 * G1 * Dl * v12 + Dl * Dl * v22) / (G2 * G2);
-    const se2 = var2 > 0 ? Math.sqrt(var2) : Infinity;
+    const se2 = var2 >= 0 ? Math.sqrt(var2) : Infinity;
     if (!(Fstat > 10 && aa >= 0.03 && aa <= 0.97 && G2 >= 1.5 * G1 && se1 < 0.3 && se2 < 0.3)) return out;
     return Object.assign(out, {
       A: Math.exp(p[0]), B: p[1] * scale, gamma_hz: G1, lnGamma_se: se1, two: true, gamma2_hz: G2, lnGamma2_se: se2, frac_slow: aa,
@@ -989,21 +1071,27 @@
     // parameters: ln A, B / scale, ln Gamma, beta  (B linear: it may legitimately be near zero)
     // Schulz: PI enters linearly and may go below 0 (the same form continued: f = max(0, 1 + PI G t)^(-1/PI)), so that
     // noise does not push the estimate up against a bound at 0; only PI >= 0 is a real spread of rates
-    let p = [Math.log(A0), (opt && opt.start ? opt.start.B : B0) / scale, Math.log(G0), schulz ? 0.02 : 1];
-    const np = (stretched || schulz) && fixPI === null ? 4 : 3;
+    // B: fixed when the camera noise is known (opt.Bfix, or BFIX set by analyse), else free between 0 and d at the
+    // shortest delay plus 2 % of the amplitude (d rises with the delay, so it is at least B; a free B ran below 0 or
+    // above the data, and the normalised curves then left [0, 1])
+    const Bfix = opt && opt.Bfix !== undefined ? opt.Bfix : BFIX;
+    const dtb = DEPTH && q > 0 ? DEPTH(q) : null;   // depth of field (see depthC): D = Gamma / q^2 in the axial step
+    let p = [Math.log(A0), (Bfix !== null ? Bfix : opt && opt.start ? opt.start.B : B0) / scale, Math.log(G0), schulz ? 0.02 : 1];
+    const free = [0].concat(Bfix !== null ? [] : [1], [2], (stretched || schulz) && fixPI === null ? [3] : []), np = free.length, iG = free.indexOf(2);
     const model = function (pp, t) {
       const A = Math.exp(pp[0]), B = pp[1] * scale, G = Math.exp(pp[2]);
-      if (schulz) { const PI = fixPI !== null ? fixPI : pp[3]; return Math.abs(PI) < 1e-6 ? A * (1 - Math.exp(-G * t)) + B : A * (1 - Math.pow(Math.max(0, 1 + PI * G * t), -1 / PI)) + B; }
+      const df = dtb ? depthFade(dtb, G / (q * q), t) : 1;
+      if (schulz) { const PI = fixPI !== null ? fixPI : pp[3]; return Math.abs(PI) < 1e-6 ? A * (1 - df * Math.exp(-G * t)) + B : A * (1 - df * Math.pow(Math.max(0, 1 + PI * G * t), -1 / PI)) + B; }
       const be = stretched ? pp[3] : 1;
-      return A * (1 - Math.exp(-Math.pow(G * t, be))) + B;
+      return A * (1 - df * Math.exp(-Math.pow(G * t, be))) + B;
     };
     const resid = function (pp) { const r = new Float64Array(L); for (let i = 0; i < L; i++) r[i] = (model(pp, taus[i]) - y[i]) / scale; return r; };
     const cost = function (r) { let s = 0; for (let i = 0; i < L; i++) s += r[i] * r[i]; return s; };
     let r = resid(p), c = cost(r), lambda = 1e-3, J = null;
     for (let it = 0; it < 200; it++) {
       J = [];
-      for (let k = 0; k < np; k++) {
-        const h = 1e-6 * Math.max(1, Math.abs(p[k]));
+      for (let kk = 0; kk < np; kk++) {
+        const k = free[kk], h = 1e-6 * Math.max(1, Math.abs(p[k]));
         const pp = p.slice(); pp[k] += h;
         const r2 = resid(pp); const col = new Float64Array(L);
         for (let i = 0; i < L; i++) col[i] = (r2[i] - r[i]) / h;
@@ -1020,7 +1108,8 @@
         const M = JTJ.map(function (row, a) { const rr = Float64Array.from(row); rr[a] *= (1 + lambda); return rr; });
         const delta = solve(M, JTr.map(function (v) { return -v; }));
         if (delta === null) { lambda *= 10; continue; }
-        const pn = p.slice(); for (let k = 0; k < np; k++) pn[k] += delta[k];
+        const pn = p.slice(); for (let kk = 0; kk < np; kk++) pn[free[kk]] += delta[kk];
+        if (Bfix === null) pn[1] = Math.max(0, Math.min((y[0] + 0.02 * Math.exp(pn[0])) / scale, pn[1]));
         if (stretched) pn[3] = Math.min(2, Math.max(0.2, pn[3]));
         if (schulz && fixPI === null) pn[3] = Math.min(2, Math.max(-0.3, pn[3]));
         const rn = resid(pn), cn = cost(rn);
@@ -1036,7 +1125,7 @@
       const JTJ = [];
       for (let a = 0; a < np; a++) { JTJ.push(new Float64Array(np)); for (let bb = 0; bb < np; bb++) { let t = 0; for (let i = 0; i < L; i++) t += J[a][i] * J[bb][i]; JTJ[a][bb] = t; } }
       const inv = invert(JTJ);
-      if (inv !== null && inv[2][2] > 0) lnG_se = Math.sqrt(inv[2][2] * c / dof);
+      if (inv !== null && inv[iG][iG] > 0) lnG_se = Math.sqrt(inv[iG][iG] * c / dof);
     }
     const ok = Number.isFinite(p[2]) && Number.isFinite(lnG_se) && Number.isFinite(c);
     return {
