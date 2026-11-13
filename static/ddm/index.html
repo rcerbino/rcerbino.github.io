@@ -411,8 +411,9 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
           <summary>The math: fitting the curves</summary>
           <div class="eq"><i>d</i>(<i>q</i>, &Delta;<i>t</i>) = <i>A</i>(<i>q</i>) [1 &minus; <i>f</i>(<i>q</i>, &Delta;<i>t</i>)] + <i>B</i>(<i>q</i>)</div>
           <p><i>A</i>(<i>q</i>) holds the sample's signal seen through the microscope, <i>B</i>(<i>q</i>) the camera noise. For particles in Brownian motion the intermediate scattering function is a simple exponential, <i>f</i> = exp(&minus;&Gamma;&Delta;<i>t</i>). For a mixture of sizes a stretched exponential, <i>f</i> = exp[&minus;(&Gamma;&Delta;<i>t</i>)<sup>&beta;</sup>] with &beta; &lt; 1, describes the data better.</p>
-          <p>First guesses as in fastDDM: <i>A</i> + <i>B</i> from twice the temporal variance of each Fourier mode, &Gamma; from the delay where <i>f</i> falls to 1/e. Then a least-squares fit for every <i>q</i>. A <i>q</i> whose &Gamma;/<i>q</i><sup>2</sup> lies more than 3 times away from the median of the others is left out as an outlier.</p>
-          <p><b>Camera noise.</b> For a camera the noise <i>B</i> is known: twice the variance per pixel, 2 (<i>F</i> &times; mean count in electrons + read noise<sup>2</sup>), with <i>F</i> the excess-noise factor (1, or 2 for an electron-multiplying camera). It is white, so the same at every <i>q</i>, and the fits keep it fixed. Fitted at each <i>q</i> instead, <i>B</i> trades against the amplitude and the rate. For a scanner, and for the squared gradient (whose noise is not white), <i>B</i> is fitted, kept between 0 and the first point of the curve plus 2 % of the amplitude (the curve rises with the delay, so it starts at <i>B</i> or above): the normalised curves then stay within [0, 1].</p>
+          <p>First guesses as in fastDDM: <i>A</i> + <i>B</i> from twice the temporal variance of each Fourier mode, &Gamma; from the delay where <i>f</i> falls to 1/e. Then a least-squares fit for every <i>q</i>. A <i>q</i> whose &Gamma;/<i>q</i><sup>2</sup> lies more than 3 times away from the median of the others is left out as an outlier. <i>D</i> is the weighted mean of &Gamma;/<i>q</i><sup>2</sup> (on a log scale), each <i>q</i> weighted by the inverse variance of its rate, but no variance taken below a quarter of the median one: in noisy movies a few rates with error bars small by chance otherwise set the result.</p>
+          <p><b>Exposure.</b> Each frame averages the image over the exposure time <i>T</i><sub>e</sub>. For a mode that decays as e<sup>&minus;&Gamma;|<i>t</i>|</sup> the frames then vary less, by <i>S</i>(<i>x</i>) = 2(<i>x</i> &minus; 1 + e<sup>&minus;<i>x</i></sup>)/<i>x</i><sup>2</sup>, and frames &Delta;<i>t</i> apart keep the correlation <i>K</i>(<i>x</i>) e<sup>&minus;&Gamma;&Delta;<i>t</i></sup>, <i>K</i>(<i>x</i>) = 2(cosh <i>x</i> &minus; 1)/<i>x</i><sup>2</sup>, with <i>x</i> = &Gamma;<i>T</i><sub>e</sub>. The fit uses <i>d</i> = <i>A</i>[<i>S</i> &minus; <i>K</i> e<sup>&minus;&Gamma;&Delta;<i>t</i></sup>] + <i>B</i>. At 50 ms exposure and 20 frames/s the size of 200 nm beads read 16 % large without it once <i>B</i> was fixed (a free <i>B</i> had absorbed the difference).</p>
+          <p><b>Camera noise.</b> For a camera the noise <i>B</i> is known: twice the variance per pixel, 2 (<i>F</i> &times; mean count in electrons + read noise<sup>2</sup>), with <i>F</i> the excess-noise factor (1, or 2 for an electron-multiplying camera). It is white, so the same at every <i>q</i>, and the fits keep it fixed. Where the signal is below a tenth of the noise, a <i>q</i> is kept only if a fit with <i>B</i> free gives a rate within a factor 1.5: otherwise its rate hangs on <i>B</i> to a fraction of a percent. Fitted at each <i>q</i> instead, <i>B</i> trades against the amplitude and the rate. For a scanner, and for the squared gradient (whose noise is not white), <i>B</i> is fitted, kept between 0 and the first point of the curve plus 2 % of the amplitude (the curve rises with the delay, so it starts at <i>B</i> or above): the normalised curves then stay within [0, 1].</p>
           <p><b>Depth of field.</b> A particle at depth <i>z</i> adds <i>K</i>(<i>q</i>, <i>z</i>) e<sup>&minus;<i>i</i><b>q</b>&middot;<b>x</b></sup> to the image, <i>K</i> being the optical kernel of step 1. A particle that diffuses up or down therefore also fades from each pattern, and that alone would make the particles look smaller. With <i>C<sub>q</sub></i>(<i>a</i>) the overlap of <i>K</i>(<i>q</i>, <i>z</i>) and <i>K</i>(<i>q</i>, <i>z</i> + <i>a</i>) averaged over the cell (mirrored at its walls), <i>f</i> = e<sup>&minus;<i>Dq</i><sup>2</sup>&Delta;<i>t</i></sup> &lang;<i>C<sub>q</sub></i>(<i>a</i>)&rang;, averaged over a Gaussian step <i>a</i> of variance 2<i>D</i>&Delta;<i>t</i>, with the same <i>D</i>. In simulations of 200 nm beads in a spinning-disk confocal at 60x NA 1.2 the size read 14 % small without it and within 3 % with it; in DIC at 60x NA 1.2 13 % small without it, 3 % with it; in bright field at 20x it moved the result by 2 %. Where the fit with it lands at less than half the rate of the fit without it (a curve that has already decayed at the first delay), the fit without it is kept for that <i>q</i>. It is not used with two image channels (scattered light included) nor with the squared gradient.</p>
           <div class="lvl-3"><pre class="code">B_est, _ = fd.noise_est.estimate_camera_noise(aa, mode='polyfit', num_points=5)
 A_est = 2 * aa.var - B_est
@@ -2415,7 +2416,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       test_track: track || undefined,
       test_heights: cfg.test_return_heights === true ? { H: Float64Array.from(H), lg: classes[0].lg, aex: classes[0].aex, ah: classes[0].ah } : undefined,   // test only
       n: N, T: T, frames: frames, fft: fft, times_s: times || undefined,
-      pixel_um: a, L_um: L, frame_rate_hz: fr, T_C: T_C, viscosity_Pa_s: eta,
+      pixel_um: a, L_um: L, frame_rate_hz: fr, exposure_s: expo, T_C: T_C, viscosity_Pa_s: eta,
       q_opt_per_um: trans ? TWO_PI * Math.min(na, 1.34) / lamRef : 2 * TWO_PI * Math.min(na, 1.34) / lamRef,
       q_signal_max_per_um: qcut,
       info: { mode: mode, cell_z_um: [zlo, zhi], dark: dark, directions: nd, n_particles: nTot, n_points: Math.round(ptsTotal), exposure_substeps: nsub, timing: timing, readout_s: readout, read_noise_e: readE, excess_noise: enf, detector_kind: det.kind, full_well_e: fullWell, oversampling: s, truncated_q_per_um: truncated ? qKmax : null, rank: M, rank_residual: LR.residual, Cext_um2: Cext, background_e: bgE, wavelength_um: lamRef, kernel_q: qk,
@@ -2996,11 +2997,12 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       for (let b = 1; b <= S.nb; b++) if (S.nmodes[b] > 0) { S.B_est[b] = noiseB; S.A_est[b] = 2 * S.varq[b] - noiseB; }
     }
     BFIX = noiseB;
+    EXPO = opts.exposure !== false && movie.info && movie.info.detector_kind === "camera" && movie.exposure_s > 0 ? movie.exposure_s : 0;
     // depth of field (opts.depth, on by default when the movie carries its optics; not with the squared gradient, whose
     // image is not linear in the particles, nor with two image channels)
     const info = movie.info, useDepth = opts.depth !== false && !S.sg && info && info.kernel && info.kernel_q && info.cell_z_um && !info.split;
     if (useDepth) { const cache = new Map(); DEPTH = function (q) { const k = q.toPrecision(6); if (!cache.has(k)) cache.set(k, depthC(info, q)); return cache.get(k); }; }
-    try { const r = yield* analyseFits(movie, opts, S, noiseB); r.depth_model = !!useDepth && r.used.some(function (f) { return !f.no_depth; }); return r; } finally { BFIX = null; DEPTH = null; }
+    try { const r = yield* analyseFits(movie, opts, S, noiseB); r.depth_model = !!useDepth && r.used.some(function (f) { return !f.no_depth; }); return r; } finally { BFIX = null; DEPTH = null; EXPO = 0; }
   }
   function* analyseFits(movie, opts, S, noiseB) {
     const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
@@ -3019,6 +3021,10 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       // (a curve that has decayed within the first frame, fitted as a slow rise: point scanning at 7 frames/s read 65 um
       // for 500 nm), the one without is kept for that q
       if (DEPTH && !rotFit) { const fp = fitOne(taus_s, yv, varq[b], B_est[b], kind, b, q_per_um[b], { noDepth: true }); if (!f1.ok || (fp.ok && f1.gamma_hz < 0.5 * fp.gamma_hz)) { f1 = fp; f1.no_depth = true; } }
+      // with the camera noise fixed, a curve whose signal is a few % of the noise still gives a rate with a small error bar,
+      // but that rate then hangs on B to a fraction of a percent: such a q is kept only if a fit with B free agrees within
+      // a factor 1.5 (ORCA on the full chip, 100 nm: 27 % off with every such q kept)
+      if (BFIX !== null && f1.ok && f1.A < 0.1 * BFIX && !rotFit) { const ff = fitOne(taus_s, yv, varq[b], B_est[b], kind, b, q_per_um[b], { Bfix: null, noDepth: !!f1.no_depth }); if (!ff.ok || Math.abs(Math.log(ff.gamma_hz / f1.gamma_hz)) > Math.log(1.5)) f1.weak = true; }
       fits.push(rotFit ? fitTwo(taus_s, yv, f1) : f1);
       if ((b & 7) === 0) yield { stage: "Fitting", frac: b / nb };
     }
@@ -3031,7 +3037,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       if (f.q_per_um < 2 * q_lo_per_um) f.reason = "pattern as large as the image";
       else if (f.q_per_um > q_hi_per_um) f.reason = "finer than the microscope can see";
       else if (!f.ok) f.reason = "fit failed";
-      else if (f.lnGamma_se > MAX_LN_GAMMA_SE) f.reason = "signal lost in camera noise";
+      else if (f.lnGamma_se > MAX_LN_GAMMA_SE || f.weak) f.reason = "signal lost in camera noise";
       else if (f.gamma_hz <= gamma_lo_hz) f.reason = "too slow for this movie";
       else if (f.gamma_hz >= gamma_hi_hz) f.reason = "too fast for this frame rate";
       else if (DEPTH && !f.no_depth && DEPTH(f.q_per_um) && depthFade(DEPTH(f.q_per_um), f.gamma_hz / (f.q_per_um * f.q_per_um), taus_s[0]) < 0.3) f.reason = "particles leave the focus within one frame";
@@ -3157,6 +3163,11 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
    * 2 D dt. Without it D reads high where K changes over the distance a particle diffuses during the decay (thin
    * confocal slices: +16 % at 60x NA 1.2). DEPTH: q -> table, while one analysis runs (null: off). */
   let DEPTH = null;
+  // exposure time while one analysis runs (camera, set by analyse): each frame averages the image over it. For a mode with
+  // correlation exp(-G |t|) the frames then have variance factor S(x) = 2 (x - 1 + e^-x)/x^2 and correlation K(x) e^(-G dt)
+  // between frames dt >= T_e apart, K(x) = 2 (cosh x - 1)/x^2, x = G T_e: d = A (S - K e^(-G dt)) + B. Without it, at 50 ms
+  // exposure and 20 frames/s, 200 nm beads read 16 % large once B was fixed (a free B had absorbed the difference)
+  let EXPO = 0;
   function depthC(info, q) {
     const K = info.kernel, qk = info.kernel_q, nq = qk.length, nzk = K.z_um.length, zg = K.z_um;
     const tq = Math.min(nq - 2, Math.max(0, q / qk[nq - 2] * (nq - 2))), iq = Math.floor(tq), fq = tq - iq;
@@ -3335,13 +3346,18 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     return { method: kind, n_blocks: res.length, frames_per_block: Tb, D_um2_s: res, mean_D_um2_s: mean, rel_sd: sd / mean, rel_err_full: sd / mean / Math.sqrt(res.length) };
   }
   // weighted mean of ln(Gamma / q^2); uncertainty from the scatter of the points
+  // weighted mean of ln(Gamma / q^2). The variance of a point is floored at a quarter of the median variance: in noisy
+  // movies the error of a single fit is itself poorly known, and a few points with errors small by chance set the result
+  // (dim light, 2 x 2 binning: 13 % off before)
   function weightedD(used) {
     if (used.length < 3) return null;
+    const x = used.map(function (f) { return Math.log(f.gamma_hz) - 2 * Math.log(f.q_per_um); }), v0 = used.map(function (f) { return f.lnGamma_se * f.lnGamma_se + 1e-4; });
+    const vm = v0.slice().sort(function (a, b) { return a - b; })[Math.floor(v0.length / 2)], v = v0.map(function (z) { return Math.max(z, vm / 4); });
     let sw = 0, sx = 0;
-    for (const f of used) { const wgt = 1 / (f.lnGamma_se * f.lnGamma_se + 1e-4); sw += wgt; sx += wgt * (Math.log(f.gamma_hz) - 2 * Math.log(f.q_per_um)); }
+    for (let i = 0; i < x.length; i++) { const wgt = 1 / v[i]; sw += wgt; sx += wgt * x[i]; }
     const mean = sx / sw;
     let ss = 0;
-    for (const f of used) { const wgt = 1 / (f.lnGamma_se * f.lnGamma_se + 1e-4); const r = Math.log(f.gamma_hz) - 2 * Math.log(f.q_per_um) - mean; ss += wgt * r * r; }
+    for (let i = 0; i < x.length; i++) { const wgt = 1 / v[i]; const r = x[i] - mean; ss += wgt * r * r; }
     const se = Math.sqrt(ss / ((used.length - 1) * sw));
     return { D_um2_s: Math.exp(mean), rel_err: se, n_points: used.length };
   }
@@ -3600,7 +3616,12 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const free = [0].concat(Bfix !== null ? [] : [1], [2], (stretched || schulz) && fixPI === null ? [3] : []), np = free.length, iG = free.indexOf(2);
     const model = function (pp, t) {
       const A = Math.exp(pp[0]), B = pp[1] * scale, G = Math.exp(pp[2]);
-      const df = dtb ? depthFade(dtb, G / (q * q), t) : 1;
+      let df = dtb ? depthFade(dtb, G / (q * q), t) : 1, S1 = 1;
+      if (EXPO > 0) { const x = G * EXPO; if (x > 1e-4) { S1 = 2 * (x - 1 + Math.exp(-x)) / (x * x); df *= 2 * (Math.cosh(Math.min(x, 300)) - 1) / (x * x); } }
+      if (S1 !== 1) {
+        const decay = schulz ? (function () { const PI = fixPI !== null ? fixPI : pp[3]; return Math.abs(PI) < 1e-6 ? Math.exp(-G * t) : Math.pow(Math.max(0, 1 + PI * G * t), -1 / PI); })() : Math.exp(-Math.pow(G * t, stretched ? pp[3] : 1));
+        return A * (S1 - df * decay) + B;
+      }
       if (schulz) { const PI = fixPI !== null ? fixPI : pp[3]; return Math.abs(PI) < 1e-6 ? A * (1 - df * Math.exp(-G * t)) + B : A * (1 - df * Math.pow(Math.max(0, 1 + PI * G * t), -1 / PI)) + B; }
       const be = stretched ? pp[3] : 1;
       return A * (1 - df * Math.exp(-Math.pow(G * t, be))) + B;
@@ -5318,6 +5339,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       return { key: c.key, kind: c.kind, lvl: c.lvl, min: c.min, max: c.max, options: opts };
     }); },
     truth: function () { return cache && cache.movie ? cache.movie.truth : null; },
+    cfg: function () { return cache && cache.cfg ? JSON.parse(JSON.stringify(cache.cfg)) : null; },
     result: function () { return cache && cache.res ? { D: cache.res.D ? cache.res.D.D_um2_s : null, d: cache.res.diameter_um, rot: cache.res.rot && cache.res.rot.D_r_s ? cache.res.rot.D_r_s : null, reasons: cache.res.fits.map(function (f) { return f.reason; }) } : null; }
   };
 })();

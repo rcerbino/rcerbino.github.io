@@ -1559,6 +1559,7 @@
       return { key: c.key, kind: c.kind, lvl: c.lvl, min: c.min, max: c.max, options: opts };
     }); },
     truth: function () { return cache && cache.movie ? cache.movie.truth : null; },
+    cfg: function () { return cache && cache.cfg ? JSON.parse(JSON.stringify(cache.cfg)) : null; },
     result: function () { return cache && cache.res ? { D: cache.res.D ? cache.res.D.D_um2_s : null, d: cache.res.diameter_um, rot: cache.res.rot && cache.res.rot.D_r_s ? cache.res.rot.D_r_s : null, reasons: cache.res.fits.map(function (f) { return f.reason; }) } : null; }
   };
 })();
