@@ -311,6 +311,10 @@
   function windowWeights(n) {
     const a = [0.3635819, 0.4891775, 0.1365995, 0.0106411], w1 = new Float64Array(n), W = new Float64Array(n * n);
     for (let x = 0; x < n; x++) { const u = 2 * Math.PI * x / n; w1[x] = a[0] - a[1] * Math.cos(u) + a[2] * Math.cos(2 * u) - a[3] * Math.cos(3 * u); }
+    // scaled so that the mean of W^2 is 1 (the paper keeps the peak at 1): A(q) and B keep the height they have
+    // without the window, so the two analyses can be compared on the same axes
+    let m2 = 0; for (let x = 0; x < n; x++) m2 += w1[x] * w1[x];
+    const k = 1 / Math.sqrt(m2 / n); for (let x = 0; x < n; x++) w1[x] *= k;
     for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) W[y * n + x] = w1[x] * w1[y];
     return W;
   }
