@@ -49,8 +49,12 @@
     return { x: pts[best], f: vals[best] };
   }
 
+  /* opts.velocity: "phase" (default: v from the phase of the cross spectrum) or "structure" (v and D fitted together to
+   * the structure function, as published: no sign of v). opts.published_only: the published method alone (B fitted at
+   * each q, v from the structure function). */
   function* analyse(movie, opts) {
     opts = opts || {};
+    if (opts.published_only === true) opts = Object.assign({}, opts, { noise: "fit", velocity: "structure" });
     const S = yield* DDM.structure(movie, opts);
     const n = S.n, P = S.P, T = S.T, L = S.L, fft = S.fft, taus = S.taus_s, nb = S.nb, binOf = S.binOf;
     const dkq = 2 * Math.PI / movie.L_um;                               // q step (1/um)
@@ -221,13 +225,15 @@
     // ---- 4. global fit of ln D, vx, vy -------------------------------------------------------------------------
     // D: the structure function with v fixed at the phase result (the phase measures v without any model of the decay)
     const fD = nelderMead(function (x) { return totalCost(Math.exp(x[0]), ph0.vx, ph0.vy, binsUsed); }, [Math.log(bestD)], [0.2], 200);
-    const D = Math.exp(fD.x[0]), vx = ph0.vx, vy = ph0.vy;
+    let D = Math.exp(fD.x[0]), vx = ph0.vx, vy = ph0.vy;
     // for comparison: D and v from the structure function alone (it has cos(q.v dt) only: no sign, and it can trade
     // drift against diffusion when the pattern fades before it oscillates)
     const vScale = Math.max(Math.hypot(vx, vy), D * qm, 1e-3);
     const fitSF = nelderMead(function (x) { return totalCost(Math.exp(x[0]), x[1], x[2], binsUsed); },
       [Math.log(D), vx, vy], [0.2, 0.2 * vScale, 0.2 * vScale], 400);
     const sf = { D_um2_s: Math.exp(fitSF.x[0]), v_um_s: Math.hypot(fitSF.x[1], fitSF.x[2]), v_dir_deg: Math.atan2(fitSF.x[2], fitSF.x[1]) * 180 / Math.PI };
+    const fromSF = opts.velocity === "structure";
+    if (fromSF) { D = sf.D_um2_s; vx = fitSF.x[1]; vy = fitSF.x[2]; if (vx < 0 || (vx === 0 && vy < 0)) { vx = -vx; vy = -vy; } }   // no sign: shown along +x
     const bins = []; binsUsed.forEach(function (b) { binCost(b, D, vx, vy, bins); });
     yield { stage: "Fitting each q", frac: 0.6 };
 
@@ -263,7 +269,9 @@
       return { q_from: a, q_to: z, n_q: nq, visible: nq >= 3, q_star: v / Dv, peclet: v * movie.L_um / Dv };
     };
     const vis = visibility(Math.max(speed, 1e-9), D);
-    const detected = vis.visible && speed > 3 * Math.max(Math.hypot(vxErr, vyErr), 1e-12);
+    let detected = vis.visible && speed > 3 * Math.max(Math.hypot(vxErr, vyErr), 1e-12);
+    let vErrOut = v_err;
+    if (fromSF) { const vq = okQ.filter(function (e) { return e.q_per_um * speed * taus[L - 1] > 1; }).map(function (e) { return e.omega_rad_s / e.q_per_um; }); vErrOut = spreadOf(vq); detected = vis.visible && vErrOut !== null && speed > 3 * vErrOut; }
 
     // ---- outputs for the page ------------------------------------------------------------------------------------
     // sector curves along and across the drift (normalised: f = 1 - (d - B) / A), per bin
@@ -307,12 +315,12 @@
     const ampOf = new Map(); bins.forEach(function (e) { ampOf.set(e.b, e); });
     return {
       D_um2_s: D, D_rel_err: D_err !== null ? D_err / D : null, diameter_um: diameter,
-      v_um_s: speed, v_err_um_s: v_err, v_dir_deg: Math.atan2(vy, vx) * 180 / Math.PI, v_dir_err_deg: dir_err_deg, vx_um_s: vx, vy_um_s: vy,
+      v_um_s: speed, v_err_um_s: vErrOut, v_dir_deg: Math.atan2(vy, vx) * 180 / Math.PI, v_dir_err_deg: dir_err_deg, vx_um_s: vx, vy_um_s: vy,
       v_from_phase: { vx_um_s: v0x, vy_um_s: v0y }, v_jack: { vx_err: vxErr, vy_err: vyErr, n_pixels: ph0.n }, from_structure_function: sf, phase_lags: phaseV, detected: detected, visibility: vis,
-      noise_B: noiseB, bins: bins, per_q: perQ, along: along, across: across, sector_v: sectorV,
+      noise_B: noiseB, velocity_from: fromSF ? "structure" : "phase", bins: bins, times_s: S.times_s, pairs: S.pairs, per_q: perQ, along: along, across: across, sector_v: sectorV,
       taus_s: taus, lags: S.lags, q_per_um: S.q_per_um, binOf: binOf, n: n, L_um: movie.L_um, nb: nb,
-      d2d: S.d2d, cross: C, amp: ampOf, window: { q_from: qLo, q_to: qHi, q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um },
-      dq: S.dq, varq: S.varq, structure: S
+      d2d: S.d2d, cross: C, amp: ampOf, window: { q_from: qLo, q_to: qHi, q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, q_opt_per_um: S.q_opt_per_um, q_nyq_per_um: S.q_nyq_per_um, gamma_lo_hz: S.gamma_lo_hz, gamma_hi_hz: S.gamma_hi_hz },
+      dq: S.dq, varq: S.varq, windowing: !!S.window
     };
   }
 
