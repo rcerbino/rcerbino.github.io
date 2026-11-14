@@ -82,7 +82,7 @@ p { margin: 0 0 1rem; }
 html[data-level="curious"] .lvl-2, html[data-level="curious"] .lvl-3, html[data-level="student"] .lvl-3 { display: none !important; }
 html[data-level="student"] .only-1, html[data-level="researcher"] .only-1 { display: none !important; }
 html[data-level="curious"] details.math { display: none; }
-html:not([data-level="hood"]) .lvl-4 { display: none !important; }
+html:not([data-level="addict"]) .lvl-4 { display: none !important; }
 /* what this page adds to the published methods */
 .adds { max-width: var(--measure); padding-left: 1.1rem; }
 .adds li { margin-bottom: 0.6rem; }
@@ -262,7 +262,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <label><input type="radio" name="level" id="lv-curious" value="curious"><span class="t">Curious</span><span class="d">The idea in words and pictures, no equations.</span></label>
           <label><input type="radio" name="level" id="lv-student" value="student"><span class="t">Student</span><span class="d">The method step by step, equations folded away.</span></label>
           <label><input type="radio" name="level" id="lv-researcher" value="researcher"><span class="t">Researcher</span><span class="d">All controls, equations open, and the matching fastDDM calls.</span></label>
-          <label><input type="radio" name="level" id="lv-hood" value="hood"><span class="t">Under the hood</span><span class="d">As Researcher, plus switches for what this page adds to the published method, and that method alone on the same movie.</span></label>
+          <label><input type="radio" name="level" id="lv-addict" value="addict"><span class="t">Addict</span><span class="d">As Researcher, plus a couple of tricks up the sleeve.</span></label>
         </div>
       </fieldset>
       <div class="hero-result" id="hero-result" aria-live="polite">
@@ -527,7 +527,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
 
   <section class="wrap further" aria-labelledby="h-adds">
     <h2 id="h-adds">What this page adds to the published methods</h2>
-    <p class="prose">The analysis follows the papers listed under "Go further". The steps below are not in those papers: we added them while testing the page against its own simulations, each to remove a bias or a failure we saw there. Some may exist elsewhere in the literature. At the "Under the hood" level each can be switched off (in their own group among the settings), and the result table shows the published method alone on the same movie, next to the headline. The simulation itself (steps 1 and 2) is ours throughout and is not part of this list.</p>
+    <p class="prose">The analysis follows the papers listed under "Go further". The steps below are not in those papers: we added them while testing the page against its own simulations, each to remove a bias or a failure we saw there. Some may exist elsewhere in the literature. At the "Addict" level each can be switched off (in their own group among the settings), and the result table shows the published method alone on the same movie, next to the headline. The simulation itself (steps 1 and 2) is ours throughout and is not part of this list.</p>
     <ul class="adds">
       <li><b>Camera noise known from the detector.</b> B = 2 (excess-noise factor &times; mean count + read noise<sup>2</sup>), the same at every <i>q</i>, instead of a free B at each <i>q</i>, which trades against the amplitude and the rate. Two checks come with it: a <i>q</i> whose signal is below a tenth of the noise is kept only if a free B gives nearly the same rate, and a <i>q</i> whose pattern renews within one frame is left out. <span class="where">Step 5. With the point scanner it took the size of 500 nm beads from 800 nm to 440-560 nm.</span></li>
       <li><b>Depth of field.</b> Particles that diffuse up or down also fade from each pattern; the fit allows for it through the optics of step 1, and a <i>q</i> where the particles leave the focus within one frame is left out. <span class="where">Step 5. Without it, 200 nm beads read 13-14 % small at 60x (spinning disk, DIC).</span></li>
@@ -3840,7 +3840,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       }
       const res = drive(DDM.analyse(movie, m.opts), m.token, 0.85, m.opts.compare_published ? 0.93 : 1);
       res.fits.forEach(function (f) { delete f.model; });
-      // the published method alone on the same movie ("Under the hood" level)
+      // the published method alone on the same movie ("Addict" level)
       if (m.opts.compare_published) res.published = DDM.publishedSummary(drive(DDM.analyse(movie, Object.assign({}, m.opts, { published_only: true, jackknife: false })), m.token, 0.93, 1));
       const transfer = res.d2d.map(function (a) { return a.buffer; });
       if (out) transfer.push(out.frames.buffer);
@@ -3978,7 +3978,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     x_noise: "on", x_depth: "on", x_expo: "on", x_outliers: "on", x_floor: "on", x_window: "on"
   };
   let state = Object.assign({}, BASE);
-  const LEVEL_RANK = { curious: 1, student: 2, researcher: 3, hood: 4 };
+  const LEVEL_RANK = { curious: 1, student: 2, researcher: 3, addict: 4 };
   let level = "curious";
 
   function fmtSize(um) { return um < 1 ? Math.round(um * 1000) + " nm" : um.toFixed(um < 2 ? 2 : 1) + " " + MU + "m"; }
@@ -4121,10 +4121,10 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   }
   function analysisOptions() {
     return { fit_model: fitModel(), q_min_per_um: state.q_min, q_max_per_um: state.q_max, images: state.images, windowing: state.windowing === "on",
-      // what this page adds to the published method, each switchable at the "Under the hood" level, where the published
+      // what this page adds to the published method, each switchable at the "Addict" level, where the published
       // method alone also runs on the same movie for comparison
       noise: state.x_noise === "off" ? "fit" : undefined, depth: state.x_depth !== "off", exposure: state.x_expo !== "off",
-      outliers: state.x_outliers !== "off", var_floor: state.x_floor !== "off", window_fix: state.x_window !== "off", compare_published: level === "hood" };
+      outliers: state.x_outliers !== "off", var_floor: state.x_floor !== "off", window_fix: state.x_window !== "off", compare_published: level === "addict" };
   }
 
   // ---- controls -------------------------------------------------------------------
@@ -4209,7 +4209,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     { key: "qrange", group: "Analysis", lvl: 3, label: "Fit range in q (1/" + MU + "m)", kind: "qrange" }
   ];
   // where each control sits: the imaging mode, then everything about the sample, the light reaching it, and how the
-  // "Under the hood": the additions to the published method, one switch each (see "What this page adds" on the page)
+  // "Addict": the additions to the published method, one switch each (see "What this page adds" on the page)
   const ONOFF = function (off) { return [["on", "On"], ["off", "Off: " + off]]; };
   CONTROLS.push(
     { key: "x_noise", lvl: 4, label: "Camera noise known from the detector", kind: "select", options: ONOFF("B fitted at each q"),
@@ -4234,7 +4234,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     ["Detection", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg", "analyzer", "pol_angle_deg", "extinction",
       "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "log_factor", "sim_px"]],
     ["Analysis", ["images", "windowing", "fit_model", "qrange"]],
-    ["Under the hood: what this page adds", ["x_noise", "x_depth", "x_expo", "x_outliers", "x_floor", "x_window"]]
+    ["Addict: what this page adds", ["x_noise", "x_depth", "x_expo", "x_outliers", "x_floor", "x_window"]]
   ];
   (function () {
     const byKey = {}; CONTROLS.forEach(function (c) { byKey[c.kind === "qrange" ? "qrange" : c.key] = c; });
@@ -4437,7 +4437,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     level = lv;
     document.documentElement.setAttribute("data-level", lv);
     $("lv-" + lv).checked = true;
-    const lvOpen = lv === "hood" ? "researcher" : lv;
+    const lvOpen = lv === "addict" ? "researcher" : lv;
     document.querySelectorAll("details.math[data-open-at]").forEach(function (d) { d.open = (lvOpen === d.getAttribute("data-open-at")); });
     // controls hidden at this level go back to the standard value, so the bench shows what is simulated
     let changed = false, changedAna = false;   // a setting of the movie, or only of the analysis
@@ -4450,8 +4450,8 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     if (curveView === "d" && lv === "curious") setCurveView("change");
     if (fromUser && location.hash !== "#" + lv) { try { history.replaceState(null, "", "#" + lv); } catch (e) { /* sandboxed previews (about:srcdoc) refuse it */ } }
     constrain(); syncControls(); drawFov();
-    // the "published method only" row is computed at the "Under the hood" level only
-    if (changed) schedule(); else if (changedAna || (cache.res && lv === "hood" && !cache.res.published)) scheduleAnalysis(); else if (cache.res) renderAll();
+    // the "published method only" row is computed at the "Addict" level only
+    if (changed) schedule(); else if (changedAna || (cache.res && lv === "addict" && !cache.res.published)) scheduleAnalysis(); else if (cache.res) renderAll();
   }
 
   // ---- running (in a background worker when the browser allows it) --------------------
@@ -5188,7 +5188,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       const row = function (cls, name, d, pi, pe, err, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + (d ? fmtSize(d) : "-") + '</td><td>' + piCell(pi, pe) + '</td><td>' + (err === null || err === undefined ? "-" : "\u00b1 " + pctTxt(err)) + '</td></tr>'; };
       let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">Size</th><th scope="col">PI</th><th scope="col">Uncertainty</th></tr></thead><tbody>';
       t += row("main", "Fit at each q: " + MODEL_NAME[res.fit_model], res.diameter_um, null, null, res.diameter_rel_err, "the headline");
-      if (level === "hood" && res.published) t += row("pub", "Published method only", res.published.diameter_um, null, null, res.published.rel_err, "the same fit on the same movie, without what this page adds" + (res.published.n_used ? ", " + res.published.n_used + " q" : ""));
+      if (level === "addict" && res.published) t += row("pub", "Published method only", res.published.diameter_um, null, null, res.published.rel_err, "the same fit on the same movie, without what this page adds" + (res.published.n_used ? ", " + res.published.n_used + " q" : ""));
       if (cu && cu.D_um2_s) t += row("", "Cumulants, 2nd order", sizeFromD(cu.D_um2_s), cu.pi, cu.pi_err, cu.rel_err, "as in ISO 22412, " + cu.n_points + " q");
       if (sch) t += row("", "Schulz, one PI for all q", sizeFromD(sch.D_um2_s), sch.pi, sch.pi_err, sch.rel_err, sch.n_points + " q");
       const qs = cu && cu.per_q.length ? cu.per_q.map(function (e) { return e.q_per_um; }) : res.used.map(function (f) { return f.q_per_um; }), tt = seenOver(tr, qs);

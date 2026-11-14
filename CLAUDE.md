@@ -217,7 +217,7 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
 - "Swimming cells" /ddm/swimmers/ (`static/ddm/swimmers/index.html`): `swim.src.html`, `app-swim.js`,
   `active-engine.js` and `worker-swim.js`; it shares the optics, movie and engine files.
 
-Both application pages have a fourth reader level, "Under the hood" (`#hood`): one switch for each step the
+Both application pages have a fourth reader level, "Addict" (`#addict`): one switch for each step the
 analysis adds to the published method (`x_*` settings in `app.js` and `app-swim.js`, mapped to engine options;
 `opts.published_only` switches them all off), and a "published method only" row computed on the same movie.
 Each such step is described in the methods text and listed under "What this page adds to the published

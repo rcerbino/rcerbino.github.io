@@ -34,7 +34,7 @@
       }
       const res = drive(DDM.analyse(movie, m.opts), m.token, 0.85, m.opts.compare_published ? 0.93 : 1);
       res.fits.forEach(function (f) { delete f.model; });
-      // the published method alone on the same movie ("Under the hood" level)
+      // the published method alone on the same movie ("Addict" level)
       if (m.opts.compare_published) res.published = DDM.publishedSummary(drive(DDM.analyse(movie, Object.assign({}, m.opts, { published_only: true, jackknife: false })), m.token, 0.93, 1));
       const transfer = res.d2d.map(function (a) { return a.buffer; });
       if (out) transfer.push(out.frames.buffer);

@@ -175,7 +175,7 @@
       text: "Starts from the cells shown now; shape, size and material are then yours to set." },
   };
   let state = Object.assign({}, BASE);
-  const LEVEL_RANK = { curious: 1, student: 2, researcher: 3, hood: 4 };
+  const LEVEL_RANK = { curious: 1, student: 2, researcher: 3, addict: 4 };
   let level = "curious";
 
   function fmtSize(um) { return um < 1 ? Math.round(um * 1000) + " nm" : um.toFixed(um < 2 ? 2 : 1) + " " + MU + "m"; }
@@ -338,10 +338,10 @@
   // patterns depend on details of the image of a thick cell (in bright field at low NA) that the model leaves out
   function autoQmax() { return state.shape === "sphere" || state.swim_frac === 0 ? null : 2 * Math.PI / Math.max(0.3, state.diameter_um); }   // long cells only (see the card "Long cells")
   function analysisOptions() { const m = swimModel(); return { q_min_per_um: state.q_min, q_max_per_um: state.q_max !== null ? state.q_max : autoQmax(), beta: null, kind: m === "plane" ? "2d" : "3d", depth: m === "depth", stroke: m === "stroke" || m === "strokex", stroke_dir: m === "strokex" ? "across" : "along", D_from_cells: state.x_dcells !== "off", tumbles: state.swim_tumble > 0 && state.x_tumble !== "off", windowing: state.windowing === "on",
-    // what this page adds to Wilson's model, each switchable at the "Under the hood" level, where the published model alone
+    // what this page adds to Wilson's model, each switchable at the "Addict" level, where the published model alone
     // also runs on the same movie for comparison
     noise: state.x_noise === "off" ? "fit" : undefined, cell_shape: state.x_shape === "off" ? false : undefined, turn_perq: state.x_turn !== "off", swim_turning: state.x_turn !== "off",
-    swim_axial: state.x_axial !== "off", amplitude_limits: state.x_amp !== "off", window_fix: state.x_window !== "off", compare_published: level === "hood" }; }
+    swim_axial: state.x_axial !== "off", amplitude_limits: state.x_amp !== "off", window_fix: state.x_window !== "off", compare_published: level === "addict" }; }
   // centre height of cells lying on the bottom glass: half their thickness plus a 0.2 um gap
   function glassHeight() { const g = geometry(); return Math.min(g.a_par, g.a_perp) + 0.2; }
 
@@ -434,7 +434,7 @@
     { key: "swim_model", group: "Analysis", lvl: 2, label: "Swimmer model fitted to all q", kind: "select", options: [["auto", "Automatic"], ["wilson", MODEL_LABEL.wilson], ["depth", MODEL_LABEL.depth], ["plane", MODEL_LABEL.plane], ["stroke", MODEL_LABEL.stroke], ["strokex", MODEL_LABEL.strokex]], hint: function () { return "In use: " + MODEL_LABEL[swimModel()] + "." + (swimModel() === "depth" ? " Uses how each pattern fades as a cell moves up or down through the focus, computed from the optics of this microscope." : ""); } },
     { key: "qrange", group: "Analysis", lvl: 3, label: "Fit range in q (1/" + MU + "m)", kind: "qrange" }
   ];
-  // "Under the hood": the additions to Wilson's model, one switch each (see "What this page adds" on the page)
+  // "Addict": the additions to Wilson's model, one switch each (see "What this page adds" on the page)
   const ONOFF = function (off) { return [["on", "On"], ["off", "Off: " + off]]; };
   CONTROLS.push(
     { key: "x_noise", lvl: 4, label: "Camera noise known from the detector", kind: "select", options: ONOFF("B fitted at each q"),
@@ -463,7 +463,7 @@
     ["Detection", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg",
       "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "log_factor", "sim_px"]],
     ["Analysis", ["swim_model", "windowing", "qrange"]],
-    ["Under the hood: what this page adds", ["x_noise", "x_shape", "x_dcells", "x_turn", "x_tumble", "x_axial", "x_amp", "x_window"]]
+    ["Addict: what this page adds", ["x_noise", "x_shape", "x_dcells", "x_turn", "x_tumble", "x_axial", "x_amp", "x_window"]]
   ];
   (function () {
     const byKey = {}; CONTROLS.forEach(function (c) { byKey[c.kind === "qrange" ? "qrange" : c.key] = c; });
@@ -668,7 +668,7 @@
     level = lv;
     document.documentElement.setAttribute("data-level", lv);
     $("lv-" + lv).checked = true;
-    const lvOpen = lv === "hood" ? "researcher" : lv;
+    const lvOpen = lv === "addict" ? "researcher" : lv;
     document.querySelectorAll("details.math[data-open-at]").forEach(function (d) { d.open = (lvOpen === d.getAttribute("data-open-at")); });
     // controls hidden at this level go back to the standard value of the chosen organism (its size and shape, not those of
     // the example cells), so the bench shows what is simulated
@@ -684,8 +684,8 @@
     if (curveView === "d" && lv === "curious") setCurveView("change");
     if (fromUser && location.hash !== "#" + lv) { try { history.replaceState(null, "", "#" + lv); } catch (e) { /* sandboxed previews (about:srcdoc) refuse it */ } }
     constrain(); syncControls(); drawFov();
-    // the "published model only" row is computed at the "Under the hood" level only
-    if (changed) schedule(); else if (changedAna || (cache.res && lv === "hood" && !cache.res.published)) scheduleAnalysis(); else if (cache.res) renderAll();
+    // the "published model only" row is computed at the "Addict" level only
+    if (changed) schedule(); else if (changedAna || (cache.res && lv === "addict" && !cache.res.published)) scheduleAnalysis(); else if (cache.res) renderAll();
   }
 
   // ---- running (in a background worker when the browser allows it) --------------------
@@ -1430,7 +1430,7 @@
       if (res.swim) t += row(isMain(res.kind === "2d" ? "plane" : "wilson"), res.kind === "2d" ? "Swimmers in the image plane" : "3D swimmers (Wilson et al. 2011)", res.swim.v_um_s, res.swim.alpha, res.swim.spread, isMain(res.kind === "2d" ? "plane" : "wilson") ? "the headline" : "");
       if (res.swim_depth) t += row("main", "3D swimmers, with the depth of field", res.swim_depth.v_um_s, res.swim_depth.alpha, res.swim_depth.spread, "the headline");
       if (res.swim_stroke) t += row("main", MODEL_LABEL[swimModel() === "strokex" ? "strokex" : "stroke"], res.swim_stroke.v_um_s, res.swim_stroke.alpha, res.swim_stroke.spread, "the headline; stroke " + fmtSig(res.swim_stroke.stroke_um, 2) + " " + MU + "m at " + fmtSig(res.swim_stroke.stroke_hz, 3) + " Hz");
-      if (level === "hood" && res.published) t += row("pub", "Published model only (Wilson et al. 2011)", res.published.v_um_s, res.published.alpha, res.published.spread, "the same movie, without what this page adds" + (res.published.no_swim ? "; reads no swimming" : "") + (res.published.n_used ? ", " + res.published.n_used + " q" : ""));
+      if (level === "addict" && res.published) t += row("pub", "Published model only (Wilson et al. 2011)", res.published.v_um_s, res.published.alpha, res.published.spread, "the same movie, without what this page adds" + (res.published.no_swim ? "; reads no swimming" : "") + (res.published.n_used ? ", " + res.published.n_used + " q" : ""));
       if (res.pv) t += row("", "Distribution from the data, no shape assumed", res.pv.data_mean_swimmers_um_s, 1 - res.pv.data_still_share, null, "see the chart below");
       if (res.fast) t += row("", "v\u2080 from the swimmers' step, rate = v\u2080 q", res.fast.v0_um_s, null, null, "a speed scale, not the mean speed: in 3D about mean / 2.2 for short cells");
       else if (res.compressed) t += row("", "v\u2080 from rate = v\u2080 q (compressed exponential)", res.compressed.v0_um_s, null, null, "a speed scale, not the mean speed: in 3D about mean / 2.2");

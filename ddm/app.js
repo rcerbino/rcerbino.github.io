@@ -123,7 +123,7 @@
     x_noise: "on", x_depth: "on", x_expo: "on", x_outliers: "on", x_floor: "on", x_window: "on"
   };
   let state = Object.assign({}, BASE);
-  const LEVEL_RANK = { curious: 1, student: 2, researcher: 3, hood: 4 };
+  const LEVEL_RANK = { curious: 1, student: 2, researcher: 3, addict: 4 };
   let level = "curious";
 
   function fmtSize(um) { return um < 1 ? Math.round(um * 1000) + " nm" : um.toFixed(um < 2 ? 2 : 1) + " " + MU + "m"; }
@@ -266,10 +266,10 @@
   }
   function analysisOptions() {
     return { fit_model: fitModel(), q_min_per_um: state.q_min, q_max_per_um: state.q_max, images: state.images, windowing: state.windowing === "on",
-      // what this page adds to the published method, each switchable at the "Under the hood" level, where the published
+      // what this page adds to the published method, each switchable at the "Addict" level, where the published
       // method alone also runs on the same movie for comparison
       noise: state.x_noise === "off" ? "fit" : undefined, depth: state.x_depth !== "off", exposure: state.x_expo !== "off",
-      outliers: state.x_outliers !== "off", var_floor: state.x_floor !== "off", window_fix: state.x_window !== "off", compare_published: level === "hood" };
+      outliers: state.x_outliers !== "off", var_floor: state.x_floor !== "off", window_fix: state.x_window !== "off", compare_published: level === "addict" };
   }
 
   // ---- controls -------------------------------------------------------------------
@@ -354,7 +354,7 @@
     { key: "qrange", group: "Analysis", lvl: 3, label: "Fit range in q (1/" + MU + "m)", kind: "qrange" }
   ];
   // where each control sits: the imaging mode, then everything about the sample, the light reaching it, and how the
-  // "Under the hood": the additions to the published method, one switch each (see "What this page adds" on the page)
+  // "Addict": the additions to the published method, one switch each (see "What this page adds" on the page)
   const ONOFF = function (off) { return [["on", "On"], ["off", "Off: " + off]]; };
   CONTROLS.push(
     { key: "x_noise", lvl: 4, label: "Camera noise known from the detector", kind: "select", options: ONOFF("B fitted at each q"),
@@ -379,7 +379,7 @@
     ["Detection", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg", "analyzer", "pol_angle_deg", "extinction",
       "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "log_factor", "sim_px"]],
     ["Analysis", ["images", "windowing", "fit_model", "qrange"]],
-    ["Under the hood: what this page adds", ["x_noise", "x_depth", "x_expo", "x_outliers", "x_floor", "x_window"]]
+    ["Addict: what this page adds", ["x_noise", "x_depth", "x_expo", "x_outliers", "x_floor", "x_window"]]
   ];
   (function () {
     const byKey = {}; CONTROLS.forEach(function (c) { byKey[c.kind === "qrange" ? "qrange" : c.key] = c; });
@@ -582,7 +582,7 @@
     level = lv;
     document.documentElement.setAttribute("data-level", lv);
     $("lv-" + lv).checked = true;
-    const lvOpen = lv === "hood" ? "researcher" : lv;
+    const lvOpen = lv === "addict" ? "researcher" : lv;
     document.querySelectorAll("details.math[data-open-at]").forEach(function (d) { d.open = (lvOpen === d.getAttribute("data-open-at")); });
     // controls hidden at this level go back to the standard value, so the bench shows what is simulated
     let changed = false, changedAna = false;   // a setting of the movie, or only of the analysis
@@ -595,8 +595,8 @@
     if (curveView === "d" && lv === "curious") setCurveView("change");
     if (fromUser && location.hash !== "#" + lv) { try { history.replaceState(null, "", "#" + lv); } catch (e) { /* sandboxed previews (about:srcdoc) refuse it */ } }
     constrain(); syncControls(); drawFov();
-    // the "published method only" row is computed at the "Under the hood" level only
-    if (changed) schedule(); else if (changedAna || (cache.res && lv === "hood" && !cache.res.published)) scheduleAnalysis(); else if (cache.res) renderAll();
+    // the "published method only" row is computed at the "Addict" level only
+    if (changed) schedule(); else if (changedAna || (cache.res && lv === "addict" && !cache.res.published)) scheduleAnalysis(); else if (cache.res) renderAll();
   }
 
   // ---- running (in a background worker when the browser allows it) --------------------
@@ -1333,7 +1333,7 @@
       const row = function (cls, name, d, pi, pe, err, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + (d ? fmtSize(d) : "-") + '</td><td>' + piCell(pi, pe) + '</td><td>' + (err === null || err === undefined ? "-" : "\u00b1 " + pctTxt(err)) + '</td></tr>'; };
       let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">Size</th><th scope="col">PI</th><th scope="col">Uncertainty</th></tr></thead><tbody>';
       t += row("main", "Fit at each q: " + MODEL_NAME[res.fit_model], res.diameter_um, null, null, res.diameter_rel_err, "the headline");
-      if (level === "hood" && res.published) t += row("pub", "Published method only", res.published.diameter_um, null, null, res.published.rel_err, "the same fit on the same movie, without what this page adds" + (res.published.n_used ? ", " + res.published.n_used + " q" : ""));
+      if (level === "addict" && res.published) t += row("pub", "Published method only", res.published.diameter_um, null, null, res.published.rel_err, "the same fit on the same movie, without what this page adds" + (res.published.n_used ? ", " + res.published.n_used + " q" : ""));
       if (cu && cu.D_um2_s) t += row("", "Cumulants, 2nd order", sizeFromD(cu.D_um2_s), cu.pi, cu.pi_err, cu.rel_err, "as in ISO 22412, " + cu.n_points + " q");
       if (sch) t += row("", "Schulz, one PI for all q", sizeFromD(sch.D_um2_s), sch.pi, sch.pi_err, sch.rel_err, sch.n_points + " q");
       const qs = cu && cu.per_q.length ? cu.per_q.map(function (e) { return e.q_per_um; }) : res.used.map(function (f) { return f.q_per_um; }), tt = seenOver(tr, qs);

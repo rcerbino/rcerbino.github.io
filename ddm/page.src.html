@@ -77,7 +77,7 @@ p { margin: 0 0 1rem; }
 html[data-level="curious"] .lvl-2, html[data-level="curious"] .lvl-3, html[data-level="student"] .lvl-3 { display: none !important; }
 html[data-level="student"] .only-1, html[data-level="researcher"] .only-1 { display: none !important; }
 html[data-level="curious"] details.math { display: none; }
-html:not([data-level="hood"]) .lvl-4 { display: none !important; }
+html:not([data-level="addict"]) .lvl-4 { display: none !important; }
 /* what this page adds to the published methods */
 .adds { max-width: var(--measure); padding-left: 1.1rem; }
 .adds li { margin-bottom: 0.6rem; }
@@ -264,7 +264,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <label><input type="radio" name="level" id="lv-curious" value="curious"><span class="t">Curious</span><span class="d">The idea in words and pictures, no equations.</span></label>
           <label><input type="radio" name="level" id="lv-student" value="student"><span class="t">Student</span><span class="d">The method step by step, equations folded away.</span></label>
           <label><input type="radio" name="level" id="lv-researcher" value="researcher"><span class="t">Researcher</span><span class="d">All controls, equations open, and the matching fastDDM calls.</span></label>
-          <label><input type="radio" name="level" id="lv-hood" value="hood"><span class="t">Under the hood</span><span class="d">As Researcher, plus switches for what this page adds to the published method, and that method alone on the same movie.</span></label>
+          <label><input type="radio" name="level" id="lv-addict" value="addict"><span class="t">Addict</span><span class="d">As Researcher, plus a couple of tricks up the sleeve.</span></label>
         </div>
       </fieldset>
       <div class="hero-result" id="hero-result" aria-live="polite">
@@ -529,7 +529,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
 
   <section class="wrap further" aria-labelledby="h-adds">
     <h2 id="h-adds">What this page adds to the published methods</h2>
-    <p class="prose">The analysis follows the papers listed under "Go further". The steps below are not in those papers: we added them while testing the page against its own simulations, each to remove a bias or a failure we saw there. Some may exist elsewhere in the literature. At the "Under the hood" level each can be switched off (in their own group among the settings), and the result table shows the published method alone on the same movie, next to the headline. The simulation itself (steps 1 and 2) is ours throughout and is not part of this list.</p>
+    <p class="prose">The analysis follows the papers listed under "Go further". The steps below are not in those papers: we added them while testing the page against its own simulations, each to remove a bias or a failure we saw there. Some may exist elsewhere in the literature. At the "Addict" level each can be switched off (in their own group among the settings), and the result table shows the published method alone on the same movie, next to the headline. The simulation itself (steps 1 and 2) is ours throughout and is not part of this list.</p>
     <ul class="adds">
       <li><b>Camera noise known from the detector.</b> B = 2 (excess-noise factor &times; mean count + read noise<sup>2</sup>), the same at every <i>q</i>, instead of a free B at each <i>q</i>, which trades against the amplitude and the rate. Two checks come with it: a <i>q</i> whose signal is below a tenth of the noise is kept only if a free B gives nearly the same rate, and a <i>q</i> whose pattern renews within one frame is left out. <span class="where">Step 5. With the point scanner it took the size of 500 nm beads from 800 nm to 440-560 nm.</span></li>
       <li><b>Depth of field.</b> Particles that diffuse up or down also fade from each pattern; the fit allows for it through the optics of step 1, and a <i>q</i> where the particles leave the focus within one frame is left out. <span class="where">Step 5. Without it, 200 nm beads read 13-14 % small at 60x (spinning disk, DIC).</span></li>

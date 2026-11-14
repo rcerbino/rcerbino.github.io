@@ -77,7 +77,7 @@ p { margin: 0 0 1rem; }
 html[data-level="curious"] .lvl-2, html[data-level="curious"] .lvl-3, html[data-level="student"] .lvl-3 { display: none !important; }
 html[data-level="student"] .only-1, html[data-level="researcher"] .only-1 { display: none !important; }
 html[data-level="curious"] details.math { display: none; }
-html:not([data-level="hood"]) .lvl-4 { display: none !important; }
+html:not([data-level="addict"]) .lvl-4 { display: none !important; }
 /* what this page adds to the published methods */
 .adds { max-width: var(--measure); padding-left: 1.1rem; }
 .adds li { margin-bottom: 0.6rem; }
@@ -274,7 +274,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <label><input type="radio" name="level" id="lv-curious" value="curious"><span class="t">Curious</span><span class="d">The idea in words and pictures, no equations.</span></label>
           <label><input type="radio" name="level" id="lv-student" value="student"><span class="t">Student</span><span class="d">The method step by step, equations folded away.</span></label>
           <label><input type="radio" name="level" id="lv-researcher" value="researcher"><span class="t">Researcher</span><span class="d">All controls, equations open, and the matching fastDDM calls.</span></label>
-          <label><input type="radio" name="level" id="lv-hood" value="hood"><span class="t">Under the hood</span><span class="d">As Researcher, plus switches for what this page adds to the published model, and that model alone on the same movie.</span></label>
+          <label><input type="radio" name="level" id="lv-addict" value="addict"><span class="t">Addict</span><span class="d">As Researcher, plus a couple of tricks up the sleeve.</span></label>
         </div>
       </fieldset>
       <div class="hero-result" id="hero-result" aria-live="polite">
@@ -561,7 +561,7 @@ A_est = 2 * aa.var - B_est
 
   <section class="wrap further" aria-labelledby="h-adds">
     <h2 id="h-adds">What this page adds to the published methods</h2>
-    <p class="prose">The analysis follows Wilson et al. (2011) for straight swimmers and Martinez et al. (2012) for the stroke of algae and sperm. The steps below are not in those papers: we added them while testing the page against its own simulations, each to remove a bias or a failure we saw there. Some may exist elsewhere in the literature. At the "Under the hood" level each can be switched off (in their own group among the settings), and the result table shows the published model alone on the same movie, next to the headline. The simulation itself (steps 1 and 2) is ours throughout and is not part of this list.</p>
+    <p class="prose">The analysis follows Wilson et al. (2011) for straight swimmers and Martinez et al. (2012) for the stroke of algae and sperm. The steps below are not in those papers: we added them while testing the page against its own simulations, each to remove a bias or a failure we saw there. Some may exist elsewhere in the literature. At the "Addict" level each can be switched off (in their own group among the settings), and the result table shows the published model alone on the same movie, next to the headline. The simulation itself (steps 1 and 2) is ours throughout and is not part of this list.</p>
     <ul class="adds">
       <li><b>Camera noise known from the detector.</b> B = 2 (excess-noise factor &times; mean count + read noise<sup>2</sup>), the same at every <i>q</i>, instead of a free B at each <i>q</i>, which trades against the amplitude and the rates. <span class="where">Step 5; cameras only.</span></li>
       <li><b>Shape of the cells.</b> Wilson's model treats each cell as a point; here each direction of swimming is weighted by how a rod of the cells' length and width shows at that <i>q</i>. <span class="where">Step 6. With 50 &mu;m Euglena the point model read the speed 40 % low, the weighted one within 1 %.</span></li>
