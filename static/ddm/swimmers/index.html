@@ -5394,6 +5394,10 @@ A_est = 2 * aa.var - B_est
     { key: "dic_shear_um", group: "Microscope (Nikon Ti2-E)", lvl: 3, label: "DIC shear", kind: "lin", min: 0.05, max: 1, step: 0.01, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m"; }, when: function () { return state.mode === "dic"; }, hint: "0.24 " + MU + "m was measured for a Nikon N2 prism (Ostler et al.)." },
     { key: "dic_angle_deg", group: "Microscope (Nikon Ti2-E)", lvl: 3, label: "DIC shear direction", kind: "select", num: true, options: [[0, "0" + DEG], [45, "45" + DEG], [90, "90" + DEG]], when: function () { return state.mode === "dic"; } },
     { key: "source", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Light source", kind: "select", options: Object.keys(OPTICS.SOURCES).map(function (k) { return [k, OPTICS.SOURCES[k].label]; }), when: TRANS },
+    { key: "polarizer", group: "Illumination", lvl: 2, label: "Polarizer before the sample", kind: "select", options: [["off", "None"], ["on", "Linear polarizer"]], when: function () { return TRANS() && state.mode !== "dic"; }, hint: function () { return state.polarizer === "on" ? "Light polarized along x." + (state.analyzer !== "on" ? " Without an analyzer, anisotropic particles look brighter or darker as they turn." : "") : TURNS() && state.analyzer !== "on" ? "Turning particles show best between polarizers (birefringent ones) or in dark field." : ""; } },
+    { key: "analyzer", group: "Detection", lvl: 2, label: "Analyzer after the sample", kind: "select", options: [["off", "None"], ["on", "Linear polarizer (analyzer)"]], when: function () { return TRANS() && state.mode !== "dic"; }, hint: polHint },
+    { key: "pol_angle_deg", group: "Detection", lvl: 2, label: "Angle between polarizer and analyzer", kind: "lin", min: 0, max: 90, step: 1, fmt: function (v) { return Math.round(v) + DEG + (Math.round(v) === 90 ? " (crossed)" : Math.round(v) === 0 ? " (parallel)" : ""); }, when: function () { return TRANS() && state.mode !== "dic" && state.polarizer === "on" && state.analyzer === "on"; } },
+    { key: "extinction", group: "Detection", lvl: 3, label: "Polarizer leak (light passing crossed polarizers)", kind: "log", min: 1e-6, max: 1e-2, fmt: fmtPhi, when: function () { return TRANS() && state.mode !== "dic" && state.polarizer === "on" && state.analyzer === "on"; }, hint: "Real pairs in a microscope pass about 1e-4 to 1e-3 of the light when crossed." },
     { key: "df_light_e", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Lamp power (electrons per pixel if all the light reached the camera)", kind: "log", min: 1e4, max: 1e10, fmt: function (v) { return fmtPhi(v); }, when: function () { return state.mode === "darkfield" || (TRANS() && state.mode !== "dic" && state.analyzer === "on"); }, hint: function () { return state.mode === "darkfield" ? "" : "With an analyzer the lamp is turned up to fill the camera, up to this limit."; } },
     { key: "stray_frac", group: "Microscope (Nikon Ti2-E)", lvl: 3, label: "Stray light (share of the illumination)", kind: "log", min: 1e-6, max: 1e-2, fmt: function (v) { return fmtPhi(v); }, when: function () { return state.mode === "darkfield"; }, hint: "Light scattered by dust, cover-glass defects and the optics; it sets the dark-field background." },
     { key: "dye", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Dye", kind: "select", options: Object.keys(DYES).map(function (k) { return [k, DYES[k].label]; }), when: FL },
@@ -5417,9 +5421,9 @@ A_est = 2 * aa.var - B_est
     { key: "light_frac", group: "Camera and recording", lvl: 2, label: "Lamp brightness (background as a share of the full well)", kind: "log", min: 0.002, max: 0.9, fmt: function (v) { return fmtSig(100 * v, 2) + " %"; }, when: function () { return TRANS() && state.mode !== "darkfield"; }, hint: function () { const fw = detFullWell(); return "Background " + Math.round(state.light_frac * fw) + " electrons per pixel; shot noise " + fmtSig(100 / Math.sqrt(state.light_frac * fw), 2) + " %."; } },
     { key: "n_frames", group: "Camera and recording", lvl: 2, label: "Number of frames", kind: "select", num: true, options: [[128, "128"], [256, "256"], [512, "512"], [1024, "1024"], [2048, "2048"]],
       hint: function () { return "The browser holds up to " + maxFrames(simPx()) + " frames at " + simPx() + " x " + simPx() + " pixels; asking for more makes the simulated image smaller."; } },
-    { key: "frame_timing", group: "Camera and recording", lvl: 1, label: "Frame timing", kind: "select", options: [["even", "Evenly spaced"], ["log", "Log-spaced, in a repeating cycle (like a multi-tau correlator)"]],
+    { key: "frame_timing", group: "Camera and recording", lvl: 2, label: "Frame timing", kind: "select", options: [["even", "Evenly spaced"], ["log", "Log-spaced, in a repeating cycle (like a multi-tau correlator)"]],
       hint: function () { return BURSTS() ? "The same " + nFrames() + " frames cover " + fmtDur(movieSpanS()) + " instead of " + fmtDur(nFrames() / state.frame_rate_hz) + ". In each cycle the first frames follow at the frame rate, then the gaps grow by a fixed factor; the cycle repeats." : "All frames one frame interval apart: " + fmtDur(nFrames() / state.frame_rate_hz) + " of movie."; } },
-    { key: "log_factor", group: "Camera and recording", lvl: 1, label: "Log-spaced: how much longer the movie lasts", kind: "select", num: true, when: function () { return state.frame_timing === "log"; },
+    { key: "log_factor", group: "Camera and recording", lvl: 2, label: "Log-spaced: how much longer the movie lasts", kind: "select", num: true, when: function () { return state.frame_timing === "log"; },
       options: function () { return [5, 10, 20, 50].map(function (k) { return [k, k + " times (" + fmtDur(movieSpanS(k)) + ")"]; }); } },
     { key: "sim_px", group: "Camera and recording", lvl: 3, label: "Simulated part of the image", kind: "select", num: true, options: [[64, "64 x 64 pixels (fast)"], [128, "128 x 128 pixels"], [256, "256 x 256 pixels (slow)"]] },
 
@@ -5458,8 +5462,8 @@ A_est = 2 * aa.var - B_est
       ["Chamber", ["cell_um", "drift_um_s"]]]],
     ["Microscope (Nikon Ti2-E)", [
       ["", ["mode"]],
-      ["Illumination", ["source", "condenser", "na_c", "df_kind", "annulus", "light_frac", "df_light_e", "stray_frac", "rate_ph_ms", "bg_e_ms", "scan_rate"]],
-      ["Objective and contrast", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg"]]]],
+      ["Illumination", ["source", "condenser", "na_c", "df_kind", "annulus", "polarizer", "light_frac", "df_light_e", "stray_frac", "rate_ph_ms", "bg_e_ms", "scan_rate"]],
+      ["Objective and contrast", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg", "analyzer", "pol_angle_deg", "extinction"]]]],
     ["Camera and recording", [
       ["", ["camera", "cam_mode", "iface", "roi", "binning"]],
       ["Point scanner (Nikon AX R)", ["scanner", "scan_px", "zoom", "line_avg", "pinhole_au"]],
@@ -6500,7 +6504,7 @@ A_est = 2 * aa.var - B_est
     const br = $("btn-repeat"); if (br) br.addEventListener("click", startRepeat);
     $("hero-result").innerHTML = '<span>True mean speed</span><span class="n">' + fmtV(swt.v_mean_um_s) + '</span><span>Measured by DDM</span><span class="n">' + (h ? fmtV(h.v_um_s) : "-") + '</span>' +
       '<span>Cells that swim: ' + Math.round(100 * swt.fraction) + ' % true' + (swt.n_swimmers > 0 && Math.abs(st.share - swt.fraction) >= 0.025 ? ' (' + Math.round(100 * st.share) + ' % of what the microscope sees)' : '') + ', ' + (h ? Math.round(100 * (h.no_swim ? 0 : h.alpha)) + ' %' : '-') + ' measured</span><span class="chip ' + v.cls + '">' + v.text + '</span>' + (sv && sv.cls !== "good" && swt.n_swimmers > 0 ? ' <span class="chip ' + sv.cls + '">' + sv.text + '</span>' : '');
-    $("hero-cap").textContent = "Simulated " + MODE_SHORT[state.mode] + " movie, " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
+    $("hero-cap").textContent = "Simulated " + MODE_SHORT[state.mode] + " movie" + (cache.cfg.polarization ? " between polarizers" : "") + ", " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
   }
   function renderRepeatTable() {
     const rows = repeat.runs;
