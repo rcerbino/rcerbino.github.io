@@ -77,6 +77,12 @@ p { margin: 0 0 1rem; }
 html[data-level="curious"] .lvl-2, html[data-level="curious"] .lvl-3, html[data-level="student"] .lvl-3 { display: none !important; }
 html[data-level="student"] .only-1, html[data-level="researcher"] .only-1 { display: none !important; }
 html[data-level="curious"] details.math { display: none; }
+html:not([data-level="addict"]) .lvl-4 { display: none !important; }
+/* what this page adds to the published methods */
+.adds { max-width: var(--measure); padding-left: 1.1rem; }
+.adds li { margin-bottom: 0.6rem; }
+.adds .where { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); }
+table.sizing tr.pub th, table.sizing tr.pub td { font-style: italic; }
 
 /* opening */
 .intro { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; padding-block: 2.5rem 1.5rem; align-items: center; }
@@ -268,6 +274,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <label><input type="radio" name="level" id="lv-curious" value="curious"><span class="t">Curious</span><span class="d">The idea in words and pictures, no equations.</span></label>
           <label><input type="radio" name="level" id="lv-student" value="student"><span class="t">Student</span><span class="d">The method step by step, equations folded away.</span></label>
           <label><input type="radio" name="level" id="lv-researcher" value="researcher"><span class="t">Researcher</span><span class="d">All controls, equations open, and the matching fastDDM calls.</span></label>
+          <label><input type="radio" name="level" id="lv-addict" value="addict"><span class="t">Addict</span><span class="d">As Researcher, and you can switch off our tricks to see what each one does.</span></label>
         </div>
       </fieldset>
       <div class="hero-result" id="hero-result" aria-live="polite">
@@ -550,6 +557,22 @@ A_est = 2 * aa.var - B_est
       <li><b>Collective motion.</b> Swarming bacteria and moving cell sheets, whose motion is shared by many cells over large distances.</li>
     </ul>
     <p class="prose">None of these is simulated here: they need cells that interact, or models the page does not include.</p>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-adds">
+    <h2 id="h-adds">What this page adds to the published methods</h2>
+    <p class="prose">The analysis follows Wilson et al. (2011) for straight swimmers and Martinez et al. (2012) for the stroke of algae and sperm. The steps below are not in those papers: we added them while testing the page against its own simulations, each to remove a bias or a failure we saw there. Some may exist elsewhere in the literature. At the "Addict" level each can be switched off (in their own group among the settings), and the result table shows the published model alone on the same movie, next to the headline. The simulation itself (steps 1 and 2) is ours throughout and is not part of this list.</p>
+    <ul class="adds">
+      <li><b>Camera noise known from the detector.</b> B = 2 (excess-noise factor &times; mean count + read noise<sup>2</sup>), the same at every <i>q</i>, instead of a free B at each <i>q</i>, which trades against the amplitude and the rates. <span class="where">Step 5; cameras only.</span></li>
+      <li><b>Shape of the cells.</b> Wilson's model treats each cell as a point; here each direction of swimming is weighted by how a rod of the cells' length and width shows at that <i>q</i>. <span class="where">Step 6. With 50 &mu;m Euglena the point model read the speed 40 % low, the weighted one within 1 %.</span></li>
+      <li><b>Expected diffusion of the cells.</b> D also tried fixed at the value expected from the size and shape of the cells and the viscosity, and kept when the data do not ask for another one; when the still cells barely move, the share of swimmers also from the amplitude. <span class="where">Step 6. Without it, still cells that barely move leave the share of swimmers and the amplitude free to trade.</span></li>
+      <li><b>Turning of the cells.</b> Rods fade from each pattern as they turn: a share <i>b</i> at each <i>q</i>, at rate 6<i>D</i><sub>R</sub> for the still cells and 6<i>D</i><sub>s</sub> for the swimmers, <i>D</i><sub>s</sub> at most that of the body. A fit with no swimming at all is also tried, since turning rods alone can pass for slow swimmers. <span class="where">Step 6. Without it the share of swimmers came out about 8 % low where all cells swim.</span></li>
+      <li><b>Tumbles.</b> For cells known to tumble, the swimmers' images also fade at the tumble rate, fitted. <span class="where">Step 6; only for tumbling cells.</span></li>
+      <li><b>Swimmers leave the focus.</b> With the depth-of-field model (itself our addition: how each pattern fades as a cell moves up or down through the optics of step 1), the swimmers fade with depth as the still cells do. <span class="where">Step 6; used automatically in the confocal modes, or chosen under Analysis.</span></li>
+      <li><b>Limits on the amplitude.</b> A of each <i>q</i> below the whole amplitude from the mean power of the images, and below three times twice the variance in time of that pattern. <span class="where">Step 6. Without them a sample of dead sperm passed for 40 % slow swimmers.</span></li>
+      <li><b>Uncertainty from the movie itself.</b> The fits repeated five times with one fifth of the movie left out (jackknife). It changes the quoted uncertainties, not the results. <span class="where">Step 6. The covariance of the fit gave errors 5-8 times too small.</span></li>
+      <li><b>Window corrections.</b> With windowing on: the window scaled so that the mean of <i>W</i><sup>2</sup> is 1 (heights only), and the patterns below 5 steps in <i>q</i> left out. <span class="where">Step 4; only with windowing on.</span></li>
+    </ul>
   </section>
 
   <section class="wrap further" aria-labelledby="h-about">

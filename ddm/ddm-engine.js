@@ -508,7 +508,13 @@
              q_per_um: q_per_um, d2d: d2d, dq: dq, varq: varq, powq: powq, q_lo_per_um: q_lo_per_um, q_nyq_per_um: q_nyq_per_um, q_opt_per_um: q_opt_per_um,
              q_sig_per_um: q_sig_per_um, q_hi_per_um: q_hi_per_um, gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz, B_floor: B_floor, B_est: B_est, A_est: A_est };
   }
+  /* What this page adds to the published method can be switched off one by one (opts.noise "fit", opts.depth false,
+   * opts.exposure false, opts.outliers false, opts.var_floor false, opts.window_fix false), or all at once with
+   * opts.published_only: B fitted at each q, no depth of field, no exposure blur, no outlier rule, plain weights, the window
+   * as in the paper (no q correction, no wider exclusion of the widest patterns). */
+  const PUBLISHED_ONLY = { noise: "fit", depth: false, exposure: false, outliers: false, var_floor: false, window_fix: false };
   function* analyse(movie, opts) {
+    if (opts.published_only === true) opts = Object.assign({}, opts, PUBLISHED_ONLY);
     need(["simple", "stretched", "schulz", "two", "three"].indexOf(opts.fit_model) >= 0, "fit_model must be simple, stretched, schulz, two or three");
     const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
     need("q_min_per_um" in opts && "q_max_per_um" in opts, "q range missing (use null for the full range)");
@@ -519,14 +525,15 @@
     let noiseB = opts.noise !== "fit" && !S.sg ? detectorNoiseB(movie, S.window) : null;
     if (noiseB !== null) for (let b = 1; b <= S.nb; b++) if (S.nmodes[b] > 0) { S.B_est[b] = noiseB; S.A_est[b] = 2 * S.varq[b] - noiseB; }
     BFIX = noiseB;
-    if (S.window) { const a = [0.3635819, 0.4891775, 0.1365995, 0.0106411], c = [a[0] * a[0], a[1] * a[1] / 4, a[2] * a[2] / 4, a[3] * a[3] / 4];
+    VAR_FLOOR = opts.var_floor !== false;
+    if (S.window && opts.window_fix !== false) { const a = [0.3635819, 0.4891775, 0.1365995, 0.0106411], c = [a[0] * a[0], a[1] * a[1] / 4, a[2] * a[2] / 4, a[3] * a[3] / 4];
       const m2 = 2 * (c[1] + 4 * c[2] + 9 * c[3]) / (c[0] + 2 * (c[1] + c[2] + c[3])), dq = 2 * Math.PI / movie.L_um; WIN_DQ2 = 2 * m2 * dq * dq; }
     EXPO = opts.exposure !== false && movie.info && movie.info.detector_kind === "camera" && movie.exposure_s > 0 ? movie.exposure_s : 0;
     // depth of field (opts.depth, on by default when the movie carries its optics; not with the squared gradient, whose
     // image is not linear in the particles, nor with two image channels)
     const info = movie.info, useDepth = opts.depth !== false && !S.sg && info && info.kernel && info.kernel_q && info.cell_z_um && !info.split;
     if (useDepth) { const cache = new Map(); DEPTH = function (q) { const k = q.toPrecision(6); if (!cache.has(k)) cache.set(k, depthC(info, q)); return cache.get(k); }; }
-    try { const r = yield* analyseFits(movie, opts, S, noiseB); r.depth_model = !!useDepth && r.used.some(function (f) { return !f.no_depth; }); return r; } finally { BFIX = null; DEPTH = null; EXPO = 0; WIN_DQ2 = 0; }
+    try { const r = yield* analyseFits(movie, opts, S, noiseB); r.depth_model = !!useDepth && r.used.some(function (f) { return !f.no_depth; }); return r; } finally { BFIX = null; DEPTH = null; EXPO = 0; WIN_DQ2 = 0; VAR_FLOOR = true; }
   }
   function* analyseFits(movie, opts, S, noiseB) {
     const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
@@ -554,7 +561,8 @@
     const rows = fits.filter(function (f) { return f !== null; });
     for (const f of rows) {
       f.reason = null;
-      if (f.q_per_um < (S.window ? 5 : 2) * q_lo_per_um) f.reason = S.window ? "pattern too wide for the window" : "pattern as large as the image";   // (the window spreads each mode over +-3 bins)
+      const wide = S.window && opts.window_fix !== false;
+      if (f.q_per_um < (wide ? 5 : 2) * q_lo_per_um) f.reason = wide ? "pattern too wide for the window" : "pattern as large as the image";   // (the window spreads each mode over +-3 bins)
       else if (f.q_per_um > q_hi_per_um) f.reason = "finer than the microscope can see";
       else if (!f.ok) f.reason = "fit failed";
       else if (f.lnGamma_se > MAX_LN_GAMMA_SE || f.weak) f.reason = "signal lost in camera noise";
@@ -570,7 +578,7 @@
     let used = rows.filter(function (f) { return f.reason === null; });
     // a q whose Gamma / q^2 is more than 3 times away from the median of the others is an outlier (a curve lost in noise
     // that passed the other tests by chance); for sizes, even broad spreads keep Gamma / q^2 within that range
-    if (used.length >= 5) {
+    if (opts.outliers !== false && used.length >= 5) {
       const lv = used.map(function (f) { return Math.log(f.gamma_hz / q2eff(f.q_per_um)); }).sort(function (a, b) { return a - b; });
       const med = lv[Math.floor(lv.length / 2)];
       used.forEach(function (f) { if (Math.abs(Math.log(f.gamma_hz / q2eff(f.q_per_um)) - med) > Math.log(3)) f.reason = "rate far from the other q"; });
@@ -696,7 +704,7 @@
   // at q is the mean of D |q + dq|^2 = D (q^2 + <dq^2>). For the Blackman-Harris window its transform has 7 lines per axis
   // (0, +-1, +-2, +-3 bins, amplitudes a0, a_j/2), <dq^2> = 2 x 0.603 bins^2 in 2D. WIN_DQ2: that, in um^-2, while one
   // analysis runs (0 without a window). Without the correction 200 nm beads read 4.7 % small.
-  let WIN_DQ2 = 0;
+  let WIN_DQ2 = 0; let VAR_FLOOR = true;
   function q2eff(q) { return q * q + WIN_DQ2; }
   function depthC(info, q) {
     const K = info.kernel, qk = info.kernel_q, nq = qk.length, nzk = K.z_um.length, zg = K.z_um;
@@ -882,7 +890,7 @@
   function weightedD(used) {
     if (used.length < 3) return null;
     const x = used.map(function (f) { return Math.log(f.gamma_hz) - Math.log(q2eff(f.q_per_um)); }), v0 = used.map(function (f) { return f.lnGamma_se * f.lnGamma_se + 1e-4; });
-    const vm = v0.slice().sort(function (a, b) { return a - b; })[Math.floor(v0.length / 2)], v = v0.map(function (z) { return Math.max(z, vm / 4); });
+    const vm = v0.slice().sort(function (a, b) { return a - b; })[Math.floor(v0.length / 2)], v = v0.map(function (z) { return VAR_FLOOR ? Math.max(z, vm / 4) : z; });
     let sw = 0, sx = 0;
     for (let i = 0; i < x.length; i++) { const wgt = 1 / v[i]; sw += wgt; sx += wgt * x[i]; }
     const mean = sx / sw;
@@ -1249,6 +1257,8 @@
     CAMERA_PIXEL_UM: CAMERA_PIXEL_UM, WAVELENGTH_UM: WAVELENGTH_UM,
     waterViscosity_Pa_s: waterViscosity_Pa_s, diffusion_um2_s: diffusion_um2_s, diameterFromD_um: diameterFromD_um,
     detectorNoiseB: detectorNoiseB,
+    // the few numbers the page shows for the published method alone (analysed with opts.published_only)
+    publishedSummary: function (r) { return { diameter_um: r.diameter_um, rel_err: r.diameter_rel_err, D_um2_s: r.D ? r.D.D_um2_s : null, n_used: r.used ? r.used.length : 0 }; },
     simulate: simulate, analyse: analyse, structure: structure, structureMap: structureMap, lm: lm, solve: solve, invert: invert, logspaceLags: logspaceLags, pairBins: pairBins, runToEnd: runToEnd,
     // compact result of one analysis for repeated measurements: D from the main fit and the cumulants, the q used and the truth
     repeatSummary: function (r, mv) {

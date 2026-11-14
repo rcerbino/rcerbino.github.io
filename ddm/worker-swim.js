@@ -32,7 +32,9 @@
         out = { n: movie.n, T: movie.T, frames: movie.frames.slice(0), pixel_um: movie.pixel_um, L_um: movie.L_um, frame_rate_hz: movie.frame_rate_hz,
           T_C: movie.T_C, viscosity_Pa_s: movie.viscosity_Pa_s, q_opt_per_um: movie.q_opt_per_um, q_signal_max_per_um: movie.q_signal_max_per_um, times_s: movie.times_s, info: movie.info, truth: movie.truth };
       }
-      const res = drive(ACTIVE.analyse(movie, m.opts), m.token, 0.85, 1);
+      const res = drive(ACTIVE.analyse(movie, m.opts), m.token, 0.85, m.opts.compare_published ? 0.92 : 1);
+      // Wilson's model alone on the same movie ("Addict" level)
+      if (m.opts.compare_published) res.published = ACTIVE.publishedSummary(drive(ACTIVE.analyse(movie, Object.assign({}, m.opts, { published_only: true, jackknife: false })), m.token, 0.92, 1));
       const transfer = res.d2d.map(function (a) { return a.buffer; });
       if (out) transfer.push(out.frames.buffer);
       self.postMessage({ type: "done", token: m.token, movie: out, res: res }, transfer);
