@@ -32,8 +32,10 @@
         out = { n: movie.n, T: movie.T, frames: movie.frames.slice(0), pixel_um: movie.pixel_um, L_um: movie.L_um, frame_rate_hz: movie.frame_rate_hz,
           T_C: movie.T_C, viscosity_Pa_s: movie.viscosity_Pa_s, q_opt_per_um: movie.q_opt_per_um, q_signal_max_per_um: movie.q_signal_max_per_um, info: movie.info, truth: movie.truth };
       }
-      const res = drive(DDM.analyse(movie, m.opts), m.token, 0.85, 1);
+      const res = drive(DDM.analyse(movie, m.opts), m.token, 0.85, m.opts.compare_published ? 0.93 : 1);
       res.fits.forEach(function (f) { delete f.model; });
+      // the published method alone on the same movie ("Under the hood" level)
+      if (m.opts.compare_published) res.published = DDM.publishedSummary(drive(DDM.analyse(movie, Object.assign({}, m.opts, { published_only: true, jackknife: false })), m.token, 0.93, 1));
       const transfer = res.d2d.map(function (a) { return a.buffer; });
       if (out) transfer.push(out.frames.buffer);
       self.postMessage({ type: "done", token: m.token, movie: out, res: res }, transfer);

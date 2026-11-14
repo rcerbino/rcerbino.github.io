@@ -217,6 +217,12 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
 - "Swimming cells" /ddm/swimmers/ (`static/ddm/swimmers/index.html`): `swim.src.html`, `app-swim.js`,
   `active-engine.js` and `worker-swim.js`; it shares the optics, movie and engine files.
 
+Both application pages have a fourth reader level, "Under the hood" (`#hood`): one switch for each step the
+analysis adds to the published method (`x_*` settings in `app.js` and `app-swim.js`, mapped to engine options;
+`opts.published_only` switches them all off), and a "published method only" row computed on the same movie.
+Each such step is marked "Our addition" in the methods text and listed under "What this page adds to the
+published methods". A new step that is not in the cited papers gets all three: tag, list entry and switch.
+
 After any change to the sources: run `python3 ddm/build.py`, then `python3 build.py --check`, and commit
 both. Checks: `cd ddm && node test-optics.js data/mie_ref.json && node test-engine.js && node test-movie.js`
 (the last takes several minutes), and for the swimmers `node test-swim.js && node test-active.js`.

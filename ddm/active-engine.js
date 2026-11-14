@@ -454,7 +454,7 @@
     };
     let x = g2.some(function (v) { return v !== 0; }) ? solve3() : solve2(0);     // round cells (D_R = 0): no turning
     if (!x || !(x.c1 > 0) || x.c2 < 0 || x.c2 > x.c1) { const a = solve2(0), b = solve2(1); const cost = function (z) { if (!z) return Infinity; let c = 0; for (let i = 0; i < L; i++) { const e = z.c1 * g1[i] + z.c2 * g2[i] + z.B - r.y[i]; c += e * e; } return c; }; x = cost(a) <= cost(b) ? a : b; }
-    const hiA = r.Ahi > 0 ? (r.slowStill ? r.Ahi : Math.min(3 * r.scale, r.Ahi)) : 3 * r.scale, loA = r.Alo > 0 ? Math.min(r.Alo, hiA) : 0;
+    const hiA = r.capFree ? 100 * r.scale : r.Ahi > 0 ? (r.slowStill ? r.Ahi : Math.min(3 * r.scale, r.Ahi)) : 3 * r.scale, loA = r.Alo > 0 ? Math.min(r.Alo, hiA) : 0;
     // A within its bounds and B between 0 and the d at the shortest delays (see boundAB), with the share b kept
     if (x && (x.c1 < loA || x.c1 > hiA || x.B < 0 || x.B > dMin(r) || NOISE_B !== null)) {
       const bq = x.c1 > 0 ? Math.min(1, Math.max(0, x.c2 / x.c1)) : 0, g = new Float64Array(L); for (let i = 0; i < L; i++) g[i] = g1[i] + bq * g2[i];
@@ -566,7 +566,7 @@
   // scale, the still cells looked like slow swimmers). Otherwise it is kept (lifted at the small q only, still rods at
   // 10x gave a few % of "swimmers")
   function boundAB(r, f) {
-    const L = f.length, hiA = r.Ahi > 0 ? (r.slowStill ? r.Ahi : Math.min(3 * r.scale, r.Ahi)) : 3 * r.scale, loA = r.Alo > 0 ? Math.min(r.Alo, hiA) : 0;
+    const L = f.length, hiA = r.capFree ? 100 * r.scale : r.Ahi > 0 ? (r.slowStill ? r.Ahi : Math.min(3 * r.scale, r.Ahi)) : 3 * r.scale, loA = r.Alo > 0 ? Math.min(r.Alo, hiA) : 0;
     const g = gbuf.length === L ? gbuf : (gbuf = new Float64Array(L)); for (let i = 0; i < L; i++) g[i] = 1 - f[i];
     return NOISE_B !== null ? boxAB(r.y, g, loA, hiA, NOISE_B, NOISE_B) : boxAB(r.y, g, loA, hiA, 0, dMin(r));
   }
@@ -635,7 +635,13 @@
 
   /* opts: { q_min_per_um, q_max_per_um (null: automatic), beta (null: free, else fixed for the compressed fits),
    *         kind ("3d" | "2d": geometry assumed by the swimmer model and the inversions), images (as in ddm-engine) } */
+  /* opts.published_only: Wilson's model as published (cells as points, B fitted at each q, no depth of field), without
+   * what this page adds: camera noise, turning of the cells, tumbles, swimmers leaving the focus, the expected diffusion of
+   * the cells, the amplitude checks and the window corrections. Each can also be switched off by itself. */
+  const PUBLISHED_ONLY = { noise: "fit", cell_shape: false, turn_perq: false, swim_turning: false, tumbles: false, swim_axial: false,
+    D_from_cells: false, D_hint: 0, share_from_amplitude: false, amplitude_floor: false, amplitude_limits: false, depth: false, window_fix: false };
   function* analyse(movie, opts) {
+    if (opts.published_only === true) opts = Object.assign({}, opts, PUBLISHED_ONLY);
     const kind = opts.kind === "2d" ? "2d" : "3d";
     const S = yield* DDM.structure(movie, opts);
     const taus = S.taus_s, L = taus.length, nb = S.nb;
@@ -662,16 +668,17 @@
       // whole amplitude from the mean power (cells that stay put included), with the scatter of a few modes allowed for
       // (and at least that amplitude divided by the same margin: cells that stay put still count in the whole)
       const Atot = S.powq ? 2 * S.powq[b] - (NOISE_B !== null ? NOISE_B : S.B_est[b]) : NaN, kA = Math.max(1.3, 1 + 3 / Math.sqrt(Math.max(1, S.nmodes[b])));
-      const Ahi = Atot > 0 ? Atot * kA : NaN, Alo = Atot > 0 && opts.amplitude_floor !== false ? Atot / kA : NaN;
+      const lim = opts.amplitude_limits !== false, Ahi = lim && Atot > 0 ? Atot * kA : NaN, Alo = lim && Atot > 0 && opts.amplitude_floor !== false ? Atot / kA : NaN;
       const DhR = opts.D_hint > 0 ? opts.D_hint : opts.D_from_cells === true && movie.truth && movie.truth.D_um2_s > 0 ? movie.truth.D_um2_s : 0;
-      rows.push({ bin: b, q: S.q_per_um[b], y: y, A: cx.A, B: cx.B, scale: 2 * S.varq[b], Atot: Atot, Ahi: Ahi, Alo: Alo, slowStill: DhR > 0 && DhR * S.q_per_um[b] * S.q_per_um[b] * taus[L - 1] < 1, free: cf, fixed: cx, gamma_hz: cx.gamma_hz, beta_free: cf.beta, lnGamma_se: cx.lnGamma_se, ok: cx.ok });
+      rows.push({ bin: b, q: S.q_per_um[b], y: y, A: cx.A, B: cx.B, scale: 2 * S.varq[b], capFree: !lim, Atot: Atot, Ahi: Ahi, Alo: Alo, slowStill: DhR > 0 && DhR * S.q_per_um[b] * S.q_per_um[b] * taus[L - 1] < 1, free: cf, fixed: cx, gamma_hz: cx.gamma_hz, beta_free: cf.beta, lnGamma_se: cx.lnGamma_se, ok: cx.ok });
     }
     // window: measurable q, rates the movie can follow
     const qmin = opts.q_min_per_um === null || opts.q_min_per_um === undefined ? 0 : opts.q_min_per_um;
     const qmax = opts.q_max_per_um === null || opts.q_max_per_um === undefined ? Infinity : opts.q_max_per_um;
     for (const r of rows) {
       r.reason = null;
-      if (r.q < (S.window ? 5 : 2) * S.q_lo_per_um) r.reason = S.window ? "pattern too wide for the window" : "pattern as large as the image";   // (the window spreads each mode over +-3 bins)
+      const wide = S.window && opts.window_fix !== false;
+      if (r.q < (wide ? 5 : 2) * S.q_lo_per_um) r.reason = wide ? "pattern too wide for the window" : "pattern as large as the image";   // (the window spreads each mode over +-3 bins)
       else if (r.q > S.q_hi_per_um) r.reason = "finer than the microscope can see";
       else {
         // from the data, not from a fit (curves of swimmers mixed with still cells rise in two steps, which one
@@ -1077,6 +1084,8 @@
     return { fraction: fs / qs.length, v_mean_um_s: nv ? vs / nv : null };
   }
 
-  const api = { _test: { setOptics: function (o) { OPTICS = o; SHAPE = o ? { optics: true } : null; opticsCache.clear(); }, opticsTable: function (q) { return opticsTable(q); }, opticsAt: function (q) { return opticsAt(q); }, setShape: function (s) { SHAPE = s; shapeCache.clear(); }, shapeWeights: function (q, k) { return shapeWeights(q, k); }, gaussLegendre: function (n) { return gaussLegendre(n); } }, fitStill: fitStill, summary: summary, depthTable: depthTable, depthF: depthF, seenOver: seenOver, analyse: analyse, swimF: swimF, swim3: swim3, swim2: swim2, besselJ0: besselJ0, nnls: nnls, invertCurve: invertCurve, fitSwimGlobal: fitSwimGlobal, fitCompressed: fitCompressed, linAB: linAB };
+  // the few numbers the page shows for the published method alone (analysed with opts.published_only)
+  function publishedSummary(r) { const h = r.head; return { v_um_s: h && !h.no_swim ? h.v_um_s : null, alpha: h ? h.alpha : null, spread: h ? h.spread : null, D_um2_s: h ? h.D_um2_s : null, no_swim: !!(h && h.no_swim), n_used: r.fits.filter(function (f) { return f.reason === null; }).length }; }
+  const api = { publishedSummary: publishedSummary, _test: { setOptics: function (o) { OPTICS = o; SHAPE = o ? { optics: true } : null; opticsCache.clear(); }, opticsTable: function (q) { return opticsTable(q); }, opticsAt: function (q) { return opticsAt(q); }, setShape: function (s) { SHAPE = s; shapeCache.clear(); }, shapeWeights: function (q, k) { return shapeWeights(q, k); }, gaussLegendre: function (n) { return gaussLegendre(n); } }, fitStill: fitStill, summary: summary, depthTable: depthTable, depthF: depthF, seenOver: seenOver, analyse: analyse, swimF: swimF, swim3: swim3, swim2: swim2, besselJ0: besselJ0, nnls: nnls, invertCurve: invertCurve, fitSwimGlobal: fitSwimGlobal, fitCompressed: fitCompressed, linAB: linAB };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ACTIVE = api;
 })(this);

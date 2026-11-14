@@ -82,6 +82,13 @@ p { margin: 0 0 1rem; }
 html[data-level="curious"] .lvl-2, html[data-level="curious"] .lvl-3, html[data-level="student"] .lvl-3 { display: none !important; }
 html[data-level="student"] .only-1, html[data-level="researcher"] .only-1 { display: none !important; }
 html[data-level="curious"] details.math { display: none; }
+html:not([data-level="hood"]) .lvl-4 { display: none !important; }
+/* what this page adds to the published methods */
+.ours { display: inline-block; font-family: var(--sans); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em; color: var(--accent-2); border: 1px solid currentColor; border-radius: 999px; padding: 0 0.45rem; margin-right: 0.35rem; line-height: 1.5; vertical-align: 0.12em; white-space: nowrap; font-style: normal; }
+.adds { max-width: var(--measure); padding-left: 1.1rem; }
+.adds li { margin-bottom: 0.6rem; }
+.adds .where { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); }
+table.sizing tr.pub th, table.sizing tr.pub td { font-style: italic; }
 
 /* opening */
 .intro { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; padding-block: 2.5rem 1.5rem; align-items: center; }
@@ -266,6 +273,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <label><input type="radio" name="level" id="lv-curious" value="curious"><span class="t">Curious</span><span class="d">The idea in words and pictures, no equations.</span></label>
           <label><input type="radio" name="level" id="lv-student" value="student"><span class="t">Student</span><span class="d">The method step by step, equations folded away.</span></label>
           <label><input type="radio" name="level" id="lv-researcher" value="researcher"><span class="t">Researcher</span><span class="d">All controls, equations open, and the matching fastDDM calls.</span></label>
+          <label><input type="radio" name="level" id="lv-hood" value="hood"><span class="t">Under the hood</span><span class="d">As Researcher, plus switches for what this page adds to the published model, and that model alone on the same movie.</span></label>
         </div>
       </fieldset>
       <div class="hero-result" id="hero-result" aria-live="polite">
@@ -394,7 +402,7 @@ img_seq = fd.read_images(file_names)</pre>
         <details class="math" data-open-at="researcher">
           <summary>The math: image structure function</summary>
           <div class="eq"><i>d</i>(<b>q</b>, &Delta;<i>t</i>) = &lang; |<i>F</i>[&Delta;<i>I</i>](<b>q</b>; <i>t</i>, &Delta;<i>t</i>)|<sup>2</sup> &rang;<sub><i>t</i></sub></div>
-          <p>Here <i>F</i> is the two-dimensional Fourier transform and the average runs over all start times <i>t</i>. For motion with no preferred direction, <i>d</i> depends only on <i>q</i> = |<b>q</b>|, and the azimuthal average gives <i>d</i>(<i>q</i>, &Delta;<i>t</i>). The cross <i>q<sub>x</sub></i> = 0 or <i>q<sub>y</sub></i> = 0 is left out because image edges add artefacts there. <b>Windowing</b> (switch under Analysis, off by default; Giavazzi, Edera, Lu and Cerbino, <a href="https://doi.org/10.1140/epje/i2017-11587-3">Image windowing mitigates edge effects in differential dynamic microscopy</a>, Eur. Phys. J. E 40, 97 (2017)): the transform treats each image as one tile of a repeating pattern, so anything that crosses an edge makes a jump at the tile border. The jump spreads over all <i>q</i> along the axes of the map and adds a fast decay, nearly the same at every <i>q</i>, that swamps the finest patterns. With the switch on, each frame is first multiplied by a Blackman-Harris window <i>W</i>(<i>x</i>)<i>W</i>(<i>y</i>), <i>W</i> = 0.3636 &minus; 0.4892 cos(2&pi;<i>x</i>/<i>L</i>) + 0.1366 cos(4&pi;<i>x</i>/<i>L</i>) &minus; 0.0106 cos(6&pi;<i>x</i>/<i>L</i>), which falls smoothly to zero at the edges. The window has its own price: less of the field counts, and its transform mixes each pattern with its neighbours up to 3 steps away in <i>q</i>, so the widest patterns (below 5 steps) are left out. On two simulated movies of the standard sample it read the speed 1.5 and 3 % high (3.4 and 3.9 % without it) and the share 0.61 and 0.56 (0.68 and 0.56 seen). The camera noise <i>B</i> becomes 2 &lang;<i>W</i><sup>2</sup> &times; noise variance&rang;. The paper keeps the peak of the window at 1, which lowers <i>A</i>(<i>q</i>) and <i>B</i> by more than 90 %; here the window is scaled so that the mean of <i>W</i><sup>2</sup> over the image is 1, so <i>A</i>(<i>q</i>) and <i>B</i> keep the height they have without it and the two analyses can be compared on the same axes. Rates, sizes and speeds do not depend on this choice.</p>
+          <p>Here <i>F</i> is the two-dimensional Fourier transform and the average runs over all start times <i>t</i>. For motion with no preferred direction, <i>d</i> depends only on <i>q</i> = |<b>q</b>|, and the azimuthal average gives <i>d</i>(<i>q</i>, &Delta;<i>t</i>). The cross <i>q<sub>x</sub></i> = 0 or <i>q<sub>y</sub></i> = 0 is left out because image edges add artefacts there. <b>Windowing</b> (switch under Analysis, off by default; Giavazzi, Edera, Lu and Cerbino, <a href="https://doi.org/10.1140/epje/i2017-11587-3">Image windowing mitigates edge effects in differential dynamic microscopy</a>, Eur. Phys. J. E 40, 97 (2017)): the transform treats each image as one tile of a repeating pattern, so anything that crosses an edge makes a jump at the tile border. The jump spreads over all <i>q</i> along the axes of the map and adds a fast decay, nearly the same at every <i>q</i>, that swamps the finest patterns. With the switch on, each frame is first multiplied by a Blackman-Harris window <i>W</i>(<i>x</i>)<i>W</i>(<i>y</i>), <i>W</i> = 0.3636 &minus; 0.4892 cos(2&pi;<i>x</i>/<i>L</i>) + 0.1366 cos(4&pi;<i>x</i>/<i>L</i>) &minus; 0.0106 cos(6&pi;<i>x</i>/<i>L</i>), which falls smoothly to zero at the edges. The window has its own price: less of the field counts, and its transform mixes each pattern with its neighbours up to 3 steps away in <i>q</i>, <span class="ours">Our addition</span>so the widest patterns (below 5 steps) are left out. On two simulated movies of the standard sample it read the speed 1.5 and 3 % high (3.4 and 3.9 % without it) and the share 0.61 and 0.56 (0.68 and 0.56 seen). The camera noise <i>B</i> becomes 2 &lang;<i>W</i><sup>2</sup> &times; noise variance&rang;. The paper keeps the peak of the window at 1, which lowers <i>A</i>(<i>q</i>) and <i>B</i> by more than 90 %; <span class="ours">Our addition</span>here the window is scaled so that the mean of <i>W</i><sup>2</sup> over the image is 1, so <i>A</i>(<i>q</i>) and <i>B</i> keep the height they have without it and the two analyses can be compared on the same axes. Rates, sizes and speeds do not depend on this choice.</p>
           <div class="lvl-3"><pre class="code">dqt = fd.ddm(img_seq, range(1, len(img_seq) // 2))
 dqt.pixel_size = pixel_size        # um
 dqt.set_frame_rate(frame_rate)     # frames per second
@@ -431,12 +439,12 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
           <div class="eq"><i>f</i> = e<sup>&minus;<i>Dq</i><sup>2</sup>&Delta;<i>t</i></sup> [ (1 &minus; &alpha;) + &alpha; &lang;sin(<i>qv</i>&Delta;<i>t</i>) / (<i>qv</i>&Delta;<i>t</i>)&rang;<sub><i>v</i></sub> ]</div>
           <div class="eq">&lang;sin(<i>qv</i>&Delta;<i>t</i>) / (<i>qv</i>&Delta;<i>t</i>)&rang;<sub><i>v</i></sub> = (<i>Z</i> + 1) sin(<i>Z</i> arctan &Lambda;) / [<i>Z</i> <i>qv&#772;</i>&Delta;<i>t</i> (1 + &Lambda;<sup>2</sup>)<sup><i>Z</i>/2</sup>], &nbsp; &Lambda; = <i>qv&#772;</i>&Delta;<i>t</i> / (<i>Z</i> + 1)</div>
           <p>The sine over its argument is the average of e<sup>&minus;<i>i</i><b>q</b>&middot;<b>v</b>&Delta;<i>t</i></sup> over directions in 3D. For cells swimming in the image plane the average over directions in the plane is the Bessel function <i>J</i><sub>0</sub>(<i>qv</i>&Delta;<i>t</i>) instead. The page fits &alpha;, <i>v&#772;</i>, &sigma; and <i>D</i> to all <i>q</i> at once; <i>A</i> and <i>B</i> of each <i>q</i> follow by linear least squares. Several starting points are tried and the best fit is kept.</p>
-          <p><b>The shape of the cells.</b> Wilson's model treats each cell as a point. A rod swims along its own axis <b>u</b>, and its image at <b>q</b> depends on the angle between the two: for a cylinder of length <i>L</i> and radius <i>R</i> the weight is |<i>F</i>|<sup>2</sup> = sinc<sup>2</sup>(<i>q&mu;L</i>/2) [2<i>J</i><sub>1</sub>(<i>x</i>)/<i>x</i>]<sup>2</sup>, with &mu; the cosine of the angle between <b>q</b> and <b>u</b> and <i>x</i> = <i>qR</i>(1 &minus; &mu;<sup>2</sup>)<sup>1/2</sup>. A swimmer moves along <b>u</b>, so <b>q</b>&middot;&Delta;<b>r</b> = <i>qv</i>&Delta;<i>t</i>&mu;, and the page averages over directions with this weight:</p>
+          <p><span class="ours">Our addition</span><b>The shape of the cells.</b> Wilson's model treats each cell as a point. A rod swims along its own axis <b>u</b>, and its image at <b>q</b> depends on the angle between the two: for a cylinder of length <i>L</i> and radius <i>R</i> the weight is |<i>F</i>|<sup>2</sup> = sinc<sup>2</sup>(<i>q&mu;L</i>/2) [2<i>J</i><sub>1</sub>(<i>x</i>)/<i>x</i>]<sup>2</sup>, with &mu; the cosine of the angle between <b>q</b> and <b>u</b> and <i>x</i> = <i>qR</i>(1 &minus; &mu;<sup>2</sup>)<sup>1/2</sup>. A swimmer moves along <b>u</b>, so <b>q</b>&middot;&Delta;<b>r</b> = <i>qv</i>&Delta;<i>t</i>&mu;, and the page averages over directions with this weight:</p>
           <div class="eq">&lang;&hellip;&rang; = &int; d&mu; |<i>F</i>|<sup>2</sup> &lang;cos(<i>qv</i>&Delta;<i>t</i>&mu;)&rang;<sub><i>v</i></sub> / &int; d&mu; |<i>F</i>|<sup>2</sup>, &nbsp; &lang;cos(<i>k v</i>)&rang;<sub><i>v</i></sub> = cos((<i>Z</i> + 1) arctan &Lambda;) / (1 + &Lambda;<sup>2</sup>)<sup>(<i>Z</i>+1)/2</sup>, &nbsp; &Lambda; = <i>kv&#772;</i>/(<i>Z</i> + 1)</div>
           <p>&mu; is spread evenly over [0, 1] for cells swimming in 3D, and &mu; = cos &phi; with &phi; spread evenly for cells in the plane; with |<i>F</i>|<sup>2</sup> = 1 this gives back the sine over its argument and <i>J</i><sub>0</sub>. When <i>qL</i> is large, the swimmers moving across <b>q</b>, which renew the pattern slowly, dominate. The length and width are those of the simulated cells, which an experimenter measures in the images. In a simulation with fluorescent 50 &mu;m Euglena the point model reads the speed 40 % low and the weighted model is within 1 %. In bright field at very low aperture the image of a thick cell is not its flat outline at patterns finer than its length, so the page keeps by default to patterns at least as wide as a cell is long.</p>
-          <p><b>Two safeguards.</b> When the cells that do not swim barely move during the movie, a smaller &alpha; with a larger <i>A</i> describes the curves just as well (cells that stay put add nothing to the changes from frame to frame). So the page also tries <i>D</i> fixed at the value expected from the size and shape of the cells and the viscosity of the liquid, and keeps it when the data do not ask for another one (cost at most 3 % higher); for rods it may add the fading of the still cells as they turn, a share <i>b</i> at rate 6<i>D<sub>R</sub></i>. The swimmers turn too, and their images fade in the same way: the same share <i>b</i> (it belongs to the image of a rod at that <i>q</i>, whatever the rod does), at rate 6<i>D<sub>s</sub></i>, with <i>D<sub>s</sub></i> the rotational diffusion of their heading, fitted, at most that of the body alone (from its size and the viscosity, as <i>D</i>; the flagella only add drag). Without this term the share of swimmers came out about 8 % low in a sample where all cells swim (the fading of the swimmers was taken for still cells that turn) and the speed of the standard sample 5 % high instead of 3-4 %. Without the limit, for long rods the fading stood in for the errors of the shape weight and the speed came out up to 23 % low. And it fits cells that do not swim at all (&alpha; = 0, with <i>b</i> and <i>D<sub>R</sub></i> free): if that is about as good (cost at most 10 % higher), it reports no swimming, because turning rods alone can pass for slow swimmers. Last, <i>A</i> of each <i>q</i> stays below the whole amplitude from the mean power of the images, and below three times twice the variance in time of that pattern. The second limit is dropped when the cells that do not swim hardly move during the movie at every <i>q</i> used (<i>Dq</i><sup>2</sup> times the longest delay below 1): then most of their amplitude never shows up in the variance in time, and with it a sample of dead sperm passed for 40 % slow swimmers.</p>
-          <p><b>Uncertainties.</b> The points of <i>d</i>(<i>q</i>, &Delta;<i>t</i>) are not independent: all delays come from the same frames, and the same cells make every curve. The covariance of the fit treats them as independent and gives errors several times too small. The page therefore repeats the fits <i>K</i> = 5 times, each time with one fifth of the movie left out (a pair of frames counts in the block of its first frame), and quotes the jackknife error &radic;[(<i>K</i> &minus; 1)/<i>K</i> &Sigma; (<i>x<sub>j</sub></i> &minus; <i>x&#772;</i>)<sup>2</sup>]. In simulations of the standard sample and of wild-type E. coli, six movies each, the speed scattered from movie to movie by 1.2-1.3 times the quoted error (the covariance of the fit gave 5-8 times too little). The error does not include the errors of the model, such as a few % from the shape of the cells in phase contrast; the true values, and "Repeat 5 times with new cells", show those. Nor does it include which cells happen to be in view: the parts of the movie show the same cells. With few cells this matters. In five simulated movies of Chlamydomonas (about 170 cells, all with the stroke frequency found within 0.5 %) the speed scattered by 3.4 % against a quoted 1.2 %, one movie being 7 % off; with 250-340 cells (E. coli, standard sample) the factor was 1.2-1.3. The page adds a note when fewer than 200 cells are in view.</p>
-          <p><b>The depth of field.</b> Wilson's model counts only sideways motion. A cell at depth <i>z</i> adds <i>K</i>(<i>q</i>, <i>z</i>) e<sup>&minus;<i>i</i><b>q</b>&middot;<b>x</b></sup> to the image, with <i>K</i> the optical kernel of step 1, so a swimmer that also moves up or down fades from each pattern. With <i>C<sub>q</sub></i>(&delta;<i>z</i>) the overlap of <i>K</i>(<i>q</i>, <i>z</i>) and <i>K</i>(<i>q</i>, <i>z</i> + &delta;<i>z</i>) averaged over the cell, a swimmer that has moved <i>s</i> = <i>v</i>&Delta;<i>t</i> gives</p>
+          <p><span class="ours">Our additions</span><b>Two safeguards.</b> When the cells that do not swim barely move during the movie, a smaller &alpha; with a larger <i>A</i> describes the curves just as well (cells that stay put add nothing to the changes from frame to frame). So the page also tries <i>D</i> fixed at the value expected from the size and shape of the cells and the viscosity of the liquid, and keeps it when the data do not ask for another one (cost at most 3 % higher); for rods it may add the fading of the still cells as they turn, a share <i>b</i> at rate 6<i>D<sub>R</sub></i>. The swimmers turn too, and their images fade in the same way: the same share <i>b</i> (it belongs to the image of a rod at that <i>q</i>, whatever the rod does), at rate 6<i>D<sub>s</sub></i>, with <i>D<sub>s</sub></i> the rotational diffusion of their heading, fitted, at most that of the body alone (from its size and the viscosity, as <i>D</i>; the flagella only add drag). Without this term the share of swimmers came out about 8 % low in a sample where all cells swim (the fading of the swimmers was taken for still cells that turn) and the speed of the standard sample 5 % high instead of 3-4 %. Without the limit, for long rods the fading stood in for the errors of the shape weight and the speed came out up to 23 % low. And it fits cells that do not swim at all (&alpha; = 0, with <i>b</i> and <i>D<sub>R</sub></i> free): if that is about as good (cost at most 10 % higher), it reports no swimming, because turning rods alone can pass for slow swimmers. Last, <i>A</i> of each <i>q</i> stays below the whole amplitude from the mean power of the images, and below three times twice the variance in time of that pattern. The second limit is dropped when the cells that do not swim hardly move during the movie at every <i>q</i> used (<i>Dq</i><sup>2</sup> times the longest delay below 1): then most of their amplitude never shows up in the variance in time, and with it a sample of dead sperm passed for 40 % slow swimmers.</p>
+          <p><b>Uncertainties.</b> The points of <i>d</i>(<i>q</i>, &Delta;<i>t</i>) are not independent: all delays come from the same frames, and the same cells make every curve. The covariance of the fit treats them as independent and gives errors several times too small. <span class="ours">Our addition</span>The page therefore repeats the fits <i>K</i> = 5 times, each time with one fifth of the movie left out (a pair of frames counts in the block of its first frame), and quotes the jackknife error &radic;[(<i>K</i> &minus; 1)/<i>K</i> &Sigma; (<i>x<sub>j</sub></i> &minus; <i>x&#772;</i>)<sup>2</sup>]. In simulations of the standard sample and of wild-type E. coli, six movies each, the speed scattered from movie to movie by 1.2-1.3 times the quoted error (the covariance of the fit gave 5-8 times too little). The error does not include the errors of the model, such as a few % from the shape of the cells in phase contrast; the true values, and "Repeat 5 times with new cells", show those. Nor does it include which cells happen to be in view: the parts of the movie show the same cells. With few cells this matters. In five simulated movies of Chlamydomonas (about 170 cells, all with the stroke frequency found within 0.5 %) the speed scattered by 3.4 % against a quoted 1.2 %, one movie being 7 % off; with 250-340 cells (E. coli, standard sample) the factor was 1.2-1.3. The page adds a note when fewer than 200 cells are in view.</p>
+          <p><span class="ours">Our addition</span><b>The depth of field.</b> Wilson's model counts only sideways motion. A cell at depth <i>z</i> adds <i>K</i>(<i>q</i>, <i>z</i>) e<sup>&minus;<i>i</i><b>q</b>&middot;<b>x</b></sup> to the image, with <i>K</i> the optical kernel of step 1, so a swimmer that also moves up or down fades from each pattern. With <i>C<sub>q</sub></i>(&delta;<i>z</i>) the overlap of <i>K</i>(<i>q</i>, <i>z</i>) and <i>K</i>(<i>q</i>, <i>z</i> + &delta;<i>z</i>) averaged over the cell, a swimmer that has moved <i>s</i> = <i>v</i>&Delta;<i>t</i> gives</p>
           <div class="eq"><i>h<sub>q</sub></i>(<i>s</i>) = &int;<sub>0</sub><sup>1</sup> d&mu; <i>J</i><sub>0</sub>(<i>qs</i> &radic;(1 &minus; &mu;<sup>2</sup>)) Re <i>C<sub>q</sub></i>(<i>s</i>&mu;)</div>
           <p>in place of the sine over its argument (they are equal when <i>C</i> = 1), averaged over the speeds; the cells that do not swim get <i>C<sub>q</sub></i> averaged over their axial diffusion, and the swimmers get the same factor on top, as they diffuse up and down too (for those swimming along the slice that is all their axial motion). Without it, at 60x with all cells swimming the fit needed a diffusion coefficient three times too large; with it the true one fits and the speed is within 1 %. With 60 % swimming at 60x the share still reads about 0.76 for 0.62 seen. This model is used automatically in the confocal modes. As far as we know it has not been published.</p>
           <p><b>The stroke.</b> Algae and sperm do not glide: each beat moves the cell, or the sperm head, back and forth about its mean path. Martinez et al. (2012) wrote the displacement as <i>v</i>&Delta;<i>t</i> + <i>A</i>[sin(2&pi;<i>f</i>&Delta;<i>t</i> + &phi;) &minus; sin &phi;], with a random phase &phi; for each cell. Averaged over &phi; and over the speeds, the sine over its argument of Wilson's model becomes</p>
@@ -548,6 +556,22 @@ A_est = 2 * aa.var - B_est
       <li><b>Collective motion.</b> Swarming bacteria and moving cell sheets, whose motion is shared by many cells over large distances.</li>
     </ul>
     <p class="prose">None of these is simulated here: they need cells that interact, or models the page does not include.</p>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-adds">
+    <h2 id="h-adds">What this page adds to the published methods</h2>
+    <p class="prose">The analysis follows Wilson et al. (2011) for straight swimmers and Martinez et al. (2012) for the stroke of algae and sperm. The steps below are not in those papers: we added them while testing the page against its own simulations, each to remove a bias or a failure we saw there. Some may exist elsewhere in the literature. In the steps above each is marked <span class="ours">Our addition</span>. At the "Under the hood" level each can be switched off (in their own group among the settings), and the result table shows the published model alone on the same movie, next to the headline. The simulation itself (steps 1 and 2) is ours throughout and is not part of this list.</p>
+    <ul class="adds">
+      <li><b>Camera noise known from the detector.</b> B = 2 (excess-noise factor &times; mean count + read noise<sup>2</sup>), the same at every <i>q</i>, instead of a free B at each <i>q</i>, which trades against the amplitude and the rates. <span class="where">Step 5; cameras only.</span></li>
+      <li><b>Shape of the cells.</b> Wilson's model treats each cell as a point; here each direction of swimming is weighted by how a rod of the cells' length and width shows at that <i>q</i>. <span class="where">Step 6. With 50 &mu;m Euglena the point model read the speed 40 % low, the weighted one within 1 %.</span></li>
+      <li><b>Expected diffusion of the cells.</b> D also tried fixed at the value expected from the size and shape of the cells and the viscosity, and kept when the data do not ask for another one; when the still cells barely move, the share of swimmers also from the amplitude. <span class="where">Step 6. Without it, still cells that barely move leave the share of swimmers and the amplitude free to trade.</span></li>
+      <li><b>Turning of the cells.</b> Rods fade from each pattern as they turn: a share <i>b</i> at each <i>q</i>, at rate 6<i>D</i><sub>R</sub> for the still cells and 6<i>D</i><sub>s</sub> for the swimmers, <i>D</i><sub>s</sub> at most that of the body. A fit with no swimming at all is also tried, since turning rods alone can pass for slow swimmers. <span class="where">Step 6. Without it the share of swimmers came out about 8 % low where all cells swim.</span></li>
+      <li><b>Tumbles.</b> For cells known to tumble, the swimmers' images also fade at the tumble rate, fitted. <span class="where">Step 6; only for tumbling cells.</span></li>
+      <li><b>Swimmers leave the focus.</b> With the depth-of-field model (itself our addition: how each pattern fades as a cell moves up or down through the optics of step 1), the swimmers fade with depth as the still cells do. <span class="where">Step 6; used automatically in the confocal modes, or chosen under Analysis.</span></li>
+      <li><b>Limits on the amplitude.</b> A of each <i>q</i> below the whole amplitude from the mean power of the images, and below three times twice the variance in time of that pattern. <span class="where">Step 6. Without them a sample of dead sperm passed for 40 % slow swimmers.</span></li>
+      <li><b>Uncertainty from the movie itself.</b> The fits repeated five times with one fifth of the movie left out (jackknife). It changes the quoted uncertainties, not the results. <span class="where">Step 6. The covariance of the fit gave errors 5-8 times too small.</span></li>
+      <li><b>Window corrections.</b> With windowing on: the window scaled so that the mean of <i>W</i><sup>2</sup> is 1 (heights only), and the patterns below 5 steps in <i>q</i> left out. <span class="where">Step 4; only with windowing on.</span></li>
+    </ul>
   </section>
 
   <section class="wrap further" aria-labelledby="h-about">
@@ -3050,7 +3074,13 @@ A_est = 2 * aa.var - B_est
              q_per_um: q_per_um, d2d: d2d, dq: dq, varq: varq, powq: powq, q_lo_per_um: q_lo_per_um, q_nyq_per_um: q_nyq_per_um, q_opt_per_um: q_opt_per_um,
              q_sig_per_um: q_sig_per_um, q_hi_per_um: q_hi_per_um, gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz, B_floor: B_floor, B_est: B_est, A_est: A_est };
   }
+  /* What this page adds to the published method can be switched off one by one (opts.noise "fit", opts.depth false,
+   * opts.exposure false, opts.outliers false, opts.var_floor false, opts.window_fix false), or all at once with
+   * opts.published_only: B fitted at each q, no depth of field, no exposure blur, no outlier rule, plain weights, the window
+   * as in the paper (no q correction, no wider exclusion of the widest patterns). */
+  const PUBLISHED_ONLY = { noise: "fit", depth: false, exposure: false, outliers: false, var_floor: false, window_fix: false };
   function* analyse(movie, opts) {
+    if (opts.published_only === true) opts = Object.assign({}, opts, PUBLISHED_ONLY);
     need(["simple", "stretched", "schulz", "two", "three"].indexOf(opts.fit_model) >= 0, "fit_model must be simple, stretched, schulz, two or three");
     const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
     need("q_min_per_um" in opts && "q_max_per_um" in opts, "q range missing (use null for the full range)");
@@ -3061,14 +3091,15 @@ A_est = 2 * aa.var - B_est
     let noiseB = opts.noise !== "fit" && !S.sg ? detectorNoiseB(movie, S.window) : null;
     if (noiseB !== null) for (let b = 1; b <= S.nb; b++) if (S.nmodes[b] > 0) { S.B_est[b] = noiseB; S.A_est[b] = 2 * S.varq[b] - noiseB; }
     BFIX = noiseB;
-    if (S.window) { const a = [0.3635819, 0.4891775, 0.1365995, 0.0106411], c = [a[0] * a[0], a[1] * a[1] / 4, a[2] * a[2] / 4, a[3] * a[3] / 4];
+    VAR_FLOOR = opts.var_floor !== false;
+    if (S.window && opts.window_fix !== false) { const a = [0.3635819, 0.4891775, 0.1365995, 0.0106411], c = [a[0] * a[0], a[1] * a[1] / 4, a[2] * a[2] / 4, a[3] * a[3] / 4];
       const m2 = 2 * (c[1] + 4 * c[2] + 9 * c[3]) / (c[0] + 2 * (c[1] + c[2] + c[3])), dq = 2 * Math.PI / movie.L_um; WIN_DQ2 = 2 * m2 * dq * dq; }
     EXPO = opts.exposure !== false && movie.info && movie.info.detector_kind === "camera" && movie.exposure_s > 0 ? movie.exposure_s : 0;
     // depth of field (opts.depth, on by default when the movie carries its optics; not with the squared gradient, whose
     // image is not linear in the particles, nor with two image channels)
     const info = movie.info, useDepth = opts.depth !== false && !S.sg && info && info.kernel && info.kernel_q && info.cell_z_um && !info.split;
     if (useDepth) { const cache = new Map(); DEPTH = function (q) { const k = q.toPrecision(6); if (!cache.has(k)) cache.set(k, depthC(info, q)); return cache.get(k); }; }
-    try { const r = yield* analyseFits(movie, opts, S, noiseB); r.depth_model = !!useDepth && r.used.some(function (f) { return !f.no_depth; }); return r; } finally { BFIX = null; DEPTH = null; EXPO = 0; WIN_DQ2 = 0; }
+    try { const r = yield* analyseFits(movie, opts, S, noiseB); r.depth_model = !!useDepth && r.used.some(function (f) { return !f.no_depth; }); return r; } finally { BFIX = null; DEPTH = null; EXPO = 0; WIN_DQ2 = 0; VAR_FLOOR = true; }
   }
   function* analyseFits(movie, opts, S, noiseB) {
     const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
@@ -3096,7 +3127,8 @@ A_est = 2 * aa.var - B_est
     const rows = fits.filter(function (f) { return f !== null; });
     for (const f of rows) {
       f.reason = null;
-      if (f.q_per_um < (S.window ? 5 : 2) * q_lo_per_um) f.reason = S.window ? "pattern too wide for the window" : "pattern as large as the image";   // (the window spreads each mode over +-3 bins)
+      const wide = S.window && opts.window_fix !== false;
+      if (f.q_per_um < (wide ? 5 : 2) * q_lo_per_um) f.reason = wide ? "pattern too wide for the window" : "pattern as large as the image";   // (the window spreads each mode over +-3 bins)
       else if (f.q_per_um > q_hi_per_um) f.reason = "finer than the microscope can see";
       else if (!f.ok) f.reason = "fit failed";
       else if (f.lnGamma_se > MAX_LN_GAMMA_SE || f.weak) f.reason = "signal lost in camera noise";
@@ -3112,7 +3144,7 @@ A_est = 2 * aa.var - B_est
     let used = rows.filter(function (f) { return f.reason === null; });
     // a q whose Gamma / q^2 is more than 3 times away from the median of the others is an outlier (a curve lost in noise
     // that passed the other tests by chance); for sizes, even broad spreads keep Gamma / q^2 within that range
-    if (used.length >= 5) {
+    if (opts.outliers !== false && used.length >= 5) {
       const lv = used.map(function (f) { return Math.log(f.gamma_hz / q2eff(f.q_per_um)); }).sort(function (a, b) { return a - b; });
       const med = lv[Math.floor(lv.length / 2)];
       used.forEach(function (f) { if (Math.abs(Math.log(f.gamma_hz / q2eff(f.q_per_um)) - med) > Math.log(3)) f.reason = "rate far from the other q"; });
@@ -3238,7 +3270,7 @@ A_est = 2 * aa.var - B_est
   // at q is the mean of D |q + dq|^2 = D (q^2 + <dq^2>). For the Blackman-Harris window its transform has 7 lines per axis
   // (0, +-1, +-2, +-3 bins, amplitudes a0, a_j/2), <dq^2> = 2 x 0.603 bins^2 in 2D. WIN_DQ2: that, in um^-2, while one
   // analysis runs (0 without a window). Without the correction 200 nm beads read 4.7 % small.
-  let WIN_DQ2 = 0;
+  let WIN_DQ2 = 0; let VAR_FLOOR = true;
   function q2eff(q) { return q * q + WIN_DQ2; }
   function depthC(info, q) {
     const K = info.kernel, qk = info.kernel_q, nq = qk.length, nzk = K.z_um.length, zg = K.z_um;
@@ -3424,7 +3456,7 @@ A_est = 2 * aa.var - B_est
   function weightedD(used) {
     if (used.length < 3) return null;
     const x = used.map(function (f) { return Math.log(f.gamma_hz) - Math.log(q2eff(f.q_per_um)); }), v0 = used.map(function (f) { return f.lnGamma_se * f.lnGamma_se + 1e-4; });
-    const vm = v0.slice().sort(function (a, b) { return a - b; })[Math.floor(v0.length / 2)], v = v0.map(function (z) { return Math.max(z, vm / 4); });
+    const vm = v0.slice().sort(function (a, b) { return a - b; })[Math.floor(v0.length / 2)], v = v0.map(function (z) { return VAR_FLOOR ? Math.max(z, vm / 4) : z; });
     let sw = 0, sx = 0;
     for (let i = 0; i < x.length; i++) { const wgt = 1 / v[i]; sw += wgt; sx += wgt * x[i]; }
     const mean = sx / sw;
@@ -3791,6 +3823,8 @@ A_est = 2 * aa.var - B_est
     CAMERA_PIXEL_UM: CAMERA_PIXEL_UM, WAVELENGTH_UM: WAVELENGTH_UM,
     waterViscosity_Pa_s: waterViscosity_Pa_s, diffusion_um2_s: diffusion_um2_s, diameterFromD_um: diameterFromD_um,
     detectorNoiseB: detectorNoiseB,
+    // the few numbers the page shows for the published method alone (analysed with opts.published_only)
+    publishedSummary: function (r) { return { diameter_um: r.diameter_um, rel_err: r.diameter_rel_err, D_um2_s: r.D ? r.D.D_um2_s : null, n_used: r.used ? r.used.length : 0 }; },
     simulate: simulate, analyse: analyse, structure: structure, structureMap: structureMap, lm: lm, solve: solve, invert: invert, logspaceLags: logspaceLags, pairBins: pairBins, runToEnd: runToEnd,
     // compact result of one analysis for repeated measurements: D from the main fit and the cumulants, the q used and the truth
     repeatSummary: function (r, mv) {
@@ -4260,7 +4294,7 @@ A_est = 2 * aa.var - B_est
     };
     let x = g2.some(function (v) { return v !== 0; }) ? solve3() : solve2(0);     // round cells (D_R = 0): no turning
     if (!x || !(x.c1 > 0) || x.c2 < 0 || x.c2 > x.c1) { const a = solve2(0), b = solve2(1); const cost = function (z) { if (!z) return Infinity; let c = 0; for (let i = 0; i < L; i++) { const e = z.c1 * g1[i] + z.c2 * g2[i] + z.B - r.y[i]; c += e * e; } return c; }; x = cost(a) <= cost(b) ? a : b; }
-    const hiA = r.Ahi > 0 ? (r.slowStill ? r.Ahi : Math.min(3 * r.scale, r.Ahi)) : 3 * r.scale, loA = r.Alo > 0 ? Math.min(r.Alo, hiA) : 0;
+    const hiA = r.capFree ? 100 * r.scale : r.Ahi > 0 ? (r.slowStill ? r.Ahi : Math.min(3 * r.scale, r.Ahi)) : 3 * r.scale, loA = r.Alo > 0 ? Math.min(r.Alo, hiA) : 0;
     // A within its bounds and B between 0 and the d at the shortest delays (see boundAB), with the share b kept
     if (x && (x.c1 < loA || x.c1 > hiA || x.B < 0 || x.B > dMin(r) || NOISE_B !== null)) {
       const bq = x.c1 > 0 ? Math.min(1, Math.max(0, x.c2 / x.c1)) : 0, g = new Float64Array(L); for (let i = 0; i < L; i++) g[i] = g1[i] + bq * g2[i];
@@ -4372,7 +4406,7 @@ A_est = 2 * aa.var - B_est
   // scale, the still cells looked like slow swimmers). Otherwise it is kept (lifted at the small q only, still rods at
   // 10x gave a few % of "swimmers")
   function boundAB(r, f) {
-    const L = f.length, hiA = r.Ahi > 0 ? (r.slowStill ? r.Ahi : Math.min(3 * r.scale, r.Ahi)) : 3 * r.scale, loA = r.Alo > 0 ? Math.min(r.Alo, hiA) : 0;
+    const L = f.length, hiA = r.capFree ? 100 * r.scale : r.Ahi > 0 ? (r.slowStill ? r.Ahi : Math.min(3 * r.scale, r.Ahi)) : 3 * r.scale, loA = r.Alo > 0 ? Math.min(r.Alo, hiA) : 0;
     const g = gbuf.length === L ? gbuf : (gbuf = new Float64Array(L)); for (let i = 0; i < L; i++) g[i] = 1 - f[i];
     return NOISE_B !== null ? boxAB(r.y, g, loA, hiA, NOISE_B, NOISE_B) : boxAB(r.y, g, loA, hiA, 0, dMin(r));
   }
@@ -4441,7 +4475,13 @@ A_est = 2 * aa.var - B_est
 
   /* opts: { q_min_per_um, q_max_per_um (null: automatic), beta (null: free, else fixed for the compressed fits),
    *         kind ("3d" | "2d": geometry assumed by the swimmer model and the inversions), images (as in ddm-engine) } */
+  /* opts.published_only: Wilson's model as published (cells as points, B fitted at each q, no depth of field), without
+   * what this page adds: camera noise, turning of the cells, tumbles, swimmers leaving the focus, the expected diffusion of
+   * the cells, the amplitude checks and the window corrections. Each can also be switched off by itself. */
+  const PUBLISHED_ONLY = { noise: "fit", cell_shape: false, turn_perq: false, swim_turning: false, tumbles: false, swim_axial: false,
+    D_from_cells: false, D_hint: 0, share_from_amplitude: false, amplitude_floor: false, amplitude_limits: false, depth: false, window_fix: false };
   function* analyse(movie, opts) {
+    if (opts.published_only === true) opts = Object.assign({}, opts, PUBLISHED_ONLY);
     const kind = opts.kind === "2d" ? "2d" : "3d";
     const S = yield* DDM.structure(movie, opts);
     const taus = S.taus_s, L = taus.length, nb = S.nb;
@@ -4468,16 +4508,17 @@ A_est = 2 * aa.var - B_est
       // whole amplitude from the mean power (cells that stay put included), with the scatter of a few modes allowed for
       // (and at least that amplitude divided by the same margin: cells that stay put still count in the whole)
       const Atot = S.powq ? 2 * S.powq[b] - (NOISE_B !== null ? NOISE_B : S.B_est[b]) : NaN, kA = Math.max(1.3, 1 + 3 / Math.sqrt(Math.max(1, S.nmodes[b])));
-      const Ahi = Atot > 0 ? Atot * kA : NaN, Alo = Atot > 0 && opts.amplitude_floor !== false ? Atot / kA : NaN;
+      const lim = opts.amplitude_limits !== false, Ahi = lim && Atot > 0 ? Atot * kA : NaN, Alo = lim && Atot > 0 && opts.amplitude_floor !== false ? Atot / kA : NaN;
       const DhR = opts.D_hint > 0 ? opts.D_hint : opts.D_from_cells === true && movie.truth && movie.truth.D_um2_s > 0 ? movie.truth.D_um2_s : 0;
-      rows.push({ bin: b, q: S.q_per_um[b], y: y, A: cx.A, B: cx.B, scale: 2 * S.varq[b], Atot: Atot, Ahi: Ahi, Alo: Alo, slowStill: DhR > 0 && DhR * S.q_per_um[b] * S.q_per_um[b] * taus[L - 1] < 1, free: cf, fixed: cx, gamma_hz: cx.gamma_hz, beta_free: cf.beta, lnGamma_se: cx.lnGamma_se, ok: cx.ok });
+      rows.push({ bin: b, q: S.q_per_um[b], y: y, A: cx.A, B: cx.B, scale: 2 * S.varq[b], capFree: !lim, Atot: Atot, Ahi: Ahi, Alo: Alo, slowStill: DhR > 0 && DhR * S.q_per_um[b] * S.q_per_um[b] * taus[L - 1] < 1, free: cf, fixed: cx, gamma_hz: cx.gamma_hz, beta_free: cf.beta, lnGamma_se: cx.lnGamma_se, ok: cx.ok });
     }
     // window: measurable q, rates the movie can follow
     const qmin = opts.q_min_per_um === null || opts.q_min_per_um === undefined ? 0 : opts.q_min_per_um;
     const qmax = opts.q_max_per_um === null || opts.q_max_per_um === undefined ? Infinity : opts.q_max_per_um;
     for (const r of rows) {
       r.reason = null;
-      if (r.q < (S.window ? 5 : 2) * S.q_lo_per_um) r.reason = S.window ? "pattern too wide for the window" : "pattern as large as the image";   // (the window spreads each mode over +-3 bins)
+      const wide = S.window && opts.window_fix !== false;
+      if (r.q < (wide ? 5 : 2) * S.q_lo_per_um) r.reason = wide ? "pattern too wide for the window" : "pattern as large as the image";   // (the window spreads each mode over +-3 bins)
       else if (r.q > S.q_hi_per_um) r.reason = "finer than the microscope can see";
       else {
         // from the data, not from a fit (curves of swimmers mixed with still cells rise in two steps, which one
@@ -4883,7 +4924,9 @@ A_est = 2 * aa.var - B_est
     return { fraction: fs / qs.length, v_mean_um_s: nv ? vs / nv : null };
   }
 
-  const api = { _test: { setOptics: function (o) { OPTICS = o; SHAPE = o ? { optics: true } : null; opticsCache.clear(); }, opticsTable: function (q) { return opticsTable(q); }, opticsAt: function (q) { return opticsAt(q); }, setShape: function (s) { SHAPE = s; shapeCache.clear(); }, shapeWeights: function (q, k) { return shapeWeights(q, k); }, gaussLegendre: function (n) { return gaussLegendre(n); } }, fitStill: fitStill, summary: summary, depthTable: depthTable, depthF: depthF, seenOver: seenOver, analyse: analyse, swimF: swimF, swim3: swim3, swim2: swim2, besselJ0: besselJ0, nnls: nnls, invertCurve: invertCurve, fitSwimGlobal: fitSwimGlobal, fitCompressed: fitCompressed, linAB: linAB };
+  // the few numbers the page shows for the published method alone (analysed with opts.published_only)
+  function publishedSummary(r) { const h = r.head; return { v_um_s: h && !h.no_swim ? h.v_um_s : null, alpha: h ? h.alpha : null, spread: h ? h.spread : null, D_um2_s: h ? h.D_um2_s : null, no_swim: !!(h && h.no_swim), n_used: r.fits.filter(function (f) { return f.reason === null; }).length }; }
+  const api = { publishedSummary: publishedSummary, _test: { setOptics: function (o) { OPTICS = o; SHAPE = o ? { optics: true } : null; opticsCache.clear(); }, opticsTable: function (q) { return opticsTable(q); }, opticsAt: function (q) { return opticsAt(q); }, setShape: function (s) { SHAPE = s; shapeCache.clear(); }, shapeWeights: function (q, k) { return shapeWeights(q, k); }, gaussLegendre: function (n) { return gaussLegendre(n); } }, fitStill: fitStill, summary: summary, depthTable: depthTable, depthF: depthF, seenOver: seenOver, analyse: analyse, swimF: swimF, swim3: swim3, swim2: swim2, besselJ0: besselJ0, nnls: nnls, invertCurve: invertCurve, fitSwimGlobal: fitSwimGlobal, fitCompressed: fitCompressed, linAB: linAB };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ACTIVE = api;
 })(this);
 
@@ -4923,7 +4966,9 @@ A_est = 2 * aa.var - B_est
         out = { n: movie.n, T: movie.T, frames: movie.frames.slice(0), pixel_um: movie.pixel_um, L_um: movie.L_um, frame_rate_hz: movie.frame_rate_hz,
           T_C: movie.T_C, viscosity_Pa_s: movie.viscosity_Pa_s, q_opt_per_um: movie.q_opt_per_um, q_signal_max_per_um: movie.q_signal_max_per_um, times_s: movie.times_s, info: movie.info, truth: movie.truth };
       }
-      const res = drive(ACTIVE.analyse(movie, m.opts), m.token, 0.85, 1);
+      const res = drive(ACTIVE.analyse(movie, m.opts), m.token, 0.85, m.opts.compare_published ? 0.92 : 1);
+      // Wilson's model alone on the same movie ("Under the hood" level)
+      if (m.opts.compare_published) res.published = ACTIVE.publishedSummary(drive(ACTIVE.analyse(movie, Object.assign({}, m.opts, { published_only: true, jackknife: false })), m.token, 0.92, 1));
       const transfer = res.d2d.map(function (a) { return a.buffer; });
       if (out) transfer.push(out.frames.buffer);
       self.postMessage({ type: "done", token: m.token, movie: out, res: res }, transfer);
@@ -5060,6 +5105,7 @@ A_est = 2 * aa.var - B_est
     shape: "rod", aspect: 2.5, dn: 0, dn_body: 0, polarizer: "off", analyzer: "off", pol_angle_deg: 90, extinction: 1e-4,
     swim_frac: 0.6, swim_v: 20, swim_spread: 0.3, swim_geom: "3d", swim_rot: 0.1, swim_tumble: 0,
     swim_model: "auto", windowing: "off", q_min: null, q_max: null, seed: 1,
+    x_noise: "on", x_shape: "on", x_dcells: "on", x_turn: "on", x_tumble: "on", x_axial: "on", x_amp: "on", x_window: "on",
     organism: "model", swim_osc_amp: 0, swim_osc_hz: 20, swim_osc_dir: "along", drag: 1
   };
   // Microorganisms measured with DDM, with the values reported in the papers (marked "assumed" where a paper gives none).
@@ -5111,7 +5157,7 @@ A_est = 2 * aa.var - B_est
       text: "Starts from the cells shown now; shape, size and material are then yours to set." },
   };
   let state = Object.assign({}, BASE);
-  const LEVEL_RANK = { curious: 1, student: 2, researcher: 3 };
+  const LEVEL_RANK = { curious: 1, student: 2, researcher: 3, hood: 4 };
   let level = "curious";
 
   function fmtSize(um) { return um < 1 ? Math.round(um * 1000) + " nm" : um.toFixed(um < 2 ? 2 : 1) + " " + MU + "m"; }
@@ -5273,7 +5319,11 @@ A_est = 2 * aa.var - B_est
   // The swimmer model weighs each swimmer by how its image shows the pattern along its direction of travel; finer
   // patterns depend on details of the image of a thick cell (in bright field at low NA) that the model leaves out
   function autoQmax() { return state.shape === "sphere" || state.swim_frac === 0 ? null : 2 * Math.PI / Math.max(0.3, state.diameter_um); }   // long cells only (see the card "Long cells")
-  function analysisOptions() { const m = swimModel(); return { q_min_per_um: state.q_min, q_max_per_um: state.q_max !== null ? state.q_max : autoQmax(), beta: null, kind: m === "plane" ? "2d" : "3d", depth: m === "depth", stroke: m === "stroke" || m === "strokex", stroke_dir: m === "strokex" ? "across" : "along", D_from_cells: true, tumbles: state.swim_tumble > 0, windowing: state.windowing === "on" }; }
+  function analysisOptions() { const m = swimModel(); return { q_min_per_um: state.q_min, q_max_per_um: state.q_max !== null ? state.q_max : autoQmax(), beta: null, kind: m === "plane" ? "2d" : "3d", depth: m === "depth", stroke: m === "stroke" || m === "strokex", stroke_dir: m === "strokex" ? "across" : "along", D_from_cells: state.x_dcells !== "off", tumbles: state.swim_tumble > 0 && state.x_tumble !== "off", windowing: state.windowing === "on",
+    // what this page adds to Wilson's model, each switchable at the "Under the hood" level, where the published model alone
+    // also runs on the same movie for comparison
+    noise: state.x_noise === "off" ? "fit" : undefined, cell_shape: state.x_shape === "off" ? false : undefined, turn_perq: state.x_turn !== "off", swim_turning: state.x_turn !== "off",
+    swim_axial: state.x_axial !== "off", amplitude_limits: state.x_amp !== "off", window_fix: state.x_window !== "off", compare_published: level === "hood" }; }
   // centre height of cells lying on the bottom glass: half their thickness plus a 0.2 um gap
   function glassHeight() { const g = geometry(); return Math.min(g.a_par, g.a_perp) + 0.2; }
 
@@ -5366,6 +5416,26 @@ A_est = 2 * aa.var - B_est
     { key: "swim_model", group: "Analysis", lvl: 2, label: "Swimmer model fitted to all q", kind: "select", options: [["auto", "Automatic"], ["wilson", MODEL_LABEL.wilson], ["depth", MODEL_LABEL.depth], ["plane", MODEL_LABEL.plane], ["stroke", MODEL_LABEL.stroke], ["strokex", MODEL_LABEL.strokex]], hint: function () { return "In use: " + MODEL_LABEL[swimModel()] + "." + (swimModel() === "depth" ? " Uses how each pattern fades as a cell moves up or down through the focus, computed from the optics of this microscope." : ""); } },
     { key: "qrange", group: "Analysis", lvl: 3, label: "Fit range in q (1/" + MU + "m)", kind: "qrange" }
   ];
+  // "Under the hood": the additions to Wilson's model, one switch each (see "What this page adds" on the page)
+  const ONOFF = function (off) { return [["on", "On"], ["off", "Off: " + off]]; };
+  CONTROLS.push(
+    { key: "x_noise", lvl: 4, label: "Camera noise known from the detector", kind: "select", options: ONOFF("B fitted at each q"),
+      hint: function () { return "On: B = 2 (excess-noise factor x mean count + read noise\u00b2), the same at every q. Off: B fitted at each q, as published."; } },
+    { key: "x_shape", lvl: 4, label: "Shape of the cells", kind: "select", options: ONOFF("cells as points, as in Wilson's model"),
+      hint: function () { return "On: each direction of swimming weighted by how a rod of this length and width shows at that q. Matters for long cells and fine patterns."; } },
+    { key: "x_dcells", lvl: 4, label: "Expected diffusion of the cells", kind: "select", options: ONOFF("D always fitted"),
+      hint: function () { return "On: D fixed at the value expected from the size and shape of the cells and the viscosity, when the data do not ask for another one; and the share of swimmers from the amplitude when the still cells barely move."; } },
+    { key: "x_turn", lvl: 4, label: "Turning of the cells", kind: "select", options: ONOFF("no fading as rods turn"),
+      hint: function () { return "On: rods, still or swimming, also fade from each pattern as they turn (a share b at each q, rate 6 D_R for the still ones, 6 D_s for the swimmers)."; } },
+    { key: "x_tumble", lvl: 4, label: "Tumbles", kind: "select", options: ONOFF("straight runs only"), when: function () { return state.swim_tumble > 0; },
+      hint: function () { return "On: for cells known to tumble, the swimmers' images also fade at the tumble rate, fitted."; } },
+    { key: "x_axial", lvl: 4, label: "Swimmers leave the focus", kind: "select", options: ONOFF("only the still cells fade with depth"),
+      hint: function () { return "On, with the depth-of-field model: the swimmers also diffuse up and down and fade through the optics, as the still cells do."; } },
+    { key: "x_amp", lvl: 4, label: "Limits on the amplitude", kind: "select", options: ONOFF("A free at each q"),
+      hint: function () { return "On: A of each q stays below the whole amplitude from the mean power of the images and below three times twice the variance in time, so dead cells do not pass for slow swimmers."; } },
+    { key: "x_window", lvl: 4, label: "Window corrections", kind: "select", options: ONOFF("the window as in the paper"), when: function () { return state.windowing === "on"; },
+      hint: function () { return "On: patterns below 5 steps in q are left out, because the window mixes neighbouring patterns. Off: only those below 2 steps."; } }
+  );
   // where each control sits: the imaging mode, then everything about the sample, the light reaching it, and how the
   // light is collected and recorded. Every control appears exactly once (checked at start-up).
   const LAYOUT = [
@@ -5374,7 +5444,8 @@ A_est = 2 * aa.var - B_est
     ["Illumination", ["source", "condenser", "na_c", "df_kind", "annulus", "light_frac", "df_light_e", "stray_frac", "rate_ph_ms", "bg_e_ms", "scan_rate"]],
     ["Detection", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg",
       "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "log_factor", "sim_px"]],
-    ["Analysis", ["swim_model", "windowing", "qrange"]]
+    ["Analysis", ["swim_model", "windowing", "qrange"]],
+    ["Under the hood: what this page adds", ["x_noise", "x_shape", "x_dcells", "x_turn", "x_tumble", "x_axial", "x_amp", "x_window"]]
   ];
   (function () {
     const byKey = {}; CONTROLS.forEach(function (c) { byKey[c.kind === "qrange" ? "qrange" : c.key] = c; });
@@ -5383,7 +5454,7 @@ A_est = 2 * aa.var - B_est
     const left = Object.keys(byKey); if (left.length) throw new Error("layout: controls not placed: " + left.join(", "));
     CONTROLS.length = 0; out.forEach(function (c) { CONTROLS.push(c); });
   })();
-  const ANALYSIS_KEYS = { swim_model: 1, q_min: 1, q_max: 1, windowing: 1 };
+  const ANALYSIS_KEYS = { swim_model: 1, q_min: 1, q_max: 1, windowing: 1, x_noise: 1, x_shape: 1, x_dcells: 1, x_turn: 1, x_tumble: 1, x_axial: 1, x_amp: 1, x_window: 1 };
   function fmtRate(v) { return fmtSig(v, 2) + " s" + "\u207b\u00b9"; }
   function shapeHint() {
     const hh = hydro();
@@ -5451,7 +5522,7 @@ A_est = 2 * aa.var - B_est
         host.appendChild(g); groups[c.group] = g;
       }
       const wrap = document.createElement("div");
-      wrap.className = "ctl" + (c.lvl === 2 ? " lvl-2" : c.lvl === 3 ? " lvl-3" : "");
+      wrap.className = "ctl" + (c.lvl === 2 ? " lvl-2" : c.lvl === 3 ? " lvl-3" : c.lvl === 4 ? " lvl-4" : "");
       const id = "c-" + c.key;
       let hintEl = null;
       if (c.kind === "log" || c.kind === "lin") {
@@ -5579,22 +5650,24 @@ A_est = 2 * aa.var - B_est
     level = lv;
     document.documentElement.setAttribute("data-level", lv);
     $("lv-" + lv).checked = true;
-    document.querySelectorAll("details.math[data-open-at]").forEach(function (d) { d.open = (lv === d.getAttribute("data-open-at")); });
+    const lvOpen = lv === "hood" ? "researcher" : lv;
+    document.querySelectorAll("details.math[data-open-at]").forEach(function (d) { d.open = (lvOpen === d.getAttribute("data-open-at")); });
     // controls hidden at this level go back to the standard value of the chosen organism (its size and shape, not those of
     // the example cells), so the bench shows what is simulated
-    let changed = false;
+    let changed = false, changedAna = false;   // a setting of the movie, or only of the analysis
     const std = Object.assign({}, BASE, state.organism !== "custom" && ORGANISMS[state.organism] ? ORGANISMS[state.organism].set : {});
     CONTROLS.forEach(function (c) {
       if (c.lvl <= LEVEL_RANK[lv] || c.key === "organism") return;
       if (c.kind === "qrange") { if (state.q_min !== std.q_min || state.q_max !== std.q_max) { state.q_min = std.q_min; state.q_max = std.q_max; changed = true; } return; }
       if (state.organism === "custom" && (c.key === "diameter_um" || c.key === "aspect" || c.key === "particle")) return;   // your own cells keep their size
-      if (state[c.key] !== std[c.key]) { state[c.key] = std[c.key]; changed = true; }
+      if (state[c.key] !== std[c.key]) { state[c.key] = std[c.key]; if (ANALYSIS_KEYS[c.key]) changedAna = true; else changed = true; }
     });
-    if (lv !== "researcher" && state.seed !== BASE.seed) { state.seed = BASE.seed; changed = true; }
+    if (LEVEL_RANK[lv] < 3 && state.seed !== BASE.seed) { state.seed = BASE.seed; changed = true; }
     if (curveView === "d" && lv === "curious") setCurveView("change");
     if (fromUser && location.hash !== "#" + lv) { try { history.replaceState(null, "", "#" + lv); } catch (e) { /* sandboxed previews (about:srcdoc) refuse it */ } }
     constrain(); syncControls(); drawFov();
-    if (changed) schedule(); else if (cache.res) renderAll();
+    // the "published model only" row is computed at the "Under the hood" level only
+    if (changed) schedule(); else if (changedAna || (cache.res && lv === "hood" && !cache.res.published)) scheduleAnalysis(); else if (cache.res) renderAll();
   }
 
   // ---- running (in a background worker when the browser allows it) --------------------
@@ -5681,8 +5754,9 @@ A_est = 2 * aa.var - B_est
   async function runHere(kind, token, cfg, opts) {
     let movie = cache.movie;
     if (kind === "simulate" || !movie) { movie = await drive(MOVIE.simulate(cfg), token, 0, 0.85); if (!movie) return; }
-    const res = await drive(ACTIVE.analyse(movie, opts), token, 0.85, 1);
+    const res = await drive(ACTIVE.analyse(movie, opts), token, 0.85, opts.compare_published ? 0.92 : 1);
     if (!res) return;
+    if (opts.compare_published) { const rp = await drive(ACTIVE.analyse(movie, Object.assign({}, opts, { published_only: true, jackknife: false })), token, 0.92, 1); if (!rp) return; res.published = ACTIVE.publishedSummary(rp); }
     inflight = null;
     finish(movie, res, kind === "simulate" ? cfg : cache.cfg, opts);
   }
@@ -6338,6 +6412,7 @@ A_est = 2 * aa.var - B_est
       if (res.swim) t += row(isMain(res.kind === "2d" ? "plane" : "wilson"), res.kind === "2d" ? "Swimmers in the image plane" : "3D swimmers (Wilson et al. 2011)", res.swim.v_um_s, res.swim.alpha, res.swim.spread, isMain(res.kind === "2d" ? "plane" : "wilson") ? "the headline" : "");
       if (res.swim_depth) t += row("main", "3D swimmers, with the depth of field", res.swim_depth.v_um_s, res.swim_depth.alpha, res.swim_depth.spread, "the headline");
       if (res.swim_stroke) t += row("main", MODEL_LABEL[swimModel() === "strokex" ? "strokex" : "stroke"], res.swim_stroke.v_um_s, res.swim_stroke.alpha, res.swim_stroke.spread, "the headline; stroke " + fmtSig(res.swim_stroke.stroke_um, 2) + " " + MU + "m at " + fmtSig(res.swim_stroke.stroke_hz, 3) + " Hz");
+      if (level === "hood" && res.published) t += row("pub", "Published model only (Wilson et al. 2011)", res.published.v_um_s, res.published.alpha, res.published.spread, "the same movie, without what this page adds" + (res.published.no_swim ? "; reads no swimming" : "") + (res.published.n_used ? ", " + res.published.n_used + " q" : ""));
       if (res.pv) t += row("", "Distribution from the data, no shape assumed", res.pv.data_mean_swimmers_um_s, 1 - res.pv.data_still_share, null, "see the chart below");
       if (res.fast) t += row("", "v\u2080 from the swimmers' step, rate = v\u2080 q", res.fast.v0_um_s, null, null, "a speed scale, not the mean speed: in 3D about mean / 2.2 for short cells");
       else if (res.compressed) t += row("", "v\u2080 from rate = v\u2080 q (compressed exponential)", res.compressed.v0_um_s, null, null, "a speed scale, not the mean speed: in 3D about mean / 2.2");
@@ -6482,7 +6557,7 @@ A_est = 2 * aa.var - B_est
     const keep = state.seed, sp = state.sim_px;
     state = Object.assign({}, BASE, set);
     if (!set.organism && (set.shape !== undefined || set.diameter_um !== undefined || set.aspect !== undefined || set.particle !== undefined)) state.organism = "custom";
-    state.seed = level === "researcher" ? keep : BASE.seed; state.sim_px = set.sim_px || sp;
+    state.seed = LEVEL_RANK[level] >= 3 ? keep : BASE.seed; state.sim_px = set.sim_px || sp;
     if (state.mode === "phase" && !objRing()) onChangeQuiet("mode");
     if (state.mode === "phase" && objRing()) state.annulus = objRing();
     if (state.swim_geom === "glass") state.focus_frac = Math.min(1, glassHeight() / state.cell_um);
@@ -6522,7 +6597,7 @@ A_est = 2 * aa.var - B_est
   document.querySelectorAll('input[name="level"]').forEach(function (r) { r.addEventListener("change", function () { if (r.checked) setLevel(r.value, true); }); });
   document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }); });
   window.addEventListener("hashchange", function () { const h = location.hash.slice(1); if (LEVEL_RANK[h] && h !== level) setLevel(h, false); });
-  $("btn-reset").addEventListener("click", function () { const keep = level === "researcher" ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
+  $("btn-reset").addEventListener("click", function () { const keep = LEVEL_RANK[level] >= 3 ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
   $("btn-seed").addEventListener("click", function () { state.seed = (state.seed * 1103515245 + 12345) % 2147483647; schedule(); });
   $("btn-play").addEventListener("click", function () { playing = !playing; $("btn-play").textContent = playing ? "Pause" : "Play"; });
   $("btn-play").textContent = playing ? "Pause" : "Play";

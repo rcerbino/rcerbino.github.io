@@ -119,10 +119,11 @@
     scanner: "resonant", scan_px: 512, zoom: 1, line_avg: 2, pinhole_au: 1, scan_rate: 2e7,
     frame_rate_hz: 100, exposure_ms: 0.2, frame_timing: "even", log_factor: 20,
     shape: "sphere", aspect: 3, dn: 0.1, dn_body: 0, polarizer: "off", analyzer: "off", pol_angle_deg: 90, extinction: 1e-4,
-    fit_model: "auto", images: "recorded", windowing: "off", q_min: null, q_max: null, seed: 1
+    fit_model: "auto", images: "recorded", windowing: "off", q_min: null, q_max: null, seed: 1,
+    x_noise: "on", x_depth: "on", x_expo: "on", x_outliers: "on", x_floor: "on", x_window: "on"
   };
   let state = Object.assign({}, BASE);
-  const LEVEL_RANK = { curious: 1, student: 2, researcher: 3 };
+  const LEVEL_RANK = { curious: 1, student: 2, researcher: 3, hood: 4 };
   let level = "curious";
 
   function fmtSize(um) { return um < 1 ? Math.round(um * 1000) + " nm" : um.toFixed(um < 2 ? 2 : 1) + " " + MU + "m"; }
@@ -263,7 +264,13 @@
       drift_um_s: state.drift_um_s, gravity: state.settle === "on", walls: state.settle === "on", vector: useVector()
     };
   }
-  function analysisOptions() { return { fit_model: fitModel(), q_min_per_um: state.q_min, q_max_per_um: state.q_max, images: state.images, windowing: state.windowing === "on" }; }
+  function analysisOptions() {
+    return { fit_model: fitModel(), q_min_per_um: state.q_min, q_max_per_um: state.q_max, images: state.images, windowing: state.windowing === "on",
+      // what this page adds to the published method, each switchable at the "Under the hood" level, where the published
+      // method alone also runs on the same movie for comparison
+      noise: state.x_noise === "off" ? "fit" : undefined, depth: state.x_depth !== "off", exposure: state.x_expo !== "off",
+      outliers: state.x_outliers !== "off", var_floor: state.x_floor !== "off", window_fix: state.x_window !== "off", compare_published: level === "hood" };
+  }
 
   // ---- controls -------------------------------------------------------------------
   const TRANS = function () { return state.mode === "brightfield" || state.mode === "phase" || state.mode === "darkfield" || state.mode === "dic"; };
@@ -347,6 +354,23 @@
     { key: "qrange", group: "Analysis", lvl: 3, label: "Fit range in q (1/" + MU + "m)", kind: "qrange" }
   ];
   // where each control sits: the imaging mode, then everything about the sample, the light reaching it, and how the
+  // "Under the hood": the additions to the published method, one switch each (see "What this page adds" on the page)
+  const ONOFF = function (off) { return [["on", "On"], ["off", "Off: " + off]]; };
+  CONTROLS.push(
+    { key: "x_noise", lvl: 4, label: "Camera noise known from the detector", kind: "select", options: ONOFF("B fitted at each q"),
+      hint: function () { return "On: B = 2 (excess-noise factor x mean count + read noise\u00b2), the same at every q, with the two checks that come with it. Off: B fitted at each q, as in the published method."; } },
+    { key: "x_depth", lvl: 4, label: "Depth of field in the fit", kind: "select", options: ONOFF("only sideways motion"),
+      hint: function () { return "On: particles that diffuse up or down also fade from each pattern, through the optics of step 1. Off: f = exp(-\u0393\u0394t) as published."; } },
+    { key: "x_expo", lvl: 4, label: "Exposure time in the fit", kind: "select", options: ONOFF("frames taken as instants"),
+      hint: function () { return "On: each frame averages the image over the exposure, and the fit allows for it. Matters when the exposure is not short compared with 1/\u0393."; } },
+    { key: "x_outliers", lvl: 4, label: "Outlier rule", kind: "select", options: ONOFF("every q that passes the other tests counts"),
+      hint: function () { return "On: a q whose \u0393/q\u00b2 lies more than 3 times away from the median of the others is left out."; } },
+    { key: "x_floor", lvl: 4, label: "Floor on the weights", kind: "select", options: ONOFF("plain inverse-variance weights"),
+      hint: function () { return "On: in the mean of \u0393/q\u00b2 no variance is taken below a quarter of the median one, so a few rates with error bars small by chance do not set the result."; } },
+    { key: "x_window", lvl: 4, label: "Window corrections", kind: "select", options: ONOFF("the window as in the paper"), when: function () { return state.windowing === "on"; },
+      hint: function () { return "On: the rates are compared with D(q\u00b2 + 1.21 (2\u03c0/L)\u00b2) and patterns below 5 steps in q are left out, because the window mixes neighbouring patterns. Off: D q\u00b2, and only patterns below 2 steps left out."; } }
+  );
+
   // light is collected and recorded. Every control appears exactly once (checked at start-up).
   const LAYOUT = [
     ["Imaging mode", ["mode"]],
@@ -354,7 +378,8 @@
     ["Illumination", ["source", "condenser", "na_c", "df_kind", "annulus", "polarizer", "light_frac", "df_light_e", "stray_frac", "rate_ph_ms", "bg_e_ms", "scan_rate"]],
     ["Detection", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg", "analyzer", "pol_angle_deg", "extinction",
       "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "log_factor", "sim_px"]],
-    ["Analysis", ["images", "windowing", "fit_model", "qrange"]]
+    ["Analysis", ["images", "windowing", "fit_model", "qrange"]],
+    ["Under the hood: what this page adds", ["x_noise", "x_depth", "x_expo", "x_outliers", "x_floor", "x_window"]]
   ];
   (function () {
     const byKey = {}; CONTROLS.forEach(function (c) { byKey[c.kind === "qrange" ? "qrange" : c.key] = c; });
@@ -363,7 +388,7 @@
     const left = Object.keys(byKey); if (left.length) throw new Error("layout: controls not placed: " + left.join(", "));
     CONTROLS.length = 0; out.forEach(function (c) { CONTROLS.push(c); });
   })();
-  const ANALYSIS_KEYS = { fit_model: 1, q_min: 1, q_max: 1, images: 1, windowing: 1 };
+  const ANALYSIS_KEYS = { fit_model: 1, q_min: 1, q_max: 1, images: 1, windowing: 1, x_noise: 1, x_depth: 1, x_expo: 1, x_outliers: 1, x_floor: 1, x_window: 1 };
   function fmtRate(v) { return fmtSig(v, 2) + " s" + "\u207b\u00b9"; }
   function shapeHint() {
     if (!TURNS()) return "";
@@ -434,7 +459,7 @@
         host.appendChild(g); groups[c.group] = g;
       }
       const wrap = document.createElement("div");
-      wrap.className = "ctl" + (c.lvl === 2 ? " lvl-2" : c.lvl === 3 ? " lvl-3" : "");
+      wrap.className = "ctl" + (c.lvl === 2 ? " lvl-2" : c.lvl === 3 ? " lvl-3" : c.lvl === 4 ? " lvl-4" : "");
       const id = "c-" + c.key;
       let hintEl = null;
       if (c.kind === "log" || c.kind === "lin") {
@@ -557,19 +582,21 @@
     level = lv;
     document.documentElement.setAttribute("data-level", lv);
     $("lv-" + lv).checked = true;
-    document.querySelectorAll("details.math[data-open-at]").forEach(function (d) { d.open = (lv === d.getAttribute("data-open-at")); });
+    const lvOpen = lv === "hood" ? "researcher" : lv;
+    document.querySelectorAll("details.math[data-open-at]").forEach(function (d) { d.open = (lvOpen === d.getAttribute("data-open-at")); });
     // controls hidden at this level go back to the standard value, so the bench shows what is simulated
-    let changed = false;
+    let changed = false, changedAna = false;   // a setting of the movie, or only of the analysis
     CONTROLS.forEach(function (c) {
       if (c.lvl <= LEVEL_RANK[lv]) return;
       if (c.kind === "qrange") { if (state.q_min !== null || state.q_max !== null) { state.q_min = null; state.q_max = null; changed = true; } return; }
-      if (state[c.key] !== BASE[c.key]) { state[c.key] = BASE[c.key]; changed = true; }
+      if (state[c.key] !== BASE[c.key]) { state[c.key] = BASE[c.key]; if (ANALYSIS_KEYS[c.key]) changedAna = true; else changed = true; }
     });
-    if (lv !== "researcher" && state.seed !== BASE.seed) { state.seed = BASE.seed; changed = true; }
+    if (LEVEL_RANK[lv] < 3 && state.seed !== BASE.seed) { state.seed = BASE.seed; changed = true; }
     if (curveView === "d" && lv === "curious") setCurveView("change");
     if (fromUser && location.hash !== "#" + lv) { try { history.replaceState(null, "", "#" + lv); } catch (e) { /* sandboxed previews (about:srcdoc) refuse it */ } }
     constrain(); syncControls(); drawFov();
-    if (changed) schedule(); else if (cache.res) renderAll();
+    // the "published method only" row is computed at the "Under the hood" level only
+    if (changed) schedule(); else if (changedAna || (cache.res && lv === "hood" && !cache.res.published)) scheduleAnalysis(); else if (cache.res) renderAll();
   }
 
   // ---- running (in a background worker when the browser allows it) --------------------
@@ -660,8 +687,9 @@
   async function runHere(kind, token, cfg, opts) {
     let movie = cache.movie;
     if (kind === "simulate" || !movie) { movie = await drive(MOVIE.simulate(cfg), token, 0, 0.85); if (!movie) return; }
-    const res = await drive(DDM.analyse(movie, opts), token, 0.85, 1);
+    const res = await drive(DDM.analyse(movie, opts), token, 0.85, opts.compare_published ? 0.93 : 1);
     if (!res) return;
+    if (opts.compare_published) { const rp = await drive(DDM.analyse(movie, Object.assign({}, opts, { published_only: true, jackknife: false })), token, 0.93, 1); if (!rp) return; res.published = DDM.publishedSummary(rp); }
     inflight = null;
     res.fits.forEach(function (f) { delete f.model; });
     finish(movie, res, kind === "simulate" ? cfg : cache.cfg, opts);
@@ -1048,7 +1076,7 @@
     ctx.setLineDash([]);
     if (res.D) {
       ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(a.fx(x0), a.fy(res.D.D_um2_s * x0 * x0)); ctx.lineTo(a.fx(x1), a.fy(res.D.D_um2_s * x1 * x1)); ctx.stroke();
-      if (level === "researcher" && res.slope) { ctx.setLineDash([2, 3]); ctx.strokeStyle = C.muted; ctx.beginPath(); ctx.moveTo(a.fx(x0), a.fy(res.slope.prefactor * Math.pow(x0, res.slope.exponent))); ctx.lineTo(a.fx(x1), a.fy(res.slope.prefactor * Math.pow(x1, res.slope.exponent))); ctx.stroke(); ctx.setLineDash([]); }
+      if (LEVEL_RANK[level] >= 3 && res.slope) { ctx.setLineDash([2, 3]); ctx.strokeStyle = C.muted; ctx.beginPath(); ctx.moveTo(a.fx(x0), a.fy(res.slope.prefactor * Math.pow(x0, res.slope.exponent))); ctx.lineTo(a.fx(x1), a.fy(res.slope.prefactor * Math.pow(x1, res.slope.exponent))); ctx.stroke(); ctx.setLineDash([]); }
     }
     // what pure diffusion of the true particles would give (known here because the movie is simulated)
     if (level !== "curious") {
@@ -1075,7 +1103,7 @@
         (res.rot && res.rot.D_r_s ? " The upper black line is D q\u00b2 + 6 D_R from a joint fit of all q." + (res.fit_model === "three" ? " Three modes were fitted: between crossed polarizers the light also carries a faster orientation mode, 20 D_R, which the squares (two modes per q) mix in." : "") : " No clear rotational mode was found" + (res.rot && res.rot.reason ? " (" + res.rot.reason + ")." : "."));
       ul.appendChild(lt2);
     }
-    const li0 = document.createElement("li"); li0.textContent = res.used.length + " points used" + (res.D ? " for the black line of slope 2" : "") + (level === "researcher" && res.slope ? "; free fit gives slope " + res.slope.exponent.toFixed(2) + " (dotted)" : "") + "."; ul.appendChild(li0);
+    const li0 = document.createElement("li"); li0.textContent = res.used.length + " points used" + (res.D ? " for the black line of slope 2" : "") + (LEVEL_RANK[level] >= 3 && res.slope ? "; free fit gives slope " + res.slope.exponent.toFixed(2) + " (dotted)" : "") + "."; ul.appendChild(li0);
     Object.keys(counts).sort(function (p, q) { return counts[q] - counts[p]; }).forEach(function (k) { const li = document.createElement("li"); li.textContent = counts[k] + " left out: " + k + "."; ul.appendChild(li); });
   }
   // apparent size at each q: Stokes-Einstein applied to Gamma / q^2 of that q alone (points, with the fit error),
@@ -1221,7 +1249,7 @@
       const dT = kT / (3 * Math.PI * eta * res.D.D_um2_s * 1e-12) * 1e6, dR = 2 * Math.cbrt(kT / (8 * Math.PI * eta * r.D_r_s)) * 1e6;
       h += '<dt>Diameter from translation</dt><dd>' + fmtSize(dT) + '</dd><dt>Diameter from rotation</dt><dd>' + fmtSize(dR) + ' (true ' + fmtSize(tr.diameter_um) + ')</dd>';
     } else h += '<dt>Particles</dt><dd>' + SHAPES[state.shape].toLowerCase() + ', ' + fmtSize(tr.diameter_um) + (BODY() ? ', aspect ratio ' + fmtSig(cache.cfg.aspect, 2) : '') + '</dd>';
-    if (level === "researcher" && r && r.gain !== undefined) h += '<dt>Second mode</dt><dd>removes ' + Math.round(100 * r.gain) + ' % of the one-mode misfit; ' + Math.round(100 * (r.fast_share || 0)) + ' % of the signal' + (r.D_r_s ? '; rate from the ' + (r.from || 'joint fit') + (r.joint_rate_s && r.from !== 'joint fit' ? ' (joint fit: ' + fmtRate(r.joint_rate_s) + ')' : '') : '') + '</dd>';
+    if (LEVEL_RANK[level] >= 3 && r && r.gain !== undefined) h += '<dt>Second mode</dt><dd>removes ' + Math.round(100 * r.gain) + ' % of the one-mode misfit; ' + Math.round(100 * (r.fast_share || 0)) + ' % of the signal' + (r.D_r_s ? '; rate from the ' + (r.from || 'joint fit') + (r.joint_rate_s && r.from !== 'joint fit' ? ' (joint fit: ' + fmtRate(r.joint_rate_s) + ')' : '') : '') + '</dd>';
     h += '</dl>';
     $("result").innerHTML = h;
     $("hero-result").innerHTML = '<span>True turning rate</span><span class="n">' + fmtRate(6 * tr.D_r_s) + '</span><span>Measured by DDM</span><span class="n">' + (r && r.D_r_s ? fmtRate(6 * r.D_r_s) : "not seen") + '</span><span class="chip ' + rv.cls + '">' + rv.text + '</span>';
@@ -1305,6 +1333,7 @@
       const row = function (cls, name, d, pi, pe, err, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + (d ? fmtSize(d) : "-") + '</td><td>' + piCell(pi, pe) + '</td><td>' + (err === null || err === undefined ? "-" : "\u00b1 " + pctTxt(err)) + '</td></tr>'; };
       let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">Size</th><th scope="col">PI</th><th scope="col">Uncertainty</th></tr></thead><tbody>';
       t += row("main", "Fit at each q: " + MODEL_NAME[res.fit_model], res.diameter_um, null, null, res.diameter_rel_err, "the headline");
+      if (level === "hood" && res.published) t += row("pub", "Published method only", res.published.diameter_um, null, null, res.published.rel_err, "the same fit on the same movie, without what this page adds" + (res.published.n_used ? ", " + res.published.n_used + " q" : ""));
       if (cu && cu.D_um2_s) t += row("", "Cumulants, 2nd order", sizeFromD(cu.D_um2_s), cu.pi, cu.pi_err, cu.rel_err, "as in ISO 22412, " + cu.n_points + " q");
       if (sch) t += row("", "Schulz, one PI for all q", sizeFromD(sch.D_um2_s), sch.pi, sch.pi_err, sch.rel_err, sch.n_points + " q");
       const qs = cu && cu.per_q.length ? cu.per_q.map(function (e) { return e.q_per_um; }) : res.used.map(function (f) { return f.q_per_um; }), tt = seenOver(tr, qs);
@@ -1497,7 +1526,7 @@
   }
   function applyPreset(set) {
     const keep = state.seed, sp = state.sim_px;
-    state = Object.assign({}, BASE, set); state.seed = level === "researcher" ? keep : BASE.seed; state.sim_px = set.sim_px || sp;
+    state = Object.assign({}, BASE, set); state.seed = LEVEL_RANK[level] >= 3 ? keep : BASE.seed; state.sim_px = set.sim_px || sp;
     if (state.mode === "scanning" && !set.zoom) autoZoom();
     if (set.camera && !set.cam_mode) { const c = cam(); state.cam_mode = Object.keys(c.modes)[0]; state.iface = Object.keys(c.ifaces)[0]; }
     constrain(); syncControls(); drawFov(); schedule();
@@ -1525,7 +1554,7 @@
   document.querySelectorAll('input[name="level"]').forEach(function (r) { r.addEventListener("change", function () { if (r.checked) setLevel(r.value, true); }); });
   document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }); });
   window.addEventListener("hashchange", function () { const h = location.hash.slice(1); if (LEVEL_RANK[h] && h !== level) setLevel(h, false); });
-  $("btn-reset").addEventListener("click", function () { const keep = level === "researcher" ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
+  $("btn-reset").addEventListener("click", function () { const keep = LEVEL_RANK[level] >= 3 ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
   $("btn-seed").addEventListener("click", function () { state.seed = (state.seed * 1103515245 + 12345) % 2147483647; schedule(); });
   $("btn-play").addEventListener("click", function () { playing = !playing; $("btn-play").textContent = playing ? "Pause" : "Play"; });
   $("btn-play").textContent = playing ? "Pause" : "Play";
