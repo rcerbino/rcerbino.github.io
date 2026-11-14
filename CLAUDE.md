@@ -220,8 +220,8 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
 Both application pages have a fourth reader level, "Under the hood" (`#hood`): one switch for each step the
 analysis adds to the published method (`x_*` settings in `app.js` and `app-swim.js`, mapped to engine options;
 `opts.published_only` switches them all off), and a "published method only" row computed on the same movie.
-Each such step is marked "Our addition" in the methods text and listed under "What this page adds to the
-published methods". A new step that is not in the cited papers gets all three: tag, list entry and switch.
+Each such step is described in the methods text and listed under "What this page adds to the published
+methods" (no tags in the text). A new step that is not in the cited papers gets both a list entry and a switch.
 
 After any change to the sources: run `python3 ddm/build.py`, then `python3 build.py --check`, and commit
 both. Checks: `cd ddm && node test-optics.js data/mie_ref.json && node test-engine.js && node test-movie.js`
