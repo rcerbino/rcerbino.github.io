@@ -41,12 +41,12 @@ PAGES = {
                "canonical": "https://rcerbino.github.io/ddm/sizing/", "up": "../../",
                "description": "Differential dynamic microscopy (DDM) hands on: simulate a microscopy experiment in your browser and size colloidal particles from how they move, step by step, from the raw movie to the result.",
                "parts": {"/*OBJECTIVES*/": "data/objectives.min.json", "/*OPTICS*/": "optics.js", "/*MOVIE*/": "movie.js",
-                         "/*ENGINE*/": "ddm-engine.js", "/*WORKER*/": "worker.js", "/*APP*/": "app.js"}},
+                         "/*ENGINE*/": "ddm-engine.js", "/*WORKER*/": "worker.js", "/*TIFF*/": "tiff.js", "/*APP*/": "app.js"}},
     "swimmers": {"src": "swim.src.html", "out": "static/ddm/swimmers/index.html", "preview": "ddm-swimmers.html", "title": "DDM of swimming cells",
                  "canonical": "https://rcerbino.github.io/ddm/swimmers/", "up": "../../",
                  "description": "Differential dynamic microscopy (DDM) of swimming cells (bacteria, algae, sperm): simulate a motility assay in your browser and measure swimming speeds, step by step, from the raw movie to the distribution of speeds.",
                  "parts": {"/*OBJECTIVES*/": "data/objectives.min.json", "/*OPTICS*/": "optics.js", "/*MOVIE*/": "movie.js",
-                           "/*ENGINE*/": "ddm-engine.js", "/*ACTIVE*/": "active-engine.js", "/*WORKER*/": "worker-swim.js", "/*APP*/": "app-swim.js"}},
+                           "/*ENGINE*/": "ddm-engine.js", "/*ACTIVE*/": "active-engine.js", "/*WORKER*/": "worker-swim.js", "/*TIFF*/": "tiff.js", "/*APP*/": "app-swim.js"}},
 }
 # links between the pages, as written in the sources (site addresses), and the file each points to in the previews
 PREVIEW_LINKS = {

@@ -311,7 +311,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap bench-head" aria-labelledby="bench-title">
     <p class="eyebrow">Hands on</p>
     <h2 id="bench-title">The bench</h2>
-    <p class="prose">Change the cells, the microscope or the camera with the controls (on the left, or just below on a phone). The movie is recorded again and every step below updates. A run takes from a few seconds to about a minute, because every cell is imaged through a detailed model of the microscope's optics.</p>
+    <p class="prose">Change the cells, the microscope or the camera with the controls (on the left, or just below on a phone). The movie is recorded again and every step below updates. A run takes from a few seconds to about a minute, because every cell is imaged through a detailed model of the microscope's optics. "Copy a link to this setup" gives an address that opens the bench with the same settings, to share or to come back to.</p>
   </section>
 
   <div class="wrap bench">
@@ -320,6 +320,8 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
       <div class="btns">
         <button type="button" id="btn-reset">Back to the standard sample</button>
         <button type="button" id="btn-seed" class="lvl-3">New random sample</button>
+        <button type="button" id="btn-share">Copy a link to this setup</button>
+        <span class="small" id="share-msg" aria-live="polite"></span>
       </div>
       <div class="error" id="error" hidden></div>
     </aside>
@@ -363,6 +365,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <figure class="viz">
             <div class="imgbox"><canvas id="movie" width="128" height="128" aria-label="Microscope movie"></canvas><div class="scale" id="movie-scale"><i></i><span></span></div></div>
             <div class="toolbar"><button type="button" id="btn-play">Pause</button><span class="readout" id="movie-time"></span></div>
+            <div class="toolbar lvl-2"><button type="button" id="btn-tiff">Download the movie (TIFF)</button><button type="button" id="btn-times" hidden>Frame times (CSV)</button><span class="readout">32-bit, photoelectrons per pixel; opens in ImageJ, Fiji and fastDDM.</span></div>
           </figure>
           <div class="text">
             <p id="movie-text"></p>
@@ -648,6 +651,9 @@ A_est = 2 * aa.var - B_est
 </script>
 <script type="text/plain" id="worker-src">
 /*WORKER*/
+</script>
+<script>
+/*TIFF*/
 </script>
 <script>
 /*APP*/
