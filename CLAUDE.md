@@ -206,9 +206,9 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
 `python3 ddm/build.py` assembles them into `static/ddm/`, which is committed and copied to the site, and
 `build.py` then writes the main menu into each page (marker `<!--SITE-NAV-->`, entries in `EXTRA_PAGES`).
 
-- Landing page /ddm/ (`static/ddm/index.html`, from `landing.src.html`): one card per application, the
-  shared steps drawn live from a small sketch movie, and the reader-level choice, passed on as
-  `#curious`, `#student` or `#researcher`. Old links with a hash (/ddm/#student) are sent on to /ddm/sizing/.
+- Landing page /ddm/ (`static/ddm/index.html`, from `landing.src.html`): one card per application and the
+  shared steps drawn live from a small sketch movie; no reader levels (each application page has its own).
+  Old links with a hash (/ddm/#student) are sent on to /ddm/sizing/.
   A new application gets a card here, an entry in `PAGES` and `PREVIEW_LINKS` in `ddm/build.py`, an
   `EXTRA_PAGES` entry with None, and a link in the switch under each application title.
 - "Sizing particles" /ddm/sizing/ (`static/ddm/sizing/index.html`): `page.src.html` with the styles and text,

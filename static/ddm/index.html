@@ -76,17 +76,6 @@ p { margin: 0 0 1rem; }
 
 /* opening */
 .intro { padding-block: 2.75rem 1.25rem; }
-.levels { margin: 1.5rem 0 0; border: 0; padding: 0; min-width: 0; }
-.levels legend { font-family: var(--sans); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; padding: 0; }
-.levels .note { font-family: var(--sans); font-size: 0.82rem; color: var(--muted); margin: 0.5rem 0 0; }
-.level-opts { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); max-width: 44rem; }
-.level-opts label { display: grid; gap: 0.1rem; padding: 0.6rem 0.8rem; border: 1px solid var(--rule); border-radius: 6px; cursor: pointer; font-family: var(--sans); background: var(--panel); }
-.level-opts input { position: absolute; opacity: 0; pointer-events: none; }
-.level-opts .t { font-weight: 600; font-size: 0.98rem; }
-.level-opts .d { font-size: 0.82rem; color: var(--muted); line-height: 1.35; }
-.level-opts label:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--tint); }
-.level-opts label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-
 /* one card per application */
 .apps { padding-block: 1.5rem 2.5rem; }
 .app-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
@@ -151,15 +140,6 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
     <p class="eyebrow">Differential dynamic microscopy</p>
     <h1>DDM, hands on</h1>
     <p class="lede">Differential dynamic microscopy (DDM) turns an ordinary microscope movie into a light scattering experiment: it measures how fast the patterns of each size in the image fade, without following any single particle or cell. From those rates follow sizes, speeds and much more. Each page below simulates an experiment in your browser and takes you through the whole analysis, from the raw movie to the result.</p>
-    <fieldset class="levels">
-      <legend>How deep do you want to go?</legend>
-      <div class="level-opts" role="radiogroup">
-        <label><input type="radio" name="level" value="curious" checked><span class="t">Curious</span><span class="d">The idea in words and pictures, no equations.</span></label>
-        <label><input type="radio" name="level" value="student"><span class="t">Student</span><span class="d">The method step by step, equations folded away.</span></label>
-        <label><input type="radio" name="level" value="researcher"><span class="t">Researcher</span><span class="d">All controls, equations open, and the matching fastDDM calls.</span></label>
-      </div>
-      <p class="note">The page you open starts at this level; you can change it there at any time.</p>
-    </fieldset>
   </section>
 
   <section class="wrap apps" aria-label="Applications">
@@ -168,7 +148,7 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
         <div class="media"><canvas id="cv-sizing" width="240" height="150" aria-label="Animation: particles jiggling in a liquid, as seen in a bright-field microscope"></canvas><span class="tag">Bright field, colloidal beads (sketch)</span></div>
         <div class="body">
           <p class="eyebrow">Brownian motion</p>
-          <h2><a class="app-link" href="sizing/">How big are they?</a></h2>
+          <h2><a href="sizing/">How big are they?</a></h2>
           <p>Size colloidal particles from how fast they wander, as in dynamic light scattering, but with a microscope and in samples where light scattering struggles.</p>
           <p class="what">Spheres, ellipsoids and rods, some of which turn as well as wander; seven imaging modes from bright field to confocal; cameras, noise, depth of field and what each does to the result.</p>
           <ul class="chips"><li>Diffusion</li><li>Particle size</li><li>Rotation</li></ul>
@@ -179,7 +159,7 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
         <div class="media"><canvas id="cv-swim" width="240" height="150" aria-label="Animation: rod-shaped bacteria, some swimming and some still, as seen in a phase-contrast microscope"></canvas><span class="tag">Phase contrast, bacteria (sketch)</span></div>
         <div class="body">
           <p class="eyebrow">Active motion</p>
-          <h2><a class="app-link" href="swimmers/">How fast do they swim?</a></h2>
+          <h2><a href="swimmers/">How fast do they swim?</a></h2>
           <p>Measure how fast bacteria, algae or sperm swim, how much the speeds spread and which share of the cells swims, from a motility movie with thousands of cells.</p>
           <p class="what">E. coli strains, Salmonella, B. subtilis, Chlamydomonas, Euglena and bull sperm, set up as in published experiments, or cells of your own design.</p>
           <ul class="chips"><li>Swimming speed</li><li>Speed spread</li><li>Share of swimmers</li></ul>
@@ -236,19 +216,6 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
 <script>
 (function () {
   "use strict";
-  /* reader level: carried into the page that is opened (as #curious, #student or #researcher) */
-  const links = Array.from(document.querySelectorAll(".app-link")), base = links.map(function (a) { return a.getAttribute("href"); });
-  const radios = Array.from(document.querySelectorAll('input[name="level"]'));
-  function setLevel(lv) {
-    links.forEach(function (a, i) { a.setAttribute("href", base[i] + "#" + lv); });
-    radios.forEach(function (r) { r.checked = r.value === lv; });
-    try { localStorage.setItem("ddm-level", lv); } catch (e) { /* storage blocked: the choice lasts for this visit */ }
-  }
-  let lv0 = "curious";
-  try { const s = localStorage.getItem("ddm-level"); if (s === "student" || s === "researcher" || s === "curious") lv0 = s; } catch (e) { /* no storage */ }
-  setLevel(lv0);
-  radios.forEach(function (r) { r.addEventListener("change", function () { if (r.checked) setLevel(r.value); }); });
-
   /* ---- small sketches of microscope movies (drawings for the cards, not the pages' simulation) ---- */
   const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   function gauss() { let u = 0, v = 0; while (u === 0) u = Math.random(); while (v === 0) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
