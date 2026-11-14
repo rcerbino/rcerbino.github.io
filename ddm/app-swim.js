@@ -556,7 +556,7 @@
     const host = $("ctl-groups"), subs = {};
     CONTROLS.forEach(function (c) {
       if (!blockEls[c.group]) {
-        const d = document.createElement("details"); d.className = "cblock"; d.open = true;
+        const d = document.createElement("details"); d.className = "cblock"; d.open = true; d.dataset.block = c.group.split(" ")[0].toLowerCase();   // its colour
         d.innerHTML = '<summary><h3></h3><span class="bsum"></span></summary><div class="cbody"></div>';
         d.querySelector("h3").textContent = c.group;
         host.appendChild(d); blockEls[c.group] = { el: d, body: d.querySelector(".cbody"), sum: d.querySelector(".bsum"), ctls: [] };

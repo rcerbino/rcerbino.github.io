@@ -146,17 +146,25 @@ details.more dl { margin-top: 0.4rem; }
 .controls h3 { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
 .cgroup { display: grid; gap: 0.7rem; }
 /* blocks of settings: sample, microscope, camera, analysis; each folds to a one-line summary */
-.cblock { border-top: 1px solid var(--rule); padding-top: 0.7rem; }
-.cblock:first-child { border-top: 0; padding-top: 0; }
+/* each block has its own colour: green, cyan, yellow, purple (Paul Tol and Okabe-Ito palettes), chosen to stay
+   apart in normal vision and with the three common kinds of colour blindness; the titles still say what each block is */
+:root { --blk-sample: #228833; --blk-microscope: #33bbee; --blk-camera: #e0c200; --blk-analysis: #aa3377; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --blk-sample: #4cae5c; --blk-microscope: #66ccee; --blk-camera: #f0e442; --blk-analysis: #cc5599; } }
+:root[data-theme="dark"] { --blk-sample: #4cae5c; --blk-microscope: #66ccee; --blk-camera: #f0e442; --blk-analysis: #cc5599; }
+.cblock { --c: var(--rule); border-left: 4px solid var(--c); border-radius: 6px; padding: 0.6rem 0.65rem 0.7rem; background: var(--panel); background: color-mix(in srgb, var(--c) 8%, var(--panel)); }
+.cblock[data-block="sample"] { --c: var(--blk-sample); }
+.cblock[data-block="microscope"] { --c: var(--blk-microscope); }
+.cblock[data-block="camera"] { --c: var(--blk-camera); }
+.cblock[data-block="analysis"] { --c: var(--blk-analysis); }
 .cblock > summary { cursor: pointer; list-style: none; display: grid; gap: 0.15rem; }
 .cblock > summary::-webkit-details-marker { display: none; }
+.cblock > summary h3 { color: var(--ink); color: color-mix(in srgb, var(--c) 55%, var(--ink)); }
 .cblock > summary h3::before { content: ""; display: inline-block; width: 0.42em; height: 0.42em; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); margin: 0 0.55em 0.18em 0.1em; transition: transform 0.15s; }
 .cblock:not([open]) > summary h3::before { transform: rotate(-45deg); margin-bottom: 0.05em; }
 .cblock .bsum { font-size: 0.8rem; color: var(--muted); line-height: 1.35; padding-left: 1.15em; }
-.cblock > summary:hover h3 { color: var(--ink); }
 .cbody { display: grid; gap: 0.9rem; margin-top: 0.7rem; }
 .csub { display: grid; gap: 0.7rem; }
-.csub h4 { font-family: var(--sans); font-size: 0.8rem; font-weight: 600; color: var(--accent); margin: 0.2rem 0 -0.15rem; padding-bottom: 0.2rem; border-bottom: 1px solid var(--tint); }
+.csub h4 { font-family: var(--sans); font-size: 0.8rem; font-weight: 600; color: var(--ink); color: color-mix(in srgb, var(--c) 55%, var(--ink)); margin: 0.2rem 0 -0.15rem; padding-bottom: 0.2rem; border-bottom: 1px solid var(--rule); border-bottom-color: color-mix(in srgb, var(--c) 30%, transparent); }
 @media (prefers-reduced-motion: reduce) { .cblock > summary h3::before { transition: none; } }
 .ctl { display: grid; gap: 0.2rem; }
 .ctl .row { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
@@ -5550,7 +5558,7 @@ A_est = 2 * aa.var - B_est
     const host = $("ctl-groups"), subs = {};
     CONTROLS.forEach(function (c) {
       if (!blockEls[c.group]) {
-        const d = document.createElement("details"); d.className = "cblock"; d.open = true;
+        const d = document.createElement("details"); d.className = "cblock"; d.open = true; d.dataset.block = c.group.split(" ")[0].toLowerCase();   // its colour
         d.innerHTML = '<summary><h3></h3><span class="bsum"></span></summary><div class="cbody"></div>';
         d.querySelector("h3").textContent = c.group;
         host.appendChild(d); blockEls[c.group] = { el: d, body: d.querySelector(".cbody"), sum: d.querySelector(".bsum"), ctls: [] };
