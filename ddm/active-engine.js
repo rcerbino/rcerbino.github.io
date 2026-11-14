@@ -641,10 +641,8 @@
     const taus = S.taus_s, L = taus.length, nb = S.nb;
     DRS = opts.swim_dr > 0 ? opts.swim_dr : 0; SWIM_DS_FREE = false; DS_MAX = 3; TUMBLE_FREE = false; SWIM_AXIAL = opts.swim_axial !== false; turnCache.clear();
     NOISE_B = null;     // camera noise from the mean count (see NOISE_B)
-    if (opts.noise !== "fit" && movie.info && movie.info.detector_kind === "camera" && movie.frames && typeof movie.info.read_noise_e === "number") {
-      let s = 0; const F = movie.frames; for (let k = 0; k < F.length; k++) s += F[k];
-      NOISE_B = 2 * ((movie.info.excess_noise || 1) * s / F.length + movie.info.read_noise_e * movie.info.read_noise_e);
-    }
+    // (cameras only here; with a window each pixel's noise is weighted by W^2)
+    if (opts.noise !== "fit" && movie.info && movie.info.detector_kind === "camera") NOISE_B = DDM.detectorNoiseB(movie, S.window);
     yield { stage: "Fitting each q", frac: 0.9 };
     // per-q compressed fits (beta free, and with the fixed beta if asked)
     const betaFix = opts.beta === null || opts.beta === undefined ? null : opts.beta;
@@ -673,7 +671,7 @@
     const qmax = opts.q_max_per_um === null || opts.q_max_per_um === undefined ? Infinity : opts.q_max_per_um;
     for (const r of rows) {
       r.reason = null;
-      if (r.q < 2 * S.q_lo_per_um) r.reason = "pattern as large as the image";
+      if (r.q < (S.window ? 5 : 2) * S.q_lo_per_um) r.reason = S.window ? "pattern too wide for the window" : "pattern as large as the image";   // (the window spreads each mode over +-3 bins)
       else if (r.q > S.q_hi_per_um) r.reason = "finer than the microscope can see";
       else {
         // from the data, not from a fit (curves of swimmers mixed with still cells rise in two steps, which one
@@ -1062,7 +1060,7 @@
              fits: fits, share_from_amplitude: alphaDirect, head: head ? { no_swim: head.no_swim === true, D_fixed: head.D_fixed === true, v_um_s: head.no_swim ? null : head.v_um_s, alpha: head.alpha, spread: head.spread, D_um2_s: head.D_um2_s, turn_share: head.turn_share, turn_perq: head.kind === "still" || head.turn_perq === true, turn_b: head.ab ? head.ab.map(function (x) { return x.b === undefined ? head.turn_share : x.b; }) : null, D_r_s: head.D_r_s, v_rel_err: jk && jk.v !== null && head.v_um_s > 0 ? jk.v / head.v_um_s : head.v_rel_err, alpha_err: jk ? jk.alpha : head.alpha_err, spread_err: jk ? jk.spread : head.spread_err, D_err: jk ? jk.D : null, stroke_um_err: jk && head === swimStrokeFit ? jk.stroke_um : null, stroke_hz_err: jk && head === swimStrokeFit ? jk.stroke_hz : null, err_from: jk ? "jackknife" : "fit", jackknife: jk, stroke_um: head === swimStrokeFit ? head.stroke_um : null, stroke_hz: head === swimStrokeFit ? head.stroke_hz : null, perq: head.perq } : null,
              window: { q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, q_opt_per_um: S.q_opt_per_um, q_nyq_per_um: S.q_nyq_per_um, gamma_lo_hz: S.gamma_lo_hz, gamma_hi_hz: S.gamma_hi_hz },
              rows: rows.map(function (r) { return { bin: r.bin, q_per_um: r.q, A: r.A, B: r.B, gamma_hz: r.gamma_hz, beta_free: r.beta_free, gamma_free_hz: r.free.gamma_hz, lnGamma_se: r.lnGamma_se, reason: r.reason }; }),
-             compressed: comp, fast: fast, collapse: collapse, noise_B: noiseB, swim: strip(swim), swim_depth: strip(swimDepth), swim_stroke: strip(swimStrokeFit), pv: pv, master: master };
+             compressed: comp, fast: fast, collapse: collapse, noise_B: noiseB, windowing: !!S.window, swim: strip(swim), swim_depth: strip(swimDepth), swim_stroke: strip(swimStrokeFit), pv: pv, master: master };
   }
 
   function strip(g) { if (!g) return null; const o = Object.assign({}, g); delete o.ab; if (o.no_swim) o.v_um_s = null; return o; }
