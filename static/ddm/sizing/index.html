@@ -299,7 +299,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap bench-head" aria-labelledby="bench-title">
     <p class="eyebrow">Hands on</p>
     <h2 id="bench-title">The bench</h2>
-    <p class="prose">Change the sample, the microscope or the camera with the controls (on the left, or just below on a phone). The movie is recorded again and every step below updates. A run takes from a few seconds to about a minute, because every particle is imaged through a detailed model of the microscope's optics.</p>
+    <p class="prose">Change the sample, the microscope or the camera with the controls (on the left, or just below on a phone). The movie is recorded again and every step below updates. A run takes from a few seconds to about a minute, because every particle is imaged through a detailed model of the microscope's optics. "Copy a link to this setup" gives an address that opens the bench with the same settings, to share or to come back to.</p>
   </section>
 
   <div class="wrap bench">
@@ -308,6 +308,8 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
       <div class="btns">
         <button type="button" id="btn-reset">Back to the standard sample</button>
         <button type="button" id="btn-seed" class="lvl-3">New random sample</button>
+        <button type="button" id="btn-share">Copy a link to this setup</button>
+        <span class="small" id="share-msg" aria-live="polite"></span>
       </div>
       <div class="error" id="error" hidden></div>
     </aside>
@@ -350,6 +352,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <figure class="viz">
             <div class="imgbox"><canvas id="movie" width="128" height="128" aria-label="Microscope movie"></canvas><div class="scale" id="movie-scale"><i></i><span></span></div></div>
             <div class="toolbar"><button type="button" id="btn-play">Pause</button><span class="readout" id="movie-time"></span></div>
+            <div class="toolbar lvl-2"><button type="button" id="btn-tiff">Download the movie (TIFF)</button><button type="button" id="btn-times" hidden>Frame times (CSV)</button><span class="readout">32-bit, photoelectrons per pixel; opens in ImageJ, Fiji and fastDDM.</span></div>
           </figure>
           <div class="text">
             <p id="movie-text"></p>
@@ -3874,6 +3877,56 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
 
 </script>
 <script>
+/* Saving the simulated movie as a multi-page TIFF (32-bit float, one page per frame), readable by ImageJ / Fiji,
+ * tifffile and fastDDM. The values are the ones the page analyses (photoelectrons per pixel, noise included).
+ * ImageJ reads the pixel size (XResolution, YResolution in pixels per micron) and the frame interval from the
+ * description. Nothing leaves the browser: the file is built here and handed to the browser's download. */
+(function (root) {
+  "use strict";
+  function tiff(frames, n, T, pixel_um, dt_s, note) {
+    // tags in ascending order, as TIFF requires; 339 = 3: the samples are IEEE floats; 296 = 1: no absolute unit (ImageJ
+    // takes the unit from the description)
+    const P = n * n, dataBytes = 4 * P;
+    let desc = "ImageJ=1.54f\nimages=" + T + "\nframes=" + T + "\nunit=micron\nfinterval=" + dt_s + "\nloop=false\n" + (note ? note.replace(/[^\x20-\x7e\n]/g, "") + "\n" : "");
+    desc += "\0"; while (desc.length % 4) desc += "\0";
+    const tags = [[254, 4, 0], [256, 4, n], [257, 4, n], [258, 3, 32], [259, 3, 1], [262, 3, 1], [270, 2, null], [273, 4, null],
+                  [277, 3, 1], [278, 4, n], [279, 4, dataBytes], [282, 5, null], [283, 5, null], [296, 3, 1], [339, 3, 3]];
+    const NT = tags.length, ifdBytes = 2 + 12 * NT + 4, extra = 16;
+    const descOff = 8, dataOff = descOff + desc.length, ifdOff0 = dataOff + T * dataBytes;
+    const buf = new ArrayBuffer(ifdOff0 + T * (ifdBytes + extra)), v = new DataView(buf), u8 = new Uint8Array(buf);
+    v.setUint8(0, 0x49); v.setUint8(1, 0x49); v.setUint16(2, 42, true); v.setUint32(4, ifdOff0, true);
+    for (let i = 0; i < desc.length; i++) u8[descOff + i] = desc.charCodeAt(i);
+    new Float32Array(buf, dataOff, T * P).set(frames.subarray(0, T * P));
+    const num = Math.round(1e6 / pixel_um), den = 1e6;
+    for (let t = 0; t < T; t++) {
+      const o = ifdOff0 + t * (ifdBytes + extra), rat = o + ifdBytes;
+      v.setUint16(o, NT, true);
+      tags.forEach(function (g, i) {
+        const k = o + 2 + 12 * i, id = g[0], type = g[1];
+        let count = 1, val = g[2];
+        if (id === 270) { count = t === 0 ? desc.length : 1; val = t === 0 ? descOff : 0; }
+        if (id === 273) val = dataOff + t * dataBytes;
+        if (id === 282) val = rat; if (id === 283) val = rat + 8;
+        v.setUint16(k, id, true); v.setUint16(k + 2, type, true); v.setUint32(k + 4, count, true);
+        if (type === 3) v.setUint16(k + 8, val, true); else v.setUint32(k + 8, val, true);
+      });
+      v.setUint32(o + 2 + 12 * NT, t + 1 < T ? ifdOff0 + (t + 1) * (ifdBytes + extra) : 0, true);
+      v.setUint32(rat, num, true); v.setUint32(rat + 4, den, true); v.setUint32(rat + 8, num, true); v.setUint32(rat + 12, den, true);
+    }
+    return buf;
+  }
+  // hand a file to the browser's download
+  function save(name, data, type) {
+    const url = URL.createObjectURL(new Blob([data], { type: type }));
+    const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+  }
+  const api = { tiff: tiff, save: save };
+  if (typeof module !== "undefined" && module.exports) module.exports = api; else root.DDM_TIFF = api;
+})(typeof self !== "undefined" ? self : this);
+
+</script>
+<script>
 (function () {
   "use strict";
   const $ = function (id) { return document.getElementById(id); };
@@ -4346,7 +4399,8 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const host = $("ctl-groups"), subs = {};
     CONTROLS.forEach(function (c) {
       if (!blockEls[c.group]) {
-        const d = document.createElement("details"); d.className = "cblock"; d.open = true; d.dataset.block = c.group.split(" ")[0].toLowerCase();   // its colour
+        const d = document.createElement("details"); d.className = "cblock"; d.open = !window.matchMedia("(max-width: 63.99rem)").matches;   // folded on phones and narrow windows
+        d.dataset.block = c.group.split(" ")[0].toLowerCase();   // its colour
         d.innerHTML = '<summary><h3></h3><span class="bsum"></span></summary><div class="cbody"></div>';
         d.querySelector("h3").textContent = c.group;
         host.appendChild(d); blockEls[c.group] = { el: d, body: d.querySelector(".cbody"), sum: d.querySelector(".bsum"), ctls: [] };
@@ -4623,6 +4677,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     if (runStart) { const s = (performance.now() - runStart) / 1000; if (movie !== cache.movie) lastRunS = s; }
     repeat = null;
     cache.movie = movie; cache.res = res; cache.cfg = cfg; cache.opts = opts;
+    $("btn-times").hidden = !frameTimes();
     res.used = res.fits.filter(function (f) { return f.reason === null; });
     pickDefaultSelection();
     $("bar").style.width = "100%";
@@ -5478,7 +5533,6 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   buildControls(); buildCards(); buildPredictions();
   document.querySelectorAll('input[name="level"]').forEach(function (r) { r.addEventListener("change", function () { if (r.checked) setLevel(r.value, true); }); });
   document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }); });
-  window.addEventListener("hashchange", function () { const h = location.hash.slice(1); if (LEVEL_RANK[h] && h !== level) setLevel(h, false); });
   $("btn-reset").addEventListener("click", function () { const keep = LEVEL_RANK[level] >= 3 ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
   $("btn-seed").addEventListener("click", function () { state.seed = (state.seed * 1103515245 + 12345) % 2147483647; schedule(); });
   $("btn-play").addEventListener("click", function () { playing = !playing; $("btn-play").textContent = playing ? "Pause" : "Play"; });
@@ -5503,10 +5557,68 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
   new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
-  const h0 = location.hash.slice(1);
-  setLevel(LEVEL_RANK[h0] ? h0 : "curious", false);
+  const PAGE_NAME = "sizing";
+  // ---- sharing a setup and saving the movie ------------------------------------------------------------
+  // the address holds the reader level and every setting that differs from the standard sample, e.g.
+  // #student/diameter_um=0.5&mode=fluorescence (objectives by name, so a link survives changes to the list)
+  function setupHash() {
+    const q = [];
+    Object.keys(BASE).forEach(function (k) {
+      const v = state[k];
+      if (JSON.stringify(v) === JSON.stringify(BASE[k])) return;
+      q.push(encodeURIComponent(k) + "=" + encodeURIComponent(k === "objective" ? OBJECTIVES[v].n : v === null ? "null" : String(v)));
+    });
+    return "#" + level + (q.length ? "/" + q.join("&") : "");
+  }
+  function parseHash(h) {
+    const parts = String(h || "").replace(/^#/, "").split("/"), set = {};
+    (parts[1] || "").split("&").forEach(function (kv) {
+      const i = kv.indexOf("="); if (i < 1) return;
+      let k, raw; try { k = decodeURIComponent(kv.slice(0, i)); raw = decodeURIComponent(kv.slice(i + 1)); } catch (e) { return; }
+      if (!Object.prototype.hasOwnProperty.call(BASE, k)) return;
+      if (k === "objective") { try { set[k] = objIndexByName(raw); } catch (e) { /* objective no longer listed: keep the standard one */ } return; }
+      if (typeof BASE[k] === "number" || BASE[k] === null) { const x = raw === "null" ? null : parseFloat(raw); if (x === null || isFinite(x)) set[k] = x; return; }
+      if (typeof BASE[k] === "string") set[k] = raw;
+    });
+    return { level: LEVEL_RANK[parts[0]] ? parts[0] : null, set: set };
+  }
+  function applySetup(p) {
+    if (!Object.keys(p.set).length) return false;
+    applyPreset(p.set);
+    if (p.set.seed !== undefined) state.seed = p.set.seed;   // applyPreset keeps the seed only for researchers
+    return true;
+  }
+  $("btn-share").addEventListener("click", function () {
+    const h = setupHash(), url = location.href.split("#")[0] + h, msg = $("share-msg");
+    try { history.replaceState(null, "", h); } catch (e) { /* sandboxed previews refuse it */ }
+    const show = function (ok) { msg.textContent = ok ? "Link copied: it opens this page with these settings." : url; msg.style.wordBreak = ok ? "" : "break-all"; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(function () { show(true); }, function () { show(false); });
+    else show(false);
+  });
+  window.addEventListener("hashchange", function () {
+    const p = parseHash(location.hash);
+    if (p.level && p.level !== level) setLevel(p.level, false);
+    applySetup(p);
+  });
+  // the movie as the page analyses it (photoelectrons per pixel), for ImageJ, Fiji or fastDDM
+  function frameTimes() { return (cache.res && cache.res.times_s) || (cache.movie && cache.movie.times_s) || null; }
+  function movieName() { const mv = cache.movie; return "ddm-" + PAGE_NAME + "-" + state.mode + "-" + mv.n + "x" + mv.n + "x" + mv.T; }
+  $("btn-tiff").addEventListener("click", function () {
+    const mv = cache.movie; if (!mv || !mv.frames) return;
+    const note = "info=Simulated on rcerbino.github.io/ddm, photoelectrons per pixel" + (frameTimes() ? "; log-spaced frames, times in the CSV file" : "");
+    DDM_TIFF.save(movieName() + ".tif", DDM_TIFF.tiff(mv.frames, mv.n, mv.T, mv.pixel_um, 1 / mv.frame_rate_hz, note), "image/tiff");
+  });
+  $("btn-times").addEventListener("click", function () {
+    const t = frameTimes(); if (!t) return;
+    let csv = "frame,time_s\n"; for (let i = 0; i < t.length; i++) csv += i + "," + t[i] + "\n";
+    DDM_TIFF.save(movieName() + "-times.csv", csv, "text/csv");
+  });
+
+  // start: the level and the settings in the address, if any (a shared link), else the standard sample
+  const p0 = parseHash(location.hash);
+  setLevel(p0.level || "curious", false);
   $("lag").value = 12;
-  schedule();
+  if (!applySetup(p0)) schedule();
   requestAnimationFrame(tick);
   // hook for automated checks of the page (reads settings, applies a preset; changes nothing by itself)
   window.DDM_PAGE = {

@@ -556,7 +556,8 @@
     const host = $("ctl-groups"), subs = {};
     CONTROLS.forEach(function (c) {
       if (!blockEls[c.group]) {
-        const d = document.createElement("details"); d.className = "cblock"; d.open = true; d.dataset.block = c.group.split(" ")[0].toLowerCase();   // its colour
+        const d = document.createElement("details"); d.className = "cblock"; d.open = !window.matchMedia("(max-width: 63.99rem)").matches;   // folded on phones and narrow windows
+        d.dataset.block = c.group.split(" ")[0].toLowerCase();   // its colour
         d.innerHTML = '<summary><h3></h3><span class="bsum"></span></summary><div class="cbody"></div>';
         d.querySelector("h3").textContent = c.group;
         host.appendChild(d); blockEls[c.group] = { el: d, body: d.querySelector(".cbody"), sum: d.querySelector(".bsum"), ctls: [] };
@@ -836,6 +837,7 @@
     if (runStart) { const s = (performance.now() - runStart) / 1000; if (movie !== cache.movie) lastRunS = s; }
     repeat = null;
     cache.movie = movie; cache.res = res; cache.cfg = cfg; cache.opts = opts;
+    $("btn-times").hidden = !frameTimes();
     res.used = res.fits.filter(function (f) { return f.reason === null; });
     pickDefaultSelection();
     $("bar").style.width = "100%";
@@ -1668,7 +1670,6 @@
   buildControls(); buildCards(); buildPredictions();
   document.querySelectorAll('input[name="level"]').forEach(function (r) { r.addEventListener("change", function () { if (r.checked) setLevel(r.value, true); }); });
   document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }); });
-  window.addEventListener("hashchange", function () { const h = location.hash.slice(1); if (LEVEL_RANK[h] && h !== level) setLevel(h, false); });
   $("btn-reset").addEventListener("click", function () { const keep = LEVEL_RANK[level] >= 3 ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
   $("btn-seed").addEventListener("click", function () { state.seed = (state.seed * 1103515245 + 12345) % 2147483647; schedule(); });
   $("btn-play").addEventListener("click", function () { playing = !playing; $("btn-play").textContent = playing ? "Pause" : "Play"; });
@@ -1693,10 +1694,68 @@
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
   new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
-  const h0 = location.hash.slice(1);
-  setLevel(LEVEL_RANK[h0] ? h0 : "curious", false);
+  const PAGE_NAME = "swimmers";
+  // ---- sharing a setup and saving the movie ------------------------------------------------------------
+  // the address holds the reader level and every setting that differs from the standard sample, e.g.
+  // #student/diameter_um=0.5&mode=fluorescence (objectives by name, so a link survives changes to the list)
+  function setupHash() {
+    const q = [];
+    Object.keys(BASE).forEach(function (k) {
+      const v = state[k];
+      if (JSON.stringify(v) === JSON.stringify(BASE[k])) return;
+      q.push(encodeURIComponent(k) + "=" + encodeURIComponent(k === "objective" ? OBJECTIVES[v].n : v === null ? "null" : String(v)));
+    });
+    return "#" + level + (q.length ? "/" + q.join("&") : "");
+  }
+  function parseHash(h) {
+    const parts = String(h || "").replace(/^#/, "").split("/"), set = {};
+    (parts[1] || "").split("&").forEach(function (kv) {
+      const i = kv.indexOf("="); if (i < 1) return;
+      let k, raw; try { k = decodeURIComponent(kv.slice(0, i)); raw = decodeURIComponent(kv.slice(i + 1)); } catch (e) { return; }
+      if (!Object.prototype.hasOwnProperty.call(BASE, k)) return;
+      if (k === "objective") { try { set[k] = objIndexByName(raw); } catch (e) { /* objective no longer listed: keep the standard one */ } return; }
+      if (typeof BASE[k] === "number" || BASE[k] === null) { const x = raw === "null" ? null : parseFloat(raw); if (x === null || isFinite(x)) set[k] = x; return; }
+      if (typeof BASE[k] === "string") set[k] = raw;
+    });
+    return { level: LEVEL_RANK[parts[0]] ? parts[0] : null, set: set };
+  }
+  function applySetup(p) {
+    if (!Object.keys(p.set).length) return false;
+    applyPreset(p.set);
+    if (p.set.seed !== undefined) state.seed = p.set.seed;   // applyPreset keeps the seed only for researchers
+    return true;
+  }
+  $("btn-share").addEventListener("click", function () {
+    const h = setupHash(), url = location.href.split("#")[0] + h, msg = $("share-msg");
+    try { history.replaceState(null, "", h); } catch (e) { /* sandboxed previews refuse it */ }
+    const show = function (ok) { msg.textContent = ok ? "Link copied: it opens this page with these settings." : url; msg.style.wordBreak = ok ? "" : "break-all"; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(function () { show(true); }, function () { show(false); });
+    else show(false);
+  });
+  window.addEventListener("hashchange", function () {
+    const p = parseHash(location.hash);
+    if (p.level && p.level !== level) setLevel(p.level, false);
+    applySetup(p);
+  });
+  // the movie as the page analyses it (photoelectrons per pixel), for ImageJ, Fiji or fastDDM
+  function frameTimes() { return (cache.res && cache.res.times_s) || (cache.movie && cache.movie.times_s) || null; }
+  function movieName() { const mv = cache.movie; return "ddm-" + PAGE_NAME + "-" + state.mode + "-" + mv.n + "x" + mv.n + "x" + mv.T; }
+  $("btn-tiff").addEventListener("click", function () {
+    const mv = cache.movie; if (!mv || !mv.frames) return;
+    const note = "info=Simulated on rcerbino.github.io/ddm, photoelectrons per pixel" + (frameTimes() ? "; log-spaced frames, times in the CSV file" : "");
+    DDM_TIFF.save(movieName() + ".tif", DDM_TIFF.tiff(mv.frames, mv.n, mv.T, mv.pixel_um, 1 / mv.frame_rate_hz, note), "image/tiff");
+  });
+  $("btn-times").addEventListener("click", function () {
+    const t = frameTimes(); if (!t) return;
+    let csv = "frame,time_s\n"; for (let i = 0; i < t.length; i++) csv += i + "," + t[i] + "\n";
+    DDM_TIFF.save(movieName() + "-times.csv", csv, "text/csv");
+  });
+
+  // start: the level and the settings in the address, if any (a shared link), else the standard sample
+  const p0 = parseHash(location.hash);
+  setLevel(p0.level || "curious", false);
   $("lag").value = 12;
-  schedule();
+  if (!applySetup(p0)) schedule();
   requestAnimationFrame(tick);
   // hook for automated checks of the page (reads settings, applies a preset; changes nothing by itself)
   window.DDM_PAGE = {
