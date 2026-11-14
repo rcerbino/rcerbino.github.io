@@ -119,7 +119,7 @@
     scanner: "resonant", scan_px: 512, zoom: 1, line_avg: 2, pinhole_au: 1, scan_rate: 2e7,
     frame_rate_hz: 100, exposure_ms: 0.2, frame_timing: "even", log_factor: 20,
     shape: "sphere", aspect: 3, dn: 0.1, dn_body: 0, polarizer: "off", analyzer: "off", pol_angle_deg: 90, extinction: 1e-4,
-    fit_model: "auto", images: "recorded", q_min: null, q_max: null, seed: 1
+    fit_model: "auto", images: "recorded", windowing: "off", q_min: null, q_max: null, seed: 1
   };
   let state = Object.assign({}, BASE);
   const LEVEL_RANK = { curious: 1, student: 2, researcher: 3 };
@@ -263,7 +263,7 @@
       drift_um_s: state.drift_um_s, gravity: state.settle === "on", walls: state.settle === "on", vector: useVector()
     };
   }
-  function analysisOptions() { return { fit_model: fitModel(), q_min_per_um: state.q_min, q_max_per_um: state.q_max, images: state.images }; }
+  function analysisOptions() { return { fit_model: fitModel(), q_min_per_um: state.q_min, q_max_per_um: state.q_max, images: state.images, windowing: state.windowing === "on" }; }
 
   // ---- controls -------------------------------------------------------------------
   const TRANS = function () { return state.mode === "brightfield" || state.mode === "phase" || state.mode === "darkfield" || state.mode === "dic"; };
@@ -341,6 +341,8 @@
     { key: "sim_px", group: "Camera and recording", lvl: 3, label: "Simulated part of the image", kind: "select", num: true, options: [[64, "64 x 64 pixels (fast)"], [128, "128 x 128 pixels"], [256, "256 x 256 pixels (slow)"]] },
 
     { key: "fit_model", group: "Analysis", lvl: 2, label: "Fit at each q (sets the headline size)", kind: "select", options: [["auto", "Automatic: simple exponential, or modes for particles that turn"], ["simple", "Simple exponential (identical particles)"], ["schulz", "Schulz distribution of rates (mixed sizes)"], ["stretched", "Stretched exponential"], ["two", "Two modes: translation, translation + rotation"], ["three", "Three modes: adds 20 D_R (crossed polarizers)"]], hint: "Cumulants (as in DLS) and a Schulz fit are always computed too and shown next to the headline, so the methods can be compared. Repeatability and the other checks use the fit chosen here." },
+    { key: "windowing", group: "Analysis", lvl: 2, label: "Windowing (Giavazzi et al. 2017)", kind: "select", options: [["off", "Off"], ["on", "On: each frame multiplied by a window that falls to zero at the edges"]],
+      hint: function () { return state.windowing === "on" ? "Cells or particles that cross the edge of the image no longer leave bands along the axes of the map in step 4, nor a fast decay that swamps the finest patterns. The price: the window darkens the edges, so less of the field counts and the results scatter more, and patterns wider than a fifth of the field are left out (the window mixes each pattern with its neighbours)." : "The Fourier transform treats the image as one tile of a repeating pattern, so cells or particles crossing the edges make jumps at the tile borders. The central cross of the map is left out to remove most of their effect."; } },
     { key: "images", group: "Analysis", lvl: 2, label: "Images analysed", kind: "select", options: [["recorded", "As recorded"], ["squared_gradient", "Squared gradient of each frame (SG-DDM)"]], hint: function () { return state.images === "squared_gradient" ? "Squaring turns changes of shape into changes of brightness, so rotations show up in bright field (Giavazzi, Pal and Cerbino 2021)." : ""; } },
     { key: "qrange", group: "Analysis", lvl: 3, label: "Fit range in q (1/" + MU + "m)", kind: "qrange" }
   ];
@@ -352,7 +354,7 @@
     ["Illumination", ["source", "condenser", "na_c", "df_kind", "annulus", "polarizer", "light_frac", "df_light_e", "stray_frac", "rate_ph_ms", "bg_e_ms", "scan_rate"]],
     ["Detection", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg", "analyzer", "pol_angle_deg", "extinction",
       "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "log_factor", "sim_px"]],
-    ["Analysis", ["images", "fit_model", "qrange"]]
+    ["Analysis", ["images", "windowing", "fit_model", "qrange"]]
   ];
   (function () {
     const byKey = {}; CONTROLS.forEach(function (c) { byKey[c.kind === "qrange" ? "qrange" : c.key] = c; });
@@ -361,7 +363,7 @@
     const left = Object.keys(byKey); if (left.length) throw new Error("layout: controls not placed: " + left.join(", "));
     CONTROLS.length = 0; out.forEach(function (c) { CONTROLS.push(c); });
   })();
-  const ANALYSIS_KEYS = { fit_model: 1, q_min: 1, q_max: 1, images: 1 };
+  const ANALYSIS_KEYS = { fit_model: 1, q_min: 1, q_max: 1, images: 1, windowing: 1 };
   function fmtRate(v) { return fmtSig(v, 2) + " s" + "\u207b\u00b9"; }
   function shapeHint() {
     if (!TURNS()) return "";
@@ -1323,6 +1325,7 @@
       h += '<dt>Wave vectors used</dt><dd>' + (res.D ? res.D.n_points : 0) + (res.used.length ? ', ' + res.used[0].q_per_um.toFixed(2) + ' to ' + res.used[res.used.length - 1].q_per_um.toFixed(2) + ' ' + MU + 'm\u207b\u00b9' : '') + '</dd>';
       h += '<dt>Uncertainty</dt><dd>larger of the scatter between q (' + pctTxt(res.diameter_rel_err_points) + ')' + (res.jackknife ? ' and the jackknife: the fits repeated with one of ' + res.jackknife.blocks + ' parts of the movie left out (' + pctTxt(res.jackknife.rel_err) + ')' : res.blocks ? ' and the spread of ' + res.blocks.n_blocks + ' parts of the movie / &radic;' + res.blocks.n_blocks + ' (' + pctTxt(res.blocks.rel_err_full) + ')' : '') + '</dd>';
       h += '<dt>Camera noise</dt><dd>' + (res.noise_B ? 'B = ' + fmtSig(res.noise_B, 3) + ' from the mean count, the read noise and the excess-noise factor of the camera, the same at every q' : 'B fitted at each q, between 0 and the first point of the curve') + '</dd>';
+      h += '<dt>Windowing</dt><dd>' + (res.windowing ? 'on: each frame multiplied by a Blackman-Harris window that falls to zero at the edges (Giavazzi et al. 2017); patterns wider than a fifth of the field left out' : 'off (the central cross of the map is left out instead)') + '</dd>';
       h += '<dt>Depth of field</dt><dd>' + (res.depth_model ? 'included: a particle that diffuses up or down fades from each pattern through the optics of step 1, and the fit allows for it' : 'not included') + '</dd>';
       if (res.beta_mean !== null) h += '<dt>Mean stretching &beta;</dt><dd>' + res.beta_mean.toFixed(2) + '</dd>';
       if (cu && cu.third) h += '<dt>Cumulants, 3rd order</dt><dd>' + fmtSize(sizeFromD(cu.third.D_um2_s)) + ', PI ' + cu.third.pi.toFixed(3) + ' &plusmn; ' + cu.third.pi_err.toFixed(3) + ' (less biased for broad distributions, but noisier)</dd>';
@@ -1404,7 +1407,7 @@
     } else L.push("  No result: too few usable wave vectors.");
     L.push("");
     L.push("Evaluation");
-    L.push("  Algorithm: differential dynamic microscopy; structure function azimuthally averaged (central cross masked); " + (r.noise_B ? "camera noise B from the mean count, read noise and excess-noise factor, the same at every q" : r.B_floor !== null && r.B_floor !== undefined ? "noise B from the flat floor beyond the optical cut-off" : "noise B from the zero-delay intercept of the first five delays") + (r.depth_model ? "; depth of field included (axial diffusion through the optical kernel)" : "") + ", A + B = 2 var; " + MODEL_NAME[r.fit_model] + " fit at each q; D as the weighted mean of Gamma / q^2 (geometric mean, logarithmic scale); cumulants to second order on f(q, dt) from f = 1 down to f1/10.");
+    L.push("  Algorithm: differential dynamic microscopy; structure function azimuthally averaged (central cross masked); " + (r.noise_B ? "camera noise B from the mean count, read noise and excess-noise factor, the same at every q" : r.B_floor !== null && r.B_floor !== undefined ? "noise B from the flat floor beyond the optical cut-off" : "noise B from the zero-delay intercept of the first five delays") + (r.depth_model ? "; depth of field included (axial diffusion through the optical kernel)" : "") + (r.windowing ? "; each frame multiplied by a Blackman-Harris window before the transform (Giavazzi et al. 2017), widest patterns left out" : "") + ", A + B = 2 var; " + MODEL_NAME[r.fit_model] + " fit at each q; D as the weighted mean of Gamma / q^2 (geometric mean, logarithmic scale); cumulants to second order on f(q, dt) from f = 1 down to f1/10.");
     L.push("  Wave vectors used: " + (r.used.length ? r.used[0].q_per_um.toFixed(2) + " to " + r.used[r.used.length - 1].q_per_um.toFixed(2) + " um^-1" : "none") + "; delays " + fmtTime(r.taus_s[0]) + " to " + fmtTime(r.taus_s[r.taus_s.length - 1]) + ".");
     L.push("  Results are weighted by the signal of each particle in the images (the counterpart of intensity weighting in DLS); no conversion to volume or number distributions.");
     L.push("");

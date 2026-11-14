@@ -257,7 +257,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap intro">
     <div>
       <p class="eyebrow">Differential dynamic microscopy</p>
-      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">Sizing particles</a><span aria-current="page">Swimming cells</span></nav>
+      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><span aria-current="page">Swimming cells</span></nav>
       <h1>How fast do cells swim?</h1>
       <p class="lede">Many bacteria swim, and so do algae and sperm. How fast they swim and how many of them do it tells a biologist whether they are healthy, hungry or poisoned, and a clinician whether sperm are fit to fertilise. Following cells one by one is slow and gives a few hundred tracks at best. Differential dynamic microscopy (DDM) reads the swimming speeds and the share of swimmers from an ordinary microscope movie of thousands of cells in a few minutes, without following any of them (Wilson et al. 2011). Here a simulated microscope lets you run this motility assay yourself, from the raw movie to the distribution of swimming speeds, and see where it can go wrong.</p>
       <fieldset class="levels">
@@ -394,7 +394,7 @@ img_seq = fd.read_images(file_names)</pre>
         <details class="math" data-open-at="researcher">
           <summary>The math: image structure function</summary>
           <div class="eq"><i>d</i>(<b>q</b>, &Delta;<i>t</i>) = &lang; |<i>F</i>[&Delta;<i>I</i>](<b>q</b>; <i>t</i>, &Delta;<i>t</i>)|<sup>2</sup> &rang;<sub><i>t</i></sub></div>
-          <p>Here <i>F</i> is the two-dimensional Fourier transform and the average runs over all start times <i>t</i>. For motion with no preferred direction, <i>d</i> depends only on <i>q</i> = |<b>q</b>|, and the azimuthal average gives <i>d</i>(<i>q</i>, &Delta;<i>t</i>). The cross <i>q<sub>x</sub></i> = 0 or <i>q<sub>y</sub></i> = 0 is left out because image edges add artefacts there.</p>
+          <p>Here <i>F</i> is the two-dimensional Fourier transform and the average runs over all start times <i>t</i>. For motion with no preferred direction, <i>d</i> depends only on <i>q</i> = |<b>q</b>|, and the azimuthal average gives <i>d</i>(<i>q</i>, &Delta;<i>t</i>). The cross <i>q<sub>x</sub></i> = 0 or <i>q<sub>y</sub></i> = 0 is left out because image edges add artefacts there. <b>Windowing</b> (switch under Analysis, off by default; Giavazzi, Edera, Lu and Cerbino, <a href="https://doi.org/10.1140/epje/i2017-11587-3">Image windowing mitigates edge effects in differential dynamic microscopy</a>, Eur. Phys. J. E 40, 97 (2017)): the transform treats each image as one tile of a repeating pattern, so anything that crosses an edge makes a jump at the tile border. The jump spreads over all <i>q</i> along the axes of the map and adds a fast decay, nearly the same at every <i>q</i>, that swamps the finest patterns. With the switch on, each frame is first multiplied by a Blackman-Harris window <i>W</i>(<i>x</i>)<i>W</i>(<i>y</i>), <i>W</i> = 0.3636 &minus; 0.4892 cos(2&pi;<i>x</i>/<i>L</i>) + 0.1366 cos(4&pi;<i>x</i>/<i>L</i>) &minus; 0.0106 cos(6&pi;<i>x</i>/<i>L</i>), which falls smoothly to zero at the edges. The window has its own price: less of the field counts, and its transform mixes each pattern with its neighbours up to 3 steps away in <i>q</i>, so the widest patterns (below 5 steps) are left out. On two simulated movies of the standard sample it read the speed 1.5 and 3 % high (3.4 and 3.9 % without it) and the share 0.61 and 0.56 (0.68 and 0.56 seen). The camera noise <i>B</i> becomes 2 &lang;<i>W</i><sup>2</sup> &times; noise variance&rang;. The paper keeps the peak of the window at 1, which lowers <i>A</i>(<i>q</i>) and <i>B</i> by more than 90 %; here the window is scaled so that the mean of <i>W</i><sup>2</sup> over the image is 1, so <i>A</i>(<i>q</i>) and <i>B</i> keep the height they have without it and the two analyses can be compared on the same axes. Rates, sizes and speeds do not depend on this choice.</p>
           <div class="lvl-3"><pre class="code">dqt = fd.ddm(img_seq, range(1, len(img_seq) // 2))
 dqt.pixel_size = pixel_size        # um
 dqt.set_frame_rate(frame_rate)     # frames per second
@@ -568,6 +568,7 @@ A_est = 2 * aa.var - B_est
       <li>V. A. Martinez, R. Besseling, O. A. Croze, J. Tailleur, M. Reufer, J. Schwarz-Linek, L. G. Wilson, M. A. Bees and W. C. K. Poon, <a href="https://doi.org/10.1016/j.bpj.2012.08.045">Differential dynamic microscopy: a high-throughput method for characterizing the motility of microorganisms</a>, Biophys. J. 103, 1637 (2012). The method in detail, with its limits.</li>
       <li>R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope</a>, Phys. Rev. Lett. 100, 188102 (2008). The paper that introduced DDM.</li>
       <li>E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a>, J. Chem. Phys. 163, 161501 (2025). A practical guide with the notation used here, including swimming bacteria (section V B).</li>
+      <li>F. Giavazzi, P. Edera, P. J. Lu and R. Cerbino, <a href="https://doi.org/10.1140/epje/i2017-11587-3">Image windowing mitigates edge effects in differential dynamic microscopy</a>, Eur. Phys. J. E 40, 97 (2017). The windowing switch under Analysis.</li>
       <li><a href="https://github.com/somexlab/fastddm-tutorials">fastDDM tutorials</a>: Jupyter notebooks that run DDM on real movies; tutorial 8 is about bacteria.</li>
     </ul>
     <ul class="lvl-3">
@@ -2830,7 +2831,7 @@ A_est = 2 * aa.var - B_est
   }
 
   // squared gradient of every frame (periodic central differences), then its Fourier transform
-  function squaredGradientFft(movie) {
+  function squaredGradientFft(movie, win) {
     const n = movie.n, T = movie.T, P = n * n, out = new Float32Array(2 * P * T), img = new Float64Array(P);
     const tb = makeFftTables(n), work = makeWork(n);
     for (let t = 0; t < T; t++) {
@@ -2838,11 +2839,44 @@ A_est = 2 * aa.var - B_est
       for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
         const xp = (x + 1) % n, xm = (x + n - 1) % n, yp = (y + 1) % n, ym = (y + n - 1) % n;
         const gxv = 0.5 * (f[o + y * n + xp] - f[o + y * n + xm]), gyv = 0.5 * (f[o + yp * n + x] - f[o + ym * n + x]);
-        img[y * n + x] = gxv * gxv + gyv * gyv;
+        img[y * n + x] = (gxv * gxv + gyv * gyv) * (win ? win[y * n + x] : 1);
       }
       fft2dReal(img, n, tb, out, 2 * P * t, work);
     }
     return out;
+  }
+  /* Windowing (Giavazzi, Edera, Lu and Cerbino, Eur. Phys. J. E 40, 97 (2017)): each frame is multiplied by a window that
+   * falls smoothly to zero at the edges, W(x) W(y), before its Fourier transform. The transform treats the image as one
+   * tile of a periodic pattern; a particle crossing an edge then makes a jump at the tile border, which spreads over all
+   * q along the axes of the map (the bands that the central cross mask removes) and adds a fast, nearly q-independent decay
+   * that dominates at large q. With the window the borders are dark and the jumps are gone. Blackman-Harris, 4 terms. */
+  function windowWeights(n) {
+    const a = [0.3635819, 0.4891775, 0.1365995, 0.0106411], w1 = new Float64Array(n), W = new Float64Array(n * n);
+    for (let x = 0; x < n; x++) { const u = 2 * Math.PI * x / n; w1[x] = a[0] - a[1] * Math.cos(u) + a[2] * Math.cos(2 * u) - a[3] * Math.cos(3 * u); }
+    // scaled so that the mean of W^2 is 1 (the paper keeps the peak at 1): A(q) and B keep the height they have
+    // without the window, so the two analyses can be compared on the same axes
+    let m2 = 0; for (let x = 0; x < n; x++) m2 += w1[x] * w1[x];
+    const k = 1 / Math.sqrt(m2 / n); for (let x = 0; x < n; x++) w1[x] *= k;
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) W[y * n + x] = w1[x] * w1[y];
+    return W;
+  }
+  function windowedFft(movie, W) {
+    const n = movie.n, T = movie.T, P = n * n, out = new Float32Array(2 * P * T), img = new Float64Array(P);
+    const tb = makeFftTables(n), work = makeWork(n), f = movie.frames;
+    for (let t = 0; t < T; t++) { const o = t * P; for (let p = 0; p < P; p++) img[p] = f[o + p] * W[p]; fft2dReal(img, n, tb, out, 2 * P * t, work); }
+    return out;
+  }
+  /* Detector noise B = 2 x the mean noise variance per pixel (white noise; the structure function is normalised per
+   * pixel): variance = excess-noise factor x mean count + read noise^2, for cameras and photon-counting scanners. With a
+   * window W the noise of each pixel is weighted by W^2: B = 2 <W^2 (F count + read^2)>. null when it does not apply. */
+  function detectorNoiseB(movie, W) {
+    const info = movie.info;
+    if (!(info && (info.detector_kind === "camera" || info.detector_kind === "scanner") && movie.frames && typeof info.read_noise_e === "number")) return null;
+    const F = movie.frames, P = movie.n * movie.n, T = movie.T, enf = info.excess_noise || 1, r2 = info.read_noise_e * info.read_noise_e;
+    if (!W) { let s = 0; for (let k = 0; k < F.length; k++) s += F[k]; return 2 * (enf * s / F.length + r2); }
+    const m = new Float64Array(P); for (let t = 0; t < T; t++) { const o = t * P; for (let p = 0; p < P; p++) m[p] += F[o + p]; }
+    let s = 0; for (let p = 0; p < P; p++) s += W[p] * W[p] * (enf * m[p] / T + r2);
+    return 2 * s / P;
   }
 
   /* opts (required): fit_model ("simple" | "stretched" | "schulz" | "two" | "three"),
@@ -2882,7 +2916,9 @@ A_est = 2 * aa.var - B_est
     need(images === "recorded" || images === "squared_gradient", "images must be recorded or squared_gradient");
     const sg = images === "squared_gradient";
     if (sg) yield { stage: "Squared gradient of each frame", frac: 0 };
-    const n = movie.n, T = movie.T, P = n * n, fft = sg ? squaredGradientFft(movie) : movie.fft;
+    const win = opts.windowing === true ? windowWeights(movie.n) : null;
+    if (win && !sg) yield { stage: "Windowing each frame", frac: 0 };
+    const n = movie.n, T = movie.T, P = n * n, fft = sg ? squaredGradientFft(movie, win) : win ? windowedFft(movie, win) : movie.fft;
     const dt_s = 1 / movie.frame_rate_hz;
     // evenly spaced frames: integer lags, every pair at each lag. Uneven frame times (log-spaced cycles): pairs grouped by their
     // time apart (pairBins), at most T pairs per group. lags are then in units of the shortest interval, rounded.
@@ -3010,7 +3046,7 @@ A_est = 2 * aa.var - B_est
       if (B_floor !== null) Bq = Math.min(B_floor, dq[0][b]);
       B_est[b] = Bq; A_est[b] = 2 * varq[b] - Bq;
     }
-    return { images: images, sg: sg, n: n, T: T, P: P, fft: fft, lags: lags, L: L, dt_s: dt_s, taus_s: taus_s, pairs: PB ? PB.pairs : null, times_s: movie.times_s || null, nb: nb, binOf: binOf, nmodes: nmodes, blocks: K, jackDq: jackDq,
+    return { images: images, sg: sg, n: n, T: T, P: P, fft: fft, lags: lags, L: L, dt_s: dt_s, taus_s: taus_s, pairs: PB ? PB.pairs : null, times_s: movie.times_s || null, nb: nb, binOf: binOf, nmodes: nmodes, blocks: K, jackDq: jackDq, window: win,
              q_per_um: q_per_um, d2d: d2d, dq: dq, varq: varq, powq: powq, q_lo_per_um: q_lo_per_um, q_nyq_per_um: q_nyq_per_um, q_opt_per_um: q_opt_per_um,
              q_sig_per_um: q_sig_per_um, q_hi_per_um: q_hi_per_um, gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz, B_floor: B_floor, B_est: B_est, A_est: A_est };
   }
@@ -3022,19 +3058,17 @@ A_est = 2 * aa.var - B_est
     // detector noise: B = 2 (excess-noise factor x mean count + read noise^2) per pixel, the same at every q (white noise),
     // from the frames and the detector (known to the experimenter): cameras, and point scanners (photon counting, no read
     // noise). Not for the squared gradient (its noise is not white); opts.noise "fit" fits B at each q as before
-    let noiseB = null;
-    if (opts.noise !== "fit" && !S.sg && movie.info && (movie.info.detector_kind === "camera" || movie.info.detector_kind === "scanner") && movie.frames && typeof movie.info.read_noise_e === "number") {
-      let sum = 0; const F = movie.frames; for (let k = 0; k < F.length; k++) sum += F[k];
-      noiseB = 2 * ((movie.info.excess_noise || 1) * sum / F.length + movie.info.read_noise_e * movie.info.read_noise_e);
-      for (let b = 1; b <= S.nb; b++) if (S.nmodes[b] > 0) { S.B_est[b] = noiseB; S.A_est[b] = 2 * S.varq[b] - noiseB; }
-    }
+    let noiseB = opts.noise !== "fit" && !S.sg ? detectorNoiseB(movie, S.window) : null;
+    if (noiseB !== null) for (let b = 1; b <= S.nb; b++) if (S.nmodes[b] > 0) { S.B_est[b] = noiseB; S.A_est[b] = 2 * S.varq[b] - noiseB; }
     BFIX = noiseB;
+    if (S.window) { const a = [0.3635819, 0.4891775, 0.1365995, 0.0106411], c = [a[0] * a[0], a[1] * a[1] / 4, a[2] * a[2] / 4, a[3] * a[3] / 4];
+      const m2 = 2 * (c[1] + 4 * c[2] + 9 * c[3]) / (c[0] + 2 * (c[1] + c[2] + c[3])), dq = 2 * Math.PI / movie.L_um; WIN_DQ2 = 2 * m2 * dq * dq; }
     EXPO = opts.exposure !== false && movie.info && movie.info.detector_kind === "camera" && movie.exposure_s > 0 ? movie.exposure_s : 0;
     // depth of field (opts.depth, on by default when the movie carries its optics; not with the squared gradient, whose
     // image is not linear in the particles, nor with two image channels)
     const info = movie.info, useDepth = opts.depth !== false && !S.sg && info && info.kernel && info.kernel_q && info.cell_z_um && !info.split;
     if (useDepth) { const cache = new Map(); DEPTH = function (q) { const k = q.toPrecision(6); if (!cache.has(k)) cache.set(k, depthC(info, q)); return cache.get(k); }; }
-    try { const r = yield* analyseFits(movie, opts, S, noiseB); r.depth_model = !!useDepth && r.used.some(function (f) { return !f.no_depth; }); return r; } finally { BFIX = null; DEPTH = null; EXPO = 0; }
+    try { const r = yield* analyseFits(movie, opts, S, noiseB); r.depth_model = !!useDepth && r.used.some(function (f) { return !f.no_depth; }); return r; } finally { BFIX = null; DEPTH = null; EXPO = 0; WIN_DQ2 = 0; }
   }
   function* analyseFits(movie, opts, S, noiseB) {
     const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
@@ -3062,7 +3096,7 @@ A_est = 2 * aa.var - B_est
     const rows = fits.filter(function (f) { return f !== null; });
     for (const f of rows) {
       f.reason = null;
-      if (f.q_per_um < 2 * q_lo_per_um) f.reason = "pattern as large as the image";
+      if (f.q_per_um < (S.window ? 5 : 2) * q_lo_per_um) f.reason = S.window ? "pattern too wide for the window" : "pattern as large as the image";   // (the window spreads each mode over +-3 bins)
       else if (f.q_per_um > q_hi_per_um) f.reason = "finer than the microscope can see";
       else if (!f.ok) f.reason = "fit failed";
       else if (f.lnGamma_se > MAX_LN_GAMMA_SE || f.weak) f.reason = "signal lost in camera noise";
@@ -3072,16 +3106,16 @@ A_est = 2 * aa.var - B_est
       // it, the pattern renewed within one frame and the fitted rate only follows the last bit (point scanning at 14
       // frames/s: rates at high q read 2-10 times slow, and the size 60 % large)
       else if (noiseB !== null && 2 * varq[f.bin] > noiseB && 1 - (dq[0][f.bin] - noiseB) / (2 * varq[f.bin] - noiseB) < 0.2) f.reason = "too fast for this frame rate";
-      else if (DEPTH && !f.no_depth && DEPTH(f.q_per_um) && depthFade(DEPTH(f.q_per_um), f.gamma_hz / (f.q_per_um * f.q_per_um), taus_s[0]) < 0.3) f.reason = "particles leave the focus within one frame";
+      else if (DEPTH && !f.no_depth && DEPTH(f.q_per_um) && depthFade(DEPTH(f.q_per_um), f.gamma_hz / q2eff(f.q_per_um), taus_s[0]) < 0.3) f.reason = "particles leave the focus within one frame";
       else if (f.q_per_um < qmin || f.q_per_um > qmax) f.reason = "outside the chosen fit range";
     }
     let used = rows.filter(function (f) { return f.reason === null; });
     // a q whose Gamma / q^2 is more than 3 times away from the median of the others is an outlier (a curve lost in noise
     // that passed the other tests by chance); for sizes, even broad spreads keep Gamma / q^2 within that range
     if (used.length >= 5) {
-      const lv = used.map(function (f) { return Math.log(f.gamma_hz / (f.q_per_um * f.q_per_um)); }).sort(function (a, b) { return a - b; });
+      const lv = used.map(function (f) { return Math.log(f.gamma_hz / q2eff(f.q_per_um)); }).sort(function (a, b) { return a - b; });
       const med = lv[Math.floor(lv.length / 2)];
-      used.forEach(function (f) { if (Math.abs(Math.log(f.gamma_hz / (f.q_per_um * f.q_per_um)) - med) > Math.log(3)) f.reason = "rate far from the other q"; });
+      used.forEach(function (f) { if (Math.abs(Math.log(f.gamma_hz / q2eff(f.q_per_um)) - med) > Math.log(3)) f.reason = "rate far from the other q"; });
       used = rows.filter(function (f) { return f.reason === null; });
     }
     let D = weightedD(used);
@@ -3179,7 +3213,7 @@ A_est = 2 * aa.var - B_est
       beta_mean: stretched && used.length ? used.reduce(function (s, f) { return s + f.beta; }, 0) / used.length : null,
       // mean over q weighted like D (by the precision of each rate): PI is poorly fixed where the rate is
       pi_mean: opts.fit_model === "schulz" && used.length ? (function () { let sw = 0, sp = 0; used.forEach(function (f) { const w = 1 / (f.lnGamma_se * f.lnGamma_se + 1e-4); sw += w; sp += w * f.pi; }); return sp / sw; })() : null,
-      cumulants: cum, blocks: blocks, jackknife: jk, noise_B: noiseB, halves: halves,
+      cumulants: cum, blocks: blocks, jackknife: jk, noise_B: noiseB, windowing: !!S.window, halves: halves,
       images: images, rot: rot
     };
     return result;
@@ -3200,6 +3234,12 @@ A_est = 2 * aa.var - B_est
   // between frames dt >= T_e apart, K(x) = 2 (cosh x - 1)/x^2, x = G T_e: d = A (S - K e^(-G dt)) + B. Without it, at 50 ms
   // exposure and 20 frames/s, 200 nm beads read 16 % large once B was fixed (a free B had absorbed the difference)
   let EXPO = 0;
+  // windowing mixes neighbouring q: the transform of the window spreads each mode over a few bins, so the rate measured
+  // at q is the mean of D |q + dq|^2 = D (q^2 + <dq^2>). For the Blackman-Harris window its transform has 7 lines per axis
+  // (0, +-1, +-2, +-3 bins, amplitudes a0, a_j/2), <dq^2> = 2 x 0.603 bins^2 in 2D. WIN_DQ2: that, in um^-2, while one
+  // analysis runs (0 without a window). Without the correction 200 nm beads read 4.7 % small.
+  let WIN_DQ2 = 0;
+  function q2eff(q) { return q * q + WIN_DQ2; }
   function depthC(info, q) {
     const K = info.kernel, qk = info.kernel_q, nq = qk.length, nzk = K.z_um.length, zg = K.z_um;
     const tq = Math.min(nq - 2, Math.max(0, q / qk[nq - 2] * (nq - 2))), iq = Math.floor(tq), fq = tq - iq;
@@ -3383,7 +3423,7 @@ A_est = 2 * aa.var - B_est
   // (dim light, 2 x 2 binning: 13 % off before)
   function weightedD(used) {
     if (used.length < 3) return null;
-    const x = used.map(function (f) { return Math.log(f.gamma_hz) - 2 * Math.log(f.q_per_um); }), v0 = used.map(function (f) { return f.lnGamma_se * f.lnGamma_se + 1e-4; });
+    const x = used.map(function (f) { return Math.log(f.gamma_hz) - Math.log(q2eff(f.q_per_um)); }), v0 = used.map(function (f) { return f.lnGamma_se * f.lnGamma_se + 1e-4; });
     const vm = v0.slice().sort(function (a, b) { return a - b; })[Math.floor(v0.length / 2)], v = v0.map(function (z) { return Math.max(z, vm / 4); });
     let sw = 0, sx = 0;
     for (let i = 0; i < x.length; i++) { const wgt = 1 / v[i]; sw += wgt; sx += wgt * x[i]; }
@@ -3648,7 +3688,7 @@ A_est = 2 * aa.var - B_est
     const free = [0].concat(Bfix !== null ? [] : [1], [2], (stretched || schulz) && fixPI === null ? [3] : []), np = free.length, iG = free.indexOf(2);
     const model = function (pp, t) {
       const A = Math.exp(pp[0]), B = pp[1] * scale, G = Math.exp(pp[2]);
-      let df = dtb ? depthFade(dtb, G / (q * q), t) : 1, S1 = 1;
+      let df = dtb ? depthFade(dtb, G / q2eff(q), t) : 1, S1 = 1;
       if (EXPO > 0) { const x = G * EXPO; if (x > 1e-4) { S1 = 2 * (x - 1 + Math.exp(-x)) / (x * x); df *= 2 * (Math.cosh(Math.min(x, 300)) - 1) / (x * x); } }
       if (S1 !== 1) {
         const decay = schulz ? (function () { const PI = fixPI !== null ? fixPI : pp[3]; return Math.abs(PI) < 1e-6 ? Math.exp(-G * t) : Math.pow(Math.max(0, 1 + PI * G * t), -1 / PI); })() : Math.exp(-Math.pow(G * t, stretched ? pp[3] : 1));
@@ -3750,6 +3790,7 @@ A_est = 2 * aa.var - B_est
   const api = {
     CAMERA_PIXEL_UM: CAMERA_PIXEL_UM, WAVELENGTH_UM: WAVELENGTH_UM,
     waterViscosity_Pa_s: waterViscosity_Pa_s, diffusion_um2_s: diffusion_um2_s, diameterFromD_um: diameterFromD_um,
+    detectorNoiseB: detectorNoiseB,
     simulate: simulate, analyse: analyse, structure: structure, structureMap: structureMap, lm: lm, solve: solve, invert: invert, logspaceLags: logspaceLags, pairBins: pairBins, runToEnd: runToEnd,
     // compact result of one analysis for repeated measurements: D from the main fit and the cumulants, the q used and the truth
     repeatSummary: function (r, mv) {
@@ -4406,10 +4447,8 @@ A_est = 2 * aa.var - B_est
     const taus = S.taus_s, L = taus.length, nb = S.nb;
     DRS = opts.swim_dr > 0 ? opts.swim_dr : 0; SWIM_DS_FREE = false; DS_MAX = 3; TUMBLE_FREE = false; SWIM_AXIAL = opts.swim_axial !== false; turnCache.clear();
     NOISE_B = null;     // camera noise from the mean count (see NOISE_B)
-    if (opts.noise !== "fit" && movie.info && movie.info.detector_kind === "camera" && movie.frames && typeof movie.info.read_noise_e === "number") {
-      let s = 0; const F = movie.frames; for (let k = 0; k < F.length; k++) s += F[k];
-      NOISE_B = 2 * ((movie.info.excess_noise || 1) * s / F.length + movie.info.read_noise_e * movie.info.read_noise_e);
-    }
+    // (cameras only here; with a window each pixel's noise is weighted by W^2)
+    if (opts.noise !== "fit" && movie.info && movie.info.detector_kind === "camera") NOISE_B = DDM.detectorNoiseB(movie, S.window);
     yield { stage: "Fitting each q", frac: 0.9 };
     // per-q compressed fits (beta free, and with the fixed beta if asked)
     const betaFix = opts.beta === null || opts.beta === undefined ? null : opts.beta;
@@ -4438,7 +4477,7 @@ A_est = 2 * aa.var - B_est
     const qmax = opts.q_max_per_um === null || opts.q_max_per_um === undefined ? Infinity : opts.q_max_per_um;
     for (const r of rows) {
       r.reason = null;
-      if (r.q < 2 * S.q_lo_per_um) r.reason = "pattern as large as the image";
+      if (r.q < (S.window ? 5 : 2) * S.q_lo_per_um) r.reason = S.window ? "pattern too wide for the window" : "pattern as large as the image";   // (the window spreads each mode over +-3 bins)
       else if (r.q > S.q_hi_per_um) r.reason = "finer than the microscope can see";
       else {
         // from the data, not from a fit (curves of swimmers mixed with still cells rise in two steps, which one
@@ -4827,7 +4866,7 @@ A_est = 2 * aa.var - B_est
              fits: fits, share_from_amplitude: alphaDirect, head: head ? { no_swim: head.no_swim === true, D_fixed: head.D_fixed === true, v_um_s: head.no_swim ? null : head.v_um_s, alpha: head.alpha, spread: head.spread, D_um2_s: head.D_um2_s, turn_share: head.turn_share, turn_perq: head.kind === "still" || head.turn_perq === true, turn_b: head.ab ? head.ab.map(function (x) { return x.b === undefined ? head.turn_share : x.b; }) : null, D_r_s: head.D_r_s, v_rel_err: jk && jk.v !== null && head.v_um_s > 0 ? jk.v / head.v_um_s : head.v_rel_err, alpha_err: jk ? jk.alpha : head.alpha_err, spread_err: jk ? jk.spread : head.spread_err, D_err: jk ? jk.D : null, stroke_um_err: jk && head === swimStrokeFit ? jk.stroke_um : null, stroke_hz_err: jk && head === swimStrokeFit ? jk.stroke_hz : null, err_from: jk ? "jackknife" : "fit", jackknife: jk, stroke_um: head === swimStrokeFit ? head.stroke_um : null, stroke_hz: head === swimStrokeFit ? head.stroke_hz : null, perq: head.perq } : null,
              window: { q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, q_opt_per_um: S.q_opt_per_um, q_nyq_per_um: S.q_nyq_per_um, gamma_lo_hz: S.gamma_lo_hz, gamma_hi_hz: S.gamma_hi_hz },
              rows: rows.map(function (r) { return { bin: r.bin, q_per_um: r.q, A: r.A, B: r.B, gamma_hz: r.gamma_hz, beta_free: r.beta_free, gamma_free_hz: r.free.gamma_hz, lnGamma_se: r.lnGamma_se, reason: r.reason }; }),
-             compressed: comp, fast: fast, collapse: collapse, noise_B: noiseB, swim: strip(swim), swim_depth: strip(swimDepth), swim_stroke: strip(swimStrokeFit), pv: pv, master: master };
+             compressed: comp, fast: fast, collapse: collapse, noise_B: noiseB, windowing: !!S.window, swim: strip(swim), swim_depth: strip(swimDepth), swim_stroke: strip(swimStrokeFit), pv: pv, master: master };
   }
 
   function strip(g) { if (!g) return null; const o = Object.assign({}, g); delete o.ab; if (o.no_swim) o.v_um_s = null; return o; }
@@ -5020,7 +5059,7 @@ A_est = 2 * aa.var - B_est
     frame_rate_hz: 50, exposure_ms: 1, frame_timing: "even", log_factor: 20,
     shape: "rod", aspect: 2.5, dn: 0, dn_body: 0, polarizer: "off", analyzer: "off", pol_angle_deg: 90, extinction: 1e-4,
     swim_frac: 0.6, swim_v: 20, swim_spread: 0.3, swim_geom: "3d", swim_rot: 0.1, swim_tumble: 0,
-    swim_model: "auto", q_min: null, q_max: null, seed: 1,
+    swim_model: "auto", windowing: "off", q_min: null, q_max: null, seed: 1,
     organism: "model", swim_osc_amp: 0, swim_osc_hz: 20, swim_osc_dir: "along", drag: 1
   };
   // Microorganisms measured with DDM, with the values reported in the papers (marked "assumed" where a paper gives none).
@@ -5234,7 +5273,7 @@ A_est = 2 * aa.var - B_est
   // The swimmer model weighs each swimmer by how its image shows the pattern along its direction of travel; finer
   // patterns depend on details of the image of a thick cell (in bright field at low NA) that the model leaves out
   function autoQmax() { return state.shape === "sphere" || state.swim_frac === 0 ? null : 2 * Math.PI / Math.max(0.3, state.diameter_um); }   // long cells only (see the card "Long cells")
-  function analysisOptions() { const m = swimModel(); return { q_min_per_um: state.q_min, q_max_per_um: state.q_max !== null ? state.q_max : autoQmax(), beta: null, kind: m === "plane" ? "2d" : "3d", depth: m === "depth", stroke: m === "stroke" || m === "strokex", stroke_dir: m === "strokex" ? "across" : "along", D_from_cells: true, tumbles: state.swim_tumble > 0 }; }
+  function analysisOptions() { const m = swimModel(); return { q_min_per_um: state.q_min, q_max_per_um: state.q_max !== null ? state.q_max : autoQmax(), beta: null, kind: m === "plane" ? "2d" : "3d", depth: m === "depth", stroke: m === "stroke" || m === "strokex", stroke_dir: m === "strokex" ? "across" : "along", D_from_cells: true, tumbles: state.swim_tumble > 0, windowing: state.windowing === "on" }; }
   // centre height of cells lying on the bottom glass: half their thickness plus a 0.2 um gap
   function glassHeight() { const g = geometry(); return Math.min(g.a_par, g.a_perp) + 0.2; }
 
@@ -5322,6 +5361,8 @@ A_est = 2 * aa.var - B_est
       options: function () { return [5, 10, 20, 50].map(function (k) { return [k, k + " times (" + fmtDur(movieSpanS(k)) + ")"]; }); } },
     { key: "sim_px", group: "Camera and recording", lvl: 3, label: "Simulated part of the image", kind: "select", num: true, options: [[64, "64 x 64 pixels (fast)"], [128, "128 x 128 pixels"], [256, "256 x 256 pixels (slow)"]] },
 
+    { key: "windowing", group: "Analysis", lvl: 2, label: "Windowing (Giavazzi et al. 2017)", kind: "select", options: [["off", "Off"], ["on", "On: each frame multiplied by a window that falls to zero at the edges"]],
+      hint: function () { return state.windowing === "on" ? "Cells or particles that cross the edge of the image no longer leave bands along the axes of the map in step 4, nor a fast decay that swamps the finest patterns. The price: the window darkens the edges, so less of the field counts and the results scatter more, and patterns wider than a fifth of the field are left out (the window mixes each pattern with its neighbours)." : "The Fourier transform treats the image as one tile of a repeating pattern, so cells or particles crossing the edges make jumps at the tile borders. The central cross of the map is left out to remove most of their effect."; } },
     { key: "swim_model", group: "Analysis", lvl: 2, label: "Swimmer model fitted to all q", kind: "select", options: [["auto", "Automatic"], ["wilson", MODEL_LABEL.wilson], ["depth", MODEL_LABEL.depth], ["plane", MODEL_LABEL.plane], ["stroke", MODEL_LABEL.stroke], ["strokex", MODEL_LABEL.strokex]], hint: function () { return "In use: " + MODEL_LABEL[swimModel()] + "." + (swimModel() === "depth" ? " Uses how each pattern fades as a cell moves up or down through the focus, computed from the optics of this microscope." : ""); } },
     { key: "qrange", group: "Analysis", lvl: 3, label: "Fit range in q (1/" + MU + "m)", kind: "qrange" }
   ];
@@ -5333,7 +5374,7 @@ A_est = 2 * aa.var - B_est
     ["Illumination", ["source", "condenser", "na_c", "df_kind", "annulus", "light_frac", "df_light_e", "stray_frac", "rate_ph_ms", "bg_e_ms", "scan_rate"]],
     ["Detection", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg",
       "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "log_factor", "sim_px"]],
-    ["Analysis", ["swim_model", "qrange"]]
+    ["Analysis", ["swim_model", "windowing", "qrange"]]
   ];
   (function () {
     const byKey = {}; CONTROLS.forEach(function (c) { byKey[c.kind === "qrange" ? "qrange" : c.key] = c; });
@@ -5342,7 +5383,7 @@ A_est = 2 * aa.var - B_est
     const left = Object.keys(byKey); if (left.length) throw new Error("layout: controls not placed: " + left.join(", "));
     CONTROLS.length = 0; out.forEach(function (c) { CONTROLS.push(c); });
   })();
-  const ANALYSIS_KEYS = { swim_model: 1, q_min: 1, q_max: 1 };
+  const ANALYSIS_KEYS = { swim_model: 1, q_min: 1, q_max: 1, windowing: 1 };
   function fmtRate(v) { return fmtSig(v, 2) + " s" + "\u207b\u00b9"; }
   function shapeHint() {
     const hh = hydro();

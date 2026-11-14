@@ -199,22 +199,30 @@ approves them.
 | Supervised and hosted people, read from the SoMeX people page (generated; corrections in `content/teaching.yaml > mentoring`) | `data/people.json` |
 | Visiting senior scientists (collaborators, shown on the Research page under The lab): `group: scientists` in `content/teaching.yaml > mentoring > extra` | `data/people.json` |
 
-## DDM page (/ddm/)
+## DDM pages (/ddm/)
 
-"DDM, hands on" is a self-contained page that simulates DDM experiments and analyses them in the
-visitor's browser (nothing is uploaded, no outside service is contacted). Its sources are in `ddm/`
-(`page.src.html` with the styles and text, `app.js` the page logic, `optics.js` image formation,
-`movie.js` the simulated movie, `ddm-engine.js` the analysis, `worker.js`, `data/` Nikon objectives).
-`python3 ddm/build.py` assembles them into `static/ddm/index.html`, which is committed and copied to the
-site; `build.py` then writes the main menu into it (marker `<!--SITE-NAV-->`, entry in `EXTRA_PAGES`).
+"DDM, hands on" is a set of self-contained pages that simulate DDM experiments and analyse them in the
+visitor's browser (nothing is uploaded, no outside service is contacted). Sources are in `ddm/`;
+`python3 ddm/build.py` assembles them into `static/ddm/`, which is committed and copied to the site, and
+`build.py` then writes the main menu into each page (marker `<!--SITE-NAV-->`, entries in `EXTRA_PAGES`).
+
+- Landing page /ddm/ (`static/ddm/index.html`, from `landing.src.html`): one card per application and the
+  shared steps drawn live from a small sketch movie; no reader levels (each application page has its own).
+  Old links with a hash (/ddm/#student) are sent on to /ddm/sizing/.
+  A new application gets a card here, an entry in `PAGES` and `PREVIEW_LINKS` in `ddm/build.py`, an
+  `EXTRA_PAGES` entry with None, and a link in the switch under each application title.
+- "Sizing particles" /ddm/sizing/ (`static/ddm/sizing/index.html`): `page.src.html` with the styles and text,
+  `app.js` the page logic, `optics.js` image formation, `movie.js` the simulated movie, `ddm-engine.js` the
+  analysis, `worker.js`, `data/` Nikon objectives.
+- "Swimming cells" /ddm/swimmers/ (`static/ddm/swimmers/index.html`): `swim.src.html`, `app-swim.js`,
+  `active-engine.js` and `worker-swim.js`; it shares the optics, movie and engine files.
+
 After any change to the sources: run `python3 ddm/build.py`, then `python3 build.py --check`, and commit
-both. The same build also writes the second DDM page, "Swimming cells" (/ddm/swimmers/, `static/ddm/swimmers/index.html`),
-from `swim.src.html`, `app-swim.js`, `active-engine.js` and `worker-swim.js`; it shares the optics, movie and engine files,
-gets the menu with "DDM" marked (`EXTRA_PAGES` entry with None) and is reached from a switch under each title. Its checks:
-`node test-swim.js && node test-active.js`. Checks: `cd ddm && node test-optics.js data/mie_ref.json && node test-engine.js && node test-movie.js`
-(the last takes several minutes). `python3 ddm/build.py --preview` writes a stand-alone copy with Google
-Fonts for previews outside the site; do not commit it. The page text follows the writing style below; it
-must stay ASCII (the build refuses other characters).
+both. Checks: `cd ddm && node test-optics.js data/mie_ref.json && node test-engine.js && node test-movie.js`
+(the last takes several minutes), and for the swimmers `node test-swim.js && node test-active.js`.
+`python3 ddm/build.py --preview` writes stand-alone copies (`ddm-landing.html`, `ddm-hands-on.html`,
+`ddm-swimmers.html`, linked to each other, Google Fonts) for previews outside the site; do not commit them.
+The page text follows the writing style above; it must stay ASCII (the build refuses other characters).
 
 ## Analytics
 

@@ -289,7 +289,7 @@
   }
 
   // squared gradient of every frame (periodic central differences), then its Fourier transform
-  function squaredGradientFft(movie) {
+  function squaredGradientFft(movie, win) {
     const n = movie.n, T = movie.T, P = n * n, out = new Float32Array(2 * P * T), img = new Float64Array(P);
     const tb = makeFftTables(n), work = makeWork(n);
     for (let t = 0; t < T; t++) {
@@ -297,11 +297,44 @@
       for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
         const xp = (x + 1) % n, xm = (x + n - 1) % n, yp = (y + 1) % n, ym = (y + n - 1) % n;
         const gxv = 0.5 * (f[o + y * n + xp] - f[o + y * n + xm]), gyv = 0.5 * (f[o + yp * n + x] - f[o + ym * n + x]);
-        img[y * n + x] = gxv * gxv + gyv * gyv;
+        img[y * n + x] = (gxv * gxv + gyv * gyv) * (win ? win[y * n + x] : 1);
       }
       fft2dReal(img, n, tb, out, 2 * P * t, work);
     }
     return out;
+  }
+  /* Windowing (Giavazzi, Edera, Lu and Cerbino, Eur. Phys. J. E 40, 97 (2017)): each frame is multiplied by a window that
+   * falls smoothly to zero at the edges, W(x) W(y), before its Fourier transform. The transform treats the image as one
+   * tile of a periodic pattern; a particle crossing an edge then makes a jump at the tile border, which spreads over all
+   * q along the axes of the map (the bands that the central cross mask removes) and adds a fast, nearly q-independent decay
+   * that dominates at large q. With the window the borders are dark and the jumps are gone. Blackman-Harris, 4 terms. */
+  function windowWeights(n) {
+    const a = [0.3635819, 0.4891775, 0.1365995, 0.0106411], w1 = new Float64Array(n), W = new Float64Array(n * n);
+    for (let x = 0; x < n; x++) { const u = 2 * Math.PI * x / n; w1[x] = a[0] - a[1] * Math.cos(u) + a[2] * Math.cos(2 * u) - a[3] * Math.cos(3 * u); }
+    // scaled so that the mean of W^2 is 1 (the paper keeps the peak at 1): A(q) and B keep the height they have
+    // without the window, so the two analyses can be compared on the same axes
+    let m2 = 0; for (let x = 0; x < n; x++) m2 += w1[x] * w1[x];
+    const k = 1 / Math.sqrt(m2 / n); for (let x = 0; x < n; x++) w1[x] *= k;
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) W[y * n + x] = w1[x] * w1[y];
+    return W;
+  }
+  function windowedFft(movie, W) {
+    const n = movie.n, T = movie.T, P = n * n, out = new Float32Array(2 * P * T), img = new Float64Array(P);
+    const tb = makeFftTables(n), work = makeWork(n), f = movie.frames;
+    for (let t = 0; t < T; t++) { const o = t * P; for (let p = 0; p < P; p++) img[p] = f[o + p] * W[p]; fft2dReal(img, n, tb, out, 2 * P * t, work); }
+    return out;
+  }
+  /* Detector noise B = 2 x the mean noise variance per pixel (white noise; the structure function is normalised per
+   * pixel): variance = excess-noise factor x mean count + read noise^2, for cameras and photon-counting scanners. With a
+   * window W the noise of each pixel is weighted by W^2: B = 2 <W^2 (F count + read^2)>. null when it does not apply. */
+  function detectorNoiseB(movie, W) {
+    const info = movie.info;
+    if (!(info && (info.detector_kind === "camera" || info.detector_kind === "scanner") && movie.frames && typeof info.read_noise_e === "number")) return null;
+    const F = movie.frames, P = movie.n * movie.n, T = movie.T, enf = info.excess_noise || 1, r2 = info.read_noise_e * info.read_noise_e;
+    if (!W) { let s = 0; for (let k = 0; k < F.length; k++) s += F[k]; return 2 * (enf * s / F.length + r2); }
+    const m = new Float64Array(P); for (let t = 0; t < T; t++) { const o = t * P; for (let p = 0; p < P; p++) m[p] += F[o + p]; }
+    let s = 0; for (let p = 0; p < P; p++) s += W[p] * W[p] * (enf * m[p] / T + r2);
+    return 2 * s / P;
   }
 
   /* opts (required): fit_model ("simple" | "stretched" | "schulz" | "two" | "three"),
@@ -341,7 +374,9 @@
     need(images === "recorded" || images === "squared_gradient", "images must be recorded or squared_gradient");
     const sg = images === "squared_gradient";
     if (sg) yield { stage: "Squared gradient of each frame", frac: 0 };
-    const n = movie.n, T = movie.T, P = n * n, fft = sg ? squaredGradientFft(movie) : movie.fft;
+    const win = opts.windowing === true ? windowWeights(movie.n) : null;
+    if (win && !sg) yield { stage: "Windowing each frame", frac: 0 };
+    const n = movie.n, T = movie.T, P = n * n, fft = sg ? squaredGradientFft(movie, win) : win ? windowedFft(movie, win) : movie.fft;
     const dt_s = 1 / movie.frame_rate_hz;
     // evenly spaced frames: integer lags, every pair at each lag. Uneven frame times (log-spaced cycles): pairs grouped by their
     // time apart (pairBins), at most T pairs per group. lags are then in units of the shortest interval, rounded.
@@ -469,7 +504,7 @@
       if (B_floor !== null) Bq = Math.min(B_floor, dq[0][b]);
       B_est[b] = Bq; A_est[b] = 2 * varq[b] - Bq;
     }
-    return { images: images, sg: sg, n: n, T: T, P: P, fft: fft, lags: lags, L: L, dt_s: dt_s, taus_s: taus_s, pairs: PB ? PB.pairs : null, times_s: movie.times_s || null, nb: nb, binOf: binOf, nmodes: nmodes, blocks: K, jackDq: jackDq,
+    return { images: images, sg: sg, n: n, T: T, P: P, fft: fft, lags: lags, L: L, dt_s: dt_s, taus_s: taus_s, pairs: PB ? PB.pairs : null, times_s: movie.times_s || null, nb: nb, binOf: binOf, nmodes: nmodes, blocks: K, jackDq: jackDq, window: win,
              q_per_um: q_per_um, d2d: d2d, dq: dq, varq: varq, powq: powq, q_lo_per_um: q_lo_per_um, q_nyq_per_um: q_nyq_per_um, q_opt_per_um: q_opt_per_um,
              q_sig_per_um: q_sig_per_um, q_hi_per_um: q_hi_per_um, gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz, B_floor: B_floor, B_est: B_est, A_est: A_est };
   }
@@ -481,19 +516,17 @@
     // detector noise: B = 2 (excess-noise factor x mean count + read noise^2) per pixel, the same at every q (white noise),
     // from the frames and the detector (known to the experimenter): cameras, and point scanners (photon counting, no read
     // noise). Not for the squared gradient (its noise is not white); opts.noise "fit" fits B at each q as before
-    let noiseB = null;
-    if (opts.noise !== "fit" && !S.sg && movie.info && (movie.info.detector_kind === "camera" || movie.info.detector_kind === "scanner") && movie.frames && typeof movie.info.read_noise_e === "number") {
-      let sum = 0; const F = movie.frames; for (let k = 0; k < F.length; k++) sum += F[k];
-      noiseB = 2 * ((movie.info.excess_noise || 1) * sum / F.length + movie.info.read_noise_e * movie.info.read_noise_e);
-      for (let b = 1; b <= S.nb; b++) if (S.nmodes[b] > 0) { S.B_est[b] = noiseB; S.A_est[b] = 2 * S.varq[b] - noiseB; }
-    }
+    let noiseB = opts.noise !== "fit" && !S.sg ? detectorNoiseB(movie, S.window) : null;
+    if (noiseB !== null) for (let b = 1; b <= S.nb; b++) if (S.nmodes[b] > 0) { S.B_est[b] = noiseB; S.A_est[b] = 2 * S.varq[b] - noiseB; }
     BFIX = noiseB;
+    if (S.window) { const a = [0.3635819, 0.4891775, 0.1365995, 0.0106411], c = [a[0] * a[0], a[1] * a[1] / 4, a[2] * a[2] / 4, a[3] * a[3] / 4];
+      const m2 = 2 * (c[1] + 4 * c[2] + 9 * c[3]) / (c[0] + 2 * (c[1] + c[2] + c[3])), dq = 2 * Math.PI / movie.L_um; WIN_DQ2 = 2 * m2 * dq * dq; }
     EXPO = opts.exposure !== false && movie.info && movie.info.detector_kind === "camera" && movie.exposure_s > 0 ? movie.exposure_s : 0;
     // depth of field (opts.depth, on by default when the movie carries its optics; not with the squared gradient, whose
     // image is not linear in the particles, nor with two image channels)
     const info = movie.info, useDepth = opts.depth !== false && !S.sg && info && info.kernel && info.kernel_q && info.cell_z_um && !info.split;
     if (useDepth) { const cache = new Map(); DEPTH = function (q) { const k = q.toPrecision(6); if (!cache.has(k)) cache.set(k, depthC(info, q)); return cache.get(k); }; }
-    try { const r = yield* analyseFits(movie, opts, S, noiseB); r.depth_model = !!useDepth && r.used.some(function (f) { return !f.no_depth; }); return r; } finally { BFIX = null; DEPTH = null; EXPO = 0; }
+    try { const r = yield* analyseFits(movie, opts, S, noiseB); r.depth_model = !!useDepth && r.used.some(function (f) { return !f.no_depth; }); return r; } finally { BFIX = null; DEPTH = null; EXPO = 0; WIN_DQ2 = 0; }
   }
   function* analyseFits(movie, opts, S, noiseB) {
     const rotFit = opts.fit_model === "two" || opts.fit_model === "three";
@@ -521,7 +554,7 @@
     const rows = fits.filter(function (f) { return f !== null; });
     for (const f of rows) {
       f.reason = null;
-      if (f.q_per_um < 2 * q_lo_per_um) f.reason = "pattern as large as the image";
+      if (f.q_per_um < (S.window ? 5 : 2) * q_lo_per_um) f.reason = S.window ? "pattern too wide for the window" : "pattern as large as the image";   // (the window spreads each mode over +-3 bins)
       else if (f.q_per_um > q_hi_per_um) f.reason = "finer than the microscope can see";
       else if (!f.ok) f.reason = "fit failed";
       else if (f.lnGamma_se > MAX_LN_GAMMA_SE || f.weak) f.reason = "signal lost in camera noise";
@@ -531,16 +564,16 @@
       // it, the pattern renewed within one frame and the fitted rate only follows the last bit (point scanning at 14
       // frames/s: rates at high q read 2-10 times slow, and the size 60 % large)
       else if (noiseB !== null && 2 * varq[f.bin] > noiseB && 1 - (dq[0][f.bin] - noiseB) / (2 * varq[f.bin] - noiseB) < 0.2) f.reason = "too fast for this frame rate";
-      else if (DEPTH && !f.no_depth && DEPTH(f.q_per_um) && depthFade(DEPTH(f.q_per_um), f.gamma_hz / (f.q_per_um * f.q_per_um), taus_s[0]) < 0.3) f.reason = "particles leave the focus within one frame";
+      else if (DEPTH && !f.no_depth && DEPTH(f.q_per_um) && depthFade(DEPTH(f.q_per_um), f.gamma_hz / q2eff(f.q_per_um), taus_s[0]) < 0.3) f.reason = "particles leave the focus within one frame";
       else if (f.q_per_um < qmin || f.q_per_um > qmax) f.reason = "outside the chosen fit range";
     }
     let used = rows.filter(function (f) { return f.reason === null; });
     // a q whose Gamma / q^2 is more than 3 times away from the median of the others is an outlier (a curve lost in noise
     // that passed the other tests by chance); for sizes, even broad spreads keep Gamma / q^2 within that range
     if (used.length >= 5) {
-      const lv = used.map(function (f) { return Math.log(f.gamma_hz / (f.q_per_um * f.q_per_um)); }).sort(function (a, b) { return a - b; });
+      const lv = used.map(function (f) { return Math.log(f.gamma_hz / q2eff(f.q_per_um)); }).sort(function (a, b) { return a - b; });
       const med = lv[Math.floor(lv.length / 2)];
-      used.forEach(function (f) { if (Math.abs(Math.log(f.gamma_hz / (f.q_per_um * f.q_per_um)) - med) > Math.log(3)) f.reason = "rate far from the other q"; });
+      used.forEach(function (f) { if (Math.abs(Math.log(f.gamma_hz / q2eff(f.q_per_um)) - med) > Math.log(3)) f.reason = "rate far from the other q"; });
       used = rows.filter(function (f) { return f.reason === null; });
     }
     let D = weightedD(used);
@@ -638,7 +671,7 @@
       beta_mean: stretched && used.length ? used.reduce(function (s, f) { return s + f.beta; }, 0) / used.length : null,
       // mean over q weighted like D (by the precision of each rate): PI is poorly fixed where the rate is
       pi_mean: opts.fit_model === "schulz" && used.length ? (function () { let sw = 0, sp = 0; used.forEach(function (f) { const w = 1 / (f.lnGamma_se * f.lnGamma_se + 1e-4); sw += w; sp += w * f.pi; }); return sp / sw; })() : null,
-      cumulants: cum, blocks: blocks, jackknife: jk, noise_B: noiseB, halves: halves,
+      cumulants: cum, blocks: blocks, jackknife: jk, noise_B: noiseB, windowing: !!S.window, halves: halves,
       images: images, rot: rot
     };
     return result;
@@ -659,6 +692,12 @@
   // between frames dt >= T_e apart, K(x) = 2 (cosh x - 1)/x^2, x = G T_e: d = A (S - K e^(-G dt)) + B. Without it, at 50 ms
   // exposure and 20 frames/s, 200 nm beads read 16 % large once B was fixed (a free B had absorbed the difference)
   let EXPO = 0;
+  // windowing mixes neighbouring q: the transform of the window spreads each mode over a few bins, so the rate measured
+  // at q is the mean of D |q + dq|^2 = D (q^2 + <dq^2>). For the Blackman-Harris window its transform has 7 lines per axis
+  // (0, +-1, +-2, +-3 bins, amplitudes a0, a_j/2), <dq^2> = 2 x 0.603 bins^2 in 2D. WIN_DQ2: that, in um^-2, while one
+  // analysis runs (0 without a window). Without the correction 200 nm beads read 4.7 % small.
+  let WIN_DQ2 = 0;
+  function q2eff(q) { return q * q + WIN_DQ2; }
   function depthC(info, q) {
     const K = info.kernel, qk = info.kernel_q, nq = qk.length, nzk = K.z_um.length, zg = K.z_um;
     const tq = Math.min(nq - 2, Math.max(0, q / qk[nq - 2] * (nq - 2))), iq = Math.floor(tq), fq = tq - iq;
@@ -842,7 +881,7 @@
   // (dim light, 2 x 2 binning: 13 % off before)
   function weightedD(used) {
     if (used.length < 3) return null;
-    const x = used.map(function (f) { return Math.log(f.gamma_hz) - 2 * Math.log(f.q_per_um); }), v0 = used.map(function (f) { return f.lnGamma_se * f.lnGamma_se + 1e-4; });
+    const x = used.map(function (f) { return Math.log(f.gamma_hz) - Math.log(q2eff(f.q_per_um)); }), v0 = used.map(function (f) { return f.lnGamma_se * f.lnGamma_se + 1e-4; });
     const vm = v0.slice().sort(function (a, b) { return a - b; })[Math.floor(v0.length / 2)], v = v0.map(function (z) { return Math.max(z, vm / 4); });
     let sw = 0, sx = 0;
     for (let i = 0; i < x.length; i++) { const wgt = 1 / v[i]; sw += wgt; sx += wgt * x[i]; }
@@ -1107,7 +1146,7 @@
     const free = [0].concat(Bfix !== null ? [] : [1], [2], (stretched || schulz) && fixPI === null ? [3] : []), np = free.length, iG = free.indexOf(2);
     const model = function (pp, t) {
       const A = Math.exp(pp[0]), B = pp[1] * scale, G = Math.exp(pp[2]);
-      let df = dtb ? depthFade(dtb, G / (q * q), t) : 1, S1 = 1;
+      let df = dtb ? depthFade(dtb, G / q2eff(q), t) : 1, S1 = 1;
       if (EXPO > 0) { const x = G * EXPO; if (x > 1e-4) { S1 = 2 * (x - 1 + Math.exp(-x)) / (x * x); df *= 2 * (Math.cosh(Math.min(x, 300)) - 1) / (x * x); } }
       if (S1 !== 1) {
         const decay = schulz ? (function () { const PI = fixPI !== null ? fixPI : pp[3]; return Math.abs(PI) < 1e-6 ? Math.exp(-G * t) : Math.pow(Math.max(0, 1 + PI * G * t), -1 / PI); })() : Math.exp(-Math.pow(G * t, stretched ? pp[3] : 1));
@@ -1209,6 +1248,7 @@
   const api = {
     CAMERA_PIXEL_UM: CAMERA_PIXEL_UM, WAVELENGTH_UM: WAVELENGTH_UM,
     waterViscosity_Pa_s: waterViscosity_Pa_s, diffusion_um2_s: diffusion_um2_s, diameterFromD_um: diameterFromD_um,
+    detectorNoiseB: detectorNoiseB,
     simulate: simulate, analyse: analyse, structure: structure, structureMap: structureMap, lm: lm, solve: solve, invert: invert, logspaceLags: logspaceLags, pairBins: pairBins, runToEnd: runToEnd,
     // compact result of one analysis for repeated measurements: D from the main fit and the cumulants, the q used and the truth
     repeatSummary: function (r, mv) {

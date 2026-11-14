@@ -20,8 +20,9 @@ themes:
       runs on microscopes in many laboratories, for samples ranging from
       proteins and nanoparticles to bacteria and tissues. We keep extending it,
       for example to samples under oscillatory shear.
-      To see how it works, try [DDM, hands on](site:ddm/), a page that simulates
-      a DDM experiment in your browser, from the raw movie to the particle size.
+      To see how it works, try [DDM, hands on](site:ddm/), pages that simulate
+      DDM experiments in your browser, from the raw movie to particle sizes and
+      swimming speeds.
     papers:
       - 10.1103/physrevlett.100.188102
       - 10.1103/physreve.80.031403

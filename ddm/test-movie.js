@@ -37,6 +37,15 @@ function run(label, over, tol) {
   }
   check("measured amplitude A(q) agrees with the optics (" + n + " q values)", worst < 0.25, "largest deviation " + (100 * worst).toFixed(0) + " %");
 }
+// windowing (Giavazzi et al. 2017): the same movie analysed with a Blackman-Harris window before the transform
+{
+  const cfg = { seed: 1, mode: "brightfield", objective: { mag: 20, na: 0.5 }, illum: { na_in: 0, na_out: 0.3 }, source: "green", homodyne: false, df_light_e: 1e7, stray_frac: 1e-4,
+    l_ex_um: 0.488, l_em_um: 0.52, pinhole_um: 50, crosstalk: 0.0314, pinhole_au: 1, photons_per_particle: 2000, background_photons: 100, light_frac: 0.5, scan_rate_hz: 1e7,
+    detector: orca(1), n_px: 128, n_frames: 256, frame_rate_hz: 100, exposure_s: 0, particle: "ps", diameter_um: 0.2, size_spread: 0, volume_fraction: 2e-4, liquid: { glycerol_w: 0 }, T_C: 22, cell_um: 20, focus_um: 10, drift_um_s: 0 };
+  const movie = DDM.runToEnd(MOVIE.simulate(cfg)), res = DDM.runToEnd(DDM.analyse(movie, { fit_model: "simple", q_min_per_um: null, q_max_per_um: null, windowing: true }));
+  const dev = res.diameter_um / movie.truth.diameter_um - 1, nb = res.q_per_um.length - 1, floor = res.dq[0][nb] / res.noise_B - 1;
+  check("windowing: 200 nm within 8 %, camera noise with the window matches the floor within 3 %", res.windowing && Math.abs(dev) < 0.08 && Math.abs(floor) < 0.03, "measured " + Math.round(res.diameter_um * 1000) + " nm, floor / B - 1 = " + (100 * floor).toFixed(1) + " %");
+}
 run("bright field, 500 nm PMMA in 50% glycerol", { particle: "pmma", diameter_um: 0.5, liquid: { glycerol_w: 0.5 }, frame_rate_hz: 20 }, 0.1);
 run("bright field, 1 um PS, scattered intensity included", { diameter_um: 1.0, volume_fraction: 2e-3, frame_rate_hz: 20, homodyne: true }, 0.1);
 run("widefield fluorescence, 200 nm", { mode: "fluorescence", exposure_s: 0.002 }, 0.1);
