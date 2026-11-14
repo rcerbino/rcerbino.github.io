@@ -440,14 +440,15 @@ dqt.set_frame_rate(frame_rate)     # frames per second
             <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. Patterns across the drift (stripes parallel to it) are not moved by it: they only fade, as without a drift. Patterns along the drift fade at the same rate but also travel, so the curves swing below zero and back before they die out. Fine stripes swing sooner, because the drift needs less time to carry them by one spacing; but they also fade sooner, and may be gone before they swing.</p>
             <p class="lvl-2">The curves are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i> averaged over the directions of <b>q</b> within 15&deg; of the drift (left) or of the direction across it (right). The lines are the model e<sup>&minus;<i>Dq</i><sup>2</sup>&Delta;<i>t</i></sup> cos(<b>q</b>&middot;<b>v</b>&Delta;<i>t</i>), with the <i>D</i> and <i>v</i> of the result, averaged over the same directions: across the drift <b>q</b>&middot;<b>v</b> is small but not zero, so at long delays even those curves dip below zero when the drift is fast.</p>
           </div>
+          <p class="small" id="curves-note" hidden></p>
           <div class="pair">
             <figure class="viz">
-              <figcaption>Along the drift</figcaption>
+              <figcaption id="along-cap">Along the drift</figcaption>
               <div class="chart short"><canvas id="chart-along" aria-label="Curves along the drift"></canvas></div>
               <div class="legend" id="along-legend"></div>
             </figure>
             <figure class="viz">
-              <figcaption>Across the drift</figcaption>
+              <figcaption id="across-cap">Across the drift</figcaption>
               <div class="chart short"><canvas id="chart-across" aria-label="Curves across the drift"></canvas></div>
               <div class="legend" id="across-legend"></div>
             </figure>

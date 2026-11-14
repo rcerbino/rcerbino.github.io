@@ -285,7 +285,9 @@
     // ---- outputs for the page ------------------------------------------------------------------------------------
     // sector curves along and across the drift (normalised: f = 1 - (d - B) / A), per bin
     const along = [], across = [];
-    const angV = Math.atan2(vy, vx);
+    // along and across the drift when one is detected; otherwise no in-plane direction is special, and the two sets are
+    // simply the patterns along x and along y of the image (the noise in v would give a random direction)
+    const angV = detected ? Math.atan2(vy, vx) : 0;
     bins.forEach(function (e) {
       const gs = byBin.get(e.b); const fa = new Float64Array(L), fc = new Float64Array(L); let na = 0, nc = 0;
       gs.forEach(function (g) {
@@ -326,7 +328,7 @@
       D_um2_s: D, D_rel_err: D_err !== null ? D_err / D : null, diameter_um: diameter,
       v_um_s: speed, v_err_um_s: vErrOut, v_dir_deg: Math.atan2(vy, vx) * 180 / Math.PI, v_dir_err_deg: dir_err_deg, vx_um_s: vx, vy_um_s: vy,
       v_from_phase: { vx_um_s: v0x, vy_um_s: v0y }, v_jack: { vx_err: vxErr, vy_err: vyErr, time: eT, q: eQ, n_pixels: ph0.n }, from_structure_function: sf, phase_lags: phaseV, detected: detected, visibility: vis,
-      noise_B: noiseB, velocity_from: fromSF ? "structure" : "phase", bins: bins, times_s: S.times_s, pairs: S.pairs, per_q: perQ, along: along, across: across, sector_v: sectorV,
+      noise_B: noiseB, velocity_from: fromSF ? "structure" : "phase", bins: bins, times_s: S.times_s, pairs: S.pairs, per_q: perQ, along: along, across: across, curves_axes: detected ? "drift" : "image", sector_v: sectorV,
       taus_s: taus, lags: S.lags, q_per_um: S.q_per_um, binOf: binOf, n: n, L_um: movie.L_um, nb: nb,
       d2d: S.d2d, cross: C, amp: ampOf, window: { q_from: qLo, q_to: qHi, q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, q_opt_per_um: S.q_opt_per_um, q_nyq_per_um: S.q_nyq_per_um, gamma_lo_hz: S.gamma_lo_hz, gamma_hi_hz: S.gamma_hi_hz },
       dq: S.dq, varq: S.varq, windowing: !!S.window

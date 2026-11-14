@@ -438,14 +438,15 @@ dqt.set_frame_rate(frame_rate)     # frames per second
             <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. Patterns across the drift (stripes parallel to it) are not moved by it: they only fade, as without a drift. Patterns along the drift fade at the same rate but also travel, so the curves swing below zero and back before they die out. Fine stripes swing sooner, because the drift needs less time to carry them by one spacing; but they also fade sooner, and may be gone before they swing.</p>
             <p class="lvl-2">The curves are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i> averaged over the directions of <b>q</b> within 15&deg; of the drift (left) or of the direction across it (right). The lines are the model e<sup>&minus;<i>Dq</i><sup>2</sup>&Delta;<i>t</i></sup> cos(<b>q</b>&middot;<b>v</b>&Delta;<i>t</i>), with the <i>D</i> and <i>v</i> of the result, averaged over the same directions: across the drift <b>q</b>&middot;<b>v</b> is small but not zero, so at long delays even those curves dip below zero when the drift is fast.</p>
           </div>
+          <p class="small" id="curves-note" hidden></p>
           <div class="pair">
             <figure class="viz">
-              <figcaption>Along the drift</figcaption>
+              <figcaption id="along-cap">Along the drift</figcaption>
               <div class="chart short"><canvas id="chart-along" aria-label="Curves along the drift"></canvas></div>
               <div class="legend" id="along-legend"></div>
             </figure>
             <figure class="viz">
-              <figcaption>Across the drift</figcaption>
+              <figcaption id="across-cap">Across the drift</figcaption>
               <div class="chart short"><canvas id="chart-across" aria-label="Curves across the drift"></canvas></div>
               <div class="legend" id="across-legend"></div>
             </figure>
@@ -4074,7 +4075,9 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     // ---- outputs for the page ------------------------------------------------------------------------------------
     // sector curves along and across the drift (normalised: f = 1 - (d - B) / A), per bin
     const along = [], across = [];
-    const angV = Math.atan2(vy, vx);
+    // along and across the drift when one is detected; otherwise no in-plane direction is special, and the two sets are
+    // simply the patterns along x and along y of the image (the noise in v would give a random direction)
+    const angV = detected ? Math.atan2(vy, vx) : 0;
     bins.forEach(function (e) {
       const gs = byBin.get(e.b); const fa = new Float64Array(L), fc = new Float64Array(L); let na = 0, nc = 0;
       gs.forEach(function (g) {
@@ -4115,7 +4118,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
       D_um2_s: D, D_rel_err: D_err !== null ? D_err / D : null, diameter_um: diameter,
       v_um_s: speed, v_err_um_s: vErrOut, v_dir_deg: Math.atan2(vy, vx) * 180 / Math.PI, v_dir_err_deg: dir_err_deg, vx_um_s: vx, vy_um_s: vy,
       v_from_phase: { vx_um_s: v0x, vy_um_s: v0y }, v_jack: { vx_err: vxErr, vy_err: vyErr, time: eT, q: eQ, n_pixels: ph0.n }, from_structure_function: sf, phase_lags: phaseV, detected: detected, visibility: vis,
-      noise_B: noiseB, velocity_from: fromSF ? "structure" : "phase", bins: bins, times_s: S.times_s, pairs: S.pairs, per_q: perQ, along: along, across: across, sector_v: sectorV,
+      noise_B: noiseB, velocity_from: fromSF ? "structure" : "phase", bins: bins, times_s: S.times_s, pairs: S.pairs, per_q: perQ, along: along, across: across, curves_axes: detected ? "drift" : "image", sector_v: sectorV,
       taus_s: taus, lags: S.lags, q_per_um: S.q_per_um, binOf: binOf, n: n, L_um: movie.L_um, nb: nb,
       d2d: S.d2d, cross: C, amp: ampOf, window: { q_from: qLo, q_to: qHi, q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, q_opt_per_um: S.q_opt_per_um, q_nyq_per_um: S.q_nyq_per_um, gamma_lo_hz: S.gamma_lo_hz, gamma_hi_hz: S.gamma_hi_hz },
       dq: S.dq, varq: S.varq, windowing: !!S.window
@@ -5404,7 +5407,13 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     pick.forEach(function (r) { const s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(r.q_per_um)) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / r.q_per_um, 2) + " " + MU + "m" : "q = " + r.q_per_um.toFixed(2)); leg.appendChild(s); });
   }
   function drawCurves() {
-    const res = cache.res;
+    const res = cache.res, ev = expectedDrift(), byDrift = res.curves_axes !== "image";
+    $("along-cap").textContent = byDrift ? "Along the drift" : "Patterns that vary from left to right (q along x)";
+    $("across-cap").textContent = byDrift ? "Across the drift" : "Patterns that vary from top to bottom (q along y)";
+    const note = $("curves-note"); note.hidden = byDrift;
+    if (!byDrift) note.textContent = "No drift is seen in the image plane, so no direction of the image is special: the two sets of curves below are simply the patterns along x and along y, and they fade alike, without swinging. " +
+      (!ev.plane && ev.speed > 0 ? "A drift along the optical axis cannot make a pattern of the image travel. Its only traces are a little extra fading, as the particles' images change with their height, and, once they have piled up against the glass, their slower diffusion there."
+        : ev.plane && ev.speed > 0 ? "The drift set is too slow to move any pattern before diffusion renews it (see step 6)." : "");
     if (!res.along.length || !res.across.length) return;
     drawSector($("chart-along"), res.along, true, "along-legend");
     drawSector($("chart-across"), res.across, false, "across-legend");

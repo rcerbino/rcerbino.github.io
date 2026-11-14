@@ -1187,7 +1187,13 @@
     pick.forEach(function (r) { const s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(r.q_per_um)) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / r.q_per_um, 2) + " " + MU + "m" : "q = " + r.q_per_um.toFixed(2)); leg.appendChild(s); });
   }
   function drawCurves() {
-    const res = cache.res;
+    const res = cache.res, ev = expectedDrift(), byDrift = res.curves_axes !== "image";
+    $("along-cap").textContent = byDrift ? "Along the drift" : "Patterns that vary from left to right (q along x)";
+    $("across-cap").textContent = byDrift ? "Across the drift" : "Patterns that vary from top to bottom (q along y)";
+    const note = $("curves-note"); note.hidden = byDrift;
+    if (!byDrift) note.textContent = "No drift is seen in the image plane, so no direction of the image is special: the two sets of curves below are simply the patterns along x and along y, and they fade alike, without swinging. " +
+      (!ev.plane && ev.speed > 0 ? "A drift along the optical axis cannot make a pattern of the image travel. Its only traces are a little extra fading, as the particles' images change with their height, and, once they have piled up against the glass, their slower diffusion there."
+        : ev.plane && ev.speed > 0 ? "The drift set is too slow to move any pattern before diffusion renews it (see step 6)." : "");
     if (!res.along.length || !res.across.length) return;
     drawSector($("chart-along"), res.along, true, "along-legend");
     drawSector($("chart-across"), res.across, false, "across-legend");
