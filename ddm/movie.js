@@ -120,7 +120,10 @@
    *  objective {mag, na, n_imm (optional immersion index; adds the aberration of focusing into the liquid)},
  *  vector (optional, default true; false = scalar optics, faster),
  *  liquid {glycerol_w} or {n, viscosity_mPa_s}, T_C, cell_um, focus_um (height of the focal plane above the bottom),
-   *  drift_um_s, homodyne (transmitted light),
+   *  drift_um_s (in the image plane; with drift_profile "poiseuille" the mean over the cell, zero at the walls),
+   *  drift_deg (optional, its direction in the image plane, 0 = to the right, 90 = down the image), drift_profile (optional:
+   *  "plug" default, or "poiseuille"), drift_z_um_s (optional, along the optical axis, positive = towards the bottom;
+   *  with walls it builds the steady profile like gravity), homodyne (transmitted light),
    *  gravity (optional, default false): sedimentation with the material and liquid densities,
    *  walls (optional, default false): particles keep their size away from the walls and diffuse more slowly near them
    *  swim (optional): self-propelled particles (swimming bacteria, active colloids)
@@ -167,7 +170,11 @@
     const d0 = num(cfg, "diameter_um", 0.01, 100), spread = num(cfg, "size_spread", 0, 0.5);
     const phi = num(cfg, "volume_fraction", 1e-9, 0.05);
     const T_C = num(cfg, "T_C", 0, 90), Lz = num(cfg, "cell_um", 1, 2000), hf = num(cfg, "focus_um", -50, 2050);
-    const drift = num(cfg, "drift_um_s", 0, 1000);
+    const drift = num(cfg, "drift_um_s", 0, 1000), driftDeg = cfg.drift_deg === undefined ? 0 : num(cfg, "drift_deg", -360, 360);
+    const driftProfile = cfg.drift_profile === undefined ? "plug" : cfg.drift_profile;
+    need(driftProfile === "plug" || driftProfile === "poiseuille", "drift_profile must be plug or poiseuille");
+    const driftZ = cfg.drift_z_um_s === undefined ? 0 : num(cfg, "drift_z_um_s", -1000, 1000);
+    const vX = drift * Math.cos(driftDeg * Math.PI / 180), vY = drift * Math.sin(driftDeg * Math.PI / 180);
     // swimmers (optional)
     const sw = cfg.swim || null;
     let swFrac = 0, swV = 0, swSpread = 0, swPlane = 0, swH = 0, swHs = 0, swDr = null, swTumble = 0, swOmega = 0;
@@ -370,13 +377,15 @@
      * (6 g^2 + 2 a_h g) / (6 g^2 + 9 a_h g + 2 a_h^2) (g = gap); the two walls combine as 1/f = 1/f1 + 1/f2 - 1.
      * Rotation near walls is not hindered (approximation). Gravity: buoyant weight F = (rho_p - rho_l) V g gives the
      * drift D_z F / kT and the gravitational length kT / F; heights start from the equilibrium (barometric) profile. */
-    const walls = cfg.walls === true, gravity = cfg.gravity === true;
+    const walls = cfg.walls === true, gravity = cfg.gravity === true, zdrift = gravity || driftZ !== 0;   // vertical drift: gravity and/or drift_z_um_s
     const rhoL = O.liquidDensity(cfg.liquid, T_C), rhoP = gravity ? O.particleDensity(cfg.particle) : rhoL;
     classes.forEach(function (c) {
       c.aex = walls ? Math.min(c.geo.a_par, c.geo.a_perp) : 0;
       c.ah = kT / (6 * Math.PI * eta * c.hyd.D_t * 1e-12) * 1e6;                         // hydrodynamic radius (um)
       const F = (rhoP - rhoL) * 1000 * c.geo.volume * 1e-18 * 9.81;                       // N, positive = sinks
-      c.lg = gravity && Math.abs(F) > 0 ? kT / F * 1e6 : Infinity;                        // um, signed
+      // um, signed: sinking (gravity) plus any other vertical drift (thermophoresis along the optical axis): 1/l = F/kT + v_z/D
+      const invLg = (gravity && Math.abs(F) > 0 ? F / kT * 1e-6 : 0) + driftZ / c.hyd.D_t;
+      c.lg = invLg !== 0 ? 1 / invLg : Infinity;
       need(Lz > 2 * c.aex * 1.02, "the cell is thinner than the particles");
     });
     const fWall = function (c, h) {   // h = centre height above the bottom; returns [parallel, perpendicular] factors
@@ -410,7 +419,7 @@
     let fParMean = 0;
     for (let i = 0; i < nTot; i++) {
       const r = rng.u(); let c = 0; while (c < classes.length - 1 && r > cum[c]) c++;
-      cls[i] = c; X[i] = rng.u() * L; Y[i] = rng.u() * L; H[i] = (walls || gravity) ? sampleHeight(classes[c]) : rng.u() * Lz;
+      cls[i] = c; X[i] = rng.u() * L; Y[i] = rng.u() * L; H[i] = (walls || zdrift) ? sampleHeight(classes[c]) : rng.u() * Lz;
       if (oriented) randomAxis(i);
       fParMean += fWall(classes[c], H[i])[0] / nTot;
     }
@@ -588,24 +597,27 @@
     };
     // sub-steps near a wall, so that hindrance and gravity are resolved (steps below 0.3 of the radius or gravitational length)
     const wallSteps = function (c, h, dt) {
-      if (!nearWall(c, h, dt) && !(gravity && isFinite(c.lg) && Math.abs(c.lg) < 5 * Math.sqrt(2 * c.hyd.D_t * dt))) return 1;
+      if (!nearWall(c, h, dt) && !(zdrift && isFinite(c.lg) && Math.abs(c.lg) < 5 * Math.sqrt(2 * c.hyd.D_t * dt))) return 1;
       const sc = 0.3 * Math.min(c.ah, isFinite(c.lg) ? Math.abs(c.lg) : Infinity);
       return Math.max(1, Math.min(64, Math.ceil(2 * c.hyd.D_t * dt / (sc * sc))));
     };
+    // flow in the image plane: the same everywhere (plug), or Poiseuille across the cell, 6 h (Lz - h) / Lz^2 times the mean
+    const flowAt = function (h) { return driftProfile === "poiseuille" ? 6 * h * (Lz - h) / (Lz * Lz) : 1; };
+    const addFlow = function (i, dt) { if (drift === 0) return; const f = flowAt(H[i]); X[i] += vX * f * dt; Y[i] += vY * f * dt; };
     const advance = function (i, dt) {
       if (dt <= 0) return;
       const c = classes[cls[i]], hy = c.hyd;
       if (!oriented) {
         const nst = wallSteps(c, H[i], dt), hh = dt / nst, st = Math.sqrt(2 * hy.D_t * hh);
         for (let k = 0; k < nst; k++) { moveBy(i, c, st * rng.g(), st * rng.g(), st * rng.g(), hh); if (nst > 1) reflect(i); }
-        X[i] += drift * dt; reflect(i); return;
+        addFlow(i, dt); reflect(i); return;
       }
       if (hy.D_r * dt > 1 && !nearWall(c, H[i], dt)) {
         // the axis has forgotten its direction: new random axis, translation with the mean coefficient. The optics
         // depends on the axis only through u u (even orientation modes), whose memory exp(-6 D_r dt) is below 0.3 % here
         const st = Math.sqrt(2 * hy.D_t * dt);
         moveBy(i, c, st * rng.g(), st * rng.g(), st * rng.g(), dt);
-        X[i] += drift * dt; randomAxis(i); reflect(i); return;
+        addFlow(i, dt); randomAxis(i); reflect(i); return;
       }
       const nst = Math.max(wallSteps(c, H[i], dt), Math.min(400, Math.ceil(hy.D_r * dt / 0.03))), hh = dt / nst;
       const sPar = Math.sqrt(2 * hy.D_par * hh), sPer = Math.sqrt(2 * hy.D_perp * hh), sRot = Math.sqrt(2 * hy.D_r * hh);
@@ -615,7 +627,7 @@
         const g0 = sPar * rng.g(), g1 = sPer * rng.g(), g2 = sPer * rng.g();
         // z points down (along the light): height decreases with the z component
         moveBy(i, c, g0 * ux + g1 * e1[0] + g2 * e2[0], g0 * uy + g1 * e1[1] + g2 * e2[1], -(g0 * uz + g1 * e1[2] + g2 * e2[2]), hh);
-        if (walls || gravity) reflect(i);
+        if (walls || zdrift) reflect(i);
         const w1 = sRot * rng.g(), w2 = sRot * rng.g(), om = Math.hypot(w1, w2);
         if (om > 0) {
           const cc = Math.cos(om), sn = Math.sin(om) / om;
@@ -624,7 +636,7 @@
         }
       }
       UX[i] = ux; UY[i] = uy; UZ[i] = uz;
-      X[i] += drift * dt;
+      addFlow(i, dt);
       reflect(i);
     };
     // swimmers: Brownian translation (in the body frame for particles with an axis), swimming along the axis,
@@ -643,8 +655,9 @@
       for (let k = 0; k < nst; k++) {
         frame(ux, uy, uz);
         const g0 = sPar * rng.g(), g1 = sPer * rng.g(), g2 = sPer * rng.g();
-        X[i] += g0 * ux + g1 * e1[0] + g2 * e2[0] + v * ux * hh + drift * hh;
-        Y[i] += g0 * uy + g1 * e1[1] + g2 * e2[1] + v * uy * hh;
+        const fl = drift === 0 ? 0 : flowAt(H[i]);
+        X[i] += g0 * ux + g1 * e1[0] + g2 * e2[0] + v * ux * hh + vX * fl * hh;
+        Y[i] += g0 * uy + g1 * e1[1] + g2 * e2[1] + v * uy * hh + vY * fl * hh;
         if (!pl && !freezeZ) {
           H[i] -= g0 * uz + g1 * e1[2] + g2 * e2[2] + v * uz * hh;      // z points down: height decreases with uz
           // the height falls when uz > 0: at the bottom the swimmer turns to uz < 0 (up), at the top to uz > 0 (down)
@@ -858,7 +871,7 @@
               split: split, channels: split ? { het: kInfo(chm.het), hom: kInfo(chm.hom) } : null,
               particle: { shape: shape, oriented: oriented, body: body, aspect: pAsp, birefringence: dn, geometry: cm.geo, points: body ? { xyz: cm.pts.xyz, n: cm.pts.n, spacing: cm.pts.spacing } : null,
                           alpha_perp: cm.aPerp, dalpha: cm.dA, alpha_ref: cm.aRef, Wtab: cm.Wtab || null, polarization: pol, background_share: bgf } },
-      truth: { diameter_um: d0, mean_diameter_um: dnum, D_um2_s: hd0.D_t, D_seen_um2_s: Dseen, seen_table: seenTable, diameter_seen_um: kT / (3 * Math.PI * eta * Dseen * 1e-12) * 1e6, drift_um_s: drift,
+      truth: { diameter_um: d0, mean_diameter_um: dnum, D_um2_s: hd0.D_t, D_seen_um2_s: Dseen, seen_table: seenTable, diameter_seen_um: kT / (3 * Math.PI * eta * Dseen * 1e-12) * 1e6, drift_um_s: drift, drift_deg: driftDeg, drift_profile: driftProfile, drift_z_um_s: driftZ,
                D_plane_um2_s: hd0.D_t * fParFocus, D_plane_all_um2_s: hd0.D_t * fParMean, walls: walls, gravity: gravity, gravitational_length_um: isFinite(classes[0].lg) ? classes[0].lg : null,
                swim: sw ? (function () {
                  const n = swList.length, m = n ? swList.reduce(function (p, v) { return p + v; }, 0) / n : 0;
