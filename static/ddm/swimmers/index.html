@@ -145,6 +145,19 @@ details.more dl { margin-top: 0.4rem; }
 .controls { font-family: var(--sans); font-size: 0.9rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 1rem; display: grid; gap: 1rem; }
 .controls h3 { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
 .cgroup { display: grid; gap: 0.7rem; }
+/* blocks of settings: sample, microscope, camera, analysis; each folds to a one-line summary */
+.cblock { border-top: 1px solid var(--rule); padding-top: 0.7rem; }
+.cblock:first-child { border-top: 0; padding-top: 0; }
+.cblock > summary { cursor: pointer; list-style: none; display: grid; gap: 0.15rem; }
+.cblock > summary::-webkit-details-marker { display: none; }
+.cblock > summary h3::before { content: ""; display: inline-block; width: 0.42em; height: 0.42em; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); margin: 0 0.55em 0.18em 0.1em; transition: transform 0.15s; }
+.cblock:not([open]) > summary h3::before { transform: rotate(-45deg); margin-bottom: 0.05em; }
+.cblock .bsum { font-size: 0.8rem; color: var(--muted); line-height: 1.35; padding-left: 1.15em; }
+.cblock > summary:hover h3 { color: var(--ink); }
+.cbody { display: grid; gap: 0.9rem; margin-top: 0.7rem; }
+.csub { display: grid; gap: 0.7rem; }
+.csub h4 { font-family: var(--sans); font-size: 0.8rem; font-weight: 600; color: var(--accent); margin: 0.2rem 0 -0.15rem; padding-bottom: 0.2rem; border-bottom: 1px solid var(--tint); }
+@media (prefers-reduced-motion: reduce) { .cblock > summary h3::before { transition: none; } }
 .ctl { display: grid; gap: 0.2rem; }
 .ctl .row { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
 .ctl label { font-weight: 500; }
@@ -5269,11 +5282,11 @@ A_est = 2 * aa.var - B_est
   }
   // settling: gravitational length kT / (buoyant weight) of a sphere of the same volume, and the wall slow-down
   function settleHint() {
-    if (state.settle !== "on") return "Particles are spread evenly through the cell and diffuse freely.";
+    if (state.settle !== "on") return "Particles are spread evenly through the chamber and diffuse freely.";
     const g = geometry(), T = state.T_C + 273.15, kT = 1.380649e-23 * T, lam = centralWavelength();
     const rp = state.particle === "custom" ? state.rho_custom : OPTICS.particleDensity(state.particle), rl = OPTICS.liquidDensity(liquidSpec(), state.T_C);
     const F = (rp - rl) * 1000 * g.volume * 1e-18 * 9.81, lg = Math.abs(F) > 0 ? kT / Math.abs(F) * 1e6 : Infinity;
-    const where = !isFinite(lg) || lg > 3 * state.cell_um ? "they stay spread through the cell" : (F > 0 ? "they collect within about " + fmtSig(lg, 2) + " " + MU + "m of the bottom" : "they float to within about " + fmtSig(lg, 2) + " " + MU + "m of the top");
+    const where = !isFinite(lg) || lg > 3 * state.cell_um ? "they stay spread through the chamber" : (F > 0 ? "they collect within about " + fmtSig(lg, 2) + " " + MU + "m of the bottom" : "they float to within about " + fmtSig(lg, 2) + " " + MU + "m of the top");
     return "Densities " + rp.toFixed(2) + " (particle) and " + rl.toFixed(3) + " g/cm" + SUP3 + " (liquid): " + where + ". Near the glass the liquid has to squeeze past, so they diffuse more slowly (exact for spheres, applied to the hydrodynamic radius for other shapes); the true value shown is the average along the image plane.";
   }
   // vector optics: automatic above this aperture (objective, or condenser in transmitted light), where 1 - cos(theta) at the
@@ -5348,7 +5361,7 @@ A_est = 2 * aa.var - B_est
     { key: "swim_frac", group: "Sample", lvl: 1, label: "Share of cells that swim", kind: "lin", min: 0, max: 1, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, hint: "The others only diffuse (dead or non-motile cells)." },
     { key: "swim_v", group: "Sample", lvl: 1, label: "Mean swimming speed", kind: "log", min: 1, max: 200, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m/s"; } },
     { key: "swim_spread", group: "Sample", lvl: 2, label: "Spread of speeds (relative standard deviation)", kind: "lin", min: 0.05, max: 0.9, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, hint: "Schulz (gamma) distribution of speeds, as in Wilson et al. 2011." },
-    { key: "swim_geom", group: "Sample", lvl: 1, label: "Where they swim", kind: "select", options: [["3d", "Everywhere in the cell, in all directions"], ["glass", "Along the bottom glass, in the plane"]], hint: function () { return state.swim_geom === "glass" ? "All cells lie on the glass, " + fmtSig(glassHeight(), 2) + " " + MU + "m above it at their centre; the focus is put there. Many bacteria swim this way near surfaces." : ""; } },
+    { key: "swim_geom", group: "Sample", lvl: 1, label: "Where they swim", kind: "select", options: [["3d", "Everywhere in the chamber, in all directions"], ["glass", "Along the bottom glass, in the plane"]], hint: function () { return state.swim_geom === "glass" ? "All cells lie on the glass, " + fmtSig(glassHeight(), 2) + " " + MU + "m above it at their centre; the focus is put there. Many bacteria swim this way near surfaces." : ""; } },
     { key: "swim_tumble", group: "Sample", lvl: 2, label: "Tumbles (new random direction)", kind: "lin", min: 0, max: 5, step: 0.1, fmt: function (v) { return v === 0 ? "none: straight runs" : fmtSig(v, 2) + " per second"; }, hint: function () { return state.swim_tumble > 0 ? "A run lasts " + fmtSig(1 / state.swim_tumble, 2) + " s on average, about " + fmtSig(state.swim_v / state.swim_tumble, 2) + " " + MU + "m. The swimmer models assume straight runs, so the largest patterns read slow." : "E. coli tumbles about once per second; smooth-swimming mutants do not."; } },
     { key: "swim_rot", group: "Sample", lvl: 3, label: "Rotational diffusion of swimmers", kind: "log", min: 0.01, max: 5, fmt: function (v) { return fmtSig(v, 2) + " s\u207b\u00b9"; }, hint: "Slow wobbling of the swimming direction (about 0.1 s\u207b\u00b9 for E. coli)." },
     { key: "swim_osc_amp", group: "Sample", lvl: 2, label: "Stroke: back-and-forth of each swimmer", kind: "lin", min: 0, max: 10, step: 0.1, fmt: function (v) { return v === 0 ? "none" : fmtSig(v, 2) + " " + MU + "m"; }, hint: "Algae and sperm do not swim smoothly: each beat moves the cell (or the head) back and forth about its mean path." },
@@ -5365,8 +5378,8 @@ A_est = 2 * aa.var - B_est
     { key: "n_liquid", group: "Sample", lvl: 3, label: "Liquid refractive index", kind: "lin", min: 1.30, max: 1.60, step: 0.005, fmt: function (v) { return v.toFixed(3); }, when: function () { return state.liquid === "custom"; } },
     { key: "visc_mPa_s", group: "Sample", lvl: 3, label: "Liquid viscosity", kind: "log", min: 0.3, max: 1000, fmt: function (v) { return fmtSig(v, 2) + " mPa s"; }, when: function () { return state.liquid === "custom"; } },
     { key: "T_C", group: "Sample", lvl: 2, label: "Temperature", kind: "lin", min: 5, max: 60, step: 1, fmt: function (v) { return v.toFixed(0) + " " + DEG + "C"; } },
-    { key: "cell_um", group: "Sample", lvl: 2, label: "Cell thickness", kind: "log", min: 1, max: 500, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m"; }, hint: function () { return particleCount() > 30000 ? "Too many particles for the browser (" + particleCount() + "): lower the concentration or simulate a smaller part of the image." : state.mode === "dic" && state.cell_um >= 200 ? "DIC is simulated in cells up to 200 " + MU + "m." : state.cell_um > 60 ? "Thick cells take longer to simulate (up to about 20 s): far from focus each particle's image changes with depth in many ways." : ""; } },
-    { key: "focus_frac", group: "Sample", lvl: 2, label: "Focus height in the cell", kind: "lin", min: 0, max: 1, step: 0.05, fmt: function (v) { return fmtSig(v * state.cell_um, 2) + " " + MU + "m above the bottom"; } },
+    { key: "cell_um", group: "Sample", lvl: 2, label: "Chamber thickness", kind: "log", min: 1, max: 500, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m"; }, hint: function () { return particleCount() > 30000 ? "Too many particles for the browser (" + particleCount() + "): lower the concentration or simulate a smaller part of the image." : state.mode === "dic" && state.cell_um >= 200 ? "DIC is simulated in cells up to 200 " + MU + "m." : state.cell_um > 60 ? "Thick cells take longer to simulate (up to about 20 s): far from focus each particle's image changes with depth in many ways." : ""; } },
+    { key: "focus_frac", group: "Sample", lvl: 2, label: "Focus height in the chamber", kind: "lin", min: 0, max: 1, step: 0.05, fmt: function (v) { return fmtSig(v * state.cell_um, 2) + " " + MU + "m above the bottom"; } },
     { key: "drift_um_s", group: "Sample", lvl: 2, label: "Drift (flow to the right)", kind: "lin", min: 0, max: 20, step: 0.5, fmt: function (v) { return v.toFixed(1) + " " + MU + "m/s"; } },
 
     { key: "mode", group: "Microscope (Nikon Ti2-E)", lvl: 1, label: "Imaging mode", kind: "select", options: [["brightfield", "Bright field"], ["phase", "Phase contrast"], ["darkfield", "Dark field"], ["dic", "DIC (Nomarski)"], ["fluorescence", "Widefield fluorescence"], ["spinning", "Spinning-disk confocal (CrestOptics X-Light V3)"], ["scanning", "Point-scanning confocal (Nikon AX R)"]], hint: modeHint },
@@ -5381,6 +5394,10 @@ A_est = 2 * aa.var - B_est
     { key: "dic_shear_um", group: "Microscope (Nikon Ti2-E)", lvl: 3, label: "DIC shear", kind: "lin", min: 0.05, max: 1, step: 0.01, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m"; }, when: function () { return state.mode === "dic"; }, hint: "0.24 " + MU + "m was measured for a Nikon N2 prism (Ostler et al.)." },
     { key: "dic_angle_deg", group: "Microscope (Nikon Ti2-E)", lvl: 3, label: "DIC shear direction", kind: "select", num: true, options: [[0, "0" + DEG], [45, "45" + DEG], [90, "90" + DEG]], when: function () { return state.mode === "dic"; } },
     { key: "source", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Light source", kind: "select", options: Object.keys(OPTICS.SOURCES).map(function (k) { return [k, OPTICS.SOURCES[k].label]; }), when: TRANS },
+    { key: "polarizer", group: "Illumination", lvl: 2, label: "Polarizer before the sample", kind: "select", options: [["off", "None"], ["on", "Linear polarizer"]], when: function () { return TRANS() && state.mode !== "dic"; }, hint: function () { return state.polarizer === "on" ? "Light polarized along x." + (state.analyzer !== "on" ? " Without an analyzer, anisotropic particles look brighter or darker as they turn." : "") : TURNS() && state.analyzer !== "on" ? "Turning particles show best between polarizers (birefringent ones) or in dark field." : ""; } },
+    { key: "analyzer", group: "Detection", lvl: 2, label: "Analyzer after the sample", kind: "select", options: [["off", "None"], ["on", "Linear polarizer (analyzer)"]], when: function () { return TRANS() && state.mode !== "dic"; }, hint: polHint },
+    { key: "pol_angle_deg", group: "Detection", lvl: 2, label: "Angle between polarizer and analyzer", kind: "lin", min: 0, max: 90, step: 1, fmt: function (v) { return Math.round(v) + DEG + (Math.round(v) === 90 ? " (crossed)" : Math.round(v) === 0 ? " (parallel)" : ""); }, when: function () { return TRANS() && state.mode !== "dic" && state.polarizer === "on" && state.analyzer === "on"; } },
+    { key: "extinction", group: "Detection", lvl: 3, label: "Polarizer leak (light passing crossed polarizers)", kind: "log", min: 1e-6, max: 1e-2, fmt: fmtPhi, when: function () { return TRANS() && state.mode !== "dic" && state.polarizer === "on" && state.analyzer === "on"; }, hint: "Real pairs in a microscope pass about 1e-4 to 1e-3 of the light when crossed." },
     { key: "df_light_e", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Lamp power (electrons per pixel if all the light reached the camera)", kind: "log", min: 1e4, max: 1e10, fmt: function (v) { return fmtPhi(v); }, when: function () { return state.mode === "darkfield" || (TRANS() && state.mode !== "dic" && state.analyzer === "on"); }, hint: function () { return state.mode === "darkfield" ? "" : "With an analyzer the lamp is turned up to fill the camera, up to this limit."; } },
     { key: "stray_frac", group: "Microscope (Nikon Ti2-E)", lvl: 3, label: "Stray light (share of the illumination)", kind: "log", min: 1e-6, max: 1e-2, fmt: function (v) { return fmtPhi(v); }, when: function () { return state.mode === "darkfield"; }, hint: "Light scattered by dust, cover-glass defects and the optics; it sets the dark-field background." },
     { key: "dye", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Dye", kind: "select", options: Object.keys(DYES).map(function (k) { return [k, DYES[k].label]; }), when: FL },
@@ -5404,9 +5421,9 @@ A_est = 2 * aa.var - B_est
     { key: "light_frac", group: "Camera and recording", lvl: 2, label: "Lamp brightness (background as a share of the full well)", kind: "log", min: 0.002, max: 0.9, fmt: function (v) { return fmtSig(100 * v, 2) + " %"; }, when: function () { return TRANS() && state.mode !== "darkfield"; }, hint: function () { const fw = detFullWell(); return "Background " + Math.round(state.light_frac * fw) + " electrons per pixel; shot noise " + fmtSig(100 / Math.sqrt(state.light_frac * fw), 2) + " %."; } },
     { key: "n_frames", group: "Camera and recording", lvl: 2, label: "Number of frames", kind: "select", num: true, options: [[128, "128"], [256, "256"], [512, "512"], [1024, "1024"], [2048, "2048"]],
       hint: function () { return "The browser holds up to " + maxFrames(simPx()) + " frames at " + simPx() + " x " + simPx() + " pixels; asking for more makes the simulated image smaller."; } },
-    { key: "frame_timing", group: "Camera and recording", lvl: 1, label: "Frame timing", kind: "select", options: [["even", "Evenly spaced"], ["log", "Log-spaced, in a repeating cycle (like a multi-tau correlator)"]],
+    { key: "frame_timing", group: "Camera and recording", lvl: 2, label: "Frame timing", kind: "select", options: [["even", "Evenly spaced"], ["log", "Log-spaced, in a repeating cycle (like a multi-tau correlator)"]],
       hint: function () { return BURSTS() ? "The same " + nFrames() + " frames cover " + fmtDur(movieSpanS()) + " instead of " + fmtDur(nFrames() / state.frame_rate_hz) + ". In each cycle the first frames follow at the frame rate, then the gaps grow by a fixed factor; the cycle repeats." : "All frames one frame interval apart: " + fmtDur(nFrames() / state.frame_rate_hz) + " of movie."; } },
-    { key: "log_factor", group: "Camera and recording", lvl: 1, label: "Log-spaced: how much longer the movie lasts", kind: "select", num: true, when: function () { return state.frame_timing === "log"; },
+    { key: "log_factor", group: "Camera and recording", lvl: 2, label: "Log-spaced: how much longer the movie lasts", kind: "select", num: true, when: function () { return state.frame_timing === "log"; },
       options: function () { return [5, 10, 20, 50].map(function (k) { return [k, k + " times (" + fmtDur(movieSpanS(k)) + ")"]; }); } },
     { key: "sim_px", group: "Camera and recording", lvl: 3, label: "Simulated part of the image", kind: "select", num: true, options: [[64, "64 x 64 pixels (fast)"], [128, "128 x 128 pixels"], [256, "256 x 256 pixels (slow)"]] },
 
@@ -5438,18 +5455,34 @@ A_est = 2 * aa.var - B_est
   // where each control sits: the imaging mode, then everything about the sample, the light reaching it, and how the
   // light is collected and recorded. Every control appears exactly once (checked at start-up).
   const LAYOUT = [
-    ["Imaging mode", ["mode"]],
-    ["Sample", ["organism", "shape", "swim_frac", "swim_v", "swim_spread", "swim_geom", "swim_tumble", "swim_rot", "swim_osc_amp", "swim_osc_hz", "swim_osc_dir", "drag", "particle", "n_custom", "diameter_um", "aspect", "phi", "dye", "liquid", "glycerol_w", "n_liquid", "visc_mPa_s", "T_C", "cell_um", "drift_um_s"]],
-    ["Illumination", ["source", "condenser", "na_c", "df_kind", "annulus", "light_frac", "df_light_e", "stray_frac", "rate_ph_ms", "bg_e_ms", "scan_rate"]],
-    ["Detection", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg",
-      "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "log_factor", "sim_px"]],
-    ["Analysis", ["swim_model", "windowing", "qrange"]],
-    ["Addict: what this page adds", ["x_noise", "x_shape", "x_dcells", "x_turn", "x_tumble", "x_axial", "x_amp", "x_window"]]
+    ["Sample", [
+      ["Cells", ["organism", "shape", "particle", "n_custom", "diameter_um", "aspect", "phi", "dye"]],
+      ["Swimming", ["swim_frac", "swim_v", "swim_spread", "swim_geom", "swim_tumble", "swim_rot", "swim_osc_amp", "swim_osc_hz", "swim_osc_dir", "drag"]],
+      ["Liquid and temperature", ["liquid", "glycerol_w", "n_liquid", "visc_mPa_s", "T_C"]],
+      ["Chamber", ["cell_um", "drift_um_s"]]]],
+    ["Microscope (Nikon Ti2-E)", [
+      ["", ["mode"]],
+      ["Illumination", ["source", "condenser", "na_c", "df_kind", "annulus", "polarizer", "light_frac", "df_light_e", "stray_frac", "rate_ph_ms", "bg_e_ms", "scan_rate"]],
+      ["Objective and contrast", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg", "analyzer", "pol_angle_deg", "extinction"]]]],
+    ["Camera and recording", [
+      ["", ["camera", "cam_mode", "iface", "roi", "binning"]],
+      ["Point scanner (Nikon AX R)", ["scanner", "scan_px", "zoom", "line_avg", "pinhole_au"]],
+      ["Timing", ["frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "log_factor", "sim_px"]]]],
+    ["Analysis", [
+      ["", ["swim_model", "windowing", "qrange"]],
+      ["Addict: what this page adds", ["x_noise", "x_shape", "x_dcells", "x_turn", "x_tumble", "x_axial", "x_amp", "x_window"]]]]
   ];
+  // one-line summary under each block title: [setting, text before, text after]
+  const SUMMARY = {
+    "Sample": [["organism"], ["swim_frac", "", " swim"], ["swim_v", "at "], ["cell_um", "chamber "]],
+    "Microscope (Nikon Ti2-E)": [["mode"], ["objective"], ["na_c", "condenser NA "]],
+    "Camera and recording": [["camera"], ["scanner"], ["frame_rate_hz"], ["exposure_ms", "exposure "], ["n_frames", "", " frames"]],
+    "Analysis": [["swim_model", "model: "], ["windowing"]]
+  };
   (function () {
     const byKey = {}; CONTROLS.forEach(function (c) { byKey[c.kind === "qrange" ? "qrange" : c.key] = c; });
     const out = [];
-    LAYOUT.forEach(function (g) { g[1].forEach(function (k) { const c = byKey[k]; if (!c) throw new Error("layout: unknown control " + k); c.group = g[0]; out.push(c); delete byKey[k]; }); });
+    LAYOUT.forEach(function (g) { g[1].forEach(function (sb) { sb[1].forEach(function (k) { const c = byKey[k]; if (!c) throw new Error("layout: unknown control " + k); c.group = g[0]; c.sub = sb[0]; out.push(c); delete byKey[k]; }); }); });
     const left = Object.keys(byKey); if (left.length) throw new Error("layout: controls not placed: " + left.join(", "));
     CONTROLS.length = 0; out.forEach(function (c) { CONTROLS.push(c); });
   })();
@@ -5506,20 +5539,29 @@ A_est = 2 * aa.var - B_est
     const parts = [o.s + ". Pixel " + fmtSig(pixelUm(), 3) + " " + MU + "m at the sample."];
     if (o.na > nl) parts.push("In this liquid only NA " + nl.toFixed(2) + " can be used (light beyond it is totally reflected at the cover glass).");
     const ni = immersionIndex(o, lam), dF = state.focus_frac * state.cell_um;
-    if (Math.abs(ni - nl) > 1e-3 && dF > 0) parts.push("Immersion index " + ni.toFixed(3) + ", liquid " + nl.toFixed(3) + ": focusing " + fmtSig(dF, 2) + " " + MU + "m into the cell adds spherical aberration (included; correction collar taken as set for a standard cover glass).");
+    if (Math.abs(ni - nl) > 1e-3 && dF > 0) parts.push("Immersion index " + ni.toFixed(3) + ", liquid " + nl.toFixed(3) + ": focusing " + fmtSig(dF, 2) + " " + MU + "m into the chamber adds spherical aberration (included; correction collar taken as set for a standard cover glass).");
     if (o.ph) parts.push("Phase ring " + o.ph + (objRing() ? "." : " (not simulated).") );
     return parts.join(" ");
   }
 
   const ctlEls = {};
   function buildControls() {
-    const host = $("ctl-groups"), groups = {};
+    // blocks (sample, microscope, camera, analysis), each folding to a one-line summary, with sub-blocks inside
+    const host = $("ctl-groups"), subs = {};
     CONTROLS.forEach(function (c) {
-      if (!groups[c.group]) {
-        const g = document.createElement("div"); g.className = "cgroup";
-        const h = document.createElement("h3"); h.textContent = c.group; g.appendChild(h);
-        host.appendChild(g); groups[c.group] = g;
+      if (!blockEls[c.group]) {
+        const d = document.createElement("details"); d.className = "cblock"; d.open = true;
+        d.innerHTML = '<summary><h3></h3><span class="bsum"></span></summary><div class="cbody"></div>';
+        d.querySelector("h3").textContent = c.group;
+        host.appendChild(d); blockEls[c.group] = { el: d, body: d.querySelector(".cbody"), sum: d.querySelector(".bsum"), ctls: [] };
       }
+      const sk = c.group + "|" + c.sub;
+      if (!subs[sk]) {
+        const s = document.createElement("div"); s.className = "csub";
+        if (c.sub) { const h = document.createElement("h4"); h.textContent = c.sub; s.appendChild(h); }
+        blockEls[c.group].body.appendChild(s); subs[sk] = { el: s, ctls: [] }; subEls.push(subs[sk]);
+      }
+      subs[sk].ctls.push(c); blockEls[c.group].ctls.push(c);
       const wrap = document.createElement("div");
       wrap.className = "ctl" + (c.lvl === 2 ? " lvl-2" : c.lvl === 3 ? " lvl-3" : c.lvl === 4 ? " lvl-4" : "");
       const id = "c-" + c.key;
@@ -5556,9 +5598,33 @@ A_est = 2 * aa.var - B_est
       }
       if (c.hint) { hintEl = document.createElement("div"); hintEl.className = "hint"; wrap.appendChild(hintEl); }
       ctlEls[c.kind === "qrange" ? "qrange" : c.key].hint = hintEl;
-      groups[c.group].appendChild(wrap);
-      const g = groups[c.group], cur = parseInt(g.dataset.minlvl || "9", 10);
-      if (c.lvl < cur) { g.dataset.minlvl = c.lvl; g.classList.remove("lvl-2", "lvl-3"); if (c.lvl === 2) g.classList.add("lvl-2"); if (c.lvl === 3) g.classList.add("lvl-3"); }
+      subs[sk].el.appendChild(wrap);
+    });
+  }
+  const blockEls = {}, subEls = [];
+  function ctlShown(c) { return c.lvl <= LEVEL_RANK[level] && (!c.when || c.when()); }
+  // the value of a setting as shown, shortened for the summary line (option text up to a colon or a bracket)
+  function ctlText(k) {
+    const c = CONTROLS.find(function (x) { return x.key === k; }), e = ctlEls[k];
+    if (!c || !e || (c.when && !c.when())) return "";
+    if (e.sel) {
+      const o = e.sel.options[e.sel.selectedIndex]; if (!o) return "";
+      const t = o.textContent, head = t.split(/:| \(/)[0].trim();
+      return head === "Example" ? t.slice(t.indexOf(":") + 1).split(" (")[0].trim() : head;   // "Example: E. coli-like rods ..."
+    }
+    return c.fmt ? c.fmt(state[k]) : "";
+  }
+  function syncBlocks() {
+    subEls.forEach(function (s) { s.el.hidden = !s.ctls.some(ctlShown); });
+    Object.keys(blockEls).forEach(function (b) {
+      const B = blockEls[b]; B.el.hidden = !B.ctls.some(ctlShown);
+      const parts = (SUMMARY[b] || []).map(function (s) {
+        if (s[0] === "windowing") return state.windowing === "on" ? "windowing" : "";
+        let t = ctlText(s[0]); if (!t) return "";
+        if (s[1] && /^[A-Z][a-z]/.test(t)) t = t.charAt(0).toLowerCase() + t.slice(1);   // "in water", not "in Water" (DIC stays DIC)
+        return (s[1] || "") + t + (s[2] || "");
+      }).filter(Boolean);
+      B.sum.textContent = parts.join(", ");
     });
   }
   function syncControls() {
@@ -5573,6 +5639,7 @@ A_est = 2 * aa.var - B_est
       if (c.when) e.wrap.hidden = !c.when();
       if (e.hint) e.hint.textContent = typeof c.hint === "function" ? c.hint() : c.hint;
     });
+    syncBlocks();
   }
   // keep settings physically possible: frame rate within the camera limit, exposure within a frame
   function constrain() {
@@ -6437,7 +6504,7 @@ A_est = 2 * aa.var - B_est
     const br = $("btn-repeat"); if (br) br.addEventListener("click", startRepeat);
     $("hero-result").innerHTML = '<span>True mean speed</span><span class="n">' + fmtV(swt.v_mean_um_s) + '</span><span>Measured by DDM</span><span class="n">' + (h ? fmtV(h.v_um_s) : "-") + '</span>' +
       '<span>Cells that swim: ' + Math.round(100 * swt.fraction) + ' % true' + (swt.n_swimmers > 0 && Math.abs(st.share - swt.fraction) >= 0.025 ? ' (' + Math.round(100 * st.share) + ' % of what the microscope sees)' : '') + ', ' + (h ? Math.round(100 * (h.no_swim ? 0 : h.alpha)) + ' %' : '-') + ' measured</span><span class="chip ' + v.cls + '">' + v.text + '</span>' + (sv && sv.cls !== "good" && swt.n_swimmers > 0 ? ' <span class="chip ' + sv.cls + '">' + sv.text + '</span>' : '');
-    $("hero-cap").textContent = "Simulated " + MODE_SHORT[state.mode] + " movie, " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
+    $("hero-cap").textContent = "Simulated " + MODE_SHORT[state.mode] + " movie" + (cache.cfg.polarization ? " between polarizers" : "") + ", " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
   }
   function renderRepeatTable() {
     const rows = repeat.runs;

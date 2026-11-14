@@ -226,11 +226,11 @@
   }
   // settling: gravitational length kT / (buoyant weight) of a sphere of the same volume, and the wall slow-down
   function settleHint() {
-    if (state.settle !== "on") return "Particles are spread evenly through the cell and diffuse freely.";
+    if (state.settle !== "on") return "Particles are spread evenly through the chamber and diffuse freely.";
     const g = geometry(), T = state.T_C + 273.15, kT = 1.380649e-23 * T, lam = centralWavelength();
     const rp = state.particle === "custom" ? state.rho_custom : OPTICS.particleDensity(state.particle), rl = OPTICS.liquidDensity(liquidSpec(), state.T_C);
     const F = (rp - rl) * 1000 * g.volume * 1e-18 * 9.81, lg = Math.abs(F) > 0 ? kT / Math.abs(F) * 1e6 : Infinity;
-    const where = !isFinite(lg) || lg > 3 * state.cell_um ? "they stay spread through the cell" : (F > 0 ? "they collect within about " + fmtSig(lg, 2) + " " + MU + "m of the bottom" : "they float to within about " + fmtSig(lg, 2) + " " + MU + "m of the top");
+    const where = !isFinite(lg) || lg > 3 * state.cell_um ? "they stay spread through the chamber" : (F > 0 ? "they collect within about " + fmtSig(lg, 2) + " " + MU + "m of the bottom" : "they float to within about " + fmtSig(lg, 2) + " " + MU + "m of the top");
     return "Densities " + rp.toFixed(2) + " (particle) and " + rl.toFixed(3) + " g/cm" + SUP3 + " (liquid): " + where + ". Near the glass the liquid has to squeeze past, so they diffuse more slowly (exact for spheres, applied to the hydrodynamic radius for other shapes); the true value shown is the average along the image plane.";
   }
   // vector optics: automatic above this aperture (objective, or condenser in transmitted light), where 1 - cos(theta) at the
@@ -295,9 +295,9 @@
     { key: "n_liquid", group: "Sample", lvl: 3, label: "Liquid refractive index", kind: "lin", min: 1.30, max: 1.60, step: 0.005, fmt: function (v) { return v.toFixed(3); }, when: function () { return state.liquid === "custom"; } },
     { key: "visc_mPa_s", group: "Sample", lvl: 3, label: "Liquid viscosity", kind: "log", min: 0.3, max: 1000, fmt: function (v) { return fmtSig(v, 2) + " mPa s"; }, when: function () { return state.liquid === "custom"; } },
     { key: "T_C", group: "Sample", lvl: 2, label: "Temperature", kind: "lin", min: 5, max: 60, step: 1, fmt: function (v) { return v.toFixed(0) + " " + DEG + "C"; } },
-    { key: "cell_um", group: "Sample", lvl: 2, label: "Cell thickness", kind: "log", min: 1, max: 500, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m"; }, hint: function () { return particleCount() > 30000 ? "Too many particles for the browser (" + particleCount() + "): lower the concentration or simulate a smaller part of the image." : state.mode === "dic" && state.cell_um >= 200 ? "DIC is simulated in cells up to 200 " + MU + "m." : state.cell_um > 60 ? "Thick cells take longer to simulate (up to about 20 s): far from focus each particle's image changes with depth in many ways." : ""; } },
-    { key: "focus_frac", group: "Sample", lvl: 2, label: "Focus height in the cell", kind: "lin", min: 0, max: 1, step: 0.05, fmt: function (v) { return fmtSig(v * state.cell_um, 2) + " " + MU + "m above the bottom"; } },
-    { key: "settle", group: "Sample", lvl: 2, label: "Gravity and walls", kind: "select", options: [["off", "Off: free diffusion in the whole cell"], ["on", "On: particles settle and slow down near the glass"]], hint: settleHint },
+    { key: "cell_um", group: "Sample", lvl: 2, label: "Chamber thickness", kind: "log", min: 1, max: 500, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m"; }, hint: function () { return particleCount() > 30000 ? "Too many particles for the browser (" + particleCount() + "): lower the concentration or simulate a smaller part of the image." : state.mode === "dic" && state.cell_um >= 200 ? "DIC is simulated in cells up to 200 " + MU + "m." : state.cell_um > 60 ? "Thick cells take longer to simulate (up to about 20 s): far from focus each particle's image changes with depth in many ways." : ""; } },
+    { key: "focus_frac", group: "Sample", lvl: 2, label: "Focus height in the chamber", kind: "lin", min: 0, max: 1, step: 0.05, fmt: function (v) { return fmtSig(v * state.cell_um, 2) + " " + MU + "m above the bottom"; } },
+    { key: "settle", group: "Sample", lvl: 2, label: "Gravity and walls", kind: "select", options: [["off", "Off: free diffusion in the whole chamber"], ["on", "On: particles settle and slow down near the glass"]], hint: settleHint },
     { key: "rho_custom", group: "Sample", lvl: 3, label: "Particle density", kind: "lin", min: 0.8, max: 4, step: 0.01, fmt: function (v) { return v.toFixed(2) + " g/cm" + SUP3; }, when: function () { return state.particle === "custom" && state.settle === "on"; } },
     { key: "rho_liquid", group: "Sample", lvl: 3, label: "Liquid density", kind: "lin", min: 0.7, max: 2, step: 0.01, fmt: function (v) { return v.toFixed(2) + " g/cm" + SUP3; }, when: function () { return state.liquid === "custom" && state.settle === "on"; } },
     { key: "drift_um_s", group: "Sample", lvl: 3, label: "Drift (flow to the right)", kind: "lin", min: 0, max: 5, step: 0.1, fmt: function (v) { return v.toFixed(1) + " " + MU + "m/s"; } },
@@ -313,9 +313,9 @@
     { key: "dic_bias_deg", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "DIC bias retardation", kind: "lin", min: 0, max: 180, step: 5, fmt: function (v) { return Math.round(v) + DEG; }, when: function () { return state.mode === "dic"; }, hint: "90" + DEG + " gives the most linear response to phase; small values give dark backgrounds and strong relief." },
     { key: "dic_shear_um", group: "Microscope (Nikon Ti2-E)", lvl: 3, label: "DIC shear", kind: "lin", min: 0.05, max: 1, step: 0.01, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m"; }, when: function () { return state.mode === "dic"; }, hint: "0.24 " + MU + "m was measured for a Nikon N2 prism (Ostler et al.)." },
     { key: "dic_angle_deg", group: "Microscope (Nikon Ti2-E)", lvl: 3, label: "DIC shear direction", kind: "select", num: true, options: [[0, "0" + DEG], [45, "45" + DEG], [90, "90" + DEG]], when: function () { return state.mode === "dic"; } },
-    { key: "polarizer", group: "Illumination", lvl: 1, label: "Polarizer before the sample", kind: "select", options: [["off", "None"], ["on", "Linear polarizer"]], when: function () { return TRANS() && state.mode !== "dic"; }, hint: function () { return state.polarizer === "on" ? "Light polarized along x." + (state.analyzer !== "on" ? " Without an analyzer, anisotropic particles look brighter or darker as they turn." : "") : TURNS() && state.analyzer !== "on" ? "Turning particles show best between polarizers (birefringent ones) or in dark field." : ""; } },
-    { key: "analyzer", group: "Detection", lvl: 1, label: "Analyzer after the sample", kind: "select", options: [["off", "None"], ["on", "Linear polarizer (analyzer)"]], when: function () { return TRANS() && state.mode !== "dic"; }, hint: polHint },
-    { key: "pol_angle_deg", group: "Detection", lvl: 1, label: "Angle between polarizer and analyzer", kind: "lin", min: 0, max: 90, step: 1, fmt: function (v) { return Math.round(v) + DEG + (Math.round(v) === 90 ? " (crossed)" : Math.round(v) === 0 ? " (parallel)" : ""); }, when: function () { return TRANS() && state.mode !== "dic" && state.polarizer === "on" && state.analyzer === "on"; } },
+    { key: "polarizer", group: "Illumination", lvl: 2, label: "Polarizer before the sample", kind: "select", options: [["off", "None"], ["on", "Linear polarizer"]], when: function () { return TRANS() && state.mode !== "dic"; }, hint: function () { return state.polarizer === "on" ? "Light polarized along x." + (state.analyzer !== "on" ? " Without an analyzer, anisotropic particles look brighter or darker as they turn." : "") : TURNS() && state.analyzer !== "on" ? "Turning particles show best between polarizers (birefringent ones) or in dark field." : ""; } },
+    { key: "analyzer", group: "Detection", lvl: 2, label: "Analyzer after the sample", kind: "select", options: [["off", "None"], ["on", "Linear polarizer (analyzer)"]], when: function () { return TRANS() && state.mode !== "dic"; }, hint: polHint },
+    { key: "pol_angle_deg", group: "Detection", lvl: 2, label: "Angle between polarizer and analyzer", kind: "lin", min: 0, max: 90, step: 1, fmt: function (v) { return Math.round(v) + DEG + (Math.round(v) === 90 ? " (crossed)" : Math.round(v) === 0 ? " (parallel)" : ""); }, when: function () { return TRANS() && state.mode !== "dic" && state.polarizer === "on" && state.analyzer === "on"; } },
     { key: "extinction", group: "Detection", lvl: 3, label: "Polarizer leak (light passing crossed polarizers)", kind: "log", min: 1e-6, max: 1e-2, fmt: fmtPhi, when: function () { return TRANS() && state.mode !== "dic" && state.polarizer === "on" && state.analyzer === "on"; }, hint: "Real pairs in a microscope pass about 1e-4 to 1e-3 of the light when crossed." },
     { key: "source", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Light source", kind: "select", options: Object.keys(OPTICS.SOURCES).map(function (k) { return [k, OPTICS.SOURCES[k].label]; }), when: TRANS },
     { key: "df_light_e", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Lamp power (electrons per pixel if all the light reached the camera)", kind: "log", min: 1e4, max: 1e10, fmt: function (v) { return fmtPhi(v); }, when: function () { return state.mode === "darkfield" || (TRANS() && state.mode !== "dic" && state.analyzer === "on"); }, hint: function () { return state.mode === "darkfield" ? "" : "With an analyzer the lamp is turned up to fill the camera, up to this limit."; } },
@@ -342,7 +342,7 @@
     { key: "n_frames", group: "Camera and recording", lvl: 2, label: "Number of frames", kind: "select", num: true, options: [[128, "128"], [256, "256"], [512, "512"], [1024, "1024"], [2048, "2048"]],
       hint: function () { return "The browser holds up to " + maxFrames(simPx()) + " frames at " + simPx() + " x " + simPx() + " pixels; asking for more makes the simulated image smaller."; } },
     { key: "frame_timing", group: "Camera and recording", lvl: 2, label: "Frame timing", kind: "select", options: [["even", "Evenly spaced"], ["log", "Log-spaced, in a repeating cycle (like a multi-tau correlator)"]],
-      hint: function () { return BURSTS() ? "The same frames cover " + fmtDur(movieSpanS()) + " instead of " + fmtDur(Math.min(state.n_frames, maxFrames(simPx())) / state.frame_rate_hz) + ". In each cycle the first frames follow at the frame rate, then the gaps grow by a fixed factor; the cycle repeats. Slow and fast particles then fit in one movie." : "All frames one frame interval apart: " + fmtDur(Math.min(state.n_frames, maxFrames(simPx())) / state.frame_rate_hz) + " of movie."; } },
+      hint: function () { return BURSTS() ? "The same frames cover " + fmtDur(movieSpanS()) + " instead of " + fmtDur(Math.min(state.n_frames, maxFrames(simPx())) / state.frame_rate_hz) + ". In each cycle the first frames follow at the frame rate, then the gaps grow by a fixed factor; the cycle repeats. Slow and fast motion then fit in one movie." : "All frames one frame interval apart: " + fmtDur(Math.min(state.n_frames, maxFrames(simPx())) / state.frame_rate_hz) + " of movie."; } },
     { key: "log_factor", group: "Camera and recording", lvl: 2, label: "Log-spaced: how much longer the movie lasts", kind: "select", num: true, when: function () { return state.frame_timing === "log"; },
       options: function () { return [5, 10, 20, 50].map(function (k) { return [k, k + " times (" + fmtDur(movieSpanS(k)) + ")"]; }); } },
     { key: "sim_px", group: "Camera and recording", lvl: 3, label: "Simulated part of the image", kind: "select", num: true, options: [[64, "64 x 64 pixels (fast)"], [128, "128 x 128 pixels"], [256, "256 x 256 pixels (slow)"]] },
@@ -373,18 +373,33 @@
 
   // light is collected and recorded. Every control appears exactly once (checked at start-up).
   const LAYOUT = [
-    ["Imaging mode", ["mode"]],
-    ["Sample", ["shape", "particle", "n_custom", "diameter_um", "aspect", "dn", "dn_body", "size_spread", "size_dist", "phi", "dye", "liquid", "glycerol_w", "n_liquid", "visc_mPa_s", "rho_liquid", "T_C", "cell_um", "settle", "rho_custom", "drift_um_s"]],
-    ["Illumination", ["source", "condenser", "na_c", "df_kind", "annulus", "polarizer", "light_frac", "df_light_e", "stray_frac", "rate_ph_ms", "bg_e_ms", "scan_rate"]],
-    ["Detection", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg", "analyzer", "pol_angle_deg", "extinction",
-      "scanner", "scan_px", "zoom", "line_avg", "pinhole_au", "camera", "cam_mode", "iface", "roi", "binning", "frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "log_factor", "sim_px"]],
-    ["Analysis", ["images", "windowing", "fit_model", "qrange"]],
-    ["Addict: what this page adds", ["x_noise", "x_depth", "x_expo", "x_outliers", "x_floor", "x_window"]]
+    ["Sample", [
+      ["Particles", ["shape", "particle", "n_custom", "diameter_um", "aspect", "dn", "dn_body", "size_spread", "size_dist", "phi", "dye", "rho_custom"]],
+      ["Liquid and temperature", ["liquid", "glycerol_w", "n_liquid", "visc_mPa_s", "rho_liquid", "T_C"]],
+      ["Chamber", ["cell_um", "settle", "drift_um_s"]]]],
+    ["Microscope (Nikon Ti2-E)", [
+      ["", ["mode"]],
+      ["Illumination", ["source", "condenser", "na_c", "df_kind", "annulus", "polarizer", "light_frac", "df_light_e", "stray_frac", "rate_ph_ms", "bg_e_ms", "scan_rate"]],
+      ["Objective and contrast", ["objective", "optics", "focus_frac", "ring_T", "dic_bias_deg", "dic_shear_um", "dic_angle_deg", "analyzer", "pol_angle_deg", "extinction"]]]],
+    ["Camera and recording", [
+      ["", ["camera", "cam_mode", "iface", "roi", "binning"]],
+      ["Point scanner (Nikon AX R)", ["scanner", "scan_px", "zoom", "line_avg", "pinhole_au"]],
+      ["Timing", ["frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "log_factor", "sim_px"]]]],
+    ["Analysis", [
+      ["", ["images", "windowing", "fit_model", "qrange"]],
+      ["Addict: what this page adds", ["x_noise", "x_depth", "x_expo", "x_outliers", "x_floor", "x_window"]]]]
   ];
+  // one-line summary under each block title: [setting, text before, text after]
+  const SUMMARY = {
+    "Sample": [["shape"], ["diameter_um"], ["particle"], ["liquid", "in "], ["T_C"], ["cell_um", "chamber "]],
+    "Microscope (Nikon Ti2-E)": [["mode"], ["objective"], ["na_c", "condenser NA "]],
+    "Camera and recording": [["camera"], ["scanner"], ["frame_rate_hz"], ["exposure_ms", "exposure "], ["n_frames", "", " frames"]],
+    "Analysis": [["fit_model", "fit: "], ["windowing"]]
+  };
   (function () {
     const byKey = {}; CONTROLS.forEach(function (c) { byKey[c.kind === "qrange" ? "qrange" : c.key] = c; });
     const out = [];
-    LAYOUT.forEach(function (g) { g[1].forEach(function (k) { const c = byKey[k]; if (!c) throw new Error("layout: unknown control " + k); c.group = g[0]; out.push(c); delete byKey[k]; }); });
+    LAYOUT.forEach(function (g) { g[1].forEach(function (sb) { sb[1].forEach(function (k) { const c = byKey[k]; if (!c) throw new Error("layout: unknown control " + k); c.group = g[0]; c.sub = sb[0]; out.push(c); delete byKey[k]; }); }); });
     const left = Object.keys(byKey); if (left.length) throw new Error("layout: controls not placed: " + left.join(", "));
     CONTROLS.length = 0; out.forEach(function (c) { CONTROLS.push(c); });
   })();
@@ -444,20 +459,29 @@
     const parts = [o.s + ". Pixel " + fmtSig(pixelUm(), 3) + " " + MU + "m at the sample."];
     if (o.na > nl) parts.push("In this liquid only NA " + nl.toFixed(2) + " can be used (light beyond it is totally reflected at the cover glass).");
     const ni = immersionIndex(o, lam), dF = state.focus_frac * state.cell_um;
-    if (Math.abs(ni - nl) > 1e-3 && dF > 0) parts.push("Immersion index " + ni.toFixed(3) + ", liquid " + nl.toFixed(3) + ": focusing " + fmtSig(dF, 2) + " " + MU + "m into the cell adds spherical aberration (included; correction collar taken as set for a standard cover glass).");
+    if (Math.abs(ni - nl) > 1e-3 && dF > 0) parts.push("Immersion index " + ni.toFixed(3) + ", liquid " + nl.toFixed(3) + ": focusing " + fmtSig(dF, 2) + " " + MU + "m into the chamber adds spherical aberration (included; correction collar taken as set for a standard cover glass).");
     if (o.ph) parts.push("Phase ring " + o.ph + (objRing() ? "." : " (not simulated).") );
     return parts.join(" ");
   }
 
   const ctlEls = {};
   function buildControls() {
-    const host = $("ctl-groups"), groups = {};
+    // blocks (sample, microscope, camera, analysis), each folding to a one-line summary, with sub-blocks inside
+    const host = $("ctl-groups"), subs = {};
     CONTROLS.forEach(function (c) {
-      if (!groups[c.group]) {
-        const g = document.createElement("div"); g.className = "cgroup";
-        const h = document.createElement("h3"); h.textContent = c.group; g.appendChild(h);
-        host.appendChild(g); groups[c.group] = g;
+      if (!blockEls[c.group]) {
+        const d = document.createElement("details"); d.className = "cblock"; d.open = true;
+        d.innerHTML = '<summary><h3></h3><span class="bsum"></span></summary><div class="cbody"></div>';
+        d.querySelector("h3").textContent = c.group;
+        host.appendChild(d); blockEls[c.group] = { el: d, body: d.querySelector(".cbody"), sum: d.querySelector(".bsum"), ctls: [] };
       }
+      const sk = c.group + "|" + c.sub;
+      if (!subs[sk]) {
+        const s = document.createElement("div"); s.className = "csub";
+        if (c.sub) { const h = document.createElement("h4"); h.textContent = c.sub; s.appendChild(h); }
+        blockEls[c.group].body.appendChild(s); subs[sk] = { el: s, ctls: [] }; subEls.push(subs[sk]);
+      }
+      subs[sk].ctls.push(c); blockEls[c.group].ctls.push(c);
       const wrap = document.createElement("div");
       wrap.className = "ctl" + (c.lvl === 2 ? " lvl-2" : c.lvl === 3 ? " lvl-3" : c.lvl === 4 ? " lvl-4" : "");
       const id = "c-" + c.key;
@@ -494,9 +518,33 @@
       }
       if (c.hint) { hintEl = document.createElement("div"); hintEl.className = "hint"; wrap.appendChild(hintEl); }
       ctlEls[c.kind === "qrange" ? "qrange" : c.key].hint = hintEl;
-      groups[c.group].appendChild(wrap);
-      const g = groups[c.group], cur = parseInt(g.dataset.minlvl || "9", 10);
-      if (c.lvl < cur) { g.dataset.minlvl = c.lvl; g.classList.remove("lvl-2", "lvl-3"); if (c.lvl === 2) g.classList.add("lvl-2"); if (c.lvl === 3) g.classList.add("lvl-3"); }
+      subs[sk].el.appendChild(wrap);
+    });
+  }
+  const blockEls = {}, subEls = [];
+  function ctlShown(c) { return c.lvl <= LEVEL_RANK[level] && (!c.when || c.when()); }
+  // the value of a setting as shown, shortened for the summary line (option text up to a colon or a bracket)
+  function ctlText(k) {
+    const c = CONTROLS.find(function (x) { return x.key === k; }), e = ctlEls[k];
+    if (!c || !e || (c.when && !c.when())) return "";
+    if (e.sel) {
+      const o = e.sel.options[e.sel.selectedIndex]; if (!o) return "";
+      const t = o.textContent, head = t.split(/:| \(/)[0].trim();
+      return head === "Example" ? t.slice(t.indexOf(":") + 1).split(" (")[0].trim() : head;   // "Example: E. coli-like rods ..."
+    }
+    return c.fmt ? c.fmt(state[k]) : "";
+  }
+  function syncBlocks() {
+    subEls.forEach(function (s) { s.el.hidden = !s.ctls.some(ctlShown); });
+    Object.keys(blockEls).forEach(function (b) {
+      const B = blockEls[b]; B.el.hidden = !B.ctls.some(ctlShown);
+      const parts = (SUMMARY[b] || []).map(function (s) {
+        if (s[0] === "windowing") return state.windowing === "on" ? "windowing" : "";
+        let t = ctlText(s[0]); if (!t) return "";
+        if (s[1] && /^[A-Z][a-z]/.test(t)) t = t.charAt(0).toLowerCase() + t.slice(1);   // "in water", not "in Water" (DIC stays DIC)
+        return (s[1] || "") + t + (s[2] || "");
+      }).filter(Boolean);
+      B.sum.textContent = parts.join(", ");
     });
   }
   function syncControls() {
@@ -511,6 +559,7 @@
       if (c.when) e.wrap.hidden = !c.when();
       if (e.hint) e.hint.textContent = typeof c.hint === "function" ? c.hint() : c.hint;
     });
+    syncBlocks();
   }
   // keep settings physically possible: frame rate within the camera limit, exposure within a frame
   function constrain() {
