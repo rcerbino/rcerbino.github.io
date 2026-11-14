@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DDM, hands on | Roberto Cerbino</title>
-<meta name="description" content="Differential dynamic microscopy (DDM) hands on: simulated microscopy experiments in your browser, analysed step by step from the raw movie to the result. Size particles from how they move, or measure how fast cells swim.">
+<meta name="description" content="Differential dynamic microscopy (DDM) hands on: simulated microscopy experiments in your browser, analysed step by step from the raw movie to the result. Size particles from how they move, measure how fast cells swim, or follow particles carried by a flow, gravity or heat.">
 <meta name="author" content="Roberto Cerbino">
 <link rel="canonical" href="https://rcerbino.github.io/ddm/">
 <link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
@@ -166,6 +166,17 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
           <span class="go" aria-hidden="true">Open Swimming cells</span>
         </div>
       </article>
+      <article class="app">
+        <div class="media"><canvas id="cv-drift" width="240" height="150" aria-label="Animation: particles jiggling and carried slowly to the right by a flow, as seen in a bright-field microscope"></canvas><span class="tag">Bright field, beads in a flow (sketch)</span></div>
+        <div class="body">
+          <p class="eyebrow">Drift</p>
+          <h2><a href="drift/">Where are they going?</a></h2>
+          <p>Measure the speed and direction of particles carried by a flow, by gravity or by a temperature gradient, while they keep jiggling, and find out when a drift is too slow to be seen.</p>
+          <p class="what">Plug and channel flows; sedimentation with the microscope upright or on its side; thermophoresis of polystyrene beads with Soret coefficients from published measurements.</p>
+          <ul class="chips"><li>Flow</li><li>Sedimentation</li><li>Thermophoresis</li></ul>
+          <span class="go" aria-hidden="true">Open Drifting particles</span>
+        </div>
+      </article>
     </div>
   </section>
 
@@ -222,12 +233,12 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
   function wrap(x, L) { return ((x % L) + L) % L; }
 
   /* a field of round particles; bright field: dark core with a faint bright ring */
-  function makeBeads(W, H, n, core, step) {
+  function makeBeads(W, H, n, core, step, drift) {
     const p = []; for (let i = 0; i < n; i++) p.push([Math.random() * W, Math.random() * H]);
     const R = Math.ceil(core * 3.2), img = new Float32Array(W * H);
     return {
       W: W, H: H, img: img,
-      step: function () { for (const q of p) { q[0] = wrap(q[0] + step * gauss(), W); q[1] = wrap(q[1] + step * gauss(), H); } },
+      step: function () { for (const q of p) { q[0] = wrap(q[0] + step * gauss() + (drift || 0), W); q[1] = wrap(q[1] + step * gauss(), H); } },
       render: function () {
         img.fill(0);
         for (const q of p) {
@@ -320,6 +331,9 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
 
   const cs = document.getElementById("cv-sizing"), ctxS = cs.getContext("2d"), beads = makeBeads(cs.width, cs.height, 80, 2.0, 0.55);
   scene(cs, beads.step, function () { grayTo(ctxS, beads.render(), cs.width, cs.height, 0.74, 0.9); });
+
+  const cdr = document.getElementById("cv-drift"), ctxD = cdr.getContext("2d"), drifting = makeBeads(cdr.width, cdr.height, 80, 2.0, 0.45, 0.35);
+  scene(cdr, drifting.step, function () { grayTo(ctxD, drifting.render(), cdr.width, cdr.height, 0.74, 0.9); });
 
   const cw = document.getElementById("cv-swim"), ctxW = cw.getContext("2d"), cells = makeCells(cw.width, cw.height, 34);
   scene(cw, cells.step, function () { grayTo(ctxW, cells.render(), cw.width, cw.height, 0.5, 0.95); });

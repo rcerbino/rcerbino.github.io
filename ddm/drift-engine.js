@@ -62,7 +62,7 @@
     // ---- 1. cross spectrum C(q, dt) on the pairs of the structure function ------------------------------------
     // C is also kept apart for K blocks of the movie (a pair counts in the block of its first frame) at about ten
     // lags, so that the phase fit can be repeated with one block left out (jackknife uncertainty of v)
-    const K = 5, blockOf = function (t) { return Math.min(K - 1, Math.floor(t * K / T)); };
+    const K = 10, GQ = 8, blockOf = function (t) { return Math.min(K - 1, Math.floor(t * K / T)); };
     const phaseLags = []; for (let li = 0; li < L; li += Math.max(1, Math.floor(L / 10))) phaseLags.push(li);
     const C = [], CB = {};                                              // C per lag: Float32Array(2P), normalised by P
     for (let li = 0; li < L; li++) {
@@ -138,14 +138,14 @@
     // (no wrapping); repeated a few times as v improves
     const ampRef = new Float64Array(nb + 1);
     for (let b = 1; b <= nb; b++) ampRef[b] = Math.max(0, 2 * S.varq[b] - (S.B_est[b] || 0)) / 2;
-    const phaseFit = function (getC, vxs, vys) {
+    const phaseFit = function (getC, vxs, vys, skip) {
       let vx = vxs, vy = vys, used = 0;
       for (let it = 0; it < 6; it++) {
         let a11 = 0, a12 = 0, a22 = 0, r1 = 0, r2 = 0; used = 0;
         for (const li of phaseLags) {
           const c = getC(li); if (!c) continue; const t = taus[li];
           for (let p = 0; p < P; p++) {
-            const b = binOf[p]; if (b <= 0 || S.q_per_um[b] < qmin || S.q_per_um[b] > qmax) continue;
+            const b = binOf[p]; if (b <= 0 || S.q_per_um[b] < qmin || S.q_per_um[b] > qmax || (skip !== undefined && b % GQ === skip)) continue;
             const re = c[2 * p], im = c[2 * p + 1], a2 = re * re + im * im;
             if (a2 < 0.04 * ampRef[b] * ampRef[b]) continue;
             const x1 = -KX[p] * t, x2 = -KY[p] * t, pred = x1 * vx + x2 * vy;
@@ -159,12 +159,21 @@
       }
       return { vx: vx, vy: vy, n: used };
     };
-    const ph0 = phaseFit(function (li) { return C[li]; }, v0x, v0y);
-    const jk = [];
-    for (let j = 0; j < K; j++) { const r = phaseFit(function (li) { return cWithout(li, j); }, ph0.vx, ph0.vy); jk.push(r); }
-    const jmx = jk.reduce(function (a, r) { return a + r.vx; }, 0) / K, jmy = jk.reduce(function (a, r) { return a + r.vy; }, 0) / K;
-    const vxErr = Math.sqrt((K - 1) / K * jk.reduce(function (a, r) { return a + (r.vx - jmx) * (r.vx - jmx); }, 0));
-    const vyErr = Math.sqrt((K - 1) / K * jk.reduce(function (a, r) { return a + (r.vy - jmy) * (r.vy - jmy); }, 0));
+    const allC = function (li) { return C[li]; };
+    const ph0 = phaseFit(allC, v0x, v0y);
+    // two jackknifes: over ten parts of the movie (noise from frame to frame), and over eight interleaved groups of q
+    // (the particles' arrangement: the widest patterns barely change during the movie, so parts of the same movie share
+    // it, and the first estimate alone came out up to three times too small in some movies). Each is itself noisy (a few
+    // parts only); their root mean square matched the scatter between movies.
+    const jackErr = function (rs) {
+      const k = rs.length, mx = rs.reduce(function (a, r) { return a + r.vx; }, 0) / k, my = rs.reduce(function (a, r) { return a + r.vy; }, 0) / k;
+      return [Math.sqrt((k - 1) / k * rs.reduce(function (a, r) { return a + (r.vx - mx) * (r.vx - mx); }, 0)), Math.sqrt((k - 1) / k * rs.reduce(function (a, r) { return a + (r.vy - my) * (r.vy - my); }, 0))];
+    };
+    const jt = [], jq = [];
+    for (let j = 0; j < K; j++) jt.push(phaseFit(function (li) { return cWithout(li, j); }, ph0.vx, ph0.vy));
+    for (let j = 0; j < GQ; j++) jq.push(phaseFit(allC, ph0.vx, ph0.vy, j));
+    const eT = jackErr(jt), eQ = jackErr(jq);
+    const vxErr = Math.sqrt((eT[0] * eT[0] + eQ[0] * eQ[0]) / 2), vyErr = Math.sqrt((eT[1] * eT[1] + eQ[1] * eQ[1]) / 2);
 
     // ---- data in sectors: (bin, sector) groups of pixels, folded onto [0, pi) (d is even in q) -----------------
     const groups = [];                                                 // { b, s, px: [qx], py: [qy], d: Float64Array(L) }
@@ -255,7 +264,7 @@
       return s / Math.sqrt(vals.length);
     };
     const D_err = spreadOf(okQ.map(function (e) { return e.gamma_hz / (e.q_per_um * e.q_per_um); }));
-    // uncertainty of v: jackknife over five parts of the movie, along v (speed) and across it (direction)
+    // uncertainty of v from the jackknifes, along v (speed) and across it (direction)
     const v_err = speed > 0 ? Math.abs(vxErr * dir[0]) + Math.abs(vyErr * dir[1]) : Math.hypot(vxErr, vyErr);
     const dir_err_deg = speed > 0 ? (Math.abs(vxErr * dir[1]) + Math.abs(vyErr * dir[0])) / speed * 180 / Math.PI : null;
 
@@ -316,7 +325,7 @@
     return {
       D_um2_s: D, D_rel_err: D_err !== null ? D_err / D : null, diameter_um: diameter,
       v_um_s: speed, v_err_um_s: vErrOut, v_dir_deg: Math.atan2(vy, vx) * 180 / Math.PI, v_dir_err_deg: dir_err_deg, vx_um_s: vx, vy_um_s: vy,
-      v_from_phase: { vx_um_s: v0x, vy_um_s: v0y }, v_jack: { vx_err: vxErr, vy_err: vyErr, n_pixels: ph0.n }, from_structure_function: sf, phase_lags: phaseV, detected: detected, visibility: vis,
+      v_from_phase: { vx_um_s: v0x, vy_um_s: v0y }, v_jack: { vx_err: vxErr, vy_err: vyErr, time: eT, q: eQ, n_pixels: ph0.n }, from_structure_function: sf, phase_lags: phaseV, detected: detected, visibility: vis,
       noise_B: noiseB, velocity_from: fromSF ? "structure" : "phase", bins: bins, times_s: S.times_s, pairs: S.pairs, per_q: perQ, along: along, across: across, sector_v: sectorV,
       taus_s: taus, lags: S.lags, q_per_um: S.q_per_um, binOf: binOf, n: n, L_um: movie.L_um, nb: nb,
       d2d: S.d2d, cross: C, amp: ampOf, window: { q_from: qLo, q_to: qHi, q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, q_opt_per_um: S.q_opt_per_um, q_nyq_per_um: S.q_nyq_per_um, gamma_lo_hz: S.gamma_lo_hz, gamma_hi_hz: S.gamma_hi_hz },
@@ -324,6 +333,8 @@
     };
   }
 
-  const api = { analyse: analyse, NSEC: NSEC };
+  // what the result table shows for the published method alone, run on the same movie
+  function publishedSummary(r) { return { v_um_s: r.v_um_s, v_err_um_s: r.v_err_um_s, D_um2_s: r.D_um2_s, detected: r.detected }; }
+  const api = { analyse: analyse, publishedSummary: publishedSummary, NSEC: NSEC };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.DRIFT = api;
 })(typeof self !== "undefined" ? self : this);
