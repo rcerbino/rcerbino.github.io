@@ -217,10 +217,13 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
 - "Swimming cells" /ddm/swimmers/ (`static/ddm/swimmers/index.html`): `swim.src.html`, `app-swim.js`,
   `active-engine.js` and `worker-swim.js`; it shares the optics, movie and engine files.
 - "Drifting particles" /ddm/drift/ (`static/ddm/drift/index.html`): `drift.src.html`, `app-drift.js`,
-  `drift-engine.js` (velocity from the phase of the cross spectrum, D from the structure function) and
+  `drift-engine.js` (velocity from the cross spectrum, fitted through its imaginary part at all delays so that drifts
+  too slow to make any pattern swing still count, as in tracking; a drift is reported when it exceeds three times its
+  uncertainty; D from the structure function) and
   `worker-drift.js`; spheres only (colloids, no interactions). Causes: flow (plug or Poiseuille), sedimentation
   (microscope upright or on its side), thermophoresis with Soret coefficients from Duhr and Braun 2006, Iacopini,
-  Rusconi and Piazza 2006, and Braibanti, Vigolo and Piazza 2008 (`THERMO` in `app-drift.js`).
+  Rusconi and Piazza 2006, Braibanti, Vigolo and Piazza 2008, and Helden, Eichhorn and Bechinger 2015 (`THERMO` in
+  `app-drift.js`).
 
 All application pages have a fourth reader level, "Addict" (`#addict`): one switch for each step the
 analysis adds to the published method (`x_*` settings in `app.js`, `app-swim.js` and `app-drift.js`, mapped to engine options;

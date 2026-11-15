@@ -60,5 +60,13 @@ const angDiff = function (a, b) { let d = ((a - b) % 360 + 540) % 360 - 180; ret
   const { r } = run("drift 2 um/s along the optical axis (upright)", { drift_um_s: 0, drift_z_um_s: 2, walls: true, seed: 7 });
   check("vertical drift: no drift in the image plane", !r.detected, "v " + r.v_um_s.toFixed(3));
 }
+{ // a slow drift that makes no pattern swing (v L / D about 5): found from the phase in a long movie (512 frames at 2/s)
+  const { r } = run("200 nm beads, 0.3 um/s, 256 s movie", { drift_um_s: 0.3, drift_deg: 0, n_frames: 512, frame_rate_hz: 2, seed: 8 });
+  check("slow drift (no pattern swings): detected, speed within 2.5 times its uncertainty", r.detected && Math.abs(r.v_um_s - 0.3) < 2.5 * r.v_err_um_s, r.v_um_s.toFixed(3) + " +- " + r.v_err_um_s.toFixed(3));
+}
+{ // the same long movie without a drift: none found
+  const { r } = run("200 nm beads, no drift, 256 s movie", { drift_um_s: 0, n_frames: 512, frame_rate_hz: 2, seed: 9 });
+  check("long movie, no drift: none detected", !r.detected, r.v_um_s.toFixed(3) + ", slowest visible " + r.visibility.v_min_um_s.toFixed(3));
+}
 console.log(failures ? "\n" + failures + " FAILED" : "\nALL DRIFT CHECKS PASSED");
 process.exitCode = failures ? 1 : 0;

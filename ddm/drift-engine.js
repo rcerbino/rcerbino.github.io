@@ -160,20 +160,91 @@
       return { vx: vx, vy: vy, n: used };
     };
     const allC = function (li) { return C[li]; };
-    const ph0 = phaseFit(allC, v0x, v0y);
-    // two jackknifes: over ten parts of the movie (noise from frame to frame), and over eight interleaved groups of q
-    // (the particles' arrangement: the widest patterns barely change during the movie, so parts of the same movie share
-    // it, and the first estimate alone came out up to three times too small in some movies). Each is itself noisy (a few
-    // parts only); their root mean square matched the scatter between movies.
+    const ph1 = phaseFit(allC, v0x, v0y);                              // start: good for fast drifts (it unwraps the phase)
+
+    // ---- 2b. velocity from the imaginary part of C, at all delays ----------------------------------------------
+    // Turn each C by the phase of the current v: z = C e^{+i q.v dt}. Then Im z = -a q.(v_true - v) dt + noise, with a
+    // the part of the pattern still there, taken as the mean of Re z over the pixels of the same q (so the weights do
+    // not depend on each pixel's own noise, which biased the phase fit with weights |C|^2). Weighted least squares,
+    // weights 1 / (noise variance of Im z), estimated for each q and delay from the scatter between its pixels (pooled
+    // with the neighbouring q). No phase is ever taken, so a phase of a few hundredths of a radian still counts: this
+    // works like tracking, where small mean displacements add up over many particles.
+    const pixList = [];
+    for (let p = 0; p < P; p++) { const b = binOf[p]; if (b > 0 && S.q_per_um[b] >= qmin && S.q_per_um[b] <= qmax) pixList.push(p); }
+    const allLags = []; for (let li = 0; li < L; li++) allLags.push(li);
+    const imFit = function (getC, lags, vxs, vys, skip) {
+      let vx = vxs, vy = vys, used = 0;
+      const sRe = new Float64Array(nb + 1), sIm2 = new Float64Array(nb + 1), sRe2 = new Float64Array(nb + 1), cnt = new Float64Array(nb + 1);
+      const xx = new Float64Array(nb + 1), xy = new Float64Array(nb + 1), yy = new Float64Array(nb + 1), x1y = new Float64Array(nb + 1), x2y = new Float64Array(nb + 1), x11 = new Float64Array(nb + 1), x12 = new Float64Array(nb + 1), x22 = new Float64Array(nb + 1);
+      const alive = new Uint8Array(nb + 1);
+      for (let it = 0; it < 5; it++) {
+        let a11 = 0, a12 = 0, a22 = 0, r1 = 0, r2 = 0; used = 0;
+        alive.fill(1);
+        for (const li of lags) {                                       // delays in increasing order
+          const c = getC(li); if (!c) continue; const t = taus[li];
+          sRe.fill(0); sRe2.fill(0); cnt.fill(0); x11.fill(0); x12.fill(0); x22.fill(0); x1y.fill(0); x2y.fill(0); yy.fill(0);
+          for (const p of pixList) {
+            const b = binOf[p]; if (skip !== undefined && b % GQ === skip) continue;
+            const ph = (KX[p] * vx + KY[p] * vy) * t, cs = Math.cos(ph), sn = Math.sin(ph);
+            const zr = c[2 * p] * cs - c[2 * p + 1] * sn, zi = c[2 * p] * sn + c[2 * p + 1] * cs;
+            sRe[b] += zr; sRe2[b] += zr * zr; cnt[b]++;
+            const u1 = -KX[p] * t, u2 = -KY[p] * t;                     // x = a u
+            x11[b] += u1 * u1; x12[b] += u1 * u2; x22[b] += u2 * u2; x1y[b] += u1 * zi; x2y[b] += u2 * zi; yy[b] += zi * zi;
+          }
+          // noise variance of Im z in each bin: what is left after the bin's own best shift, pooled with its neighbours
+          const resid = new Float64Array(nb + 1), dof = new Float64Array(nb + 1), aB = new Float64Array(nb + 1);
+          for (let b = 1; b <= nb; b++) {
+            if (cnt[b] < 2 || !alive[b]) continue;
+            const a = sRe[b] / cnt[b], aErr = Math.sqrt(Math.max(0, sRe2[b] / cnt[b] - a * a) / (cnt[b] / 2));   // conjugate pairs: half as many values
+            // only while the pattern is still clearly there (a tenth of A/2 or more, and well above its own noise), from
+            // the shortest delay on: once it has faded, a later mean of pure noise that happens to come out positive
+            // would otherwise count, and at long delays it weighs most and pins v where it is
+            if (!(a > 3 * aErr) || !(a > 0.1 * ampRef[b])) { alive[b] = 0; continue; }
+            aB[b] = a;
+            const det = x11[b] * x22[b] - x12[b] * x12[b];
+            let r = yy[b];
+            if (det > 0) { const d1 = (x1y[b] * x22[b] - x2y[b] * x12[b]) / det, d2 = (x11[b] * x2y[b] - x12[b] * x1y[b]) / det; r -= d1 * x1y[b] + d2 * x2y[b]; }
+            resid[b] = Math.max(0, r); dof[b] = Math.max(1, cnt[b] / 2 - 2);   // pixels come in conjugate pairs
+          }
+          for (let b = 1; b <= nb; b++) {
+            if (!aB[b]) continue;
+            let rs = 0, ds = 0; for (let k = Math.max(1, b - 1); k <= Math.min(nb, b + 1); k++) { rs += resid[k] / 2; ds += dof[k]; }
+            const v2 = rs / ds; if (!(v2 > 0)) continue;
+            const w = aB[b] * aB[b] / v2, wy = aB[b] / v2;
+            a11 += w * x11[b]; a12 += w * x12[b]; a22 += w * x22[b]; r1 += wy * x1y[b]; r2 += wy * x2y[b]; used += cnt[b];
+          }
+        }
+        const det = a11 * a22 - a12 * a12; if (!(det > 0)) break;
+        const dx = (r1 * a22 - r2 * a12) / det, dy = (a11 * r2 - a12 * r1) / det;
+        vx += dx; vy += dy;
+        if (Math.hypot(dx, dy) < 1e-4 * Math.max(Math.hypot(vx, vy), 1e-3)) break;
+      }
+      return { vx: vx, vy: vy, n: used };
+    };
+    // two starts, the phase fit and no drift at all; keep the one whose turned C has the least imaginary part left
+    const imLeft = function (vx, vy) {
+      let s = 0;
+      for (const li of allLags) { const c = C[li], t = taus[li]; let im2 = 0, all = 0;
+        for (const p of pixList) { const ph = (KX[p] * vx + KY[p] * vy) * t, zi = c[2 * p] * Math.sin(ph) + c[2 * p + 1] * Math.cos(ph); im2 += zi * zi; all += c[2 * p] * c[2 * p] + c[2 * p + 1] * c[2 * p + 1]; }
+        if (all > 0) s += im2 / all; }
+      return s;
+    };
+    const fa = imFit(allC, allLags, ph1.vx, ph1.vy), fb = imFit(allC, allLags, 0, 0);
+    const ph0 = imLeft(fa.vx, fa.vy) <= imLeft(fb.vx, fb.vy) ? fa : fb;
+    // uncertainty: jackknifes over ten parts of the movie (at the delays kept per part) and over eight interleaved groups
+    // of q. The parts of one movie share the arrangement of the particles in the widest patterns, so the first can come
+    // out too small; each is itself noisy (few parts). Both are added in quadrature: against the scatter between new
+    // movies this was right for 200 nm beads (slow and fast drifts) and still a factor 1.4 small for 1 um beads at 10 um/s.
     const jackErr = function (rs) {
       const k = rs.length, mx = rs.reduce(function (a, r) { return a + r.vx; }, 0) / k, my = rs.reduce(function (a, r) { return a + r.vy; }, 0) / k;
       return [Math.sqrt((k - 1) / k * rs.reduce(function (a, r) { return a + (r.vx - mx) * (r.vx - mx); }, 0)), Math.sqrt((k - 1) / k * rs.reduce(function (a, r) { return a + (r.vy - my) * (r.vy - my); }, 0))];
     };
     const jt = [], jq = [];
-    for (let j = 0; j < K; j++) jt.push(phaseFit(function (li) { return cWithout(li, j); }, ph0.vx, ph0.vy));
-    for (let j = 0; j < GQ; j++) jq.push(phaseFit(allC, ph0.vx, ph0.vy, j));
+    const phT = imFit(allC, phaseLags, ph0.vx, ph0.vy);
+    for (let j = 0; j < K; j++) jt.push(imFit(function (li) { return cWithout(li, j); }, phaseLags, phT.vx, phT.vy));
+    for (let j = 0; j < GQ; j++) jq.push(imFit(allC, allLags, ph0.vx, ph0.vy, j));
     const eT = jackErr(jt), eQ = jackErr(jq);
-    const vxErr = Math.sqrt((eT[0] * eT[0] + eQ[0] * eQ[0]) / 2), vyErr = Math.sqrt((eT[1] * eT[1] + eQ[1] * eQ[1]) / 2);
+    const vxErr = Math.hypot(eT[0], eQ[0]), vyErr = Math.hypot(eT[1], eQ[1]);
 
     // ---- data in sectors: (bin, sector) groups of pixels, folded onto [0, pi) (d is even in q) -----------------
     const groups = [];                                                 // { b, s, px: [qx], py: [qy], d: Float64Array(L) }
@@ -269,18 +340,22 @@
     const dir_err_deg = speed > 0 ? (Math.abs(vxErr * dir[1]) + Math.abs(vyErr * dir[0])) / speed * 180 / Math.PI : null;
 
     // ---- 6. can the drift be seen? ------------------------------------------------------------------------------
-    // the pattern at q oscillates (q v dt about 1) before diffusion erases it (D q^2 dt about 2) when q < 2 v / D,
-    // and within the movie when q v (longest delay) > 1. Widest and finest q used bound what is available.
+    // With the cross spectrum: when the speed is well above its uncertainty (3 sigma, sigma per component), as with
+    // tracking; no pattern has to swing. "swing": where the structure function alone can see it, because the pattern
+    // at q oscillates (q v dt about 1) before diffusion erases it (D q^2 dt about 2), q < 2 v / D, and within the movie,
+    // q v (longest delay) > 1. Widest and finest q used bound what is available.
     const qLo = S.q_per_um[binsUsed[0]], qHi = S.q_per_um[binsUsed[binsUsed.length - 1]];
+    const sigmaV = Math.sqrt((vxErr * vxErr + vyErr * vyErr) / 2);
     const visibility = function (v, Dv) {
       const a = Math.max(qLo, 1 / (v * taus[L - 1])), z = Math.min(qHi, 2 * v / Dv);
       const nq = binsUsed.filter(function (b) { const q = S.q_per_um[b]; return q >= a && q <= z; }).length;
-      return { q_from: a, q_to: z, n_q: nq, visible: nq >= 3, q_star: v / Dv, peclet: v * movie.L_um / Dv };
+      return { q_from: a, q_to: z, n_q: nq, swing: nq >= 3, visible: nq >= 3, q_star: v / Dv, peclet: v * movie.L_um / Dv, v_min_um_s: 3 * sigmaV };
     };
     const vis = visibility(Math.max(speed, 1e-9), D);
-    let detected = vis.visible && speed > 3 * Math.max(Math.hypot(vxErr, vyErr), 1e-12);
+    let detected = speed > 3 * Math.max(sigmaV, 1e-12);
     let vErrOut = v_err;
-    if (fromSF) { const vq = okQ.filter(function (e) { return e.q_per_um * speed * taus[L - 1] > 1; }).map(function (e) { return e.omega_rad_s / e.q_per_um; }); vErrOut = spreadOf(vq); detected = vis.visible && vErrOut !== null && speed > 3 * vErrOut; }
+    if (fromSF) { const vq = okQ.filter(function (e) { return e.q_per_um * speed * taus[L - 1] > 1; }).map(function (e) { return e.omega_rad_s / e.q_per_um; }); vErrOut = spreadOf(vq); detected = vis.swing && vErrOut !== null && speed > 3 * vErrOut; }
+    vis.visible = detected;
 
     // ---- outputs for the page ------------------------------------------------------------------------------------
     // sector curves along and across the drift (normalised: f = 1 - (d - B) / A), per bin

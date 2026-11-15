@@ -281,7 +281,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
       <p class="eyebrow">Differential dynamic microscopy</p>
       <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><a href="../swimmers/">Swimming cells</a><span aria-current="page">Drifting particles</span></nav>
       <h1>Particles carried by a flow, by gravity or by heat</h1>
-      <p class="lede">Particles in a liquid jiggle at random, but they can also be carried in one direction: by a flow of the liquid, by gravity when they are denser than the liquid, or by a temperature gradient, which pushes most colloids towards the cold side (thermophoresis). Differential dynamic microscopy (DDM) sees both motions in the same movie. The random part makes each stripe pattern fade; the drift makes it travel, so patterns along the drift fade and oscillate at the same time. Here a simulated microscope lets you measure the speed and the direction of the drift, and find out when it is too slow to be seen at all.</p>
+      <p class="lede">Particles in a liquid jiggle at random, but they can also be carried in one direction: by a flow of the liquid, by gravity when they are denser than the liquid, or by a temperature gradient, which pushes most colloids towards the cold side (thermophoresis). Differential dynamic microscopy (DDM) sees both motions in the same movie. The random part makes each stripe pattern fade; the drift makes it travel, so patterns along the drift fade and oscillate at the same time. Here a simulated microscope lets you measure the speed and the direction of the drift, and find out how slow a drift a movie can still show.</p>
       <fieldset class="levels">
         <legend>How deep do you want to go?</legend>
         <div class="level-opts" role="radiogroup">
@@ -460,7 +460,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
         <div class="step-body">
           <div class="text">
             <p>Each pattern gives two numbers: how fast it fades, and how fast it swings along the drift. Fading comes from the random motion: halving the stripe spacing makes it four times faster, a line of slope 2 on these logarithmic axes. Swinging comes from the drift: halving the spacing makes it only twice as fast, a line of slope 1. The height of the first line gives the diffusion coefficient, and from it the size; the height of the second gives the speed.</p>
-            <p>The two lines cross. To their left the drift moves each pattern before diffusion renews it, and the drift can be seen. To their right diffusion wins. If the crossing lies at wider stripes than the image can hold, or the movie is too short for the drift to move the widest pattern by a good part of its spacing, the drift is invisible to DDM however much you look: the result then says so.</p>
+            <p>The two lines cross. To their left the drift moves each pattern by a whole stripe before diffusion renews it, so the curves swing. To their right diffusion wins and no curve swings, but the drift is still there: each pattern is carried a little before it fades, and the page measures this small shift from the phase of the pattern, averaged over all patterns and the whole movie. As with tracking, a slow drift then only takes a longer movie (four times the frames halves the noise), a wider field or larger particles. The result says how slow a drift this movie can show.</p>
             <p class="lvl-2">Below the plot, the result gives the speed, its direction and the diffusion coefficient, and what they say about the cause: the density of the particles for sedimentation, the thermal diffusion coefficient and the Soret coefficient for thermophoresis.</p>
           </div>
           <figure class="viz">
@@ -483,8 +483,8 @@ dqt.set_frame_rate(frame_rate)     # frames per second
         <details class="math" data-open-at="researcher">
           <summary>The math: fading, swinging, and when a drift can be seen</summary>
           <div class="eq">&Gamma;(<i>q</i>) = <i>D q</i><sup>2</sup>, &nbsp;&nbsp; &omega;(<i>q</i>) = <i>q v</i> (along <b>v</b>) &nbsp;&nbsp;&rArr;&nbsp;&nbsp; <i>d</i><sub>h</sub> = <i>k</i><sub>B</sub><i>T</i> / (3&pi;<i>&eta;D</i>)</div>
-          <p>The two rates are equal at <i>q</i>* = <i>v</i>/<i>D</i>. A pattern along the drift swings visibly when <i>qv</i>&Delta;<i>t</i> reaches about 1 before diffusion has erased it, <i>Dq</i><sup>2</sup>&Delta;<i>t</i> of about 2: that is for <i>q</i> below 2<i>v</i>/<i>D</i>, and above 1/(<i>v</i>&Delta;<i>t</i><sub>max</sub>) for the longest delay of the movie. The widest pattern of the image has <i>q</i> = 2&pi;/<i>L</i>, so a drift shows only if the Peclet number over the field, <i>v L</i>/<i>D</i>, is above about 2&pi;. The page asks for at least three measured <i>q</i> in that range and a speed more than three times its uncertainty.</p>
-          <p><b>Velocity.</b> The phase of <i>C</i>(<b>q</b>, &Delta;<i>t</i>) is fitted by weighted least squares to &minus;<b>q</b>&middot;<b>v</b>&Delta;<i>t</i> over all pixels and delays where the pattern is still clearly there (|<i>C</i>| above a tenth of <i>A</i>) and the phase has not wrapped (|<b>q</b>&middot;<b>v</b>&Delta;<i>t</i>| &lt; 1.2), each weighted by |<i>C</i>|<sup>2</sup>; a first guess comes from the phase difference between neighbouring pixels, which does not wrap. The uncertainty combines two jackknifes (root mean square), the fit repeated with one part left out each time: over ten parts of the movie (noise from frame to frame) and over eight interleaved groups of <i>q</i> (the arrangement of the particles, which the widest patterns keep through the whole movie, so parts of one movie share it). <i>D</i> then comes from a fit of <i>d</i> over 12 sectors of direction with <b>v</b> fixed, <i>A</i> free at each <i>q</i> and <i>B</i> from the camera. The fits of &Gamma; and &omega; at each <i>q</i> (the plot) are for the eye and for the scatter of <i>D</i>.</p>
+          <p>The two rates are equal at <i>q</i>* = <i>v</i>/<i>D</i>. A pattern along the drift swings when <i>qv</i>&Delta;<i>t</i> reaches about 1 before diffusion has erased it, <i>Dq</i><sup>2</sup>&Delta;<i>t</i> of about 2: that is for <i>q</i> below 2<i>v</i>/<i>D</i>, and above 1/(<i>v</i>&Delta;<i>t</i><sub>max</sub>) for the longest delay of the movie. The widest pattern of the image has <i>q</i> = 2&pi;/<i>L</i>, so patterns swing only if the Peclet number over the field, <i>v L</i>/<i>D</i>, is above about 2&pi;. The structure function alone needs this. The phase of <i>C</i> does not: the page reports a drift when its speed is more than three times its uncertainty (uncertainty per component, so about 1 % of movies without a drift would show one by chance).</p>
+          <p><b>Velocity.</b> A first guess comes from the phase difference between neighbouring pixels, which does not wrap, refined by a fit of the phase of <i>C</i> where it has not wrapped. Then, for the current <b>v</b>, each <i>C</i> is turned back, <i>z</i> = <i>C</i> e<sup><i>i</i><b>q</b>&middot;<b>v</b>&Delta;<i>t</i></sup>, so that Im <i>z</i> = &minus;<i>a</i> <b>q</b>&middot;&delta;<b>v</b> &Delta;<i>t</i> + noise, with <i>a</i> the part of the pattern still there, taken as the mean of Re <i>z</i> over the pixels of the same <i>q</i>. The correction &delta;<b>v</b> follows by weighted least squares over all pixels and all delays, each <i>q</i> used from the shortest delay until its pattern has faded below a tenth of <i>A</i>/2; the weights are 1/(noise variance of Im <i>z</i>), estimated from the scatter between the pixels of each <i>q</i>. The fit is repeated until <b>v</b> no longer changes, also from a start at <b>v</b> = 0. No phase is ever taken, so phases of a few hundredths of a radian, far below a full swing, still count: the drift is found like the mean displacement in tracking, by averaging small shifts over many patterns. The slowest drift a movie can show is three times the uncertainty below; in our simulations the uncertainty falls as one over the square root of the number of frames. The uncertainty adds two jackknifes in quadrature, the fit repeated with one part left out each time: over ten parts of the movie (noise from frame to frame) and over eight interleaved groups of <i>q</i> (the arrangement of the particles, which the widest patterns keep through the whole movie, so parts of one movie share it). <i>D</i> then comes from a fit of <i>d</i> over 12 sectors of direction with <b>v</b> fixed, <i>A</i> free at each <i>q</i> and <i>B</i> from the camera. The fits of &Gamma; and &omega; at each <i>q</i> (the plot) are for the eye and for the scatter of <i>D</i>.</p>
           <p><b>Sedimentation.</b> Stokes: <i>v</i><sub>s</sub> = (2/9) &Delta;&rho; <i>g a</i><sup>2</sup> / <i>&eta;</i>, with <i>a</i> the radius. From the measured <i>v</i><sub>s</sub> and <i>D</i> (which gives <i>a</i>), &Delta;&rho; = 9<i>&eta;v</i><sub>s</sub> / (2<i>g a</i><sup>2</sup>). <b>Thermophoresis.</b> <b>v</b> = &minus;<i>D</i><sub>T</sub> &nabla;<i>T</i>, and the Soret coefficient is <i>S</i><sub>T</sub> = <i>D</i><sub>T</sub>/<i>D</i>; positive <i>S</i><sub>T</sub> sends the particles to the cold side. For polystyrene beads <i>S</i><sub>T</sub> grows with temperature and changes sign near 5-15 &deg;C (Iacopini, Rusconi and Piazza 2006; Braibanti, Vigolo and Piazza 2008). In a gradient along the axis the particles pile up against one wall within 1/(<i>S</i><sub>T</sub> |&nabla;<i>T</i>|).</p>
         </details>
         <details class="lvl-3 math" open>
@@ -505,12 +505,12 @@ dqt.set_frame_rate(frame_rate)     # frames per second
 
   <section class="wrap further" aria-labelledby="h-adds">
     <h2 id="h-adds">What this page adds to the published methods</h2>
-    <p class="prose">The analysis of drift in DDM usually fits the structure function with its cos(<b>q</b>&middot;<b>v</b>&Delta;<i>t</i>) term (see "Go further"). The steps below are not in the papers we cite: we added them while testing the page against its own simulations. Some may exist elsewhere in the literature. At the "Addict" level each can be switched off, and the result table shows the published method alone on the same movie.</p>
+    <p class="prose">The analysis of drift in DDM usually fits the structure function with its cos(<b>q</b>&middot;<b>v</b>&Delta;<i>t</i>) term (see "Go further"), which needs the patterns to swing. The steps below are not in the papers we cite: we added them while testing the page against its own simulations. Some may exist elsewhere in the literature. At the "Addict" level each can be switched off, and the result table shows the published method alone on the same movie.</p>
     <ul class="adds">
-      <li><b>Velocity from the phase of the cross spectrum.</b> The phase of &lang;<i>F</i>(<b>q</b>, <i>t</i> + &Delta;<i>t</i>) <i>F</i>*(<b>q</b>, <i>t</i>)&rang; is &minus;<b>q</b>&middot;<b>v</b>&Delta;<i>t</i>: it gives the sign of the drift, needs no model of the fading, and has no camera noise at &Delta;<i>t</i> &gt; 0. <span class="where">Step 6. For 200 nm beads at 2 &micro;m/s the structure function alone gave 2.9 &micro;m/s, and 1.4 &micro;m/s for a sample with no drift at all; the phase gave 1.93 &plusmn; 0.09 and no drift.</span></li>
+      <li><b>Velocity from the phase of the cross spectrum.</b> The phase of &lang;<i>F</i>(<b>q</b>, <i>t</i> + &Delta;<i>t</i>) <i>F</i>*(<b>q</b>, <i>t</i>)&rang; is &minus;<b>q</b>&middot;<b>v</b>&Delta;<i>t</i>: it gives the sign of the drift, needs no model of the fading, and has no camera noise at &Delta;<i>t</i> &gt; 0. Fitted through the imaginary part of <i>C</i> after turning it by the current <b>v</b>, at all delays while each pattern is still there, so that phases far below a full swing count. <span class="where">Step 6. For 200 nm beads at 2 &micro;m/s the structure function alone gave 2.9 &micro;m/s, and 1.4 &micro;m/s for a sample with no drift at all; the phase gave 2.00 &plusmn; 0.05 over six movies, and no drift. A drift of 0.3 &micro;m/s, which makes no pattern swing (<i>vL</i>/<i>D</i> = 5), was found in a movie of 512 frames at 2 per second.</span></li>
       <li><b>Camera noise known from the detector.</b> B = 2 (excess-noise factor &times; mean count + read noise<sup>2</sup>), the same at every <i>q</i>, instead of a free B at each <i>q</i>. <span class="where">Step 6.</span></li>
-      <li><b>Uncertainty from the movie itself.</b> The velocity fit repeated with one tenth of the movie left out, and with one of eight interleaved groups of <i>q</i> left out (jackknifes), combined. <span class="where">Step 6. Parts of the movie alone gave uncertainties up to three times too small, because the widest patterns keep the same particles through the whole movie.</span></li>
-      <li><b>Can the drift be seen?</b> The range of <i>q</i> where the drift moves the patterns before diffusion renews them, and the Peclet number over the field, said in words. <span class="where">Step 6.</span></li>
+      <li><b>Uncertainty from the movie itself.</b> The velocity fit repeated with one tenth of the movie left out, and with one of eight interleaved groups of <i>q</i> left out (jackknifes), added in quadrature. <span class="where">Step 6. Parts of the movie alone gave uncertainties up to three times too small, because the widest patterns keep the same particles through the whole movie.</span></li>
+      <li><b>How slow a drift the movie can show</b>, said in words: three times the uncertainty of the speed, and what lowers it. <span class="where">Step 6.</span></li>
     </ul>
   </section>
 
@@ -531,7 +531,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
       <li>R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope</a>, Phys. Rev. Lett. 100, 188102 (2008). The paper that introduced the method.</li>
       <li>E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a>, J. Chem. Phys. 163, 161501 (2025). A practical guide with the notation used here.</li>
       <li>J. A. Richards, V. A. Martinez and J. Arlt, <a href="https://doi.org/10.1039/D0SM02255A">Particle sizing for flowing colloidal suspensions using flow-differential dynamic microscopy</a>, Soft Matter 17, 3945 (2021). Sizing particles while they flow, with the effect of the flow profile.</li>
-      <li>Thermophoresis of colloids: S. Duhr and D. Braun, <a href="https://doi.org/10.1103/PhysRevLett.96.168301">Thermophoretic depletion follows Boltzmann distribution</a>, Phys. Rev. Lett. 96, 168301 (2006); S. Iacopini, R. Rusconi and R. Piazza, <a href="https://doi.org/10.1140/epje/e2006-00012-9">The "macromolecular tourist": universal temperature dependence of thermal diffusion in aqueous colloidal suspensions</a>, Eur. Phys. J. E 19, 59 (2006); M. Braibanti, D. Vigolo and R. Piazza, <a href="https://doi.org/10.1103/PhysRevLett.100.108303">Does thermophoretic mobility depend on particle size?</a>, Phys. Rev. Lett. 100, 108303 (2008). The values used on this page.</li>
+      <li>Thermophoresis of colloids: L. Helden, R. Eichhorn and C. Bechinger, <a href="https://doi.org/10.1039/C4SM02833C">Direct measurement of thermophoretic forces</a>, Soft Matter (2015), single micrometre beads near a wall; S. Duhr and D. Braun, <a href="https://doi.org/10.1103/PhysRevLett.96.168301">Thermophoretic depletion follows Boltzmann distribution</a>, Phys. Rev. Lett. 96, 168301 (2006); S. Iacopini, R. Rusconi and R. Piazza, <a href="https://doi.org/10.1140/epje/e2006-00012-9">The "macromolecular tourist": universal temperature dependence of thermal diffusion in aqueous colloidal suspensions</a>, Eur. Phys. J. E 19, 59 (2006); M. Braibanti, D. Vigolo and R. Piazza, <a href="https://doi.org/10.1103/PhysRevLett.100.108303">Does thermophoretic mobility depend on particle size?</a>, Phys. Rev. Lett. 100, 108303 (2008). The values used on this page.</li>
     </ul>
     <ul class="lvl-3">
       <li><a href="https://github.com/somexlab/fastddm">fastDDM</a> (Python, CPU and GPU, GPL 3.0): <code>pip install fastddm</code>. <a href="https://fastddm.readthedocs.io/">Documentation</a>.</li>
@@ -3950,20 +3950,91 @@ dqt.set_frame_rate(frame_rate)     # frames per second
       return { vx: vx, vy: vy, n: used };
     };
     const allC = function (li) { return C[li]; };
-    const ph0 = phaseFit(allC, v0x, v0y);
-    // two jackknifes: over ten parts of the movie (noise from frame to frame), and over eight interleaved groups of q
-    // (the particles' arrangement: the widest patterns barely change during the movie, so parts of the same movie share
-    // it, and the first estimate alone came out up to three times too small in some movies). Each is itself noisy (a few
-    // parts only); their root mean square matched the scatter between movies.
+    const ph1 = phaseFit(allC, v0x, v0y);                              // start: good for fast drifts (it unwraps the phase)
+
+    // ---- 2b. velocity from the imaginary part of C, at all delays ----------------------------------------------
+    // Turn each C by the phase of the current v: z = C e^{+i q.v dt}. Then Im z = -a q.(v_true - v) dt + noise, with a
+    // the part of the pattern still there, taken as the mean of Re z over the pixels of the same q (so the weights do
+    // not depend on each pixel's own noise, which biased the phase fit with weights |C|^2). Weighted least squares,
+    // weights 1 / (noise variance of Im z), estimated for each q and delay from the scatter between its pixels (pooled
+    // with the neighbouring q). No phase is ever taken, so a phase of a few hundredths of a radian still counts: this
+    // works like tracking, where small mean displacements add up over many particles.
+    const pixList = [];
+    for (let p = 0; p < P; p++) { const b = binOf[p]; if (b > 0 && S.q_per_um[b] >= qmin && S.q_per_um[b] <= qmax) pixList.push(p); }
+    const allLags = []; for (let li = 0; li < L; li++) allLags.push(li);
+    const imFit = function (getC, lags, vxs, vys, skip) {
+      let vx = vxs, vy = vys, used = 0;
+      const sRe = new Float64Array(nb + 1), sIm2 = new Float64Array(nb + 1), sRe2 = new Float64Array(nb + 1), cnt = new Float64Array(nb + 1);
+      const xx = new Float64Array(nb + 1), xy = new Float64Array(nb + 1), yy = new Float64Array(nb + 1), x1y = new Float64Array(nb + 1), x2y = new Float64Array(nb + 1), x11 = new Float64Array(nb + 1), x12 = new Float64Array(nb + 1), x22 = new Float64Array(nb + 1);
+      const alive = new Uint8Array(nb + 1);
+      for (let it = 0; it < 5; it++) {
+        let a11 = 0, a12 = 0, a22 = 0, r1 = 0, r2 = 0; used = 0;
+        alive.fill(1);
+        for (const li of lags) {                                       // delays in increasing order
+          const c = getC(li); if (!c) continue; const t = taus[li];
+          sRe.fill(0); sRe2.fill(0); cnt.fill(0); x11.fill(0); x12.fill(0); x22.fill(0); x1y.fill(0); x2y.fill(0); yy.fill(0);
+          for (const p of pixList) {
+            const b = binOf[p]; if (skip !== undefined && b % GQ === skip) continue;
+            const ph = (KX[p] * vx + KY[p] * vy) * t, cs = Math.cos(ph), sn = Math.sin(ph);
+            const zr = c[2 * p] * cs - c[2 * p + 1] * sn, zi = c[2 * p] * sn + c[2 * p + 1] * cs;
+            sRe[b] += zr; sRe2[b] += zr * zr; cnt[b]++;
+            const u1 = -KX[p] * t, u2 = -KY[p] * t;                     // x = a u
+            x11[b] += u1 * u1; x12[b] += u1 * u2; x22[b] += u2 * u2; x1y[b] += u1 * zi; x2y[b] += u2 * zi; yy[b] += zi * zi;
+          }
+          // noise variance of Im z in each bin: what is left after the bin's own best shift, pooled with its neighbours
+          const resid = new Float64Array(nb + 1), dof = new Float64Array(nb + 1), aB = new Float64Array(nb + 1);
+          for (let b = 1; b <= nb; b++) {
+            if (cnt[b] < 2 || !alive[b]) continue;
+            const a = sRe[b] / cnt[b], aErr = Math.sqrt(Math.max(0, sRe2[b] / cnt[b] - a * a) / (cnt[b] / 2));   // conjugate pairs: half as many values
+            // only while the pattern is still clearly there (a tenth of A/2 or more, and well above its own noise), from
+            // the shortest delay on: once it has faded, a later mean of pure noise that happens to come out positive
+            // would otherwise count, and at long delays it weighs most and pins v where it is
+            if (!(a > 3 * aErr) || !(a > 0.1 * ampRef[b])) { alive[b] = 0; continue; }
+            aB[b] = a;
+            const det = x11[b] * x22[b] - x12[b] * x12[b];
+            let r = yy[b];
+            if (det > 0) { const d1 = (x1y[b] * x22[b] - x2y[b] * x12[b]) / det, d2 = (x11[b] * x2y[b] - x12[b] * x1y[b]) / det; r -= d1 * x1y[b] + d2 * x2y[b]; }
+            resid[b] = Math.max(0, r); dof[b] = Math.max(1, cnt[b] / 2 - 2);   // pixels come in conjugate pairs
+          }
+          for (let b = 1; b <= nb; b++) {
+            if (!aB[b]) continue;
+            let rs = 0, ds = 0; for (let k = Math.max(1, b - 1); k <= Math.min(nb, b + 1); k++) { rs += resid[k] / 2; ds += dof[k]; }
+            const v2 = rs / ds; if (!(v2 > 0)) continue;
+            const w = aB[b] * aB[b] / v2, wy = aB[b] / v2;
+            a11 += w * x11[b]; a12 += w * x12[b]; a22 += w * x22[b]; r1 += wy * x1y[b]; r2 += wy * x2y[b]; used += cnt[b];
+          }
+        }
+        const det = a11 * a22 - a12 * a12; if (!(det > 0)) break;
+        const dx = (r1 * a22 - r2 * a12) / det, dy = (a11 * r2 - a12 * r1) / det;
+        vx += dx; vy += dy;
+        if (Math.hypot(dx, dy) < 1e-4 * Math.max(Math.hypot(vx, vy), 1e-3)) break;
+      }
+      return { vx: vx, vy: vy, n: used };
+    };
+    // two starts, the phase fit and no drift at all; keep the one whose turned C has the least imaginary part left
+    const imLeft = function (vx, vy) {
+      let s = 0;
+      for (const li of allLags) { const c = C[li], t = taus[li]; let im2 = 0, all = 0;
+        for (const p of pixList) { const ph = (KX[p] * vx + KY[p] * vy) * t, zi = c[2 * p] * Math.sin(ph) + c[2 * p + 1] * Math.cos(ph); im2 += zi * zi; all += c[2 * p] * c[2 * p] + c[2 * p + 1] * c[2 * p + 1]; }
+        if (all > 0) s += im2 / all; }
+      return s;
+    };
+    const fa = imFit(allC, allLags, ph1.vx, ph1.vy), fb = imFit(allC, allLags, 0, 0);
+    const ph0 = imLeft(fa.vx, fa.vy) <= imLeft(fb.vx, fb.vy) ? fa : fb;
+    // uncertainty: jackknifes over ten parts of the movie (at the delays kept per part) and over eight interleaved groups
+    // of q. The parts of one movie share the arrangement of the particles in the widest patterns, so the first can come
+    // out too small; each is itself noisy (few parts). Both are added in quadrature: against the scatter between new
+    // movies this was right for 200 nm beads (slow and fast drifts) and still a factor 1.4 small for 1 um beads at 10 um/s.
     const jackErr = function (rs) {
       const k = rs.length, mx = rs.reduce(function (a, r) { return a + r.vx; }, 0) / k, my = rs.reduce(function (a, r) { return a + r.vy; }, 0) / k;
       return [Math.sqrt((k - 1) / k * rs.reduce(function (a, r) { return a + (r.vx - mx) * (r.vx - mx); }, 0)), Math.sqrt((k - 1) / k * rs.reduce(function (a, r) { return a + (r.vy - my) * (r.vy - my); }, 0))];
     };
     const jt = [], jq = [];
-    for (let j = 0; j < K; j++) jt.push(phaseFit(function (li) { return cWithout(li, j); }, ph0.vx, ph0.vy));
-    for (let j = 0; j < GQ; j++) jq.push(phaseFit(allC, ph0.vx, ph0.vy, j));
+    const phT = imFit(allC, phaseLags, ph0.vx, ph0.vy);
+    for (let j = 0; j < K; j++) jt.push(imFit(function (li) { return cWithout(li, j); }, phaseLags, phT.vx, phT.vy));
+    for (let j = 0; j < GQ; j++) jq.push(imFit(allC, allLags, ph0.vx, ph0.vy, j));
     const eT = jackErr(jt), eQ = jackErr(jq);
-    const vxErr = Math.sqrt((eT[0] * eT[0] + eQ[0] * eQ[0]) / 2), vyErr = Math.sqrt((eT[1] * eT[1] + eQ[1] * eQ[1]) / 2);
+    const vxErr = Math.hypot(eT[0], eQ[0]), vyErr = Math.hypot(eT[1], eQ[1]);
 
     // ---- data in sectors: (bin, sector) groups of pixels, folded onto [0, pi) (d is even in q) -----------------
     const groups = [];                                                 // { b, s, px: [qx], py: [qy], d: Float64Array(L) }
@@ -4059,18 +4130,22 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     const dir_err_deg = speed > 0 ? (Math.abs(vxErr * dir[1]) + Math.abs(vyErr * dir[0])) / speed * 180 / Math.PI : null;
 
     // ---- 6. can the drift be seen? ------------------------------------------------------------------------------
-    // the pattern at q oscillates (q v dt about 1) before diffusion erases it (D q^2 dt about 2) when q < 2 v / D,
-    // and within the movie when q v (longest delay) > 1. Widest and finest q used bound what is available.
+    // With the cross spectrum: when the speed is well above its uncertainty (3 sigma, sigma per component), as with
+    // tracking; no pattern has to swing. "swing": where the structure function alone can see it, because the pattern
+    // at q oscillates (q v dt about 1) before diffusion erases it (D q^2 dt about 2), q < 2 v / D, and within the movie,
+    // q v (longest delay) > 1. Widest and finest q used bound what is available.
     const qLo = S.q_per_um[binsUsed[0]], qHi = S.q_per_um[binsUsed[binsUsed.length - 1]];
+    const sigmaV = Math.sqrt((vxErr * vxErr + vyErr * vyErr) / 2);
     const visibility = function (v, Dv) {
       const a = Math.max(qLo, 1 / (v * taus[L - 1])), z = Math.min(qHi, 2 * v / Dv);
       const nq = binsUsed.filter(function (b) { const q = S.q_per_um[b]; return q >= a && q <= z; }).length;
-      return { q_from: a, q_to: z, n_q: nq, visible: nq >= 3, q_star: v / Dv, peclet: v * movie.L_um / Dv };
+      return { q_from: a, q_to: z, n_q: nq, swing: nq >= 3, visible: nq >= 3, q_star: v / Dv, peclet: v * movie.L_um / Dv, v_min_um_s: 3 * sigmaV };
     };
     const vis = visibility(Math.max(speed, 1e-9), D);
-    let detected = vis.visible && speed > 3 * Math.max(Math.hypot(vxErr, vyErr), 1e-12);
+    let detected = speed > 3 * Math.max(sigmaV, 1e-12);
     let vErrOut = v_err;
-    if (fromSF) { const vq = okQ.filter(function (e) { return e.q_per_um * speed * taus[L - 1] > 1; }).map(function (e) { return e.omega_rad_s / e.q_per_um; }); vErrOut = spreadOf(vq); detected = vis.visible && vErrOut !== null && speed > 3 * vErrOut; }
+    if (fromSF) { const vq = okQ.filter(function (e) { return e.q_per_um * speed * taus[L - 1] > 1; }).map(function (e) { return e.omega_rad_s / e.q_per_um; }); vErrOut = spreadOf(vq); detected = vis.swing && vErrOut !== null && speed > 3 * vErrOut; }
+    vis.visible = detected;
 
     // ---- outputs for the page ------------------------------------------------------------------------------------
     // sector curves along and across the drift (normalised: f = 1 - (d - B) / A), per bin
@@ -4341,6 +4416,12 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     br123: { label: "246 nm polystyrene (Braibanti, Vigolo and Piazza 2008)", d: 0.246, pts: [[5, -0.65], [15, 0.25], [25, 0.8], [35, 1.2], [45, 1.5]] },
     br53: { label: "106 nm polystyrene (Braibanti, Vigolo and Piazza 2008)", d: 0.106, pts: [[5, -0.25], [15, 0.2], [25, 0.4], [35, 0.55], [45, 0.7]] },
     iac30: { label: "60 nm polystyrene (Iacopini, Rusconi and Piazza 2006)", d: 0.06, ST: function (T) { return 0.92 * (1 - Math.exp((278.3 - (T + 273.15)) / 19)); }, range: [3, 45] },
+    //   Helden, Eichhorn and Bechinger, Soft Matter (2015), doi 10.1039/C4SM02833C, Fig. 4: single micrometre beads held near a
+    //   glass wall (total internal reflection microscopy), S_T = S_inf [1 - exp((T* - T) / T0)]: polystyrene of radius 2.5 um,
+    //   S_inf = 583 /K, T* = 286.6 K, T0 = 40.6 K; melamine resin of radius 1.35 um, S_inf = 36.0 /K, T* = 316.7 K, T0 = 27.3 K
+    //   (negative at room temperature: they move to the warm side). Melamine: index 1.68 and density 1.51 g/cm3 (assumed).
+    hel_ps: { label: "5 um polystyrene (Helden, Eichhorn and Bechinger 2015)", d: 5, ST: function (T) { return 583 * (1 - Math.exp((286.6 - (T + 273.15)) / 40.6)); }, range: null },
+    hel_mf: { label: "2.7 um melamine resin (Helden, Eichhorn and Bechinger 2015)", d: 2.7, mat: { n: 1.68, rho: 1.51 }, ST: function (T) { return 36.0 * (1 - Math.exp((316.7 - (T + 273.15)) / 27.3)); }, range: null },
     custom: { label: "Other (set the Soret coefficient)", d: null }
   };
   function thermoST() {
@@ -4505,14 +4586,15 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     if (r && (state.T_C < r[0] || state.T_C > r[1])) h += " Outside the temperatures measured (" + r[0] + "-" + r[1] + " " + DEG + "C): the nearest value is used.";
     if (state.thermo_sys !== "custom" && THERMO[state.thermo_sys].d && Math.abs(state.diameter_um / THERMO[state.thermo_sys].d - 1) > 0.02) h += " The particles set are not those measured.";
     if (state.thermo_sys.indexOf("br") === 0) h += " Measured in a 1:1 mixture of water and heavy water; D here is for the liquid set.";
+    if (state.thermo_sys.indexOf("hel") === 0) h += " Measured on single beads near a glass wall. Beads this large also settle onto the bottom glass within minutes; the simulation leaves gravity out here.";
     if (state.grad_dir === "axis") h += " Along the optical axis the particles pile up within about " + fmtSig(Math.min(1 / Math.abs(ST * state.grad), 1e4), 2) + " " + MU + "m of one wall.";
     return h;
   }
   function visibleHint() {
-    // can this drift be seen at all with this movie: q v dt must reach about 1 at a q where diffusion has not erased the pattern
+    // whether patterns swing (q v dt reaching about 1 before diffusion erases the pattern); the phase does not need it
     const ev = expectedDrift(); if (!ev.plane || !(ev.speed > 0)) return "";
     const D = dSE(), L = simPx() * pixelUm(), Pe = ev.speed * L / D;
-    return "Peclet number over the field v L / D = " + fmtSig(Pe, 2) + (Pe < 2 * Math.PI ? ": below 2\u03c0, so even the widest pattern is renewed by diffusion before the drift moves it. Expect no drift to be seen." : Pe < 30 ? ": the drift shows only in the widest patterns." : ": the drift shows clearly.");
+    return "Peclet number over the field v L / D = " + fmtSig(Pe, 2) + (Pe < 2 * Math.PI ? ": below 2\u03c0, so no pattern swings before diffusion renews it. The phase of the cross spectrum can still measure the drift if the movie is long enough; step 6 says." : Pe < 30 ? ": the drift makes only the widest patterns swing." : ": the drift makes many patterns swing.");
   }
   // vector optics: automatic above this aperture (objective, or condenser in transmitted light), where 1 - cos(theta) at the
   // pupil edge exceeds about 0.25 in water and the scalar weights start to be off by more than a few percent
@@ -4901,8 +4983,11 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     // a measured thermophoretic system comes with its particles; other particles take the system's S_T as their own
     if (state.cause === "thermo") {
       const sys = THERMO[state.thermo_sys];
-      if ((key === "thermo_sys" || key === "cause") && sys.d) { state.particle = "ps"; state.diameter_um = sys.d; }
-      if ((key === "diameter_um" || key === "particle") && sys.d && (state.particle !== "ps" || Math.abs(state.diameter_um / sys.d - 1) > 0.02)) { state.st_custom = Math.round(thermoST() * 100) / 100; state.thermo_sys = "custom"; }
+      if ((key === "thermo_sys" || key === "cause") && sys.d) {
+        state.diameter_um = sys.d;
+        if (sys.mat) { state.particle = "custom"; state.n_custom = sys.mat.n; state.rho_custom = sys.mat.rho; } else state.particle = "ps";
+      }
+      if ((key === "diameter_um" || key === "particle" || key === "n_custom") && sys.d && (state.particle !== (sys.mat ? "custom" : "ps") || Math.abs(state.diameter_um / sys.d - 1) > 0.02)) { state.st_custom = Math.round(thermoST() * 100) / 100; state.thermo_sys = "custom"; }
     }
     if (SCANNING() && (key === "mode" || key === "objective" || key === "scan_px")) autoZoom();
     if (key === "camera") { const c = cam(); state.cam_mode = Object.keys(c.modes)[0]; state.iface = Object.keys(c.ifaces)[0]; state.binning = 1; }
@@ -5504,11 +5589,9 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     if (!res.detected) {
       let t = "";
       if (ev.plane && ev.speed > 0) {
-        // the slowest drift this movie can show: at least three q where q v t_max > 1 and q < 2 v / D, and three times its uncertainty
-        const qs = res.per_q.map(function (e) { return e.q_per_um; }), tmax = res.taus_s[res.taus_s.length - 1];
-        const vmin = Math.max(res.D_um2_s * qs[Math.min(2, qs.length - 1)] / 2, 1 / (qs[0] * tmax), 3 * (res.v_err_um_s || 0));
-        const pe = ev.speed * mv.L_um / res.D_um2_s;
-        t = "A drift shows only in patterns that it moves by a good part of a stripe before diffusion has mixed them up. This movie can show drifts faster than about " + fmtV(vmin) + "; the one set is " + fmtV(ev.speed) + " (v L / D = " + fmtSig(pe, 2) + " over the field, where about 2\u03c0 or more is needed). Larger particles, a stronger push, a lower magnification (a wider field) or a longer movie help.";
+        // the slowest drift this movie can show: three times the uncertainty of the speed, as with tracking
+        const vmin = res.visibility.v_min_um_s, pe = ev.speed * mv.L_um / res.D_um2_s;
+        t = "The drift moves each pattern a little, while the random motion shifts it back and forth far more. As with tracking, the drift only shows once enough patterns and enough time are averaged for it to stand out of that noise. This movie can show drifts faster than about " + fmtV(vmin) + "; the one set is " + fmtV(ev.speed) + ". The noise falls as one over the square root of the number of frames (four times the frames, half the noise), and with a wider field (lower magnification) and slower diffusion (larger particles).";
       } else if (!ev.plane && ev.speed > 0) {
         const lg = Math.abs(state.cause === "sediment" ? dSE() / stokesV() : 1 / (thermoST() * state.grad));
         t = "The drift is along the optical axis, and DDM sees motion in the image plane only. " + (lg < state.cell_um / 3 ? "The particles have piled up within about " + fmtSig(lg, 2) + " " + MU + "m of the " + ((state.cause === "sediment" ? stokesV() > 0 : thermoDT() > 0) ? "bottom" : "top") + " glass, where the liquid squeezing past slows their diffusion: in the bulk the same D would mean larger particles." : "The particles leave the focus slightly faster in one direction, so the curves fade a little faster.");
@@ -5534,8 +5617,9 @@ dqt.set_frame_rate(frame_rate)     # frames per second
         h += '<p class="small" style="margin:0">From the drift and the gradient: D_T = ' + fmtSig(DT, 2) + ' ' + MU + 'm\u00b2/(s K) and S_T = D_T / D = ' + fmtSig(ST, 2) + ' K\u207b\u00b9 (set ' + fmtSig(thermoDT(), 2) + ' and ' + fmtSig(thermoDT() / dSE(), 2) + '). ' + (DT > 0 ? "Positive: the particles move to the cold side." : "Negative: they move to the warm side.") + '</p>';
       }
       h += '<details class="more"><summary>Details</summary><dl>';
-      h += '<dt>Uncertainty</dt><dd>' + (res.velocity_from === "structure" ? 'speed from the scatter of the fits at each q' : 'two jackknifes combined: over ten parts of the movie, and over eight interleaved groups of q (each left out in turn)') + '; D from the scatter of &Gamma;/q&sup2; between q (' + pctTxt(res.D_rel_err) + ')</dd>';
-      h += '<dt>Visible drift</dt><dd>' + (vis.visible ? 'in the patterns from q = ' + fmtSig(vis.q_from, 2) + ' to ' + fmtSig(vis.q_to, 2) + ' ' + MU + 'm\u207b\u00b9 (' + vis.n_q + ' q)' : 'in no pattern of this movie') + '; q* = v/D = ' + fmtSig(vis.q_star, 2) + ' ' + MU + 'm\u207b\u00b9, Peclet number v L / D = ' + fmtSig(vis.peclet, 2) + '</dd>';
+      h += '<dt>Uncertainty</dt><dd>' + (res.velocity_from === "structure" ? 'speed from the scatter of the fits at each q' : 'two jackknifes added in quadrature: over ten parts of the movie, and over eight interleaved groups of q (each left out in turn)') + '; D from the scatter of &Gamma;/q&sup2; between q (' + pctTxt(res.D_rel_err) + ')</dd>';
+      h += '<dt>Slowest drift this movie shows</dt><dd>about ' + fmtV(vis.v_min_um_s) + ' (three times the uncertainty of the speed)</dd>';
+      h += '<dt>Patterns that swing</dt><dd>' + (vis.swing ? 'from q = ' + fmtSig(vis.q_from, 2) + ' to ' + fmtSig(vis.q_to, 2) + ' ' + MU + 'm\u207b\u00b9 (' + vis.n_q + ' q)' : 'none: diffusion renews each pattern before the drift moves it, so the structure function alone cannot see this drift') + '; q* = v/D = ' + fmtSig(vis.q_star, 2) + ' ' + MU + 'm\u207b\u00b9, Peclet number v L / D = ' + fmtSig(vis.peclet, 2) + '</dd>';
       h += '<dt>Camera noise</dt><dd>' + (res.noise_B ? 'B = ' + fmtSig(res.noise_B, 3) + ' from the mean count, the read noise and the excess-noise factor, the same at every q' : 'B fitted at each q') + '</dd>';
       h += '<dt>Pixels used for the phase</dt><dd>' + res.v_jack.n_pixels + ' (pixel and delay pairs where the pattern is still clearly there and the phase has not wrapped)</dd>';
       h += '</dl></details>';
@@ -5574,7 +5658,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
   // ---- "what matters" cards ---------------------------------------------------------------
   const SILICA2 = { particle: "silica", diameter_um: 2, phi: 2e-3, frame_rate_hz: 20, exposure_ms: 1, cause: "sediment" };
   const CARDS = [
-    { lvl: 1, title: "Too slow to see", text: "200 nm polystyrene beads are only 5 % denser than water and settle at about 1 nm/s, while they wander by about a micrometre every half second. No pattern of this movie lasts long enough for the drift to move it: the page says the drift cannot be seen, and why.",
+    { lvl: 1, title: "Too slow to see", text: "200 nm polystyrene beads are only 5 % denser than water and settle at about 1 nm/s, while they wander by about a micrometre every half second. To tell such a drift from the random motion, DDM, like tracking, would need to average over a movie thousands of times longer than this one: the page says how slow a drift this movie can show.",
       shows: [{ label: "Show me", set: { cause: "sediment", orient: "side", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X") }, go: "step-rates" }] },
     { lvl: 1, title: "Heavy beads, microscope on its side", text: "Silica beads of 2 " + MU + "m settle at about 2 " + MU + "m/s and diffuse slowly. With the microscope on its side gravity points down the image: the fringes of step 4 appear, the curves along the drift swing, and the speed comes out with its direction. With the microscope upright the same beads settle onto the bottom glass: no drift in the image, and slower diffusion near the glass.",
       shows: [{ label: "On its side", set: Object.assign({ orient: "side" }, SILICA2), go: "step-map" }, { label: "Upright", set: Object.assign({ orient: "upright", focus_frac: 0.05 }, SILICA2), go: "step-rates" }] },
@@ -5585,9 +5669,13 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     { lvl: 2, title: "Thermophoresis: 500 nm polystyrene in a strong gradient", text: "Polystyrene beads of 506 nm (Braibanti, Vigolo and Piazza 2008) at 35 " + DEG + "C move to the cold side with D_T of about 2.7 " + MU + "m\u00b2/(s K). In a gradient of 0.1 K/" + MU + "m, the steepest used by Duhr and Braun (2006), that is about 0.3 " + MU + "m/s: visible with a 4x objective (a wide field) and a long movie. At 5 " + DEG + "C S_T is negative: the same beads move four times more slowly, and the other way, to the warm side.",
       shows: [{ label: "35 " + DEG + "C", set: { cause: "thermo", thermo_sys: "br253", particle: "ps", diameter_um: 0.506, T_C: 35, grad: 0.1, objective: objIndexByName("CFI Plan Fluor 4X"), frame_rate_hz: 5, exposure_ms: 1, n_frames: 512, phi: 1e-3 }, go: "step-rates" },
               { label: "5 " + DEG + "C", set: { cause: "thermo", thermo_sys: "br253", particle: "ps", diameter_um: 0.506, T_C: 5, grad: 0.1, objective: objIndexByName("CFI Plan Fluor 4X"), frame_rate_hz: 5, exposure_ms: 1, n_frames: 512, phi: 1e-3 }, go: "step-rates" }] },
-    { lvl: 2, title: "Thermophoresis of small beads: invisible", text: "200 nm beads (Duhr and Braun 2006) in a gradient of 0.01 K/" + MU + "m drift at 14 nm/s, while they diffuse 150 times faster across any pattern the image holds. DDM cannot see this drift; thermophoresis of small particles is measured instead from the concentration gradient it builds up, with a beam or by fluorescence.",
-      shows: [{ label: "Show me", set: { cause: "thermo", thermo_sys: "duhr200", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X"), grad: 0.01 }, go: "step-rates" }] },
-    { lvl: 3, title: "The structure function alone", text: "Most DDM analyses of drift fit cos(q\u00b7v \u0394t) to the structure function. When the patterns fade before they oscillate, the oscillation trades against diffusion and the speed comes out wrong; it also never gives the direction's sign. The phase of the cross spectrum has neither problem. Compare the two rows of the result table.",
+    { lvl: 2, title: "Thermophoresis of small beads: a matter of time", text: "200 nm beads (Duhr and Braun 2006) in a gradient of 0.01 K/" + MU + "m drift at about 15 nm/s, while they diffuse 150 times faster across any pattern the image holds. No pattern swings, but the phase of each pattern still moves a little: averaged over a long enough movie it shows the drift, as tracking would. In 0.1 K/" + MU + "m, the steepest gradient Duhr and Braun used, the drift is about 150 nm/s, and a movie of 512 frames at 2 per second through a 10x objective shows it.",
+      shows: [{ label: "0.01 K/" + MU + "m, short movie", set: { cause: "thermo", thermo_sys: "duhr200", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X"), grad: 0.01 }, go: "step-rates" },
+              { label: "0.1 K/" + MU + "m, long movie", set: { cause: "thermo", thermo_sys: "duhr200", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 2, exposure_ms: 1, n_frames: 512, objective: objIndexByName("CFI Plan Fluor 10X"), grad: 0.1 }, go: "step-rates" }] },
+    { lvl: 2, title: "Micrometre beads, as tracked under the microscope", text: "Single beads of a few micrometres move by thermophoresis fast enough to be followed one by one: Helden, Eichhorn and Bechinger (2015) measured 5 " + MU + "m polystyrene, which goes to the cold side, and 2.7 " + MU + "m melamine resin, which at room temperature goes to the warm side. In 0.05 K/" + MU + "m they drift at about 0.5 and 0.36 " + MU + "m/s while diffusing slowly: DDM sees them as clearly as tracking does.",
+      shows: [{ label: "5 " + MU + "m polystyrene", set: { cause: "thermo", thermo_sys: "hel_ps", particle: "ps", diameter_um: 5, grad: 0.05, objective: objIndexByName("CFI Plan Fluor 10X"), frame_rate_hz: 5, exposure_ms: 1, phi: 0.01 }, go: "step-rates" },
+              { label: "2.7 " + MU + "m melamine", set: { cause: "thermo", thermo_sys: "hel_mf", particle: "custom", n_custom: 1.68, rho_custom: 1.51, diameter_um: 2.7, grad: 0.05, objective: objIndexByName("CFI Plan Fluor 10X"), frame_rate_hz: 5, exposure_ms: 1, phi: 0.01 }, go: "step-rates" }] },
+    { lvl: 3, title: "The structure function alone", text: "Most DDM analyses of drift fit cos(q\u00b7v \u0394t) to the structure function. When the patterns fade before they oscillate, the oscillation trades against diffusion and the speed comes out wrong; it also never gives the direction's sign. It also needs the patterns to swing before they fade, which slow drifts never do. The phase of the cross spectrum has none of these problems. Compare the two rows of the result table.",
       shows: [{ label: "200 nm beads, 2 " + MU + "m/s", set: { flow_v: 2, particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X") }, go: "step-rates" }, { label: "200 nm beads, no drift", set: { cause: "none", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X") }, go: "step-rates" }] }
   ];
   function buildCards() {

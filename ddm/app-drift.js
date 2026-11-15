@@ -121,6 +121,12 @@
     br123: { label: "246 nm polystyrene (Braibanti, Vigolo and Piazza 2008)", d: 0.246, pts: [[5, -0.65], [15, 0.25], [25, 0.8], [35, 1.2], [45, 1.5]] },
     br53: { label: "106 nm polystyrene (Braibanti, Vigolo and Piazza 2008)", d: 0.106, pts: [[5, -0.25], [15, 0.2], [25, 0.4], [35, 0.55], [45, 0.7]] },
     iac30: { label: "60 nm polystyrene (Iacopini, Rusconi and Piazza 2006)", d: 0.06, ST: function (T) { return 0.92 * (1 - Math.exp((278.3 - (T + 273.15)) / 19)); }, range: [3, 45] },
+    //   Helden, Eichhorn and Bechinger, Soft Matter (2015), doi 10.1039/C4SM02833C, Fig. 4: single micrometre beads held near a
+    //   glass wall (total internal reflection microscopy), S_T = S_inf [1 - exp((T* - T) / T0)]: polystyrene of radius 2.5 um,
+    //   S_inf = 583 /K, T* = 286.6 K, T0 = 40.6 K; melamine resin of radius 1.35 um, S_inf = 36.0 /K, T* = 316.7 K, T0 = 27.3 K
+    //   (negative at room temperature: they move to the warm side). Melamine: index 1.68 and density 1.51 g/cm3 (assumed).
+    hel_ps: { label: "5 um polystyrene (Helden, Eichhorn and Bechinger 2015)", d: 5, ST: function (T) { return 583 * (1 - Math.exp((286.6 - (T + 273.15)) / 40.6)); }, range: null },
+    hel_mf: { label: "2.7 um melamine resin (Helden, Eichhorn and Bechinger 2015)", d: 2.7, mat: { n: 1.68, rho: 1.51 }, ST: function (T) { return 36.0 * (1 - Math.exp((316.7 - (T + 273.15)) / 27.3)); }, range: null },
     custom: { label: "Other (set the Soret coefficient)", d: null }
   };
   function thermoST() {
@@ -285,14 +291,15 @@
     if (r && (state.T_C < r[0] || state.T_C > r[1])) h += " Outside the temperatures measured (" + r[0] + "-" + r[1] + " " + DEG + "C): the nearest value is used.";
     if (state.thermo_sys !== "custom" && THERMO[state.thermo_sys].d && Math.abs(state.diameter_um / THERMO[state.thermo_sys].d - 1) > 0.02) h += " The particles set are not those measured.";
     if (state.thermo_sys.indexOf("br") === 0) h += " Measured in a 1:1 mixture of water and heavy water; D here is for the liquid set.";
+    if (state.thermo_sys.indexOf("hel") === 0) h += " Measured on single beads near a glass wall. Beads this large also settle onto the bottom glass within minutes; the simulation leaves gravity out here.";
     if (state.grad_dir === "axis") h += " Along the optical axis the particles pile up within about " + fmtSig(Math.min(1 / Math.abs(ST * state.grad), 1e4), 2) + " " + MU + "m of one wall.";
     return h;
   }
   function visibleHint() {
-    // can this drift be seen at all with this movie: q v dt must reach about 1 at a q where diffusion has not erased the pattern
+    // whether patterns swing (q v dt reaching about 1 before diffusion erases the pattern); the phase does not need it
     const ev = expectedDrift(); if (!ev.plane || !(ev.speed > 0)) return "";
     const D = dSE(), L = simPx() * pixelUm(), Pe = ev.speed * L / D;
-    return "Peclet number over the field v L / D = " + fmtSig(Pe, 2) + (Pe < 2 * Math.PI ? ": below 2\u03c0, so even the widest pattern is renewed by diffusion before the drift moves it. Expect no drift to be seen." : Pe < 30 ? ": the drift shows only in the widest patterns." : ": the drift shows clearly.");
+    return "Peclet number over the field v L / D = " + fmtSig(Pe, 2) + (Pe < 2 * Math.PI ? ": below 2\u03c0, so no pattern swings before diffusion renews it. The phase of the cross spectrum can still measure the drift if the movie is long enough; step 6 says." : Pe < 30 ? ": the drift makes only the widest patterns swing." : ": the drift makes many patterns swing.");
   }
   // vector optics: automatic above this aperture (objective, or condenser in transmitted light), where 1 - cos(theta) at the
   // pupil edge exceeds about 0.25 in water and the scalar weights start to be off by more than a few percent
@@ -681,8 +688,11 @@
     // a measured thermophoretic system comes with its particles; other particles take the system's S_T as their own
     if (state.cause === "thermo") {
       const sys = THERMO[state.thermo_sys];
-      if ((key === "thermo_sys" || key === "cause") && sys.d) { state.particle = "ps"; state.diameter_um = sys.d; }
-      if ((key === "diameter_um" || key === "particle") && sys.d && (state.particle !== "ps" || Math.abs(state.diameter_um / sys.d - 1) > 0.02)) { state.st_custom = Math.round(thermoST() * 100) / 100; state.thermo_sys = "custom"; }
+      if ((key === "thermo_sys" || key === "cause") && sys.d) {
+        state.diameter_um = sys.d;
+        if (sys.mat) { state.particle = "custom"; state.n_custom = sys.mat.n; state.rho_custom = sys.mat.rho; } else state.particle = "ps";
+      }
+      if ((key === "diameter_um" || key === "particle" || key === "n_custom") && sys.d && (state.particle !== (sys.mat ? "custom" : "ps") || Math.abs(state.diameter_um / sys.d - 1) > 0.02)) { state.st_custom = Math.round(thermoST() * 100) / 100; state.thermo_sys = "custom"; }
     }
     if (SCANNING() && (key === "mode" || key === "objective" || key === "scan_px")) autoZoom();
     if (key === "camera") { const c = cam(); state.cam_mode = Object.keys(c.modes)[0]; state.iface = Object.keys(c.ifaces)[0]; state.binning = 1; }
@@ -1284,11 +1294,9 @@
     if (!res.detected) {
       let t = "";
       if (ev.plane && ev.speed > 0) {
-        // the slowest drift this movie can show: at least three q where q v t_max > 1 and q < 2 v / D, and three times its uncertainty
-        const qs = res.per_q.map(function (e) { return e.q_per_um; }), tmax = res.taus_s[res.taus_s.length - 1];
-        const vmin = Math.max(res.D_um2_s * qs[Math.min(2, qs.length - 1)] / 2, 1 / (qs[0] * tmax), 3 * (res.v_err_um_s || 0));
-        const pe = ev.speed * mv.L_um / res.D_um2_s;
-        t = "A drift shows only in patterns that it moves by a good part of a stripe before diffusion has mixed them up. This movie can show drifts faster than about " + fmtV(vmin) + "; the one set is " + fmtV(ev.speed) + " (v L / D = " + fmtSig(pe, 2) + " over the field, where about 2\u03c0 or more is needed). Larger particles, a stronger push, a lower magnification (a wider field) or a longer movie help.";
+        // the slowest drift this movie can show: three times the uncertainty of the speed, as with tracking
+        const vmin = res.visibility.v_min_um_s, pe = ev.speed * mv.L_um / res.D_um2_s;
+        t = "The drift moves each pattern a little, while the random motion shifts it back and forth far more. As with tracking, the drift only shows once enough patterns and enough time are averaged for it to stand out of that noise. This movie can show drifts faster than about " + fmtV(vmin) + "; the one set is " + fmtV(ev.speed) + ". The noise falls as one over the square root of the number of frames (four times the frames, half the noise), and with a wider field (lower magnification) and slower diffusion (larger particles).";
       } else if (!ev.plane && ev.speed > 0) {
         const lg = Math.abs(state.cause === "sediment" ? dSE() / stokesV() : 1 / (thermoST() * state.grad));
         t = "The drift is along the optical axis, and DDM sees motion in the image plane only. " + (lg < state.cell_um / 3 ? "The particles have piled up within about " + fmtSig(lg, 2) + " " + MU + "m of the " + ((state.cause === "sediment" ? stokesV() > 0 : thermoDT() > 0) ? "bottom" : "top") + " glass, where the liquid squeezing past slows their diffusion: in the bulk the same D would mean larger particles." : "The particles leave the focus slightly faster in one direction, so the curves fade a little faster.");
@@ -1314,8 +1322,9 @@
         h += '<p class="small" style="margin:0">From the drift and the gradient: D_T = ' + fmtSig(DT, 2) + ' ' + MU + 'm\u00b2/(s K) and S_T = D_T / D = ' + fmtSig(ST, 2) + ' K\u207b\u00b9 (set ' + fmtSig(thermoDT(), 2) + ' and ' + fmtSig(thermoDT() / dSE(), 2) + '). ' + (DT > 0 ? "Positive: the particles move to the cold side." : "Negative: they move to the warm side.") + '</p>';
       }
       h += '<details class="more"><summary>Details</summary><dl>';
-      h += '<dt>Uncertainty</dt><dd>' + (res.velocity_from === "structure" ? 'speed from the scatter of the fits at each q' : 'two jackknifes combined: over ten parts of the movie, and over eight interleaved groups of q (each left out in turn)') + '; D from the scatter of &Gamma;/q&sup2; between q (' + pctTxt(res.D_rel_err) + ')</dd>';
-      h += '<dt>Visible drift</dt><dd>' + (vis.visible ? 'in the patterns from q = ' + fmtSig(vis.q_from, 2) + ' to ' + fmtSig(vis.q_to, 2) + ' ' + MU + 'm\u207b\u00b9 (' + vis.n_q + ' q)' : 'in no pattern of this movie') + '; q* = v/D = ' + fmtSig(vis.q_star, 2) + ' ' + MU + 'm\u207b\u00b9, Peclet number v L / D = ' + fmtSig(vis.peclet, 2) + '</dd>';
+      h += '<dt>Uncertainty</dt><dd>' + (res.velocity_from === "structure" ? 'speed from the scatter of the fits at each q' : 'two jackknifes added in quadrature: over ten parts of the movie, and over eight interleaved groups of q (each left out in turn)') + '; D from the scatter of &Gamma;/q&sup2; between q (' + pctTxt(res.D_rel_err) + ')</dd>';
+      h += '<dt>Slowest drift this movie shows</dt><dd>about ' + fmtV(vis.v_min_um_s) + ' (three times the uncertainty of the speed)</dd>';
+      h += '<dt>Patterns that swing</dt><dd>' + (vis.swing ? 'from q = ' + fmtSig(vis.q_from, 2) + ' to ' + fmtSig(vis.q_to, 2) + ' ' + MU + 'm\u207b\u00b9 (' + vis.n_q + ' q)' : 'none: diffusion renews each pattern before the drift moves it, so the structure function alone cannot see this drift') + '; q* = v/D = ' + fmtSig(vis.q_star, 2) + ' ' + MU + 'm\u207b\u00b9, Peclet number v L / D = ' + fmtSig(vis.peclet, 2) + '</dd>';
       h += '<dt>Camera noise</dt><dd>' + (res.noise_B ? 'B = ' + fmtSig(res.noise_B, 3) + ' from the mean count, the read noise and the excess-noise factor, the same at every q' : 'B fitted at each q') + '</dd>';
       h += '<dt>Pixels used for the phase</dt><dd>' + res.v_jack.n_pixels + ' (pixel and delay pairs where the pattern is still clearly there and the phase has not wrapped)</dd>';
       h += '</dl></details>';
@@ -1354,7 +1363,7 @@
   // ---- "what matters" cards ---------------------------------------------------------------
   const SILICA2 = { particle: "silica", diameter_um: 2, phi: 2e-3, frame_rate_hz: 20, exposure_ms: 1, cause: "sediment" };
   const CARDS = [
-    { lvl: 1, title: "Too slow to see", text: "200 nm polystyrene beads are only 5 % denser than water and settle at about 1 nm/s, while they wander by about a micrometre every half second. No pattern of this movie lasts long enough for the drift to move it: the page says the drift cannot be seen, and why.",
+    { lvl: 1, title: "Too slow to see", text: "200 nm polystyrene beads are only 5 % denser than water and settle at about 1 nm/s, while they wander by about a micrometre every half second. To tell such a drift from the random motion, DDM, like tracking, would need to average over a movie thousands of times longer than this one: the page says how slow a drift this movie can show.",
       shows: [{ label: "Show me", set: { cause: "sediment", orient: "side", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X") }, go: "step-rates" }] },
     { lvl: 1, title: "Heavy beads, microscope on its side", text: "Silica beads of 2 " + MU + "m settle at about 2 " + MU + "m/s and diffuse slowly. With the microscope on its side gravity points down the image: the fringes of step 4 appear, the curves along the drift swing, and the speed comes out with its direction. With the microscope upright the same beads settle onto the bottom glass: no drift in the image, and slower diffusion near the glass.",
       shows: [{ label: "On its side", set: Object.assign({ orient: "side" }, SILICA2), go: "step-map" }, { label: "Upright", set: Object.assign({ orient: "upright", focus_frac: 0.05 }, SILICA2), go: "step-rates" }] },
@@ -1365,9 +1374,13 @@
     { lvl: 2, title: "Thermophoresis: 500 nm polystyrene in a strong gradient", text: "Polystyrene beads of 506 nm (Braibanti, Vigolo and Piazza 2008) at 35 " + DEG + "C move to the cold side with D_T of about 2.7 " + MU + "m\u00b2/(s K). In a gradient of 0.1 K/" + MU + "m, the steepest used by Duhr and Braun (2006), that is about 0.3 " + MU + "m/s: visible with a 4x objective (a wide field) and a long movie. At 5 " + DEG + "C S_T is negative: the same beads move four times more slowly, and the other way, to the warm side.",
       shows: [{ label: "35 " + DEG + "C", set: { cause: "thermo", thermo_sys: "br253", particle: "ps", diameter_um: 0.506, T_C: 35, grad: 0.1, objective: objIndexByName("CFI Plan Fluor 4X"), frame_rate_hz: 5, exposure_ms: 1, n_frames: 512, phi: 1e-3 }, go: "step-rates" },
               { label: "5 " + DEG + "C", set: { cause: "thermo", thermo_sys: "br253", particle: "ps", diameter_um: 0.506, T_C: 5, grad: 0.1, objective: objIndexByName("CFI Plan Fluor 4X"), frame_rate_hz: 5, exposure_ms: 1, n_frames: 512, phi: 1e-3 }, go: "step-rates" }] },
-    { lvl: 2, title: "Thermophoresis of small beads: invisible", text: "200 nm beads (Duhr and Braun 2006) in a gradient of 0.01 K/" + MU + "m drift at 14 nm/s, while they diffuse 150 times faster across any pattern the image holds. DDM cannot see this drift; thermophoresis of small particles is measured instead from the concentration gradient it builds up, with a beam or by fluorescence.",
-      shows: [{ label: "Show me", set: { cause: "thermo", thermo_sys: "duhr200", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X"), grad: 0.01 }, go: "step-rates" }] },
-    { lvl: 3, title: "The structure function alone", text: "Most DDM analyses of drift fit cos(q\u00b7v \u0394t) to the structure function. When the patterns fade before they oscillate, the oscillation trades against diffusion and the speed comes out wrong; it also never gives the direction's sign. The phase of the cross spectrum has neither problem. Compare the two rows of the result table.",
+    { lvl: 2, title: "Thermophoresis of small beads: a matter of time", text: "200 nm beads (Duhr and Braun 2006) in a gradient of 0.01 K/" + MU + "m drift at about 15 nm/s, while they diffuse 150 times faster across any pattern the image holds. No pattern swings, but the phase of each pattern still moves a little: averaged over a long enough movie it shows the drift, as tracking would. In 0.1 K/" + MU + "m, the steepest gradient Duhr and Braun used, the drift is about 150 nm/s, and a movie of 512 frames at 2 per second through a 10x objective shows it.",
+      shows: [{ label: "0.01 K/" + MU + "m, short movie", set: { cause: "thermo", thermo_sys: "duhr200", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X"), grad: 0.01 }, go: "step-rates" },
+              { label: "0.1 K/" + MU + "m, long movie", set: { cause: "thermo", thermo_sys: "duhr200", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 2, exposure_ms: 1, n_frames: 512, objective: objIndexByName("CFI Plan Fluor 10X"), grad: 0.1 }, go: "step-rates" }] },
+    { lvl: 2, title: "Micrometre beads, as tracked under the microscope", text: "Single beads of a few micrometres move by thermophoresis fast enough to be followed one by one: Helden, Eichhorn and Bechinger (2015) measured 5 " + MU + "m polystyrene, which goes to the cold side, and 2.7 " + MU + "m melamine resin, which at room temperature goes to the warm side. In 0.05 K/" + MU + "m they drift at about 0.5 and 0.36 " + MU + "m/s while diffusing slowly: DDM sees them as clearly as tracking does.",
+      shows: [{ label: "5 " + MU + "m polystyrene", set: { cause: "thermo", thermo_sys: "hel_ps", particle: "ps", diameter_um: 5, grad: 0.05, objective: objIndexByName("CFI Plan Fluor 10X"), frame_rate_hz: 5, exposure_ms: 1, phi: 0.01 }, go: "step-rates" },
+              { label: "2.7 " + MU + "m melamine", set: { cause: "thermo", thermo_sys: "hel_mf", particle: "custom", n_custom: 1.68, rho_custom: 1.51, diameter_um: 2.7, grad: 0.05, objective: objIndexByName("CFI Plan Fluor 10X"), frame_rate_hz: 5, exposure_ms: 1, phi: 0.01 }, go: "step-rates" }] },
+    { lvl: 3, title: "The structure function alone", text: "Most DDM analyses of drift fit cos(q\u00b7v \u0394t) to the structure function. When the patterns fade before they oscillate, the oscillation trades against diffusion and the speed comes out wrong; it also never gives the direction's sign. It also needs the patterns to swing before they fade, which slow drifts never do. The phase of the cross spectrum has none of these problems. Compare the two rows of the result table.",
       shows: [{ label: "200 nm beads, 2 " + MU + "m/s", set: { flow_v: 2, particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X") }, go: "step-rates" }, { label: "200 nm beads, no drift", set: { cause: "none", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X") }, go: "step-rates" }] }
   ];
   function buildCards() {
