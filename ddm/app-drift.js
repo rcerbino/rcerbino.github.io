@@ -1242,12 +1242,16 @@
   function drawSectorV() {
     const res = cache.res, c = $("chart-sector"); if (!c || LEVEL_RANK[level] < 3) return;
     const pts = res.sector_v.filter(function (e) { return e.v_um_s !== null; });
-    const vmax = Math.max(0.1, res.v_um_s * 1.3, Math.max.apply(null, pts.map(function (e) { return Math.abs(e.v_um_s); })) * 1.15);
+    const vmax = Math.max(0.1, res.v_um_s * 1.3, Math.max.apply(null, pts.map(function (e) { return Math.abs(e.v_um_s) + (e.err_um_s || 0); })) * 1.1);
     const a = axes(c, { xlog: false, ylog: false, x0: 0, x1: 180, y0: -vmax, y1: vmax, xlabel: "Direction of q (" + DEG + ")", ylabel: "v along q (" + MU + "m/s)" }), ctx = a.ctx;
     ctx.strokeStyle = C.accent; ctx.lineWidth = 1.5; ctx.beginPath();
     for (let i = 0; i <= 90; i++) { const th = 2 * i, v = res.v_um_s * Math.cos((th - res.v_dir_deg) * Math.PI / 180), X = a.fx(th), Y = a.fy(v); if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }
     ctx.stroke();
-    pts.forEach(function (e) { dot(ctx, a.fx(e.theta_deg), a.fy(e.v_um_s), 3.4, C.ink, null); });
+    pts.forEach(function (e) {
+      const X = a.fx(e.theta_deg);
+      if (e.err_um_s) { ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(X, a.fy(e.v_um_s - e.err_um_s)); ctx.lineTo(X, a.fy(e.v_um_s + e.err_um_s)); ctx.stroke(); }
+      dot(ctx, X, a.fy(e.v_um_s), 3.4, C.ink, null);
+    });
     a.done();
   }
 

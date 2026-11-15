@@ -26,6 +26,10 @@ const angDiff = function (a, b) { let d = ((a - b) % 360 + 540) % 360 - 180; ret
   const { mv, r } = run("flow 2 um/s to the right", { drift_um_s: 2, drift_deg: 0 });
   check("flow: speed within 5 %, direction within 5 deg, sign from the phase", Math.abs(r.v_um_s / 2 - 1) < 0.05 && angDiff(r.v_dir_deg, 0) < 5 && r.detected);
   check("flow: D within 8 %", Math.abs(r.D_um2_s / mv.truth.D_um2_s - 1) < 0.08);
+  // speed seen by each direction of q follows v cos(theta - theta_v) within its uncertainty
+  const dev = r.sector_v.map(function (e) { return (e.v_um_s - r.v_um_s * Math.cos((e.theta_deg - r.v_dir_deg) * Math.PI / 180)) / e.err_um_s; });
+  const chi2 = dev.reduce(function (a, d) { return a + d * d; }, 0) / dev.length;
+  check("flow: speed in each direction follows v cos(theta - theta_v) (chi2 per point below 3)", chi2 < 3, "chi2 per point " + chi2.toFixed(2));
 }
 { // another direction, and the sign
   const { r } = run("flow 3 um/s at 120 deg", { drift_um_s: 3, drift_deg: 120, seed: 2 });

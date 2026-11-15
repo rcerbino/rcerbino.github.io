@@ -476,7 +476,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
             </div>
           </div>
           <figure class="viz lvl-3">
-            <figcaption>The drift seen by patterns of each direction: the phase of the cross spectrum gives the speed along <b>q</b>, <i>v</i> cos(&theta; &minus; &theta;<sub>v</sub>), largest along the drift, zero across it and negative beyond. The line is the result.</figcaption>
+            <figcaption>The drift seen by patterns of each direction: the same fit as the velocity, with only the patterns within 7.5&deg; of each direction, gives the speed along <b>q</b>, which should be <i>v</i> cos(&theta; &minus; &theta;<sub>v</sub>): largest along the drift, zero across it and negative beyond. Error bars: jackknife over groups of <i>q</i>. The line is the result.</figcaption>
             <div class="chart short"><canvas id="chart-sector" aria-label="Speed along each direction of q"></canvas></div>
           </figure>
         </div>
@@ -3962,7 +3962,12 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     const pixList = [];
     for (let p = 0; p < P; p++) { const b = binOf[p]; if (b > 0 && S.q_per_um[b] >= qmin && S.q_per_um[b] <= qmax) pixList.push(p); }
     const allLags = []; for (let li = 0; li < L; li++) allLags.push(li);
-    const imFit = function (getC, lags, vxs, vys, skip) {
+    const sectorOf = new Int16Array(P);                               // direction sector of each pixel, folded onto [0, pi)
+    for (let p = 0; p < P; p++) { let th = Math.atan2(KY[p], KX[p]); if (th < 0) th += Math.PI; if (th >= Math.PI) th -= Math.PI; sectorOf[p] = Math.min(NSEC - 1, Math.floor(th / Math.PI * NSEC)); }
+    // skip: a group of q left out (jackknife); along: { ux, uy, sector } fits only the speed along that unit vector, with
+    // the pixels of that sector of directions (the drift seen by patterns of each direction)
+    const imFit = function (getC, lags, vxs, vys, skip, along) {
+      let lastInfo = 0;
       let vx = vxs, vy = vys, used = 0;
       const sRe = new Float64Array(nb + 1), sIm2 = new Float64Array(nb + 1), sRe2 = new Float64Array(nb + 1), cnt = new Float64Array(nb + 1);
       const xx = new Float64Array(nb + 1), xy = new Float64Array(nb + 1), yy = new Float64Array(nb + 1), x1y = new Float64Array(nb + 1), x2y = new Float64Array(nb + 1), x11 = new Float64Array(nb + 1), x12 = new Float64Array(nb + 1), x22 = new Float64Array(nb + 1);
@@ -3975,10 +3980,11 @@ dqt.set_frame_rate(frame_rate)     # frames per second
           sRe.fill(0); sRe2.fill(0); cnt.fill(0); x11.fill(0); x12.fill(0); x22.fill(0); x1y.fill(0); x2y.fill(0); yy.fill(0);
           for (const p of pixList) {
             const b = binOf[p]; if (skip !== undefined && b % GQ === skip) continue;
+            if (along && (sectorOf[p] >> 1) !== along.sector) continue;
             const ph = (KX[p] * vx + KY[p] * vy) * t, cs = Math.cos(ph), sn = Math.sin(ph);
             const zr = c[2 * p] * cs - c[2 * p + 1] * sn, zi = c[2 * p] * sn + c[2 * p + 1] * cs;
             sRe[b] += zr; sRe2[b] += zr * zr; cnt[b]++;
-            const u1 = -KX[p] * t, u2 = -KY[p] * t;                     // x = a u
+            const u1 = along ? -(KX[p] * along.ux + KY[p] * along.uy) * t : -KX[p] * t, u2 = along ? 0 : -KY[p] * t;   // x = a u
             x11[b] += u1 * u1; x12[b] += u1 * u2; x22[b] += u2 * u2; x1y[b] += u1 * zi; x2y[b] += u2 * zi; yy[b] += zi * zi;
           }
           // noise variance of Im z in each bin: what is left after the bin's own best shift, pooled with its neighbours
@@ -3993,8 +3999,9 @@ dqt.set_frame_rate(frame_rate)     # frames per second
             aB[b] = a;
             const det = x11[b] * x22[b] - x12[b] * x12[b];
             let r = yy[b];
-            if (det > 0) { const d1 = (x1y[b] * x22[b] - x2y[b] * x12[b]) / det, d2 = (x11[b] * x2y[b] - x12[b] * x1y[b]) / det; r -= d1 * x1y[b] + d2 * x2y[b]; }
-            resid[b] = Math.max(0, r); dof[b] = Math.max(1, cnt[b] / 2 - 2);   // pixels come in conjugate pairs
+            if (along) { if (x11[b] > 0) r -= x1y[b] * x1y[b] / x11[b]; }
+            else if (det > 0) { const d1 = (x1y[b] * x22[b] - x2y[b] * x12[b]) / det, d2 = (x11[b] * x2y[b] - x12[b] * x1y[b]) / det; r -= d1 * x1y[b] + d2 * x2y[b]; }
+            resid[b] = Math.max(0, r); dof[b] = Math.max(1, cnt[b] / 2 - (along ? 1 : 2));   // pixels come in conjugate pairs
           }
           for (let b = 1; b <= nb; b++) {
             if (!aB[b]) continue;
@@ -4004,12 +4011,14 @@ dqt.set_frame_rate(frame_rate)     # frames per second
             a11 += w * x11[b]; a12 += w * x12[b]; a22 += w * x22[b]; r1 += wy * x1y[b]; r2 += wy * x2y[b]; used += cnt[b];
           }
         }
-        const det = a11 * a22 - a12 * a12; if (!(det > 0)) break;
-        const dx = (r1 * a22 - r2 * a12) / det, dy = (a11 * r2 - a12 * r1) / det;
+        let dx, dy;
+        // along one direction: a single linear step from the drift found (iterating on one sector's data can run away)
+        if (along) { if (!(a11 > 0)) break; lastInfo = a11; const d = r1 / a11; vx += d * along.ux; vy += d * along.uy; break; }
+        else { const det = a11 * a22 - a12 * a12; if (!(det > 0)) break; dx = (r1 * a22 - r2 * a12) / det; dy = (a11 * r2 - a12 * r1) / det; }
         vx += dx; vy += dy;
         if (Math.hypot(dx, dy) < 1e-4 * Math.max(Math.hypot(vx, vy), 1e-3)) break;
       }
-      return { vx: vx, vy: vy, n: used };
+      return { vx: vx, vy: vy, n: used, info: along ? lastInfo : null };
     };
     // two starts, the phase fit and no drift at all; keep the one whose turned C has the least imaginary part left
     const imLeft = function (vx, vy) {
@@ -4165,26 +4174,49 @@ dqt.set_frame_rate(frame_rate)     # frames per second
       if (nc > 0) { for (let li = 0; li < L; li++) fc[li] /= nc; across.push({ q_per_um: S.q_per_um[e.b], f: fc }); }
     });
     // velocity seen in each direction: the frequency along each sector, v cos(theta - theta_v) (Researcher plot)
-    const sectorV = [];
-    for (let s = 0; s < NSEC; s++) {
-      const th = (s + 0.5) * Math.PI / NSEC, ux = Math.cos(th), uy = Math.sin(th);
-      // projection fitted on the phase of C over the visible q: phase = -(q . v) dt, with q along the sector
-      let num = 0, den = 0;
-      for (let li = 0; li < L; li++) {
+    // speed seen by the patterns of each direction (twelve sectors of 15 degrees): one linear step of the same fit as the
+    // velocity, from the drift found, with only the pixels of one sector and only the speed along it. The part of each
+    // pattern still there (a) and the noise of Im z come from all pixels of the same q (a sector alone has too few, and
+    // its fits ran away), and each q is used until it first fades. Uncertainty: jackknife over interleaved groups of q.
+    // The first version averaged the phase itself over all delays, where delays of pure noise pulled it towards zero.
+    const NS = NSEC, secNum = [], secDen = [];
+    for (let s = 0; s < NS; s++) { secNum.push(new Float64Array(GQ + 1)); secDen.push(new Float64Array(GQ + 1)); }
+    {
+      const alive = new Uint8Array(nb + 1).fill(1), sRe = new Float64Array(nb + 1), sRe2 = new Float64Array(nb + 1), cnt = new Float64Array(nb + 1), yy = new Float64Array(nb + 1);
+      for (const li of allLags) {
         const c = C[li], t = taus[li];
-        groups.forEach(function (g) {
-          if (g.s !== s) return;
-          // mean phase over the pixels of the group, against q along the sector direction
-          for (let k = 0; k < g.qx.length; k++) {
-            const ix = Math.round(g.qx[k] / dkq), iy = Math.round(g.qy[k] / dkq), p = ((iy + n) % n) * n + ((ix + n) % n);
-            const re = c[2 * p], im = c[2 * p + 1], amp2 = re * re + im * im;
-            const proj = g.qx[k] * ux + g.qy[k] * uy, ph = -Math.atan2(im, re);
-            if (Math.abs(proj * speed * t) > 2.5 || amp2 <= 0) continue;          // keep away from phase wrapping
-            num += amp2 * proj * t * ph; den += amp2 * proj * t * proj * t;
-          }
+        sRe.fill(0); sRe2.fill(0); cnt.fill(0); yy.fill(0);
+        const zr = new Float64Array(pixList.length), zi = new Float64Array(pixList.length);
+        pixList.forEach(function (p, k) {
+          const b = binOf[p], ph = (KX[p] * ph0.vx + KY[p] * ph0.vy) * t, cs = Math.cos(ph), sn = Math.sin(ph);
+          zr[k] = c[2 * p] * cs - c[2 * p + 1] * sn; zi[k] = c[2 * p] * sn + c[2 * p + 1] * cs;
+          sRe[b] += zr[k]; sRe2[b] += zr[k] * zr[k]; cnt[b]++; yy[b] += zi[k] * zi[k];
+        });
+        const aB = new Float64Array(nb + 1), v2B = new Float64Array(nb + 1);
+        for (let b = 1; b <= nb; b++) {
+          if (cnt[b] < 2 || !alive[b]) continue;
+          const a = sRe[b] / cnt[b], aErr = Math.sqrt(Math.max(0, sRe2[b] / cnt[b] - a * a) / (cnt[b] / 2));
+          if (!(a > 3 * aErr) || !(a > 0.1 * ampRef[b])) { alive[b] = 0; continue; }
+          aB[b] = a; v2B[b] = yy[b] / cnt[b];                       // the global drift is removed, so Im z is mostly noise
+        }
+        pixList.forEach(function (p, k) {
+          const b = binOf[p]; if (!aB[b] || !(v2B[b] > 0)) return;
+          const s = sectorOf[p], th = (s + 0.5) * Math.PI / NS, u = -(KX[p] * Math.cos(th) + KY[p] * Math.sin(th)) * t;
+          const w = aB[b] / v2B[b], g = b % GQ;
+          secNum[s][GQ] += w * u * zi[k]; secDen[s][GQ] += w * aB[b] * u * u;
+          secNum[s][g] += w * u * zi[k]; secDen[s][g] += w * aB[b] * u * u;
         });
       }
-      sectorV.push({ theta_deg: th * 180 / Math.PI, v_um_s: den > 0 ? num / den : null });
+    }
+    const sectorV = [];
+    for (let s = 0; s < NS; s++) {
+      const th = (s + 0.5) * Math.PI / NS, base = ph0.vx * Math.cos(th) + ph0.vy * Math.sin(th);
+      const N = secNum[s][GQ], Dn = secDen[s][GQ];
+      if (!(Dn > 0)) { sectorV.push({ theta_deg: th * 180 / Math.PI, v_um_s: null, err_um_s: null }); continue; }
+      const jj = []; for (let j = 0; j < GQ; j++) { const dn = Dn - secDen[s][j]; if (dn > 0) jj.push((N - secNum[s][j]) / dn); }
+      let err = null;
+      if (jj.length > 2) { const m = jj.reduce(function (a, c) { return a + c; }, 0) / jj.length; err = Math.sqrt((jj.length - 1) / jj.length * jj.reduce(function (a, c) { return a + (c - m) * (c - m); }, 0)); }
+      sectorV.push({ theta_deg: th * 180 / Math.PI, v_um_s: base + N / Dn, err_um_s: err });
     }
     const eta = movie.viscosity_Pa_s, TK = movie.T_C + 273.15;
     const diameter = D > 0 ? KB * TK / (3 * Math.PI * eta * D * 1e-12) * 1e6 : null;
@@ -5537,12 +5569,16 @@ dqt.set_frame_rate(frame_rate)     # frames per second
   function drawSectorV() {
     const res = cache.res, c = $("chart-sector"); if (!c || LEVEL_RANK[level] < 3) return;
     const pts = res.sector_v.filter(function (e) { return e.v_um_s !== null; });
-    const vmax = Math.max(0.1, res.v_um_s * 1.3, Math.max.apply(null, pts.map(function (e) { return Math.abs(e.v_um_s); })) * 1.15);
+    const vmax = Math.max(0.1, res.v_um_s * 1.3, Math.max.apply(null, pts.map(function (e) { return Math.abs(e.v_um_s) + (e.err_um_s || 0); })) * 1.1);
     const a = axes(c, { xlog: false, ylog: false, x0: 0, x1: 180, y0: -vmax, y1: vmax, xlabel: "Direction of q (" + DEG + ")", ylabel: "v along q (" + MU + "m/s)" }), ctx = a.ctx;
     ctx.strokeStyle = C.accent; ctx.lineWidth = 1.5; ctx.beginPath();
     for (let i = 0; i <= 90; i++) { const th = 2 * i, v = res.v_um_s * Math.cos((th - res.v_dir_deg) * Math.PI / 180), X = a.fx(th), Y = a.fy(v); if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }
     ctx.stroke();
-    pts.forEach(function (e) { dot(ctx, a.fx(e.theta_deg), a.fy(e.v_um_s), 3.4, C.ink, null); });
+    pts.forEach(function (e) {
+      const X = a.fx(e.theta_deg);
+      if (e.err_um_s) { ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(X, a.fy(e.v_um_s - e.err_um_s)); ctx.lineTo(X, a.fy(e.v_um_s + e.err_um_s)); ctx.stroke(); }
+      dot(ctx, X, a.fy(e.v_um_s), 3.4, C.ink, null);
+    });
     a.done();
   }
 
