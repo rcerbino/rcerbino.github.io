@@ -10,6 +10,11 @@ intro: >-
   Where I have presented our work, from my PhD years to today, newest first.
 
 talks:
+  - date: 2026-11-03
+    title: "Is offering an AI tutor enough? What we learned from two semesters of AI tutors in our theory courses"
+    event: "Discussion Meeting Teaching and Learning Physics in the Age of AI, Erwin Schrödinger Institute (ESI)"
+    place: "Vienna, Austria"
+    kind: teaching
   - date: 2026-10-21
     title: "Using cellular phase transitions to understand cancer"
     event: "Seminar, Center for Anatomy and Cell Biology, Medical University of Vienna"
