@@ -254,6 +254,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
 .scalebar { height: 10px; border-radius: 3px; margin-top: 0.3rem; }
 .scalebar.div { background: linear-gradient(90deg, var(--accent), var(--panel), var(--accent-2)); border: 1px solid var(--rule); }
 .scalebar.wheel { background: linear-gradient(90deg, hsl(0 85% 50%), hsl(60 85% 50%), hsl(120 85% 50%), hsl(180 85% 50%), hsl(240 85% 50%), hsl(300 85% 50%), hsl(360 85% 50%)); }
+@media (max-width: 40rem) { .pair.stack { grid-template-columns: 1fr; } }
 .scalelab { display: flex; justify-content: space-between; font-family: var(--sans); font-size: 0.72rem; color: var(--muted); }
 </style>
 
@@ -409,7 +410,8 @@ img_seq = fd.read_images(file_names)</pre>
           <div class="text">
             <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie. The centre of the map holds wide stripes, the edge fine ones.</p>
             <p>Without a drift the map is round: the particles wander equally in all directions. A drift makes the patterns along it travel. After the delay, a pattern that moved by exactly one stripe looks as before and almost cancels in the difference; one that moved by half a stripe is reversed and shows twice as strongly. So the map is crossed by dark and bright fringes at right angles to the drift, closer together for a faster drift or a longer delay. Move the delay slider and watch them close in.</p>
-            <p>The second map shows the same as a share: red where the pattern is still there, white where it has faded, blue where it came back reversed. Only a drift can turn a pattern around.</p>
+            <p>The second map shows the same as a share: red where the pattern is still there, the colour of the page where it has faded, blue where it came back reversed. Only a drift can turn a pattern around.</p>
+            <p class="lvl-2">The dashed circle on the strength map marks the finest pattern the objective can resolve.</p>
             <p class="lvl-2">The difference image cannot tell a drift to the right from one to the left: the fringes are the same for both. The phase of each pattern can. Comparing the Fourier transform of a frame with that of a later frame, each pattern has moved along by a phase, and the phase map (colour wheel) shows it: the colours run along the drift and turn faster for finer stripes. Reverse the flow and the colours run the other way. Faint colours: patterns already faded.</p>
           </div>
         </div>
@@ -437,11 +439,11 @@ dqt.set_frame_rate(frame_rate)     # frames per second
         <div class="step-title"><span class="num">5</span><h2 id="h-curves">Watch each pattern change, along and across the drift</h2></div>
         <div class="step-body">
           <div class="text">
-            <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. Patterns across the drift (stripes parallel to it) are not moved by it: they only fade, as without a drift. Patterns along the drift fade at the same rate but also travel, so the curves swing below zero and back before they die out. Fine stripes swing sooner, because the drift needs less time to carry them by one spacing; but they also fade sooner, and may be gone before they swing.</p>
+            <p>For each stripe spacing, follow how much of the pattern is left as the delay grows (curves drawn for four of the wider spacings). Patterns across the drift (stripes parallel to it) are not moved by it: they only fade, as without a drift. Patterns along the drift fade at the same rate but also travel, so the curves swing below zero and back before they die out. Fine stripes swing sooner, because the drift needs less time to carry them by one spacing; but they also fade sooner, and may be gone before they swing. Patterns almost across the drift are carried a little too, so with a fast drift even their curves dip below zero at long delays.</p>
             <p class="lvl-2">The curves are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i> averaged over the directions of <b>q</b> within 15&deg; of the drift (left) or of the direction across it (right). The lines are the model e<sup>&minus;<i>Dq</i><sup>2</sup>&Delta;<i>t</i></sup> cos(<b>q</b>&middot;<b>v</b>&Delta;<i>t</i>), with the <i>D</i> and <i>v</i> of the result, averaged over the same directions: across the drift <b>q</b>&middot;<b>v</b> is small but not zero, so at long delays even those curves dip below zero when the drift is fast.</p>
           </div>
           <p class="small" id="curves-note" hidden></p>
-          <div class="pair">
+          <div class="pair stack">
             <figure class="viz">
               <figcaption id="along-cap">Along the drift</figcaption>
               <div class="chart short"><canvas id="chart-along" aria-label="Curves along the drift"></canvas></div>
@@ -462,7 +464,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
         <div class="step-body">
           <div class="text">
             <p>Each pattern gives two numbers: how fast it fades, and how fast it swings along the drift. Fading comes from the random motion: halving the stripe spacing makes it four times faster, a line of slope 2 on these logarithmic axes. Swinging comes from the drift: halving the spacing makes it only twice as fast, a line of slope 1. The height of the first line gives the diffusion coefficient, and from it the size; the height of the second gives the speed.</p>
-            <p>The two lines cross. To their left the drift moves each pattern by a whole stripe before diffusion renews it, so the curves swing. To their right diffusion wins and no curve swings, but the drift is still there: each pattern is carried a little before it fades, and the page measures this small shift from the phase of the pattern, averaged over all patterns and the whole movie. As with tracking, a slow drift then only takes a longer movie (four times longer halves the noise) or a wider field. The result says how slow a drift this movie can show.</p>
+            <p>The two lines cross where the drift and diffusion act equally fast (for fast drifts, beyond the right edge of the plot). To their left the drift moves each pattern by a whole stripe before diffusion renews it, so the curves swing. To their right diffusion wins and no curve swings, but the drift is still there: each pattern is carried a little before it fades, and the page measures this small shift from the phase of the pattern, averaged over all patterns and the whole movie. As with tracking, a slow drift then only takes a longer movie (four times longer halves the noise) or a wider field. The result says how slow a drift this movie can show.</p>
             <p class="lvl-2">Below the plot, the result gives the speed, its direction and the diffusion coefficient, and what they say about the cause: the density of the particles for sedimentation, the thermal diffusion coefficient and the Soret coefficient for thermophoresis.</p>
           </div>
           <figure class="viz">
@@ -471,16 +473,16 @@ dqt.set_frame_rate(frame_rate)     # frames per second
           </figure>
           <div class="step-body">
             <div class="result" id="result" aria-live="polite"></div>
+            <figure class="viz lvl-3">
+              <figcaption>The drift seen by patterns of each direction: the same fit as the velocity, with only the patterns within 7.5&deg; of each direction, gives the speed along <b>q</b>, which should be <i>v</i> cos(&theta; &minus; &theta;<sub>v</sub>): largest along the drift, zero across it and negative beyond. Error bars: jackknife over groups of <i>q</i>. The line is the result.</figcaption>
+              <div class="chart short"><canvas id="chart-sector" aria-label="Speed along each direction of q"></canvas></div>
+            </figure>
             <div class="predict" data-predict="double" data-right="no">
               <div class="q">Predict first: you double the flow speed. Do the dots (the fading rates) move?</div>
               <div class="btns"><button type="button" data-guess="yes">Yes</button><button type="button" data-guess="no">No</button></div>
               <div class="a" hidden><span class="verdict"></span> No. Fading comes from diffusion alone, which does not care about the flow: the dots stay on the same line, and the size does not change. The squares (swinging) move up by a factor two, and the crossing of the two lines moves to finer stripes, so the drift shows in more patterns. The bench now runs with twice the speed (at most 20 &micro;m/s, the end of the slider).</div>
             </div>
           </div>
-          <figure class="viz lvl-3">
-            <figcaption>The drift seen by patterns of each direction: the same fit as the velocity, with only the patterns within 7.5&deg; of each direction, gives the speed along <b>q</b>, which should be <i>v</i> cos(&theta; &minus; &theta;<sub>v</sub>): largest along the drift, zero across it and negative beyond. Error bars: jackknife over groups of <i>q</i>. The line is the result.</figcaption>
-            <div class="chart short"><canvas id="chart-sector" aria-label="Speed along each direction of q"></canvas></div>
-          </figure>
         </div>
         <details class="math" data-open-at="researcher">
           <summary>The math: fading, swinging, and when a drift can be seen</summary>
@@ -505,7 +507,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     <div class="cards" id="cards"></div>
   </section>
 
-  <section class="wrap further" aria-labelledby="h-adds">
+  <section class="wrap further lvl-2" aria-labelledby="h-adds">
     <h2 id="h-adds">What this page adds to the published methods</h2>
     <p class="prose">A drift shows in the phase of the Fourier transform of the images: phase differential microscopy (phiDM; Colin, Zhang and Wilson 2014) measures it from the phase steps between consecutive frames of the widest patterns, and Richards, Martinez and Arlt (2021) used it together with DDM. Fits of the structure function with its cos(<b>q</b>&middot;<b>v</b>&Delta;<i>t</i>) term are also used; they need the patterns to swing and give no sign. The steps below are not in the papers we cite: we added them while testing the page against its own simulations. Some may exist elsewhere in the literature. At the "Addict" level each can be switched off, and the result table shows the published method alone (phiDM for the velocity, <i>B</i> fitted at each <i>q</i>, no depth of field) on the same movie.</p>
     <ul class="adds">

@@ -64,6 +64,13 @@ const angDiff = function (a, b) { let d = ((a - b) % 360 + 540) % 360 - 180; ret
   const { r } = run("drift 2 um/s along the optical axis (upright)", { drift_um_s: 0, drift_z_um_s: 2, walls: true, seed: 7 });
   check("vertical drift: no drift in the image plane", !r.detected, "v " + r.v_um_s.toFixed(3));
 }
+{ // windowing: the bright background must not leak into C (it pinned v at zero before each frame lost its mean)
+  const mv = DDM.runToEnd(MOVIE.simulate(Object.assign({}, BASE, { drift_um_s: 2, drift_deg: 30, seed: 11 })));
+  const r = DDM.runToEnd(DRIFT.analyse(mv, { q_min_per_um: null, q_max_per_um: null, windowing: true }));
+  check("windowing: drift detected, speed within 3 times its uncertainty", r.detected && Math.abs(r.v_um_s - 2) < 3 * r.v_err_um_s, r.v_um_s.toFixed(3) + " +- " + r.v_err_um_s.toFixed(3));
+  const p = DDM.runToEnd(DRIFT.analyse(mv, { q_min_per_um: null, q_max_per_um: null, published_only: true }));
+  check("published method (phiDM) runs and gives a finite speed with an uncertainty", isFinite(p.v_um_s) && p.v_err_um_s > 0 && p.velocity_from === "phidm", p.v_um_s.toFixed(3) + " +- " + p.v_err_um_s.toFixed(3));
+}
 { // a slow drift that makes no pattern swing (v L / D about 5): found from the phase in a long movie (512 frames at 2/s)
   const { r } = run("200 nm beads, 0.3 um/s, 256 s movie", { drift_um_s: 0.3, drift_deg: 0, n_frames: 512, frame_rate_hz: 2, seed: 8 });
   check("slow drift (no pattern swings): detected, speed within 2.5 times its uncertainty", r.detected && Math.abs(r.v_um_s - 0.3) < 2.5 * r.v_err_um_s, r.v_um_s.toFixed(3) + " +- " + r.v_err_um_s.toFixed(3));

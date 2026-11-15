@@ -1974,7 +1974,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     let LR;
     const RTOL = (typeof process !== "undefined" && process.env && process.env.DDM_RTOL) ? +process.env.DDM_RTOL : 1e-3;   // energy share left out; 1e-3 changes A(q) by under 1 % (checked) and saves 10-25 % of the time
     if (!complexK) LR = O.lowRank(Kall, nq, nzTot, RTOL, 32);          // thick cells need more terms
-    else { need(nzTot <= 500, "DIC: the cell is too thick to simulate here (keep it below about 200 um)"); LR = lowRankComplex(Kall, KallI, rows, nzTot, RTOL, 32); }
+    else { need(nzTot <= 500, "the cell is too thick to simulate here (keep it below about 200 um)"); LR = lowRankComplex(Kall, KallI, rows, nzTot, RTOL, 32); }
     const M = LR.rank;
     yield { stage: "Computing how one particle looks", frac: 0.14 };
 

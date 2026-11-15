@@ -217,9 +217,10 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
 - "Swimming cells" /ddm/swimmers/ (`static/ddm/swimmers/index.html`): `swim.src.html`, `app-swim.js`,
   `active-engine.js` and `worker-swim.js`; it shares the optics, movie and engine files.
 - "Drifting particles" /ddm/drift/ (`static/ddm/drift/index.html`): `drift.src.html`, `app-drift.js`,
-  `drift-engine.js` (velocity from the cross spectrum, fitted through its imaginary part at all delays so that drifts
-  too slow to make any pattern swing still count, as in tracking; a drift is reported when it exceeds three times its
-  uncertainty; D from the structure function) and
+  `drift-engine.js` (velocity from the cross spectrum, fitted through its imaginary part at all delays and all q so that
+  drifts too slow to make any pattern swing still count, as in tracking; uncertainty from two jackknifes in quadrature;
+  a drift is reported when it exceeds three times its uncertainty; D from the structure function with the depth of
+  field; the published method for the Addict row is phase differential microscopy, phiDM, Colin, Zhang and Wilson 2014) and
   `worker-drift.js`; spheres only (colloids, no interactions). Causes: flow (plug or Poiseuille), sedimentation
   (microscope upright or on its side), thermophoresis with Soret coefficients from Duhr and Braun 2006, Iacopini,
   Rusconi and Piazza 2006, Braibanti, Vigolo and Piazza 2008, and Helden, Eichhorn and Bechinger 2015 (`THERMO` in

@@ -297,7 +297,8 @@
     // whether patterns swing (q v dt reaching about 1 before diffusion erases the pattern); the phase does not need it
     const ev = expectedDrift(); if (!ev.plane || !(ev.speed > 0)) return "";
     const D = dSE(), L = simPx() * pixelUm(), Pe = ev.speed * L / D;
-    return "Peclet number over the field v L / D = " + fmtSig(Pe, 2) + (Pe < 2 * Math.PI ? ": below 2\u03c0, so no pattern swings before diffusion renews it. The phase of the cross spectrum can still measure the drift if the movie is long enough; step 6 says." : Pe < 30 ? ": the drift makes only the widest patterns swing." : ": the drift makes many patterns swing.");
+    if (level === "curious") return Pe < 2 * Math.PI ? "Slow compared with the random motion: no pattern swings, but a long enough movie still shows the drift." : "Fast enough to make the patterns swing.";
+    return "Peclet number over the field v L / D = " + fmtSig(Pe, 2) + (Pe < 2 * Math.PI ? ": below 2\u03c0, so no pattern swings before diffusion renews it. The phase of the cross spectrum can still measure the drift if the movie is long enough; step 6 says." : Pe < 30 ? ": the drift may make a few of the widest patterns swing (step 6 says which)." : ": the drift makes many patterns swing.");
   }
   // vector optics: automatic above this aperture (objective, or condenser in transmitted light), where 1 - cos(theta) at the
   // pupil edge exceeds about 0.25 in water and the scalar weights start to be off by more than a few percent
@@ -360,14 +361,14 @@
   const CONTROLS = [
     { key: "particle", group: "Sample", lvl: 1, label: "Material of the spheres", kind: "select", options: function () { return SHAPE_MATERIALS.sphere.map(function (k) { return [k, MATERIALS[k]]; }); } },
     { key: "n_custom", group: "Sample", lvl: 1, label: "Particle refractive index", kind: "lin", min: 1.3, max: 2.6, step: 0.01, fmt: function (v) { return v.toFixed(2); }, when: function () { return state.particle === "custom"; } },
-    { key: "diameter_um", group: "Sample", lvl: 1, label: "Diameter", kind: "log", min: 0.03, max: 5, fmt: fmtSize, hint: function () { return "Stokes-Einstein: D = " + fmtSig(dSE(), 3) + " " + MU + "m\u00b2/s."; } },
+    { key: "diameter_um", group: "Sample", lvl: 1, label: "Diameter", kind: "log", min: 0.03, max: 5, fmt: fmtSize, hint: function () { return level === "curious" ? "" : "Stokes-Einstein: D = " + fmtSig(dSE(), 3) + " " + MU + "m\u00b2/s."; } },
     { key: "phi", group: "Sample", lvl: 2, label: "Concentration (volume fraction)", kind: "log", min: 1e-6, max: 1e-2, fmt: fmtPhi, hint: function () { return particleCount() + " particles in the simulated volume." + (phiCapped ? " Lowered to fit what the browser can follow (" + MAX_PARTICLES + " particles even in the smallest simulated field)." : "") + (phiRaised ? " Raised so that a few particles are in the simulated field." : ""); } },
     { key: "liquid", group: "Sample", lvl: 2, label: "Liquid", kind: "select", options: Object.keys(LIQUIDS).map(function (k) { return [k, LIQUIDS[k]]; }) },
     { key: "glycerol_w", group: "Sample", lvl: 2, label: "Glycerol (by mass)", kind: "lin", min: 0, max: 0.95, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, when: function () { return state.liquid === "glycerol"; } },
     { key: "n_liquid", group: "Sample", lvl: 3, label: "Liquid refractive index", kind: "lin", min: 1.30, max: 1.60, step: 0.005, fmt: function (v) { return v.toFixed(3); }, when: function () { return state.liquid === "custom"; } },
     { key: "visc_mPa_s", group: "Sample", lvl: 3, label: "Liquid viscosity", kind: "log", min: 0.3, max: 1000, fmt: function (v) { return fmtSig(v, 2) + " mPa s"; }, when: function () { return state.liquid === "custom"; } },
     { key: "T_C", group: "Sample", lvl: 2, label: "Temperature", kind: "lin", min: 5, max: 60, step: 1, fmt: function (v) { return v.toFixed(0) + " " + DEG + "C"; } },
-    { key: "cell_um", group: "Sample", lvl: 2, label: "Chamber thickness", kind: "log", min: 1, max: 500, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m"; }, hint: function () { return particleCount() > 30000 ? "Too many particles for the browser (" + particleCount() + "): lower the concentration or simulate a smaller part of the image." : state.mode === "dic" && state.cell_um >= 200 ? "DIC is simulated in cells up to 200 " + MU + "m." : state.cell_um > 60 ? "Thick cells take longer to simulate (up to about 20 s): far from focus each particle's image changes with depth in many ways." : ""; } },
+    { key: "cell_um", group: "Sample", lvl: 2, label: "Chamber thickness", kind: "log", min: 1, max: 100, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m"; }, hint: function () { return particleCount() > 30000 ? "Too many particles for the browser (" + particleCount() + "): lower the concentration or simulate a smaller part of the image." : state.mode === "dic" && state.cell_um >= 200 ? "DIC is simulated in cells up to 200 " + MU + "m." : state.cell_um > 60 ? "Thick cells take longer to simulate (up to about 20 s): far from focus each particle's image changes with depth in many ways." : ""; } },
     { key: "focus_frac", group: "Sample", lvl: 2, label: "Focus height in the chamber", kind: "lin", min: 0, max: 1, step: 0.05, fmt: function (v) { return fmtSig(v * state.cell_um, 2) + " " + MU + "m above the bottom"; } },
     { key: "rho_custom", group: "Sample", lvl: 3, label: "Particle density", kind: "lin", min: 0.8, max: 4, step: 0.01, fmt: function (v) { return v.toFixed(2) + " g/cm" + SUP3; }, when: function () { return state.particle === "custom"; } },
     { key: "rho_liquid", group: "Sample", lvl: 3, label: "Liquid density", kind: "lin", min: 0.7, max: 2, step: 0.01, fmt: function (v) { return v.toFixed(2) + " g/cm" + SUP3; }, when: function () { return state.liquid === "custom"; } },
@@ -376,8 +377,8 @@
     { key: "cause", group: "Sample", lvl: 1, label: "What carries the particles", kind: "select", options: [["none", "Nothing: they only diffuse"], ["flow", "A flow of the liquid"], ["sediment", "Gravity: sedimentation"], ["thermo", "A temperature gradient: thermophoresis"]], hint: causeHint },
     { key: "flow_v", group: "Sample", lvl: 1, label: "Flow speed", kind: "log", min: 0.01, max: 20, fmt: fmtVel, when: function () { return state.cause === "flow"; }, hint: visibleHint },
     { key: "flow_deg", group: "Sample", lvl: 2, label: "Flow direction in the image", kind: "lin", min: 0, max: 355, step: 5, fmt: function (v) { return Math.round(v) + DEG + " (" + dirWords(v) + ")"; }, when: function () { return state.cause === "flow"; } },
-    { key: "flow_profile", group: "Sample", lvl: 2, label: "Flow across the chamber", kind: "select", options: [["plug", "The same at every height (plug flow)"], ["poiseuille", "Pushed through the chamber: fastest in the middle, still at the walls (Poiseuille)"]], when: function () { return state.cause === "flow"; } },
-    { key: "orient", group: "Sample", lvl: 1, label: "Microscope", kind: "select", options: [["upright", "Standing: optical axis vertical, gravity along it"], ["side", "On its side: optical axis horizontal, gravity down the image"]], when: function () { return state.cause === "sediment"; }, hint: visibleHint },
+    { key: "flow_profile", group: "Sample", lvl: 2, label: "Flow across the chamber", kind: "select", options: [["plug", "Plug flow: the same at every height"], ["poiseuille", "Poiseuille: fastest in the middle"]], when: function () { return state.cause === "flow"; } },
+    { key: "orient", group: "Sample", lvl: 1, label: "Microscope", kind: "select", options: [["upright", "Upright: optical axis vertical, gravity along it"], ["side", "On its side: optical axis horizontal, gravity down the image"]], when: function () { return state.cause === "sediment"; }, hint: visibleHint },
     { key: "thermo_sys", group: "Sample", lvl: 2, label: "Measured system", kind: "select", options: Object.keys(THERMO).map(function (k) { return [k, THERMO[k].label]; }), when: function () { return state.cause === "thermo"; } },
     { key: "st_custom", group: "Sample", lvl: 3, label: "Soret coefficient S_T", kind: "lin", min: -3, max: 5, step: 0.05, fmt: function (v) { return fmtSig(v, 2) + " K\u207b\u00b9"; }, when: function () { return state.cause === "thermo" && state.thermo_sys === "custom"; } },
     { key: "grad", group: "Sample", lvl: 2, label: "Temperature gradient", kind: "log", min: 0.001, max: 0.2, fmt: function (v) { return fmtSig(v, 2) + " K/" + MU + "m"; }, when: function () { return state.cause === "thermo"; }, hint: function () { const L = simPx() * pixelUm(), span = state.grad * (state.grad_dir === "plane" ? L : state.cell_um); return "Duhr and Braun reached 0.1 K/" + MU + "m by heating water with an infrared laser over tens of micrometres. Here " + fmtSig(span, 2) + " K across the " + (state.grad_dir === "plane" ? "simulated field" : "chamber") + "; the simulation uses S_T at the temperature set everywhere" + (span > 5 ? ", which is rough over so many degrees" : "") + ". " + visibleHint(); } },
@@ -605,6 +606,7 @@
     });
   }
   function syncControls() {
+    if (typeof syncPredictions === "function") syncPredictions();
     CONTROLS.forEach(function (c) {
       const e = ctlEls[c.kind === "qrange" ? "qrange" : c.key];
       if (typeof c.options === "function") {
@@ -679,6 +681,7 @@
     }
     if (SCANNING() && (key === "mode" || key === "objective" || key === "scan_px")) autoZoom();
     if (key === "camera") { const c = cam(); state.cam_mode = Object.keys(c.modes)[0]; state.iface = Object.keys(c.ifaces)[0]; state.binning = 1; }
+    resetPredictions();
     constrain(); syncControls(); drawFov();
     if (ANALYSIS_KEYS[key]) scheduleAnalysis(); else schedule();
   }
@@ -1040,7 +1043,7 @@
     ctx.putImageData(img, 0, 0);
     drawMapOverlay(); drawFmap(); drawPhase();
     const qz = cache.zoomK * 2 * Math.PI / cache.movie.L_um;
-    $("zoom-note").textContent = (level === "curious" ? "The centre of the map above" : "Both maps: the centre of the one above") + ", lightly smoothed, q up to " + fmtSig(qz, 2) + " " + MU + "m\u207b\u00b9 (stripes wider than " + fmtSig(2 * Math.PI / qz, 2) + " " + MU + "m), at the same delay.";
+    $("zoom-note").textContent = (level === "curious" ? "The centre of the map above" : "Both maps: the centre of the one above") + ", lightly smoothed (grey: the cross along the axes, left out because the edges of the image add artefacts there), q up to " + fmtSig(qz, 2) + " " + MU + "m\u207b\u00b9 (stripes wider than " + fmtSig(2 * Math.PI / qz, 2) + " " + MU + "m), at the same delay.";
   }
   function drawMapOverlay() {
     const ov = $("map-ov"), n = cache.movie.n, S = ov.width, s = S / n;
@@ -1162,8 +1165,9 @@
     const res = cache.res, taus = res.taus_s, x0 = taus[0] * 0.8, x1 = taus[taus.length - 1] * 1.25;
     const a = axes(canvas, { xlog: true, ylog: false, x0: x0, x1: x1, y0: -1.05, y1: 1.15, xlabel: "Delay (s)", ylabel: level === "curious" ? "How much of the pattern is left" : "f(q, \u0394t)" }), ctx = a.ctx;
     ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.m.l, a.fy(0)); ctx.lineTo(a.m.l + a.pw, a.fy(0)); ctx.stroke();
-    const pick = [], k = Math.min(6, rows.length);
-    for (let i = 0; i < k; i++) pick.push(rows[Math.round(i * (rows.length - 1) / Math.max(1, k - 1))]);
+    // four curves from the wider half of the patterns (the finer ones fade, or swing, too fast to follow)
+    const pool = rows.slice(0, Math.max(2, Math.ceil(rows.length / 2))), pick = [], k = Math.min(4, pool.length);
+    for (let i = 0; i < k; i++) pick.push(pool[Math.round(i * (pool.length - 1) / Math.max(1, k - 1))]);
     const D = res.D_um2_s, v = res.detected ? res.v_um_s : 0;
     pick.forEach(function (r) {
       const col = qColor(qPos(r.q_per_um)), q = r.q_per_um;
@@ -1185,7 +1189,8 @@
     const res = cache.res, ev = expectedDrift(), byDrift = res.curves_axes !== "image";
     $("along-cap").textContent = byDrift ? "Along the drift" : "Patterns that vary from left to right (q along x)";
     $("across-cap").textContent = byDrift ? "Across the drift" : "Patterns that vary from top to bottom (q along y)";
-    const note = $("curves-note"); note.hidden = byDrift;
+    const note = $("curves-note"); note.hidden = byDrift && res.visibility.swing;
+    if (byDrift && !res.visibility.swing) note.textContent = "The drift is measured (step 6), but it is too slow to carry any pattern by a whole stripe before diffusion renews it: the curves along it look like those across it, and the maps of step 4 show no fringes. It shows only in small shifts of the phase, averaged over all patterns and the whole movie.";
     if (!byDrift) note.textContent = "No drift is seen in the image plane, so no direction of the image is special: the two sets of curves below are simply the patterns along x and along y, and they fade alike, without swinging. " +
       (!ev.plane && ev.speed > 0 ? "A drift along the optical axis cannot make a pattern of the image travel. Its only traces are a little extra fading, as the particles' images change with their height, and, once they have piled up against the glass, their slower diffusion there."
         : ev.plane && ev.speed > 0 ? "The drift set is too slow to move any pattern before diffusion renews it (see step 6)." : "");
@@ -1198,7 +1203,7 @@
     const res = cache.res, w = res.window, pts = res.per_q;
     const x0 = w.q_from / 1.4, x1 = w.q_to * 1.4, y0 = w.gamma_lo_hz / 8, y1 = w.gamma_hi_hz * 8;
     const a = axes($("chart-rates"), { xlog: true, ylog: true, x0: x0, x1: x1, y0: y0, y1: y1,
-      xlabel: level === "curious" ? "Finer patterns \u2192   (wave vector q, " + MU + "m\u207b\u00b9)" : "Wave vector q (" + MU + "m\u207b\u00b9)",
+      xlabel: level === "curious" ? "Finer patterns ->   (wave vector q, " + MU + "m\u207b\u00b9)" : "Wave vector q (" + MU + "m\u207b\u00b9)",
       ylabel: level === "curious" ? "How fast (1/s)" : "\u0393 and \u03c9 (s\u207b\u00b9)" }), ctx = a.ctx;
     ctx.fillStyle = C.tint; ctx.globalAlpha = 0.9;
     const shade = function (xa, ya, xb, yb) { ctx.fillRect(a.fx(xa), a.fy(yb), a.fx(xb) - a.fx(xa), a.fy(ya) - a.fy(yb)); };
@@ -1219,9 +1224,10 @@
     a.done();
     const ul = $("reasons"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
-    add("Dots: how fast each pattern fades (\u0393), on the black line D q\u00b2 of slope 2." + (res.detected ? " Squares: how fast it oscillates along the drift (\u03c9), on the blue line v q of slope 1." : ""));
+    if (level === "curious") add("Dots: how fast each pattern fades, on the black line of slope 2." + (res.detected ? " Squares: how fast it swings along the drift, on the blue line of slope 1." : ""));
+    else add("Dots: how fast each pattern fades (\u0393), on the black line D q\u00b2 of slope 2." + (res.detected ? " Squares: how fast it swings along the drift (\u03c9), on the blue line v q of slope 1." : ""));
     if (level !== "curious") add("Dashed red: what the simulated particles should give (D q\u00b2 and, dotted, v q for the drift set).");
-    if (res.detected) add("Where the blue line is below the black one, diffusion renews the pattern before the drift moves it: only the widest patterns (left) show the drift.");
+    if (res.detected) add(res.visibility.swing ? "Where the blue line is below the black one, diffusion renews the pattern before the drift carries it by a whole stripe: those patterns do not swing, but their phase still shifts a little, and the measurement uses that too." : "No pattern swings here: diffusion renews each one before the drift carries it by a whole stripe. The drift is measured from the small shifts of the phase of all patterns, averaged over the movie.");
   }
   // speed seen along each direction of q: v cos(theta - theta_v)
   function drawSectorV() {
@@ -1256,11 +1262,16 @@
   function trueD(tr) { return tr.walls && tr.D_plane_um2_s > 0 ? tr.D_plane_um2_s : tr.D_um2_s; }
   function fmtV(v) { return Math.abs(v) < 0.1 ? fmtSig(v * 1000, 2) + " nm/s" : fmtSig(v, 3) + " " + MU + "m/s"; }
   function verdictDrift() {
-    const res = cache.res, ev = expectedDrift();
+    const res = cache.res, ev = expectedDrift(), vSet = ev.lo !== undefined ? ev.hi : ev.speed;
     if (!ev.plane && ev.speed > 0) return res.detected ? { cls: "warn", text: "A drift in the image plane, though there is none" } : { cls: "info", text: "The drift is along the optical axis: none in the image" };
     // not detected: too slow for this movie if the drift set is below the slowest it can show; otherwise a miss
-    if (!res.detected) return !(ev.speed > 0) ? { cls: "good", text: "No drift, none found" } : res.visibility.v_min_um_s > 0 && ev.speed < res.visibility.v_min_um_s ? { cls: "info", text: "Too slow to see with this movie" } : { cls: "warn", text: "Not detected, though this movie should show it" };
-    if (!(ev.speed > 0)) return { cls: "bad", text: "A drift found where there is none" };
+    const vmin = res.visibility.v_min_um_s;
+    if (!res.detected) {
+      if (!(vSet > 0)) return { cls: "good", text: "No drift, none found" };
+      if (!(vmin > 0)) return { cls: "warn", text: "Too little signal to measure a drift" };
+      return ev.speed < vmin ? { cls: "info", text: "Too slow to see with this movie" } : ev.speed < 1.7 * vmin ? { cls: "info", text: "Near the limit of this movie: not seen this time" } : { cls: "warn", text: "Not detected, though this movie should show it" };
+    }
+    if (!(vSet > 0)) return { cls: "bad", text: "A drift found where there is none" };
     let dev = res.v_um_s / ev.speed - 1;
     if (ev.lo !== undefined) dev = res.v_um_s < ev.lo ? res.v_um_s / ev.lo - 1 : res.v_um_s > ev.hi ? res.v_um_s / ev.hi - 1 : 0;
     let ang = Math.abs(((res.v_dir_deg - ev.deg) % 360 + 540) % 360 - 180);
@@ -1270,32 +1281,41 @@
     if (Math.abs(dev) < Math.max(0.1, 2.5 * sv) && angOk) return { cls: "good", text: ev.lo !== undefined ? "Between the mean flow and the flow at the focus" : Math.abs(dev) < 0.1 ? "Matches the drift set (within 10 %)" : "Matches the drift set within its uncertainty" };
     return Math.abs(dev) < Math.max(0.25, 5 * sv) && ang < Math.max(25, 5 * sa) ? { cls: "warn", text: "Off by " + Math.round(100 * Math.abs(dev)) + " %" + (ang >= 10 ? ", " + Math.round(ang) + DEG + " in direction" : "") } : { cls: "bad", text: "Off by " + Math.round(100 * Math.abs(dev)) + " %" };
   }
+  // the cause in one plain phrase, for the sentence under the movie
+  function movieCause() {
+    const ev = expectedDrift();
+    if (state.cause === "none") return "nothing else moves them";
+    if (state.cause === "flow") return "a flow carries them " + dirWords(state.flow_deg) + " at " + (ev.lo !== undefined ? "up to " + fmtV(state.flow_v * 1.5) : fmtV(state.flow_v));
+    if (state.cause === "sediment") return state.orient === "side" ? "gravity pulls them " + (stokesV() >= 0 ? "down" : "up") + " the image at " + fmtV(ev.speed) : "gravity pulls them " + (stokesV() >= 0 ? "down" : "up") + " along the optical axis, at " + fmtV(ev.speed);
+    return "the temperature gradient pushes them " + (ev.plane ? dirWords(ev.deg) : (thermoDT() >= 0 ? "down" : "up") + " along the optical axis") + " at " + fmtV(ev.speed);
+  }
   function causeText() {
     const ev = expectedDrift();
     if (state.cause === "none") return "nothing carries the particles: they only diffuse";
     if (state.cause === "flow") return "a flow of " + fmtV(state.flow_v) + " " + dirWords(state.flow_deg) + (state.flow_profile === "poiseuille" ? " (mean over the chamber; faster in the middle, still at the walls)" : "");
     if (state.cause === "sediment") return "gravity: Stokes settling at " + fmtV(Math.abs(stokesV())) + (state.orient === "side" ? ", " + (stokesV() >= 0 ? "down" : "up") + " the image (microscope on its side)" : ", along the optical axis (upright microscope)");
-    return "a temperature gradient of " + fmtSig(state.grad, 2) + " K/" + MU + "m " + (state.grad_dir === "axis" ? "along the optical axis (warmer at the top)" : "across the image (warmer to the right)") + ": D_T = " + fmtSig(thermoDT(), 2) + " " + MU + "m\u00b2/(s K), drift " + fmtV(ev.speed) + (ev.plane ? " " + dirWords(ev.deg) : " along the optical axis");
+    return "a temperature gradient of " + fmtSig(state.grad, 2) + " K/" + MU + "m " + (state.grad_dir === "axis" ? "along the optical axis (warmer at the top)" : "across the image (warmer to the right)") + ": D<sub>T</sub> = " + fmtSig(thermoDT(), 2) + " " + MU + "m\u00b2/(s K), drift " + fmtV(ev.speed) + (ev.plane ? " " + dirWords(ev.deg) : " along the optical axis");
   }
   function renderResult() {
     const res = cache.res, mv = cache.movie, tr = mv.truth, v = verdictDrift(), ev = expectedDrift(), trD = trueD(tr);
     let h = '<div class="eyebrow">Result</div>';
-    h += res.detected ? '<div class="big">' + fmtV(res.v_um_s) + (res.v_err_um_s ? ' <small>&plusmn; ' + fmtV(res.v_err_um_s) + '</small>' : '') + '</div><p class="small" style="margin:0">' + (res.velocity_from === "structure" ? "along the line " + (deg360(res.v_dir_deg) % 180) + DEG + ", either way (the structure function has no sign)" : dirTxt(res.v_dir_deg) + (level !== "curious" && res.v_dir_err_deg ? " &plusmn; " + errDeg(res.v_dir_err_deg) : "")) + '</p>'
+    h += res.detected ? '<div class="big">' + fmtV(res.v_um_s) + (res.v_err_um_s ? ' <small>&plusmn; ' + (res.v_um_s >= 0.1 ? fmtSig(res.v_err_um_s, 2) + ' ' + MU + 'm/s' : fmtV(res.v_err_um_s)) + '</small>' : '') + '</div><p class="small" style="margin:0">' + (res.velocity_from === "structure" ? "along the line " + (deg360(res.v_dir_deg) % 180) + DEG + ", either way (the structure function has no sign)" : dirTxt(res.v_dir_deg) + (level !== "curious" && res.v_dir_err_deg ? " &plusmn; " + errDeg(res.v_dir_err_deg) : "")) + '</p>'
       : '<div class="big">No drift seen</div>';
     h += '<span class="chip ' + v.cls + '">' + v.text + '</span>';
-    h += '<p class="small" style="margin:0">Set: ' + causeText() + '. Diffusion ' + fmtSig(res.D_um2_s, 3) + ' ' + MU + 'm\u00b2/s, so a size of ' + fmtSize(res.diameter_um) + ' (true ' + fmtSize(tr.diameter_um) + (Math.abs(trD / tr.D_um2_s - 1) > 0.05 ? '; near the glass they diffuse at ' + fmtSig(trD, 3) + ' ' + MU + 'm\u00b2/s, as ' + fmtSize(tr.diameter_um * tr.D_um2_s / trD) + ' particles would far from it' : '') + ').</p>';
+    h += '<p class="small" style="margin:0">Set: ' + causeText() + '. Diffusion ' + fmtSig(res.D_um2_s, 3) + ' ' + MU + 'm\u00b2/s, so a size of ' + fmtSize(res.diameter_um) + ' (true ' + fmtSize(tr.diameter_um) + (Math.abs(trD / tr.D_um2_s - 1) > 0.05 ? '; near the glass they diffuse at ' + fmtSig(trD, 3) + ' ' + MU + 'm\u00b2/s, as ' + fmtSize(tr.diameter_um * tr.D_um2_s / trD) + ' particles would far from it' : '') + ').' + (state.cause === "flow" && state.flow_profile === "poiseuille" ? ' The fit of D assumes one speed: the spread of speeds through the depth of field reads as extra diffusion, so D comes out too large and the size too small.' : '') + '</p>';
     // can the drift be seen at all, in words
     const vis = res.visibility;
     if (!res.detected) {
       let t = "";
       if (ev.plane && ev.speed > 0) {
         // the slowest drift this movie can show: three times the uncertainty of the speed, as with tracking
-        const vmin = res.visibility.v_min_um_s, pe = ev.speed * mv.L_um / res.D_um2_s;
-        t = "The drift moves each pattern a little, while the random motion shifts it back and forth far more. As with tracking, the drift only shows once enough patterns and enough time are averaged for it to stand out of that noise. This movie can show drifts faster than about " + fmtV(vmin) + "; the one set is " + fmtV(ev.speed) + (ev.speed >= vmin ? ", so this one was missed by chance: a new random sample will usually show it" : "") + ". The noise falls as one over the square root of the movie's duration (a four times longer movie halves it), and with a wider field (lower magnification).";
+        const vmin = res.visibility.v_min_um_s;
+        t = "The drift moves each pattern a little, while the random motion shifts it back and forth far more. As with tracking, the drift only shows once enough patterns and enough time are averaged for it to stand out of that noise. " + (vmin > 0 ? "This movie can show drifts faster than about " + fmtV(vmin) + "; the one set is " + fmtV(ev.speed) + (ev.speed >= vmin ? ", close enough to the limit to be missed by chance: another random sample may show it" : "") + "." : "Here the analysis found too little signal to measure any drift (particles too faint, too few or too fast for these settings).") + " The noise falls as one over the square root of the movie's duration (a four times longer movie halves it), and with a wider field (lower magnification).";
       } else if (!ev.plane && ev.speed > 0) {
         const lg = Math.abs(state.cause === "sediment" ? dSE() / stokesV() : 1 / (thermoST() * state.grad));
         const slow = trueD(tr) / tr.D_um2_s < 0.9;
-        t = "The drift is along the optical axis, and DDM sees motion in the image plane only. " + (lg < state.cell_um / 3 ? "The particles have piled up within about " + fmtSig(lg, 2) + " " + MU + "m of the " + ((state.cause === "sediment" ? stokesV() > 0 : thermoDT() > 0) ? "bottom" : "top") + " glass" + (slow ? ", where the liquid squeezing past slows their diffusion: far from the glass the same D would mean larger particles." : ".") : "The particles leave the focus slightly faster in one direction, so the curves fade a little faster.");
+        const glass = ((state.cause === "sediment" ? stokesV() > 0 : thermoDT() > 0) ? "bottom" : "top") + " glass";
+        t = "The drift is along the optical axis, and DDM sees motion in the image plane only. " + (lg < state.diameter_um / 2 ? "The particles sit on the " + glass + (slow ? ", where the liquid squeezing past slows their diffusion: far from the glass the same D would mean larger particles." : ".") : lg < state.cell_um / 3 ? "The particles have piled up within about " + fmtSig(lg, 2) + " " + MU + "m of the " + ((state.cause === "sediment" ? stokesV() > 0 : thermoDT() > 0) ? "bottom" : "top") + " glass" + (slow ? ", where the liquid squeezing past slows their diffusion: far from the glass the same D would mean larger particles." : ".") : "The particles leave the focus slightly faster in one direction, so the curves fade a little faster.");
       }
       if (t) h += '<p class="small" style="margin:0">' + t + '</p>';
     }
@@ -1322,7 +1342,7 @@
         // warmer to the right: v = -D_T dT/dx, so D_T = -v_x / gradient (the structure function alone gives no sign)
         const noSign = res.velocity_from === "structure", vX = res.v_um_s * Math.cos(res.v_dir_deg * Math.PI / 180);
         const DT = noSign ? res.v_um_s / state.grad : -vX / state.grad, ST = DT / res.D_um2_s;
-        h += '<p class="small" style="margin:0">From the drift and the gradient: ' + (noSign ? '|D_T| = ' : 'D_T = ') + fmtSig(DT, 2) + ' ' + MU + 'm\u00b2/(s K) and ' + (noSign ? '|S_T| = ' : 'S_T = D_T / D = ') + fmtSig(ST, 2) + ' K\u207b\u00b9 (set ' + fmtSig(thermoDT(), 2) + ' and ' + fmtSig(thermoDT() / dSE(), 2) + '). ' + (noSign ? "The structure function cannot tell which way the particles go, so the sign is unknown." : DT > 0 ? "Positive: the particles move to the cold side." : "Negative: they move to the warm side.") + '</p>';
+        h += '<p class="small" style="margin:0">From the drift and the gradient: ' + (noSign ? '|D<sub>T</sub>| = ' : 'D<sub>T</sub> = ') + fmtSig(DT, 2) + ' ' + MU + 'm\u00b2/(s K) and ' + (noSign ? '|S<sub>T</sub>| = ' : 'S<sub>T</sub> = D<sub>T</sub> / D = ') + fmtSig(ST, 2) + ' K\u207b\u00b9 (set ' + fmtSig(thermoDT(), 2) + ' and ' + fmtSig(thermoDT() / dSE(), 2) + '). ' + (noSign ? "The structure function cannot tell which way the particles go, so the sign is unknown." : DT > 0 ? "Positive: the particles move to the cold side." : "Negative: they move to the warm side.") + '</p>';
       }
       h += '<details class="more"><summary>Details</summary><dl>';
       h += '<dt>Uncertainty</dt><dd>' + (res.velocity_from === "structure" ? 'speed from the scatter of the fits at each q' : res.velocity_from === "phidm" ? 'jackknife over ten parts of the movie' : 'two jackknifes added in quadrature: over ten parts of the movie, and over eight interleaved groups of q (each left out in turn)') + '; D from the scatter of &Gamma;/q&sup2; between q (' + pctTxt(res.D_rel_err) + ')</dd>';
@@ -1344,7 +1364,7 @@
   function renderText() {
     const m = cache.movie, cfg = cache.cfg;
     const modeTxt = { brightfield: "a bright-field microscope", phase: "a phase-contrast microscope", darkfield: "a dark-field microscope", dic: "a DIC microscope", fluorescence: "a widefield fluorescence microscope", spinning: "a spinning-disk confocal microscope", scanning: "a point-scanning confocal microscope" }[state.mode];
-    $("movie-text").textContent = "The movie shows " + fmtSize(cfg.diameter_um) + " " + MATERIALS[state.particle].toLowerCase().replace(" (set the index)", "") + " particles in " + (LIQUIDS[state.liquid].toLowerCase()) + ", filmed through " + modeTxt + " " + fmtNum(cfg.frame_rate_hz) + " times a second. They jiggle, and " + causeText() + " carries them along. " + visibilityText(cfg, m);
+    $("movie-text").textContent = "The movie shows " + fmtSize(cfg.diameter_um) + " " + MATERIALS[state.particle].toLowerCase().replace(" (set the index)", "") + " particles in " + (LIQUIDS[state.liquid].toLowerCase()) + ", filmed through " + modeTxt + " " + fmtNum(cfg.frame_rate_hz) + " times a second. They jiggle, and " + movieCause() + ". " + visibilityText(cfg, m);
     $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + (m.times_s ? m.T + " frames at log-spaced times over " + fmtDur(m.times_s[m.T - 1] + 1 / m.frame_rate_hz) : m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s = " + fmtSig(m.T / m.frame_rate_hz, 3) + " s") + ". Chamber " + cfg.cell_um + " " + MU + "m thick, focus " + fmtSig(cfg.focus_um, 2) + " " + MU + "m above the bottom, " + m.info.n_particles + " particles.";
     $("diff-note").textContent = "A particle that moved leaves a pair of spots, one darker and one brighter, at its old and its new place. With a drift the pairs all point the same way, but diffusion hides it until the delay is long enough.";
     const sb = $("movie-scale"), target = m.L_um / 4, nice = niceStep(target) > target ? niceStep(target) / 2 : niceStep(target);
@@ -1366,11 +1386,11 @@
   // ---- "what matters" cards ---------------------------------------------------------------
   const SILICA2 = { particle: "silica", diameter_um: 2, phi: 2e-3, frame_rate_hz: 20, exposure_ms: 1, cause: "sediment" };
   const CARDS = [
-    { lvl: 1, title: "Too slow to see", text: "200 nm polystyrene beads are only 5 % denser than water and settle at about 1 nm/s, while they wander by about 1.5 " + MU + "m every half second. To tell such a drift from the random motion, DDM, like tracking, would need to average over a movie thousands of times longer than this one: the page says how slow a drift this movie can show.",
+    { lvl: 1, title: "Too slow to see", text: "200 nm polystyrene beads are only 5 % denser than water and settle at about 1 nm/s, while they wander by about 1.5 " + MU + "m every half second. To tell such a drift from the random motion, DDM, like tracking, would need to average over a movie tens of thousands of times longer than this one: the page says how slow a drift this movie can show.",
       shows: [{ label: "Show me", set: { cause: "sediment", orient: "side", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X") }, go: "step-rates" }] },
     { lvl: 1, title: "Heavy beads, microscope on its side", text: "Silica beads of 2 " + MU + "m settle at about 2 " + MU + "m/s and diffuse slowly. With the microscope on its side gravity points down the image: the fringes of step 4 appear, the curves along the drift swing, and the speed comes out with its direction. With the microscope upright the same beads settle onto the bottom glass: no drift in the image, and slower diffusion near the glass.",
       shows: [{ label: "On its side", set: Object.assign({ orient: "side" }, SILICA2), go: "step-map" }, { label: "Upright", set: Object.assign({ orient: "upright", focus_frac: 0.05 }, SILICA2), go: "step-rates" }] },
-    { lvl: 1, title: "Faster flow, closer fringes", text: "The fringes in the maps of step 4 are spaced 2\u03c0/(v \u0394t) apart in q: twice the speed, twice as many fringes at the same delay. Move the delay slider to watch them close in.",
+    { lvl: 1, title: "Faster flow, closer fringes", text: "Twice the speed, twice as many fringes in the maps of step 4 at the same delay. Move the delay slider to watch them close in.",
       shows: [{ label: "Flow 20 " + MU + "m/s", set: { flow_v: 20 }, go: "step-map" }, { label: "Flow 5 " + MU + "m/s", set: { flow_v: 5 }, go: "step-map" }] },
     { lvl: 2, title: "A flow that changes with depth", text: "Pushed through a channel, a liquid moves fastest in the middle and not at all at the walls (Poiseuille flow). The microscope averages over its depth of field, so near the middle it sees close to the top speed and near a wall much less. The spread of speeds also washes out the fringes at high q, and the fit, which assumes one speed, reads it as extra diffusion: D comes out too large, and the size too small.",
       shows: [{ label: "Focus in the middle", set: { flow_profile: "poiseuille" }, go: "step-rates" }, { label: "Focus near the bottom", set: { flow_profile: "poiseuille", focus_frac: 0.1 }, go: "step-rates" }] },
@@ -1407,9 +1427,22 @@
   function applyPreset(set) {
     const keep = state.seed, sp = state.sim_px;
     state = Object.assign({}, BASE, set); state.seed = LEVEL_RANK[level] >= 3 ? keep : BASE.seed; state.sim_px = set.sim_px || sp;
+    resetPredictions();
     if (state.mode === "scanning" && !set.zoom) autoZoom();
     if (set.camera && !set.cam_mode) { const c = cam(); state.cam_mode = Object.keys(c.modes)[0]; state.iface = Object.keys(c.ifaces)[0]; }
     constrain(); syncControls(); drawFov(); schedule();
+  }
+  // the predictions apply to a flow: shown only then (and "double" only while doubling stays on the slider); answered
+  // boxes are reset when the reader changes the settings
+  let predicting = false;
+  function syncPredictions() {
+    document.querySelectorAll(".predict").forEach(function (box) {
+      const kind = box.getAttribute("data-predict");
+      box.hidden = state.cause !== "flow" || (kind === "double" && state.flow_v > 10 && !box.classList.contains("answered"));
+    });
+  }
+  function resetPredictions() {
+    document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelector(".a").hidden = true; bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); });
   }
   function buildPredictions() {
     document.querySelectorAll(".predict").forEach(function (box) {
@@ -1421,10 +1454,9 @@
           box.querySelector(".verdict").textContent = btn.getAttribute("data-guess") === box.getAttribute("data-right") ? "Well guessed." : "Not quite.";
           box.querySelector(".a").hidden = false;
           const kind = box.getAttribute("data-predict");
-          if (kind === "reverse") { state.cause = "flow"; state.flow_deg = (state.flow_deg + 180) % 360; }
-          if (kind === "double") { state.cause = "flow"; state.flow_v = Math.min(20, 2 * state.flow_v); }   // the slider ends at 20 um/s
-          constrain();
-          syncControls(); schedule();
+          if (kind === "reverse") state.flow_deg = (state.flow_deg + 180) % 360;
+          if (kind === "double") state.flow_v = Math.min(20, 2 * state.flow_v);
+          predicting = true; constrain(); syncControls(); predicting = false; schedule();
         });
       });
     });
