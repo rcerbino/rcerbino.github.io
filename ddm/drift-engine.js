@@ -4,18 +4,22 @@
  *   F(q, t + dt) F*(q, t) averaged over t  =  (A(q) / 2) exp(-D q^2 dt) exp(-i q.v dt)        (no noise at dt > 0)
  *   d(q, dt) = <|F(q, t + dt) - F(q, t)|^2>  =  A(q) [1 - exp(-D q^2 dt) cos(q.v dt)] + B(q)
  * The structure function d keeps only cos(q.v dt): it gives the speed but not the sign of v. The phase of the
- * frame-to-frame cross spectrum C(q, dt) = <F(q, t + dt) F*(q, t)> is -q.v dt (sign included).
+ * frame-to-frame cross spectrum C(q, dt) = <F(q, t + dt) F*(q, t)> is -q.v dt (sign included), as used by phase
+ * differential microscopy (phiDM: Colin, Zhang and Wilson 2014; with DDM: Richards, Martinez and Arlt 2021).
  *
  * Steps:
- *   1. structure function (shared with the other DDM pages) and C(q, dt) on the same pairs of frames;
- *   2. first guess of v from the phase of C: neighbouring Fourier pixels differ in phase by -dq v dt
- *      (robust to phase wrapping as long as the particles moved less than half the field);
- *   3. first guess of D: one-parameter search with v fixed;
- *   4. global fit of D, vx, vy to d(q, dt) in sectors of q (12 directions), with A and B of each q found by
- *      linear least squares at every step (B fixed when the camera noise is known);
- *   5. fit at each q alone (rate Gamma = D q^2 of the fading, frequency omega = q v of the oscillation along v),
- *      for the plots and for the uncertainties (scatter between q);
- *   6. visibility: where can the drift be seen at all (q v dt reaching 1 before diffusion erases the pattern).
+ *   1. structure function (shared with the other DDM pages) and C(q, dt) on the same pairs of frames (with a window,
+ *      each frame first loses its own mean brightness);
+ *   2. first guess of v from the phase difference of neighbouring Fourier pixels, then a fit of the phase of C;
+ *   2b. velocity: C turned by the current v, Im z fitted at all pixels and all delays while each pattern is still there
+ *      (weights from the noise of each q), iterated; uncertainty: two jackknifes added in quadrature (ten parts of the
+ *      movie, eight interleaved groups of q); a drift is reported when the speed exceeds 3 sigma. opts.velocity "phidm" or
+ *      opts.published_only: phiDM instead (plane fit of the phase steps between consecutive frames at the widest q);
+ *   3-4. D from d(q, dt) in 12 direction sectors with v fixed (A, B per q by linear least squares; B known for cameras;
+ *      depth of field as on the sizing page); for comparison D and v fitted together to d alone (opts.velocity
+ *      "structure" makes that the headline);
+ *   5. fits at each q alone (rate Gamma = D q^2 of the fading, frequency omega = q v of the oscillation along v);
+ *   6. where patterns swing (needed by the structure function alone), and the slowest drift this movie shows (3 sigma).
  */
 (function (root) {
   "use strict";
@@ -49,13 +53,53 @@
     return { x: pts[best], f: vals[best] };
   }
 
+  /* Phase differential microscopy (phiDM; Colin, Zhang and Wilson, J. R. Soc. Interface 11, 20140486, 2014): a uniform
+   * drift adds to each Fourier mode a phase -q.R(t), with R the displacement of the whole population. Between consecutive
+   * frames the phase change of the widest patterns (a square of 2 x 4 + 1 modes per side around q = 0, which keeps the
+   * change below pi for drifts up to (pi / 4) / (dq dt)) is fitted with a plane, weighted by the mean power of each mode,
+   * giving the step of R; v = sum of steps / time. Uncertainty: jackknife over ten parts of the movie. */
+  function phiDM(S, movie, KX, KY, n, P, T) {
+    const KC = 4, pix = [];
+    for (let iy = -KC; iy <= KC; iy++) for (let ix = -KC; ix <= KC; ix++) { if (ix === 0 && iy === 0) continue; pix.push(((iy + n) % n) * n + ((ix + n) % n)); }
+    const fft = S.fft, w = new Float64Array(pix.length);
+    for (let t = 0; t < T; t++) { const o = 2 * P * t; pix.forEach(function (p, k) { w[k] += fft[o + 2 * p] * fft[o + 2 * p] + fft[o + 2 * p + 1] * fft[o + 2 * p + 1]; }); }
+    const times = movie.times_s || null, dtf = 1 / movie.frame_rate_hz;
+    const steps = [];                                                   // { rx, ry, dt, t }
+    for (let t = 0; t + 1 < T; t++) {
+      const o1 = 2 * P * t, o2 = 2 * P * (t + 1);
+      let a11 = 0, a12 = 0, a22 = 0, b1 = 0, b2 = 0;
+      pix.forEach(function (p, k) {
+        const ar = fft[o2 + 2 * p], ai = fft[o2 + 2 * p + 1], br = fft[o1 + 2 * p], bi = fft[o1 + 2 * p + 1];
+        const ph = Math.atan2(ai * br - ar * bi, ar * br + ai * bi);    // arg F2 F1*  = -q.dR
+        const x1 = -KX[p], x2 = -KY[p];
+        a11 += w[k] * x1 * x1; a12 += w[k] * x1 * x2; a22 += w[k] * x2 * x2; b1 += w[k] * x1 * ph; b2 += w[k] * x2 * ph;
+      });
+      const det = a11 * a22 - a12 * a12; if (!(det > 0)) continue;
+      steps.push({ rx: (b1 * a22 - b2 * a12) / det, ry: (a11 * b2 - a12 * b1) / det, dt: times ? times[t + 1] - times[t] : dtf, t: t });
+    }
+    const velo = function (skip) { let sx = 0, sy = 0, st = 0; steps.forEach(function (e) { if (skip !== undefined && Math.min(9, Math.floor(e.t * 10 / (T - 1))) === skip) return; sx += e.rx; sy += e.ry; st += e.dt; }); return st > 0 ? { vx: sx / st, vy: sy / st } : { vx: 0, vy: 0 }; };
+    const v = velo(), jack = []; for (let j = 0; j < 10; j++) jack.push(velo(j));
+    return { vx: v.vx, vy: v.vy, n: steps.length * pix.length, jack: jack };
+  }
+
   /* opts.velocity: "phase" (default: v from the phase of the cross spectrum) or "structure" (v and D fitted together to
    * the structure function, as published: no sign of v). opts.published_only: the published method alone (B fitted at
    * each q, v from the structure function). */
   function* analyse(movie, opts) {
     opts = opts || {};
-    if (opts.published_only === true) opts = Object.assign({}, opts, { noise: "fit", velocity: "structure" });
-    const S = yield* DDM.structure(movie, opts);
+    // the published method alone: velocity by phase differential microscopy (phiDM: Colin, Zhang and Wilson 2014, used with
+    // DDM by Richards, Martinez and Arlt 2021), D from the structure function with B fitted at each q and no depth of field
+    const published = opts.published_only === true;
+    if (published) opts = Object.assign({}, opts, { noise: "fit", depth: false });
+    // with a window, each frame first loses its own mean brightness: the bright, unchanging background would otherwise
+    // leak through the window into every q and add to C a part that never fades and has no phase, which pinned v at zero
+    let mvS = movie;
+    if (opts.windowing) {
+      const P0 = movie.n * movie.n, fr = new Float32Array(movie.frames.length);
+      for (let t = 0; t < movie.T; t++) { const o = t * P0; let m = 0; for (let p = 0; p < P0; p++) m += movie.frames[o + p]; m /= P0; for (let p = 0; p < P0; p++) fr[o + p] = movie.frames[o + p] - m; }
+      mvS = Object.assign({}, movie, { frames: fr, fft: null });
+    }
+    const S = yield* DDM.structure(mvS, opts);
     const n = S.n, P = S.P, T = S.T, L = S.L, fft = S.fft, taus = S.taus_s, nb = S.nb, binOf = S.binOf;
     const dkq = 2 * Math.PI / movie.L_um;                               // q step (1/um)
 
@@ -248,12 +292,30 @@
       const k = rs.length, mx = rs.reduce(function (a, r) { return a + r.vx; }, 0) / k, my = rs.reduce(function (a, r) { return a + r.vy; }, 0) / k;
       return [Math.sqrt((k - 1) / k * rs.reduce(function (a, r) { return a + (r.vx - mx) * (r.vx - mx); }, 0)), Math.sqrt((k - 1) / k * rs.reduce(function (a, r) { return a + (r.vy - my) * (r.vy - my); }, 0))];
     };
-    const jt = [], jq = [];
-    const phT = imFit(allC, phaseLags, ph0.vx, ph0.vy);
+    // speed and direction errors from the same replicates (each replicate's own speed and angle)
+    const jackPolar = function (rs) {
+      const k = rs.length, sp = rs.map(function (r) { return Math.hypot(r.vx, r.vy); }), a0 = Math.atan2(ph0.vy, ph0.vx);
+      const an = rs.map(function (r) { let d = Math.atan2(r.vy, r.vx) - a0; d -= 2 * Math.PI * Math.round(d / (2 * Math.PI)); return d; });
+      const sd = function (x) { const m = x.reduce(function (a, c) { return a + c; }, 0) / k; return Math.sqrt((k - 1) / k * x.reduce(function (a, c) { return a + (c - m) * (c - m); }, 0)); };
+      return [sd(sp), sd(an)];
+    };
+    let jt = [], jq = [];
+    let phT = imFit(allC, phaseLags, ph0.vx, ph0.vy);
     for (let j = 0; j < K; j++) jt.push(imFit(function (li) { return cWithout(li, j); }, phaseLags, phT.vx, phT.vy));
     for (let j = 0; j < GQ; j++) jq.push(imFit(allC, allLags, ph0.vx, ph0.vy, j));
-    const eT = jackErr(jt), eQ = jackErr(jq);
+    // the published method: phiDM for the velocity (it replaces the fit above; its own jackknife over parts of the movie)
+    if (published || opts.velocity === "phidm") {
+      const pd = phiDM(S, movie, KX, KY, n, P, T);
+      ph0.vx = pd.vx; ph0.vy = pd.vy; ph0.n = pd.n; jt = pd.jack; jq = pd.jack; phT = { vx: pd.vx, vy: pd.vy };
+    }
+    // The two jackknifes, over parts of the movie and over groups of q (larger when few particles fill the field), added
+    // in quadrature. Against the scatter between new movies this is on the safe side by up to 1.45 times (200 nm beads,
+    // 2 um/s); the larger of the two alone was up to 1.35 times too small (3 um/s at 120 deg), and so were directions.
+    const eT = jackErr(jt), eQ = jackErr(jq), pT = jackPolar(jt), pQ = jackPolar(jq);
     const vxErr = Math.hypot(eT[0], eQ[0]), vyErr = Math.hypot(eT[1], eQ[1]);
+    const speedErr = Math.hypot(pT[0], pQ[0]), angErr = Math.hypot(pT[1], pQ[1]);
+    // nothing usable (no q kept): no error, no detection
+    const fitEmpty = !(ph0.n > 0) || !(vxErr > 0 || vyErr > 0);
 
     // ---- data in sectors: (bin, sector) groups of pixels, folded onto [0, pi) (d is even in q) -----------------
     const groups = [];                                                 // { b, s, px: [qx], py: [qy], d: Float64Array(L) }
@@ -271,12 +333,31 @@
     const byBin = new Map(); groups.forEach(function (g) { if (!byBin.has(g.b)) byBin.set(g.b, []); byBin.get(g.b).push(g); });
 
     // model of one group: d = B + A (1 - exp(-D q^2 dt) <cos(q.v dt)>), <> over the pixels of the group
+    // depth of field, as on the sizing page: particles that diffuse up or down also fade from each pattern, through the
+    // optics of the movie (DDM depthC). Tabulated per q against the variance 2 D dt of the axial step. Without it D read
+    // about 3 % high for 200 nm beads at 20x. Off for the published method.
+    const info = movie.info, useDepth = opts.depth !== false && info && info.kernel && info.kernel_q && info.cell_z_um && !info.split && DDM._test && DDM._test.depthC;
+    const NX = 64, X0 = Math.log(1e-4), X1 = Math.log(1e4), fadeTab = new Map();
+    const fadeOf = function (q, D, t) {
+      if (!useDepth) return 1;
+      let tab = fadeTab.get(q);
+      if (tab === undefined) {
+        const tb = DDM._test.depthC(info, q);
+        tab = tb ? new Float64Array(NX + 1) : null;
+        if (tab) for (let i = 0; i <= NX; i++) tab[i] = DDM._test.depthFade(tb, Math.exp(X0 + (X1 - X0) * i / NX) / 2, 1);
+        fadeTab.set(q, tab);
+      }
+      if (!tab) return 1;
+      const x = Math.log(Math.max(2 * D * t, 1e-12)), u = (x - X0) / (X1 - X0) * NX;
+      if (u <= 0) return tab[0]; if (u >= NX) return tab[NX];
+      const i = Math.floor(u), f = u - i; return tab[i] + f * (tab[i + 1] - tab[i]);
+    };
     const decayOf = function (g, D, vx, vy, out) {
       const m = g.qx.length;
       for (let li = 0; li < L; li++) {
         const t = taus[li]; let cs = 0;
         for (let k = 0; k < m; k++) cs += Math.cos((g.qx[k] * vx + g.qy[k] * vy) * t);
-        out[li] = Math.exp(-D * g.q * g.q * t) * cs / m;
+        out[li] = Math.exp(-D * g.q * g.q * t) * fadeOf(g.q, D, t) * cs / m;
       }
       return out;
     };
@@ -345,8 +426,8 @@
     };
     const D_err = spreadOf(okQ.map(function (e) { return e.gamma_hz / (e.q_per_um * e.q_per_um); }));
     // uncertainty of v from the jackknifes, along v (speed) and across it (direction)
-    const v_err = speed > 0 ? Math.abs(vxErr * dir[0]) + Math.abs(vyErr * dir[1]) : Math.hypot(vxErr, vyErr);
-    const dir_err_deg = speed > 0 ? (Math.abs(vxErr * dir[1]) + Math.abs(vyErr * dir[0])) / speed * 180 / Math.PI : null;
+    const v_err = fitEmpty ? null : speedErr;
+    const dir_err_deg = fitEmpty || !(speed > 0) ? null : angErr * 180 / Math.PI;
 
     // ---- 6. can the drift be seen? ------------------------------------------------------------------------------
     // With the cross spectrum: when the speed is well above its uncertainty (3 sigma, sigma per component), as with
@@ -361,9 +442,14 @@
       return { q_from: a, q_to: z, n_q: nq, swing: nq >= 3, visible: nq >= 3, q_star: v / Dv, peclet: v * movie.L_um / Dv, v_min_um_s: 3 * sigmaV };
     };
     const vis = visibility(Math.max(speed, 1e-9), D);
-    let detected = speed > 3 * Math.max(sigmaV, 1e-12);
+    let detected = !fitEmpty && speed > 3 * Math.max(sigmaV, 1e-12);
     let vErrOut = v_err;
-    if (fromSF) { const vq = okQ.filter(function (e) { return e.q_per_um * speed * taus[L - 1] > 1; }).map(function (e) { return e.omega_rad_s / e.q_per_um; }); vErrOut = spreadOf(vq); detected = vis.swing && vErrOut !== null && speed > 3 * vErrOut; }
+    // the structure function alone: its speed's uncertainty from the scatter of q v (omega / q) between the q whose
+    // patterns swing within the movie; it sees a drift only where patterns swing, and then above 3 times that
+    const sfErr = function (v) { return spreadOf(okQ.filter(function (e) { return e.q_per_um * v * taus[L - 1] > 1; }).map(function (e) { return e.omega_rad_s / e.q_per_um; })); };
+    sf.v_err_um_s = sfErr(sf.v_um_s);
+    sf.detected = visibility(Math.max(sf.v_um_s, 1e-9), sf.D_um2_s).swing && sf.v_err_um_s !== null && sf.v_um_s > 3 * sf.v_err_um_s;
+    if (fromSF) { vErrOut = sfErr(speed); detected = vis.swing && vErrOut !== null && speed > 3 * vErrOut; }
     vis.visible = detected;
 
     // ---- outputs for the page ------------------------------------------------------------------------------------
@@ -426,16 +512,19 @@
       const jj = []; for (let j = 0; j < GQ; j++) { const dn = Dn - secDen[s][j]; if (dn > 0) jj.push((N - secNum[s][j]) / dn); }
       let err = null;
       if (jj.length > 2) { const m = jj.reduce(function (a, c) { return a + c; }, 0) / jj.length; err = Math.sqrt((jj.length - 1) / jj.length * jj.reduce(function (a, c) { return a + (c - m) * (c - m); }, 0)); }
-      sectorV.push({ theta_deg: th * 180 / Math.PI, v_um_s: base + N / Dn, err_um_s: err });
+      // the q jackknife alone can be too small (slow or sparse samples): scaled up by the ratio of the time jackknife to it
+      // for the whole velocity, when larger
+      const scale = Math.max(1, Math.hypot(eT[0], eT[1]) / Math.max(Math.hypot(eQ[0], eQ[1]), 1e-12));
+      sectorV.push({ theta_deg: th * 180 / Math.PI, v_um_s: base + N / Dn, err_um_s: err === null ? null : err * scale });
     }
     const eta = movie.viscosity_Pa_s, TK = movie.T_C + 273.15;
     const diameter = D > 0 ? KB * TK / (3 * Math.PI * eta * D * 1e-12) * 1e6 : null;
     const ampOf = new Map(); bins.forEach(function (e) { ampOf.set(e.b, e); });
     return {
       D_um2_s: D, D_rel_err: D_err !== null ? D_err / D : null, diameter_um: diameter,
-      v_um_s: speed, v_err_um_s: vErrOut, v_dir_deg: Math.atan2(vy, vx) * 180 / Math.PI, v_dir_err_deg: dir_err_deg, vx_um_s: vx, vy_um_s: vy,
+      v_um_s: speed, v_err_um_s: vErrOut, v_dir_deg: Math.atan2(vy, vx) * 180 / Math.PI, v_dir_err_deg: fromSF ? null : dir_err_deg, vx_um_s: vx, vy_um_s: vy,
       v_from_phase: { vx_um_s: v0x, vy_um_s: v0y }, v_jack: { vx_err: vxErr, vy_err: vyErr, time: eT, q: eQ, n_pixels: ph0.n }, from_structure_function: sf, phase_lags: phaseV, detected: detected, visibility: vis,
-      noise_B: noiseB, velocity_from: fromSF ? "structure" : "phase", bins: bins, times_s: S.times_s, pairs: S.pairs, per_q: perQ, along: along, across: across, curves_axes: detected ? "drift" : "image", sector_v: sectorV,
+      noise_B: noiseB, velocity_from: fromSF ? "structure" : (published || opts.velocity === "phidm") ? "phidm" : "phase", bins: bins, times_s: S.times_s, pairs: S.pairs, per_q: perQ, along: along, across: across, published: published, curves_axes: detected ? "drift" : "image", sector_v: fromSF ? [] : sectorV,
       taus_s: taus, lags: S.lags, q_per_um: S.q_per_um, binOf: binOf, n: n, L_um: movie.L_um, nb: nb,
       d2d: S.d2d, cross: C, amp: ampOf, window: { q_from: qLo, q_to: qHi, q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, q_opt_per_um: S.q_opt_per_um, q_nyq_per_um: S.q_nyq_per_um, gamma_lo_hz: S.gamma_lo_hz, gamma_hi_hz: S.gamma_hi_hz },
       dq: S.dq, varq: S.varq, windowing: !!S.window
@@ -443,7 +532,7 @@
   }
 
   // what the result table shows for the published method alone, run on the same movie
-  function publishedSummary(r) { return { v_um_s: r.v_um_s, v_err_um_s: r.v_err_um_s, D_um2_s: r.D_um2_s, detected: r.detected }; }
+  function publishedSummary(r) { return { v_um_s: r.v_um_s, v_err_um_s: r.v_err_um_s, v_dir_deg: r.v_dir_deg, D_um2_s: r.D_um2_s, detected: r.detected }; }
   const api = { analyse: analyse, publishedSummary: publishedSummary, NSEC: NSEC };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.DRIFT = api;
 })(typeof self !== "undefined" ? self : this);

@@ -98,11 +98,8 @@
     far: { label: "Far red (excite 640 nm, emit 680 nm)", ex: 0.64, em: 0.68 }
   };
   const MATERIALS = { ps: "Polystyrene", pmma: "PMMA", silica: "Silica", rm257: "Polymerised liquid crystal (RM257)", mfa: "Hyflon MFA (fluoropolymer)", bacterium: "Bacteria (index 1.39)", custom: "Other (set the index)" };
-  const SHAPES = { sphere: "Spheres", bisphere: "Birefringent spheres", prolate: "Prolate ellipsoids (cigars)", oblate: "Oblate ellipsoids (discs)", rod: "Rods (cylinders)" };
   // materials that make sense for each shape; the first is the default when the shape is chosen
   const SHAPE_MATERIALS = { sphere: ["ps", "pmma", "silica", "custom"], bisphere: ["rm257", "mfa", "custom"], prolate: ["ps", "pmma", "silica", "custom"], oblate: ["ps", "pmma", "silica", "custom"], rod: ["bacterium", "silica", "ps", "custom"] };
-  const SIZE_LABEL = { sphere: "Diameter", bisphere: "Diameter", prolate: "Length (long axis)", oblate: "Diameter of the disc", rod: "Length" };
-  const ASPECT_LABEL = { prolate: "Aspect ratio (long axis / short axis)", oblate: "Aspect ratio (diameter / thickness)", rod: "Aspect ratio (length / diameter)" };
   const LIQUIDS = { water: "Water", glycerol: "Water + glycerol", custom: "Other (set index and viscosity)" };
   const FIELD_NUMBER_MM = 25;          // Ti2 field of view (F-mount port); also the X-Light V3 and AX scan fields
 
@@ -110,7 +107,8 @@
 
   // Thermophoresis of colloids: measured Soret coefficients S_T = D_T / D (1/K). D_T = S_T x D, with D from
   // Stokes-Einstein at the temperature set; drift v = -D_T grad T (towards the cold side when D_T > 0).
-  //   Duhr and Braun, Phys. Rev. Lett. 96, 168301 (2006): 200 nm polystyrene in 1 mM Tris, S_T = 0.7 /K (D_T = 1.4 um^2/(s K)).
+  //   Duhr and Braun, Phys. Rev. Lett. 96, 168301 (2006): 200 nm polystyrene in 1 mM Tris, S_T = 0.7 /K (their D_T = 1.4 um^2/(s K) with their D = 2.1;
+  //   here D_T = S_T x D_SE, about 1.6 at 22 C).
   //   Braibanti, Vigolo and Piazza, Phys. Rev. Lett. 100, 108303 (2008), Fig. 2: polystyrene of radius 253, 123 and 53 nm
   //   (1:1 H2O/D2O), S_T read from the figure (about +-0.1 /K) and joined by straight lines.
   //   Iacopini, Rusconi and Piazza, Eur. Phys. J. E 19, 59 (2006): polystyrene of radius 30 nm in 4 mM NaCl,
@@ -121,10 +119,10 @@
     br123: { label: "246 nm polystyrene (Braibanti, Vigolo and Piazza 2008)", d: 0.246, pts: [[5, -0.65], [15, 0.25], [25, 0.8], [35, 1.2], [45, 1.5]] },
     br53: { label: "106 nm polystyrene (Braibanti, Vigolo and Piazza 2008)", d: 0.106, pts: [[5, -0.25], [15, 0.2], [25, 0.4], [35, 0.55], [45, 0.7]] },
     iac30: { label: "60 nm polystyrene (Iacopini, Rusconi and Piazza 2006)", d: 0.06, ST: function (T) { return 0.92 * (1 - Math.exp((278.3 - (T + 273.15)) / 19)); }, range: [3, 45] },
-    //   Helden, Eichhorn and Bechinger, Soft Matter (2015), doi 10.1039/C4SM02833C, Fig. 4: single micrometre beads held near a
-    //   glass wall (total internal reflection microscopy), S_T = S_inf [1 - exp((T* - T) / T0)]: polystyrene of radius 2.5 um,
+    //   Helden, Eichhorn and Bechinger, Soft Matter 11, 2379 (2015), doi 10.1039/C4SM02833C, Fig. 4: the force on single
+    //   micrometre beads held by optical tweezers near a sapphire wall (total internal reflection microscopy), S_T = S_inf [1 - exp((T* - T) / T0)]: polystyrene of radius 2.5 um,
     //   S_inf = 583 /K, T* = 286.6 K, T0 = 40.6 K; melamine resin of radius 1.35 um, S_inf = 36.0 /K, T* = 316.7 K, T0 = 27.3 K
-    //   (negative at room temperature: they move to the warm side). Melamine: index 1.68 and density 1.51 g/cm3 (assumed).
+    //   (negative at room temperature: they move to the warm side). Melamine: density 1.51 g/cm3 (from the paper), index 1.68 (assumed).
     hel_ps: { label: "5 um polystyrene (Helden, Eichhorn and Bechinger 2015)", d: 5, ST: function (T) { return 583 * (1 - Math.exp((286.6 - (T + 273.15)) / 40.6)); }, range: null },
     hel_mf: { label: "2.7 um melamine resin (Helden, Eichhorn and Bechinger 2015)", d: 2.7, mat: { n: 1.68, rho: 1.51 }, ST: function (T) { return 36.0 * (1 - Math.exp((316.7 - (T + 273.15)) / 27.3)); }, range: null },
     custom: { label: "Other (set the Soret coefficient)", d: null }
@@ -132,10 +130,15 @@
   function thermoST() {
     const s = THERMO[state.thermo_sys];
     if (state.thermo_sys === "custom") return state.st_custom;
-    if (s.ST) return s.ST(state.T_C);
+    if (s.ST) return s.ST(s.range ? Math.max(s.range[0], Math.min(s.range[1], state.T_C)) : state.T_C);
     const p = s.pts, T = Math.max(p[0][0], Math.min(p[p.length - 1][0], state.T_C));
     for (let i = 0; i < p.length - 1; i++) if (T <= p[i + 1][0]) return p[i][1] + (p[i + 1][1] - p[i][1]) * (T - p[i][0]) / (p[i + 1][0] - p[i][0]);
     return p[p.length - 1][1];
+  }
+  function syncThermo() {
+    const sys = THERMO[state.thermo_sys]; if (!sys.d) return;
+    state.diameter_um = sys.d;
+    if (sys.mat) { state.particle = "custom"; state.n_custom = sys.mat.n; state.rho_custom = sys.mat.rho; } else state.particle = "ps";
   }
   function thermoRange() { const s = THERMO[state.thermo_sys]; return s.pts ? [s.pts[0][0], s.pts[s.pts.length - 1][0]] : s.range || null; }
   const G = 9.81, KB = 1.380649e-23;
@@ -171,7 +174,7 @@
     frame_rate_hz: 20, exposure_ms: 1, frame_timing: "even", log_factor: 20,
     shape: "sphere", aspect: 3, dn: 0.1, dn_body: 0, polarizer: "off", analyzer: "off", pol_angle_deg: 90, extinction: 1e-4,
     windowing: "off", q_min: null, q_max: null, seed: 2,
-    x_noise: "on", x_phase: "on"
+    x_noise: "on", x_phase: "on", x_depth: "on"
   };
   let state = Object.assign({}, BASE);
   const LEVEL_RANK = { curious: 1, student: 2, researcher: 3, addict: 4 };
@@ -239,17 +242,12 @@
   function centralWavelength() { if (!TRANS()) return DYES[state.dye].em; const sp = OPTICS.SOURCES[state.source].sample(); return sp.reduce(function (s, p) { return s + p.w * p.l; }, 0); }
   function geometry() { return OPTICS.shapeGeometry(state.shape, state.diameter_um, BODY() ? Math.max(state.shape === "rod" ? 2 : 1, state.aspect) : 1); }
   function particleCount() { return Math.round(particlesFor(simPx())); }
-  function hydro() { return OPTICS.hydrodynamics(geometry(), 1.380649e-23 * (state.T_C + 273.15), viscosity_mPa_s() * 1e-3); }
   function polarization() {
     const P = state.polarizer === "on", A = state.analyzer === "on";
     if (!TRANS() || state.mode === "dic" || (!P && !A)) return null;
     // with unpolarized light the analyzer's direction does not matter; with a polarizer it sits at the chosen angle from it
     return { polarizer_deg: P ? 0 : null, analyzer_deg: A ? (P ? state.pol_angle_deg : 0) : null, extinction: state.extinction };
   }
-  // automatic: two modes for particles that turn; three (adds 20 D_R) between crossed polarizers, where the
-  // scattered intensity alone carries the next orientation mode (validated there, not in dark field)
-  function crossed() { return TRANS() && state.mode !== "dic" && state.polarizer === "on" && state.analyzer === "on" && state.pol_angle_deg >= 85; }
-  function fitModel() { return state.fit_model === "auto" ? (state.shape === "sphere" ? "simple" : crossed() ? "three" : "two") : state.fit_model; }
   function detectorConfig() {
     if (SCANNING()) {
       const sc = SCANNERS[state.scanner], tl = sc.line(state.scan_px);
@@ -291,7 +289,7 @@
     if (r && (state.T_C < r[0] || state.T_C > r[1])) h += " Outside the temperatures measured (" + r[0] + "-" + r[1] + " " + DEG + "C): the nearest value is used.";
     if (state.thermo_sys !== "custom" && THERMO[state.thermo_sys].d && Math.abs(state.diameter_um / THERMO[state.thermo_sys].d - 1) > 0.02) h += " The particles set are not those measured.";
     if (state.thermo_sys.indexOf("br") === 0) h += " Measured in a 1:1 mixture of water and heavy water; D here is for the liquid set.";
-    if (state.thermo_sys.indexOf("hel") === 0) h += " Measured on single beads near a glass wall. Beads this large also settle onto the bottom glass within minutes; the simulation leaves gravity out here.";
+    if (state.thermo_sys.indexOf("hel") === 0) h += " Measured as the force on single beads held near a wall. Beads this large also settle onto the bottom glass within about half a minute; the simulation leaves gravity out here.";
     if (state.grad_dir === "axis") h += " Along the optical axis the particles pile up within about " + fmtSig(Math.min(1 / Math.abs(ST * state.grad), 1e4), 2) + " " + MU + "m of one wall.";
     return h;
   }
@@ -350,7 +348,7 @@
     return { q_min_per_um: state.q_min, q_max_per_um: state.q_max, windowing: state.windowing === "on",
       // what this page adds to the published method, each switchable at the "Addict" level, where the published
       // method alone also runs on the same movie for comparison
-      noise: state.x_noise === "off" ? "fit" : undefined, velocity: state.x_phase === "off" ? "structure" : "phase", compare_published: level === "addict" };
+      noise: state.x_noise === "off" ? "fit" : undefined, velocity: state.x_phase === "off" ? "phidm" : "phase", depth: state.x_depth !== "off", compare_published: level === "addict" };
   }
 
   // ---- controls -------------------------------------------------------------------
@@ -358,7 +356,6 @@
   const BF = function () { return state.mode === "brightfield" || state.mode === "dic"; };              // condenser aperture in use
   const FL = function () { return !TRANS(); };
   const BODY = function () { return state.shape === "prolate" || state.shape === "oblate" || state.shape === "rod"; };
-  const TURNS = function () { return state.shape !== "sphere"; };
   const objOptions = function () { return OBJECTIVES.map(function (o, i) { return [i, o.n.replace(/^CFI /, "") + "  (" + o.m + "x, NA " + o.na + (o.im !== "dry" ? ", " + o.im : "") + ")", o.s]; }); };
   const CONTROLS = [
     { key: "particle", group: "Sample", lvl: 1, label: "Material of the spheres", kind: "select", options: function () { return SHAPE_MATERIALS.sphere.map(function (k) { return [k, MATERIALS[k]]; }); } },
@@ -383,7 +380,7 @@
     { key: "orient", group: "Sample", lvl: 1, label: "Microscope", kind: "select", options: [["upright", "Standing: optical axis vertical, gravity along it"], ["side", "On its side: optical axis horizontal, gravity down the image"]], when: function () { return state.cause === "sediment"; }, hint: visibleHint },
     { key: "thermo_sys", group: "Sample", lvl: 2, label: "Measured system", kind: "select", options: Object.keys(THERMO).map(function (k) { return [k, THERMO[k].label]; }), when: function () { return state.cause === "thermo"; } },
     { key: "st_custom", group: "Sample", lvl: 3, label: "Soret coefficient S_T", kind: "lin", min: -3, max: 5, step: 0.05, fmt: function (v) { return fmtSig(v, 2) + " K\u207b\u00b9"; }, when: function () { return state.cause === "thermo" && state.thermo_sys === "custom"; } },
-    { key: "grad", group: "Sample", lvl: 2, label: "Temperature gradient", kind: "log", min: 0.001, max: 0.2, fmt: function (v) { return fmtSig(v, 2) + " K/" + MU + "m"; }, when: function () { return state.cause === "thermo"; }, hint: function () { return "Duhr and Braun reached 0.1 K/" + MU + "m by heating water with an infrared laser over tens of micrometres; " + fmtSig(state.grad * state.cell_um, 2) + " K across the chamber here. " + visibleHint(); } },
+    { key: "grad", group: "Sample", lvl: 2, label: "Temperature gradient", kind: "log", min: 0.001, max: 0.2, fmt: function (v) { return fmtSig(v, 2) + " K/" + MU + "m"; }, when: function () { return state.cause === "thermo"; }, hint: function () { const L = simPx() * pixelUm(), span = state.grad * (state.grad_dir === "plane" ? L : state.cell_um); return "Duhr and Braun reached 0.1 K/" + MU + "m by heating water with an infrared laser over tens of micrometres. Here " + fmtSig(span, 2) + " K across the " + (state.grad_dir === "plane" ? "simulated field" : "chamber") + "; the simulation uses S_T at the temperature set everywhere" + (span > 5 ? ", which is rough over so many degrees" : "") + ". " + visibleHint(); } },
     { key: "grad_dir", group: "Sample", lvl: 2, label: "Gradient direction", kind: "select", options: [["plane", "Across the image: warmer to the right"], ["axis", "Along the optical axis: warmer at the top"]], when: function () { return state.cause === "thermo"; } },
 
     { key: "mode", group: "Microscope (Nikon Ti2-E)", lvl: 1, label: "Imaging mode", kind: "select", options: [["brightfield", "Bright field"], ["phase", "Phase contrast"], ["darkfield", "Dark field"], ["dic", "DIC (Nomarski)"], ["fluorescence", "Widefield fluorescence"], ["spinning", "Spinning-disk confocal (CrestOptics X-Light V3)"], ["scanning", "Point-scanning confocal (Nikon AX R)"]], hint: modeHint },
@@ -437,8 +434,10 @@
   CONTROLS.push(
     { key: "x_noise", lvl: 4, label: "Camera noise known from the detector", kind: "select", options: ONOFF("B fitted at each q"),
       hint: function () { return "On: B = 2 (excess-noise factor x mean count + read noise\u00b2), the same at every q. Off: B fitted at each q, as in the published method."; } },
-    { key: "x_phase", lvl: 4, label: "Velocity from the phase of the cross spectrum", kind: "select", options: ONOFF("v and D fitted together to the structure function"),
-      hint: function () { return "On: v from the phase of <F(q, t + \u0394t) F*(q, t)>, which is -q\u00b7v \u0394t, sign included; D from the structure function with v fixed. Off: v and D fitted together to d(q, \u0394t) = A[1 - e^(-Dq\u00b2\u0394t) cos(q\u00b7v \u0394t)] + B, as published: no sign, and v can trade against D."; } }
+    { key: "x_phase", lvl: 4, label: "Velocity from all delays and all q", kind: "select", options: ONOFF("phase steps between consecutive frames, widest q only (phiDM)"),
+      hint: function () { return "On: the cross spectrum <F(q, t + \u0394t) F*(q, t)> turned back by the current v, its imaginary part fitted at every q and every delay while the pattern is still there. Off: phase differential microscopy as published (Colin, Zhang and Wilson 2014): the phase steps between consecutive frames of the widest patterns, fitted with a plane and added up."; } },
+    { key: "x_depth", lvl: 4, label: "Depth of field in the fit of D", kind: "select", options: ONOFF("only sideways motion"),
+      hint: function () { return "On: particles that diffuse up or down also fade from each pattern, through the optics of step 1, as on the sizing page. Off: f = exp(-D q\u00b2 \u0394t) cos(q\u00b7v \u0394t)."; } }
   );
 
   // light is collected and recorded. Every control appears exactly once (checked at start-up).
@@ -458,7 +457,7 @@
       ["Timing", ["frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "log_factor", "sim_px"]]]],
     ["Analysis", [
       ["", ["windowing", "qrange"]],
-      ["Addict: what this page adds", ["x_noise", "x_phase"]]]]
+      ["Addict: what this page adds", ["x_noise", "x_phase", "x_depth"]]]]
   ];
   // one-line summary under each block title: [setting, text before, text after]
   const SUMMARY = {
@@ -474,22 +473,8 @@
     const left = Object.keys(byKey); if (left.length) throw new Error("layout: controls not placed: " + left.join(", "));
     CONTROLS.length = 0; out.forEach(function (c) { CONTROLS.push(c); });
   })();
-  const ANALYSIS_KEYS = { q_min: 1, q_max: 1, windowing: 1, x_noise: 1, x_phase: 1 };
+  const ANALYSIS_KEYS = { q_min: 1, q_max: 1, windowing: 1, x_noise: 1, x_phase: 1, x_depth: 1 };
   function fmtRate(v) { return fmtSig(v, 2) + " s" + "\u207b\u00b9"; }
-  function shapeHint() {
-    if (!TURNS()) return "";
-    const hh = hydro(), t = 1 / (6 * hh.D_r);
-    let s = "Turns: 6 D_R = " + fmtRate(6 * hh.D_r) + " (the axis forgets its direction in about " + fmtTime(t) + "). Translation D = " + fmtSig(hh.D_t, 2) + " " + MU + "m\u00b2/s.";
-    if (state.mode === "dic") s += " DIC is simulated for spheres only.";
-    else if (1 / state.frame_rate_hz > t) s += " The frame rate is too low to follow the rotation.";
-    return s;
-  }
-  function polHint() {
-    if (state.analyzer !== "on") return "";
-    if (state.polarizer !== "on") return "With unpolarized light an analyzer only halves the light and selects one polarization of what the particles scatter.";
-    const g = state.pol_angle_deg, bg = Math.pow(Math.cos(g * Math.PI / 180), 2) + state.extinction;
-    return "Direct light passing: " + fmtSig(100 * bg, 2) + " %. Crossed polarizers block isotropic particles; slightly uncrossed ones (about 75" + DEG + ") let the depolarized light interfere with the background, which makes it stronger and simpler to analyse (p-DDM).";
-  }
   // binning factors the camera allows in the chosen mode (the CB2 cannot bin in 16-bit HDR)
   function allowedBins() {
     const c = cam();
@@ -685,14 +670,12 @@
       if (best >= 0) state.objective = best;
     }
     if ((key === "mode" || key === "objective") && state.mode === "phase" && objRing()) state.annulus = objRing();
-    // a measured thermophoretic system comes with its particles; other particles take the system's S_T as their own
+    // a measured thermophoretic system comes with its particles; other particles take the system's S_T as their own (only
+    // where the reader can see the choice of system: at the Curious level it stays hidden and unchanged)
     if (state.cause === "thermo") {
       const sys = THERMO[state.thermo_sys];
-      if ((key === "thermo_sys" || key === "cause") && sys.d) {
-        state.diameter_um = sys.d;
-        if (sys.mat) { state.particle = "custom"; state.n_custom = sys.mat.n; state.rho_custom = sys.mat.rho; } else state.particle = "ps";
-      }
-      if ((key === "diameter_um" || key === "particle" || key === "n_custom") && sys.d && (state.particle !== (sys.mat ? "custom" : "ps") || Math.abs(state.diameter_um / sys.d - 1) > 0.02)) { state.st_custom = Math.round(thermoST() * 100) / 100; state.thermo_sys = "custom"; }
+      if ((key === "thermo_sys" || key === "cause") && sys.d) syncThermo();
+      if (LEVEL_RANK[level] >= 2 && (key === "diameter_um" || key === "particle" || key === "n_custom") && sys.d && (state.particle !== (sys.mat ? "custom" : "ps") || Math.abs(state.diameter_um / sys.d - 1) > 0.02)) { state.st_custom = Math.round(thermoST() * 100) / 100; state.thermo_sys = "custom"; }
     }
     if (SCANNING() && (key === "mode" || key === "objective" || key === "scan_px")) autoZoom();
     if (key === "camera") { const c = cam(); state.cam_mode = Object.keys(c.modes)[0]; state.iface = Object.keys(c.ifaces)[0]; state.binning = 1; }
@@ -712,10 +695,12 @@
     let changed = false, changedAna = false;   // a setting of the movie, or only of the analysis
     CONTROLS.forEach(function (c) {
       if (c.lvl <= LEVEL_RANK[lv]) return;
-      if (c.kind === "qrange") { if (state.q_min !== null || state.q_max !== null) { state.q_min = null; state.q_max = null; changed = true; } return; }
+      if (c.kind === "qrange") { if (state.q_min !== null || state.q_max !== null) { state.q_min = null; state.q_max = null; changedAna = true; } return; }
       if (state[c.key] !== BASE[c.key]) { state[c.key] = BASE[c.key]; if (ANALYSIS_KEYS[c.key]) changedAna = true; else changed = true; }
     });
     if (LEVEL_RANK[lv] < 3 && state.seed !== BASE.seed) { state.seed = BASE.seed; changed = true; }
+    // a measured thermophoretic system brought back to the standard one comes with its own particles again
+    if (changed && state.cause === "thermo" && THERMO[state.thermo_sys].d) syncThermo();
     if (fromUser && location.hash !== "#" + lv) { try { history.replaceState(null, "", "#" + lv); } catch (e) { /* sandboxed previews (about:srcdoc) refuse it */ } }
     constrain(); syncControls(); drawFov();
     // the "published method only" row is computed at the "Addict" level only
@@ -1123,7 +1108,7 @@
     const ctx = c.getContext("2d"), img = ctx.createImageData(n, n), d = img.data;
     for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const v = 128 + 110 * Math.cos(2 * Math.PI * (sel.kx * x + sel.ky * (n - 1 - y)) / n), p = 4 * (y * n + x); d[p] = d[p + 1] = d[p + 2] = v; d[p + 3] = 255; }
     ctx.putImageData(img, 0, 0);
-    const k = Math.hypot(sel.kx, sel.ky), q = 2 * Math.PI * k / cache.movie.L_um, spacing = cache.movie.L_um / k, ang = Math.round(Math.atan2(sel.ky, sel.kx) * 180 / Math.PI);
+    const k = Math.hypot(sel.kx, sel.ky), q = 2 * Math.PI * k / cache.movie.L_um, spacing = cache.movie.L_um / k, ang = deg360(Math.atan2(-sel.ky, sel.kx) * 180 / Math.PI) % 180;
     const res = cache.res, v = res.v_um_s, th = res.v_dir_deg * Math.PI / 180, qv = (2 * Math.PI / cache.movie.L_um) * (sel.kx * Math.cos(th) - sel.ky * Math.sin(th)) * v;
     let txt = "Stripe spacing <b>" + fmtSig(spacing, 2) + " " + MU + "m</b>";
     if (level !== "curious") txt += ", q = <b>" + q.toFixed(2) + " " + MU + "m<sup>-1</sup></b>, direction " + ang + "&deg;";
@@ -1157,7 +1142,7 @@
     const ticks = function (lo, hi, log) {
       const out = [];
       if (log) { for (let e = Math.floor(Math.log10(lo)); e <= Math.ceil(Math.log10(hi)); e++) { const v = Math.pow(10, e); if (v >= lo * 0.999 && v <= hi * 1.001) out.push({ v: v, major: true }); [2, 5].forEach(function (k) { const w = k * v; if (w >= lo && w <= hi) out.push({ v: w, major: false }); }); } }
-      else { const step = niceStep((hi - lo) / 5); for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push({ v: v, major: true }); }
+      else { const step = niceStep((hi - lo) / 5); for (let i = Math.ceil(lo / step); i * step <= hi + 1e-9; i++) out.push({ v: Math.abs(i) < 1e-9 ? 0 : i * step, major: true }); }
       return out;
     };
     const lab = function (v, log) { if (!log) return fmtSig(v, 2).replace(/^-0$/, "0"); const e = Math.log10(v); if (Math.abs(e - Math.round(e)) < 1e-9) return e >= -2 && e <= 3 ? fmtSig(v, 1) : "1e" + Math.round(e); return fmtSig(v, 1); };
@@ -1223,7 +1208,7 @@
     if (res.detected) line(function (q) { return res.v_um_s * q; }, C.accent, []);
     if (level !== "curious") {
       const tr = cache.movie.truth, ev = expectedDrift();
-      line(function (q) { return tr.D_um2_s * q * q; }, C["accent-2"], [7, 4]);
+      line(function (q) { return trueD(tr) * q * q; }, C["accent-2"], [7, 4]);
       if (ev.plane && ev.speed > 0) line(function (q) { return ev.speed * q; }, C["accent-2"], [2, 3]);
     }
     pts.forEach(function (e) {
@@ -1264,35 +1249,41 @@
     const d = ((deg % 360) + 360) % 360, names = ["to the right", "down and to the right", "down the image", "down and to the left", "to the left", "up and to the left", "up the image", "up and to the right"];
     return names[Math.round(d / 45) % 8];
   }
-  function dirTxt(deg) { return dirWords(deg) + (level !== "curious" ? " (" + Math.round(((deg % 360) + 360) % 360) + DEG + ")" : ""); }
+  function deg360(d) { return ((Math.round(d) % 360) + 360) % 360; }        // rounded first: -0.03 is 0, not 360
+  function dirTxt(deg) { return dirWords(deg) + (level !== "curious" ? " (" + deg360(deg) + DEG + ")" : ""); }
+  function errDeg(e) { return e >= 1 ? Math.round(e) + DEG : fmtSig(e, 1) + DEG; }
+  // the true D in the image plane: near the glass (walls) the particles diffuse more slowly
+  function trueD(tr) { return tr.walls && tr.D_plane_um2_s > 0 ? tr.D_plane_um2_s : tr.D_um2_s; }
   function fmtV(v) { return Math.abs(v) < 0.1 ? fmtSig(v * 1000, 2) + " nm/s" : fmtSig(v, 3) + " " + MU + "m/s"; }
   function verdictDrift() {
     const res = cache.res, ev = expectedDrift();
     if (!ev.plane && ev.speed > 0) return res.detected ? { cls: "warn", text: "A drift in the image plane, though there is none" } : { cls: "info", text: "The drift is along the optical axis: none in the image" };
-    if (!res.detected) return !res.visibility.visible ? { cls: "info", text: ev.speed > 0 ? "Too slow to see with this movie" : "No drift, none found" } : { cls: ev.speed > 0 ? "warn" : "good", text: ev.speed > 0 ? "Not detected" : "No drift, none found" };
+    // not detected: too slow for this movie if the drift set is below the slowest it can show; otherwise a miss
+    if (!res.detected) return !(ev.speed > 0) ? { cls: "good", text: "No drift, none found" } : res.visibility.v_min_um_s > 0 && ev.speed < res.visibility.v_min_um_s ? { cls: "info", text: "Too slow to see with this movie" } : { cls: "warn", text: "Not detected, though this movie should show it" };
     if (!(ev.speed > 0)) return { cls: "bad", text: "A drift found where there is none" };
     let dev = res.v_um_s / ev.speed - 1;
     if (ev.lo !== undefined) dev = res.v_um_s < ev.lo ? res.v_um_s / ev.lo - 1 : res.v_um_s > ev.hi ? res.v_um_s / ev.hi - 1 : 0;
-    const ang = Math.abs(((res.v_dir_deg - ev.deg) % 360 + 540) % 360 - 180);
-    if (res.velocity_from === "structure" && Math.abs(ang - 180) < 20) return { cls: "warn", text: "Speed right, direction unknown (structure function)" };
+    let ang = Math.abs(((res.v_dir_deg - ev.deg) % 360 + 540) % 360 - 180);
+    if (res.velocity_from === "structure") ang = Math.min(ang, 180 - ang);  // no sign: only the line counts
     // within 10 % and 10 degrees, or within 2.5 times the quoted uncertainty
-    const sv = (res.v_err_um_s || 0) / ev.speed, sa = res.v_dir_err_deg || 0, angOk = ang < Math.max(10, 2.5 * sa) || res.velocity_from === "structure";
+    const sv = (res.v_err_um_s || 0) / ev.speed, sa = res.v_dir_err_deg || 0, angOk = ang < Math.max(10, 2.5 * sa);
     if (Math.abs(dev) < Math.max(0.1, 2.5 * sv) && angOk) return { cls: "good", text: ev.lo !== undefined ? "Between the mean flow and the flow at the focus" : Math.abs(dev) < 0.1 ? "Matches the drift set (within 10 %)" : "Matches the drift set within its uncertainty" };
     return Math.abs(dev) < Math.max(0.25, 5 * sv) && ang < Math.max(25, 5 * sa) ? { cls: "warn", text: "Off by " + Math.round(100 * Math.abs(dev)) + " %" + (ang >= 10 ? ", " + Math.round(ang) + DEG + " in direction" : "") } : { cls: "bad", text: "Off by " + Math.round(100 * Math.abs(dev)) + " %" };
   }
   function causeText() {
     const ev = expectedDrift();
+    if (state.cause === "none") return "nothing carries the particles: they only diffuse";
     if (state.cause === "flow") return "a flow of " + fmtV(state.flow_v) + " " + dirWords(state.flow_deg) + (state.flow_profile === "poiseuille" ? " (mean over the chamber; faster in the middle, still at the walls)" : "");
     if (state.cause === "sediment") return "gravity: Stokes settling at " + fmtV(Math.abs(stokesV())) + (state.orient === "side" ? ", " + (stokesV() >= 0 ? "down" : "up") + " the image (microscope on its side)" : ", along the optical axis (upright microscope)");
     return "a temperature gradient of " + fmtSig(state.grad, 2) + " K/" + MU + "m " + (state.grad_dir === "axis" ? "along the optical axis (warmer at the top)" : "across the image (warmer to the right)") + ": D_T = " + fmtSig(thermoDT(), 2) + " " + MU + "m\u00b2/(s K), drift " + fmtV(ev.speed) + (ev.plane ? " " + dirWords(ev.deg) : " along the optical axis");
   }
   function renderResult() {
-    const res = cache.res, mv = cache.movie, tr = mv.truth, v = verdictDrift(), ev = expectedDrift(), trD = tr.D_seen_um2_s || tr.D_um2_s;
+    const res = cache.res, mv = cache.movie, tr = mv.truth, v = verdictDrift(), ev = expectedDrift(), trD = trueD(tr);
     let h = '<div class="eyebrow">Result</div>';
-    h += res.detected ? '<div class="big">' + fmtV(res.v_um_s) + (res.v_err_um_s ? ' <small>&plusmn; ' + fmtV(res.v_err_um_s) + '</small>' : '') + '</div><p class="small" style="margin:0">' + (res.velocity_from === "structure" ? "along the line " + Math.round(((res.v_dir_deg % 180) + 180) % 180) + DEG + ", either way (the structure function has no sign)" : dirTxt(res.v_dir_deg) + (level !== "curious" && res.v_dir_err_deg ? " &plusmn; " + Math.round(res.v_dir_err_deg) + DEG : "")) + '</p>'
+    h += res.detected ? '<div class="big">' + fmtV(res.v_um_s) + (res.v_err_um_s ? ' <small>&plusmn; ' + fmtV(res.v_err_um_s) + '</small>' : '') + '</div><p class="small" style="margin:0">' + (res.velocity_from === "structure" ? "along the line " + (deg360(res.v_dir_deg) % 180) + DEG + ", either way (the structure function has no sign)" : dirTxt(res.v_dir_deg) + (level !== "curious" && res.v_dir_err_deg ? " &plusmn; " + errDeg(res.v_dir_err_deg) : "")) + '</p>'
       : '<div class="big">No drift seen</div>';
     h += '<span class="chip ' + v.cls + '">' + v.text + '</span>';
-    h += '<p class="small" style="margin:0">Set: ' + causeText() + '. Diffusion ' + fmtSig(res.D_um2_s, 3) + ' ' + MU + 'm\u00b2/s, so a size of ' + fmtSize(res.diameter_um) + ' (true ' + fmtSize(tr.diameter_um) + (Math.abs(trD / tr.D_um2_s - 1) > 0.05 ? '; near the glass they diffuse at ' + fmtSig(trD, 3) + ' ' + MU + 'm\u00b2/s on average, as ' + fmtSize(tr.diameter_seen_um) + ' particles would in the bulk' : '') + ').</p>';
+    h += '<p class="small" style="margin:0">Set: ' + causeText() + '. Diffusion ' + fmtSig(res.D_um2_s, 3) + ' ' + MU + 'm\u00b2/s, so a size of ' + fmtSize(res.diameter_um) + ' (true ' + fmtSize(tr.diameter_um) + (Math.abs(trD / tr.D_um2_s - 1) > 0.05 ? '; near the glass they diffuse at ' + fmtSig(trD, 3) + ' ' + MU + 'm\u00b2/s, as ' + fmtSize(tr.diameter_um * tr.D_um2_s / trD) + ' particles would far from it' : '') + ').</p>';
     // can the drift be seen at all, in words
     const vis = res.visibility;
     if (!res.detected) {
@@ -1300,41 +1291,49 @@
       if (ev.plane && ev.speed > 0) {
         // the slowest drift this movie can show: three times the uncertainty of the speed, as with tracking
         const vmin = res.visibility.v_min_um_s, pe = ev.speed * mv.L_um / res.D_um2_s;
-        t = "The drift moves each pattern a little, while the random motion shifts it back and forth far more. As with tracking, the drift only shows once enough patterns and enough time are averaged for it to stand out of that noise. This movie can show drifts faster than about " + fmtV(vmin) + "; the one set is " + fmtV(ev.speed) + ". The noise falls as one over the square root of the number of frames (four times the frames, half the noise), and with a wider field (lower magnification) and slower diffusion (larger particles).";
+        t = "The drift moves each pattern a little, while the random motion shifts it back and forth far more. As with tracking, the drift only shows once enough patterns and enough time are averaged for it to stand out of that noise. This movie can show drifts faster than about " + fmtV(vmin) + "; the one set is " + fmtV(ev.speed) + (ev.speed >= vmin ? ", so this one was missed by chance: a new random sample will usually show it" : "") + ". The noise falls as one over the square root of the movie's duration (a four times longer movie halves it), and with a wider field (lower magnification).";
       } else if (!ev.plane && ev.speed > 0) {
         const lg = Math.abs(state.cause === "sediment" ? dSE() / stokesV() : 1 / (thermoST() * state.grad));
-        t = "The drift is along the optical axis, and DDM sees motion in the image plane only. " + (lg < state.cell_um / 3 ? "The particles have piled up within about " + fmtSig(lg, 2) + " " + MU + "m of the " + ((state.cause === "sediment" ? stokesV() > 0 : thermoDT() > 0) ? "bottom" : "top") + " glass, where the liquid squeezing past slows their diffusion: in the bulk the same D would mean larger particles." : "The particles leave the focus slightly faster in one direction, so the curves fade a little faster.");
+        const slow = trueD(tr) / tr.D_um2_s < 0.9;
+        t = "The drift is along the optical axis, and DDM sees motion in the image plane only. " + (lg < state.cell_um / 3 ? "The particles have piled up within about " + fmtSig(lg, 2) + " " + MU + "m of the " + ((state.cause === "sediment" ? stokesV() > 0 : thermoDT() > 0) ? "bottom" : "top") + " glass" + (slow ? ", where the liquid squeezing past slows their diffusion: far from the glass the same D would mean larger particles." : ".") : "The particles leave the focus slightly faster in one direction, so the curves fade a little faster.");
       }
       if (t) h += '<p class="small" style="margin:0">' + t + '</p>';
     }
     if (level !== "curious") {
-      const row = function (cls, name, vv, dir, D, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + (vv === null ? "-" : fmtV(vv)) + '</td><td>' + (dir === null ? "-" : Math.round(((dir % 360) + 360) % 360) + DEG) + '</td><td>' + (D ? fmtSig(D, 3) : "-") + '</td></tr>'; };
+      // dir: a number, null, or { line: deg } for a direction known only up to its sign
+      const row = function (cls, name, vv, dir, D, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + (vv === null ? "-" : vv === "none" ? "not seen" : fmtV(vv)) + '</td><td>' + (dir === null ? "-" : typeof dir === "object" ? (deg360(dir.line) % 180) + "/" + (deg360(dir.line) % 180 + 180) + DEG : deg360(dir) + DEG) + '</td><td>' + (D ? fmtSig(D, 3) : "-") + '</td></tr>'; };
       let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">Speed</th><th scope="col">Direction</th><th scope="col">D (' + MU + 'm\u00b2/s)</th></tr></thead><tbody>';
-      t += row("main", res.velocity_from === "structure" ? "Structure function (v and D together)" : "Phase of the cross spectrum, D from the structure function", res.detected ? res.v_um_s : null, res.detected ? res.v_dir_deg : null, res.D_um2_s, "the headline");
-      if (LEVEL_RANK[level] >= 3 && res.velocity_from !== "structure") t += row("", "Structure function alone", res.from_structure_function.v_um_s, null, res.from_structure_function.D_um2_s, "v and D together; cos(q\u00b7v \u0394t) has no sign and can trade against diffusion");
-      if (level === "addict" && res.published) t += row("pub", "Published method only", res.published.v_um_s, null, res.published.D_um2_s, "the same movie, B fitted at each q, v from the structure function");
+      const mainName = { structure: "Structure function (v and D together)", phidm: "Phase steps between frames (phiDM), D from the structure function", phase: "Cross spectrum at all delays, D from the structure function" }[res.velocity_from];
+      t += row("main", mainName, res.detected ? res.v_um_s : "none", res.detected ? (res.velocity_from === "structure" ? { line: res.v_dir_deg } : res.v_dir_deg) : null, res.D_um2_s, "the headline");
+      const sf = res.from_structure_function;
+      if (LEVEL_RANK[level] >= 3 && res.velocity_from !== "structure") t += row("", "Structure function alone", sf.detected ? sf.v_um_s : "none", sf.detected ? { line: sf.v_dir_deg } : null, sf.D_um2_s, "v and D together; cos(q\u00b7v \u0394t) has no sign, needs patterns that swing, and can trade the drift against diffusion" + (sf.detected ? "" : "; its best fit, " + fmtV(sf.v_um_s) + ", is not significant"));
+      if (level === "addict" && res.published) t += row("pub", "Published method only", res.published.detected ? res.published.v_um_s : "none", res.published.detected ? res.published.v_dir_deg : null, res.published.D_um2_s, "the same movie: phiDM for v (Colin, Zhang and Wilson 2014), D with B fitted at each q and no depth of field");
       t += row("truth", "True (simulation)", ev.plane ? ev.speed : 0, ev.plane && ev.speed > 0 ? ev.deg : null, trD, ev.plane ? (ev.lo !== undefined ? "at the focus; " + fmtV(state.flow_v) + " on average over the chamber, the microscope sees a mix of heights" : "") : "drift along the optical axis: " + fmtV(ev.speed));
       t += '</tbody></table></div>';
       h += t;
       // what the drift says about its cause
       if (res.detected && state.cause === "sediment" && state.orient === "side") {
-        const a = res.diameter_um / 2 * 1e-6, drho = 9 * viscosity_mPa_s() * 1e-3 * res.v_um_s * 1e-6 / (2 * G * a * a) / 1000;
+        // the downward component of the drift (y points down the image): negative for particles that float
+        const vDown = res.velocity_from === "structure" ? res.v_um_s : res.v_um_s * Math.sin(res.v_dir_deg * Math.PI / 180);
+        const a = res.diameter_um / 2 * 1e-6, drho = 9 * viscosity_mPa_s() * 1e-3 * vDown * 1e-6 / (2 * G * a * a) / 1000;
         h += '<p class="small" style="margin:0">From the settling speed and the size: density difference ' + fmtSig(drho, 2) + ' g/cm' + SUP3 + ' (set ' + fmtSig(particleDensity() - liquidDensity(), 2) + ').</p>';
       }
       if (res.detected && state.cause === "thermo" && state.grad_dir === "plane") {
-        const sgn = Math.cos(res.v_dir_deg * Math.PI / 180) < 0 ? 1 : -1, DT = sgn * res.v_um_s / state.grad, ST = DT / res.D_um2_s;
-        h += '<p class="small" style="margin:0">From the drift and the gradient: D_T = ' + fmtSig(DT, 2) + ' ' + MU + 'm\u00b2/(s K) and S_T = D_T / D = ' + fmtSig(ST, 2) + ' K\u207b\u00b9 (set ' + fmtSig(thermoDT(), 2) + ' and ' + fmtSig(thermoDT() / dSE(), 2) + '). ' + (DT > 0 ? "Positive: the particles move to the cold side." : "Negative: they move to the warm side.") + '</p>';
+        // warmer to the right: v = -D_T dT/dx, so D_T = -v_x / gradient (the structure function alone gives no sign)
+        const noSign = res.velocity_from === "structure", vX = res.v_um_s * Math.cos(res.v_dir_deg * Math.PI / 180);
+        const DT = noSign ? res.v_um_s / state.grad : -vX / state.grad, ST = DT / res.D_um2_s;
+        h += '<p class="small" style="margin:0">From the drift and the gradient: ' + (noSign ? '|D_T| = ' : 'D_T = ') + fmtSig(DT, 2) + ' ' + MU + 'm\u00b2/(s K) and ' + (noSign ? '|S_T| = ' : 'S_T = D_T / D = ') + fmtSig(ST, 2) + ' K\u207b\u00b9 (set ' + fmtSig(thermoDT(), 2) + ' and ' + fmtSig(thermoDT() / dSE(), 2) + '). ' + (noSign ? "The structure function cannot tell which way the particles go, so the sign is unknown." : DT > 0 ? "Positive: the particles move to the cold side." : "Negative: they move to the warm side.") + '</p>';
       }
       h += '<details class="more"><summary>Details</summary><dl>';
-      h += '<dt>Uncertainty</dt><dd>' + (res.velocity_from === "structure" ? 'speed from the scatter of the fits at each q' : 'two jackknifes added in quadrature: over ten parts of the movie, and over eight interleaved groups of q (each left out in turn)') + '; D from the scatter of &Gamma;/q&sup2; between q (' + pctTxt(res.D_rel_err) + ')</dd>';
+      h += '<dt>Uncertainty</dt><dd>' + (res.velocity_from === "structure" ? 'speed from the scatter of the fits at each q' : res.velocity_from === "phidm" ? 'jackknife over ten parts of the movie' : 'two jackknifes added in quadrature: over ten parts of the movie, and over eight interleaved groups of q (each left out in turn)') + '; D from the scatter of &Gamma;/q&sup2; between q (' + pctTxt(res.D_rel_err) + ')</dd>';
       h += '<dt>Slowest drift this movie shows</dt><dd>about ' + fmtV(vis.v_min_um_s) + ' (three times the uncertainty of the speed)</dd>';
-      h += '<dt>Patterns that swing</dt><dd>' + (vis.swing ? 'from q = ' + fmtSig(vis.q_from, 2) + ' to ' + fmtSig(vis.q_to, 2) + ' ' + MU + 'm\u207b\u00b9 (' + vis.n_q + ' q)' : 'none: diffusion renews each pattern before the drift moves it, so the structure function alone cannot see this drift') + '; q* = v/D = ' + fmtSig(vis.q_star, 2) + ' ' + MU + 'm\u207b\u00b9, Peclet number v L / D = ' + fmtSig(vis.peclet, 2) + '</dd>';
+      h += '<dt>Patterns that swing</dt><dd>' + (vis.swing ? 'from q = ' + fmtSig(vis.q_from, 2) + ' to ' + fmtSig(vis.q_to, 2) + ' ' + MU + 'm\u207b\u00b9 (' + vis.n_q + ' q)' : 'none: diffusion renews each pattern before the drift moves it, so the structure function alone can hardly see this drift') + '; q* = v/D = ' + fmtSig(vis.q_star, 2) + ' ' + MU + 'm\u207b\u00b9, Peclet number v L / D = ' + fmtSig(vis.peclet, 2) + '</dd>';
       h += '<dt>Camera noise</dt><dd>' + (res.noise_B ? 'B = ' + fmtSig(res.noise_B, 3) + ' from the mean count, the read noise and the excess-noise factor, the same at every q' : 'B fitted at each q') + '</dd>';
-      h += '<dt>Pixels used for the phase</dt><dd>' + res.v_jack.n_pixels + ' (pixel and delay pairs where the pattern is still clearly there and the phase has not wrapped)</dd>';
+      if (res.velocity_from === "phase") h += '<dt>Pixels used for the velocity</dt><dd>' + res.v_jack.n_pixels + ' (pixel and delay pairs where the pattern is still clearly there)</dd>';
       h += '</dl></details>';
     }
     $("result").innerHTML = h;
-    $("hero-result").innerHTML = '<span>Drift set</span><span class="n">' + (!(ev.speed > 0) ? "none" : !ev.plane ? "along the axis" : ev.lo !== undefined ? fmtSig(ev.lo, 2) + " to " + fmtV(ev.hi) : fmtV(ev.speed)) + '</span><span>Measured by DDM</span><span class="n">' + (res.detected ? fmtV(res.v_um_s) : "none seen") + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
+    $("hero-result").innerHTML = '<span>Drift set</span><span class="n">' + (!(ev.speed > 0) ? "none" : !ev.plane ? "along the axis" : ev.lo !== undefined ? fmtV(ev.lo) + " to " + fmtV(ev.hi) : fmtV(ev.speed)) + '</span><span>Measured by DDM</span><span class="n">' + (res.detected ? fmtV(res.v_um_s) : "none seen") + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
     $("hero-cap").textContent = "Simulated " + MODE_SHORT[state.mode] + " movie, " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
   }
   function visibilityText(cfg, m) {
@@ -1367,24 +1366,24 @@
   // ---- "what matters" cards ---------------------------------------------------------------
   const SILICA2 = { particle: "silica", diameter_um: 2, phi: 2e-3, frame_rate_hz: 20, exposure_ms: 1, cause: "sediment" };
   const CARDS = [
-    { lvl: 1, title: "Too slow to see", text: "200 nm polystyrene beads are only 5 % denser than water and settle at about 1 nm/s, while they wander by about a micrometre every half second. To tell such a drift from the random motion, DDM, like tracking, would need to average over a movie thousands of times longer than this one: the page says how slow a drift this movie can show.",
+    { lvl: 1, title: "Too slow to see", text: "200 nm polystyrene beads are only 5 % denser than water and settle at about 1 nm/s, while they wander by about 1.5 " + MU + "m every half second. To tell such a drift from the random motion, DDM, like tracking, would need to average over a movie thousands of times longer than this one: the page says how slow a drift this movie can show.",
       shows: [{ label: "Show me", set: { cause: "sediment", orient: "side", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X") }, go: "step-rates" }] },
     { lvl: 1, title: "Heavy beads, microscope on its side", text: "Silica beads of 2 " + MU + "m settle at about 2 " + MU + "m/s and diffuse slowly. With the microscope on its side gravity points down the image: the fringes of step 4 appear, the curves along the drift swing, and the speed comes out with its direction. With the microscope upright the same beads settle onto the bottom glass: no drift in the image, and slower diffusion near the glass.",
       shows: [{ label: "On its side", set: Object.assign({ orient: "side" }, SILICA2), go: "step-map" }, { label: "Upright", set: Object.assign({ orient: "upright", focus_frac: 0.05 }, SILICA2), go: "step-rates" }] },
     { lvl: 1, title: "Faster flow, closer fringes", text: "The fringes in the maps of step 4 are spaced 2\u03c0/(v \u0394t) apart in q: twice the speed, twice as many fringes at the same delay. Move the delay slider to watch them close in.",
       shows: [{ label: "Flow 20 " + MU + "m/s", set: { flow_v: 20 }, go: "step-map" }, { label: "Flow 5 " + MU + "m/s", set: { flow_v: 5 }, go: "step-map" }] },
-    { lvl: 2, title: "A flow that changes with depth", text: "Pushed through a channel, a liquid moves fastest in the middle and not at all at the walls (Poiseuille flow). The microscope averages over its depth of field, so near the middle it sees close to the top speed and near a wall much less; the spread of speeds also washes out the stripes at high q.",
+    { lvl: 2, title: "A flow that changes with depth", text: "Pushed through a channel, a liquid moves fastest in the middle and not at all at the walls (Poiseuille flow). The microscope averages over its depth of field, so near the middle it sees close to the top speed and near a wall much less. The spread of speeds also washes out the fringes at high q, and the fit, which assumes one speed, reads it as extra diffusion: D comes out too large, and the size too small.",
       shows: [{ label: "Focus in the middle", set: { flow_profile: "poiseuille" }, go: "step-rates" }, { label: "Focus near the bottom", set: { flow_profile: "poiseuille", focus_frac: 0.1 }, go: "step-rates" }] },
-    { lvl: 2, title: "Thermophoresis: 500 nm polystyrene in a strong gradient", text: "Polystyrene beads of 506 nm (Braibanti, Vigolo and Piazza 2008) at 35 " + DEG + "C move to the cold side with D_T of about 2.7 " + MU + "m\u00b2/(s K). In a gradient of 0.1 K/" + MU + "m, the steepest used by Duhr and Braun (2006), that is about 0.3 " + MU + "m/s: visible with a 4x objective (a wide field) and a long movie. At 5 " + DEG + "C S_T is negative: the same beads move four times more slowly, and the other way, to the warm side.",
-      shows: [{ label: "35 " + DEG + "C", set: { cause: "thermo", thermo_sys: "br253", particle: "ps", diameter_um: 0.506, T_C: 35, grad: 0.1, objective: objIndexByName("CFI Plan Fluor 4X"), frame_rate_hz: 5, exposure_ms: 1, n_frames: 512, phi: 1e-3 }, go: "step-rates" },
-              { label: "5 " + DEG + "C", set: { cause: "thermo", thermo_sys: "br253", particle: "ps", diameter_um: 0.506, T_C: 5, grad: 0.1, objective: objIndexByName("CFI Plan Fluor 4X"), frame_rate_hz: 5, exposure_ms: 1, n_frames: 512, phi: 1e-3 }, go: "step-rates" }] },
-    { lvl: 2, title: "Thermophoresis of small beads: a matter of time", text: "200 nm beads (Duhr and Braun 2006) in a gradient of 0.01 K/" + MU + "m drift at about 15 nm/s, while they diffuse 150 times faster across any pattern the image holds. No pattern swings, but the phase of each pattern still moves a little: averaged over a long enough movie it shows the drift, as tracking would. In 0.1 K/" + MU + "m, the steepest gradient Duhr and Braun used, the drift is about 150 nm/s, and a movie of 512 frames at 2 per second through a 10x objective shows it.",
+    { lvl: 2, title: "Thermophoresis: 500 nm polystyrene in a strong gradient", text: "Polystyrene beads of 506 nm (Braibanti, Vigolo and Piazza 2008) at 35 " + DEG + "C move to the cold side with D_T of about 2.7 " + MU + "m\u00b2/(s K). In a gradient of 0.1 K/" + MU + "m, the steepest used by Duhr and Braun (2006), that is about 0.3 " + MU + "m/s, clear with a 10x objective and a movie of 512 frames at 5 per second. At 5 " + DEG + "C S_T is negative: the same beads move four times more slowly, and the other way, to the warm side. Across the 83 " + MU + "m field the temperature changes by about 8 K; the simulation uses S_T at the temperature set everywhere.",
+      shows: [{ label: "35 " + DEG + "C", set: { cause: "thermo", thermo_sys: "br253", particle: "ps", diameter_um: 0.506, T_C: 35, grad: 0.1, objective: objIndexByName("CFI Plan Fluor 10X"), frame_rate_hz: 5, exposure_ms: 1, n_frames: 512, phi: 1e-3 }, go: "step-rates" },
+              { label: "5 " + DEG + "C", set: { cause: "thermo", thermo_sys: "br253", particle: "ps", diameter_um: 0.506, T_C: 5, grad: 0.1, objective: objIndexByName("CFI Plan Fluor 10X"), frame_rate_hz: 5, exposure_ms: 1, n_frames: 512, phi: 1e-3 }, go: "step-rates" }] },
+    { lvl: 2, title: "Thermophoresis of small beads: a matter of time", text: "200 nm beads (Duhr and Braun 2006) in a gradient of 0.01 K/" + MU + "m drift at about 15 nm/s, while diffusion renews even the widest pattern the image holds at least 20 times faster than the drift moves it. No pattern swings, but the phase of each pattern still moves a little: averaged over a long enough movie it shows the drift, as tracking would. In 0.1 K/" + MU + "m, the steepest gradient Duhr and Braun used, the drift is about 150 nm/s: a movie of 512 frames at 2 per second through a 10x objective is at the limit, and shows it in some random samples but not in others (try New random sample at the Researcher level). A real camera can record far longer movies of larger fields.",
       shows: [{ label: "0.01 K/" + MU + "m, short movie", set: { cause: "thermo", thermo_sys: "duhr200", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X"), grad: 0.01 }, go: "step-rates" },
               { label: "0.1 K/" + MU + "m, long movie", set: { cause: "thermo", thermo_sys: "duhr200", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 2, exposure_ms: 1, n_frames: 512, objective: objIndexByName("CFI Plan Fluor 10X"), grad: 0.1 }, go: "step-rates" }] },
-    { lvl: 2, title: "Micrometre beads, as tracked under the microscope", text: "Single beads of a few micrometres move by thermophoresis fast enough to be followed one by one: Helden, Eichhorn and Bechinger (2015) measured 5 " + MU + "m polystyrene, which goes to the cold side, and 2.7 " + MU + "m melamine resin, which at room temperature goes to the warm side. In 0.05 K/" + MU + "m they drift at about 0.5 and 0.36 " + MU + "m/s while diffusing slowly: DDM sees them as clearly as tracking does.",
+    { lvl: 2, title: "Micrometre beads: strong thermophoresis", text: "Beads of a few micrometres feel strong thermophoretic forces: Helden, Eichhorn and Bechinger (2015) measured the force on single 5 " + MU + "m polystyrene beads, pushed to the cold side, and 2.7 " + MU + "m melamine resin beads, which at room temperature go to the warm side, each held by optical tweezers near a wall. Free in a gradient of 0.05 K/" + MU + "m they would drift at about 0.5 and 0.36 " + MU + "m/s while diffusing slowly: fast enough to follow one by one, and clear for DDM.",
       shows: [{ label: "5 " + MU + "m polystyrene", set: { cause: "thermo", thermo_sys: "hel_ps", particle: "ps", diameter_um: 5, grad: 0.05, objective: objIndexByName("CFI Plan Fluor 10X"), frame_rate_hz: 5, exposure_ms: 1, phi: 0.01 }, go: "step-rates" },
               { label: "2.7 " + MU + "m melamine", set: { cause: "thermo", thermo_sys: "hel_mf", particle: "custom", n_custom: 1.68, rho_custom: 1.51, diameter_um: 2.7, grad: 0.05, objective: objIndexByName("CFI Plan Fluor 10X"), frame_rate_hz: 5, exposure_ms: 1, phi: 0.01 }, go: "step-rates" }] },
-    { lvl: 3, title: "The structure function alone", text: "Most DDM analyses of drift fit cos(q\u00b7v \u0394t) to the structure function. When the patterns fade before they oscillate, the oscillation trades against diffusion and the speed comes out wrong; it also never gives the direction's sign. It also needs the patterns to swing before they fade, which slow drifts never do. The phase of the cross spectrum has none of these problems. Compare the two rows of the result table.",
+    { lvl: 3, title: "The structure function alone", text: "Fitting cos(q\u00b7v \u0394t) to the structure function gives the speed without its sign, needs the patterns to swing before they fade, which slow drifts never do, and when they fade first the oscillation trades against diffusion and the speed comes out wrong, even for a sample with no drift. The phase of the Fourier transform has none of these problems. Compare the rows of the result table.",
       shows: [{ label: "200 nm beads, 2 " + MU + "m/s", set: { flow_v: 2, particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X") }, go: "step-rates" }, { label: "200 nm beads, no drift", set: { cause: "none", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X") }, go: "step-rates" }] }
   ];
   function buildCards() {
@@ -1423,7 +1422,7 @@
           box.querySelector(".a").hidden = false;
           const kind = box.getAttribute("data-predict");
           if (kind === "reverse") { state.cause = "flow"; state.flow_deg = (state.flow_deg + 180) % 360; }
-          if (kind === "double") { state.cause = "flow"; state.flow_v = Math.min(20, 2 * state.flow_v); }
+          if (kind === "double") { state.cause = "flow"; state.flow_v = Math.min(20, 2 * state.flow_v); }   // the slider ends at 20 um/s
           constrain();
           syncControls(); schedule();
         });
@@ -1465,12 +1464,15 @@
     });
     return "#" + level + (q.length ? "/" + q.join("&") : "");
   }
+  // keys a shared link may set: the controls of the page, the q range and the seed (not the leftovers of the sizing page,
+  // such as shape or polarizers, which this page keeps fixed)
+  const HASH_KEYS = { seed: 1, q_min: 1, q_max: 1 }; CONTROLS.forEach(function (c) { if (c.key) HASH_KEYS[c.key] = 1; });
   function parseHash(h) {
     const parts = String(h || "").replace(/^#/, "").split("/"), set = {};
     (parts[1] || "").split("&").forEach(function (kv) {
       const i = kv.indexOf("="); if (i < 1) return;
       let k, raw; try { k = decodeURIComponent(kv.slice(0, i)); raw = decodeURIComponent(kv.slice(i + 1)); } catch (e) { return; }
-      if (!Object.prototype.hasOwnProperty.call(BASE, k)) return;
+      if (!Object.prototype.hasOwnProperty.call(BASE, k) || !(HASH_KEYS[k])) return;   // only settings the page shows
       if (k === "objective") { try { set[k] = objIndexByName(raw); } catch (e) { /* objective no longer listed: keep the standard one */ } return; }
       if (typeof BASE[k] === "number" || BASE[k] === null) { const x = raw === "null" ? null : parseFloat(raw); if (x === null || isFinite(x)) set[k] = x; return; }
       if (typeof BASE[k] === "string") set[k] = raw;
