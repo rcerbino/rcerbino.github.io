@@ -100,7 +100,12 @@ p { margin: 0 0 1rem; }
 .pipe::before, .about::before { content: ""; display: block; border-top: 1px solid var(--rule); margin-bottom: 2.25rem; }
 .pipe-row { display: grid; gap: 1rem 0.9rem; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); margin-top: 1.25rem; counter-reset: step; }
 .pipe-row figure { margin: 0; display: grid; gap: 0.5rem; align-content: start; counter-increment: step; }
-.pipe-row .pane { aspect-ratio: 1; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: #000; }
+.pipe-row .pane { position: relative; aspect-ratio: 1; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: #000; }
+.pipe-row .pane svg.rings { position: absolute; inset: 0; }
+.pipe svg.rings circle { fill: none; stroke-width: 1.6; }
+.pipe svg.rings .halo { stroke: rgba(0, 0, 0, 0.6); stroke-width: 3.4; }
+.pipe svg.rings .r1 { stroke: #93a1ff; }   /* the dark-theme accents: the map is dark in both themes */
+.pipe svg.rings .r2 { stroke: #ff7a90; }
 .pipe-row .pane.light { background: var(--panel); }
 .pipe-row canvas, .pipe-row svg { display: block; width: 100%; height: 100%; }
 .pipe-row canvas.px { image-rendering: pixelated; }
@@ -118,8 +123,17 @@ p { margin: 0 0 1rem; }
 .pipe svg .dot { stroke: none; }
 .pipe svg .dot.c1 { fill: var(--accent); }
 .pipe svg .dot.c2 { fill: var(--accent-2); }
+.pipe svg .dot.c3 { fill: var(--muted); }
+.pipe svg .k { stroke: var(--ink); }
+.pipe svg .k.dash { stroke-dasharray: 4 3; }
 
 .about { padding-block: 0 2.5rem; }
+.next { padding-block: 0 2.5rem; }
+.next::before { content: ""; display: block; border-top: 1px solid var(--rule); margin-bottom: 2.25rem; }
+.next-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); margin-top: 1rem; }
+.next-grid > div { border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); padding: 1rem 1.2rem; }
+.next-grid h3 { font-size: 1.15rem; margin: 0 0 0.4rem; }
+.next-grid p { margin: 0; font-family: var(--sans); font-size: 0.9rem; line-height: 1.5; color: var(--muted); }
 footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; font-family: var(--sans); font-size: 0.85rem; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .app, .app:hover { transition: none; transform: none; } }
 </style>
@@ -188,37 +202,47 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
       <figure><div class="pane"><canvas id="pp-frame" class="px" width="64" height="64" aria-label="Simulated movie frame"></canvas></div>
         <figcaption><b>Movie</b>An ordinary microscope movie, many frames in a row.</figcaption></figure>
       <figure><div class="pane"><canvas id="pp-diff" class="px" width="64" height="64" aria-label="Difference of two frames"></canvas></div>
-        <figcaption><b>Difference</b>Subtract two frames taken a delay apart: only what moved is left.</figcaption></figure>
-      <figure><div class="pane"><canvas id="pp-fft" class="px" width="64" height="64" aria-label="Fourier power of the difference, averaged"></canvas></div>
-        <figcaption><b>Fourier map</b>Sort the difference by pattern size and average over the movie.</figcaption></figure>
+        <figcaption><b>Difference</b>Subtract two frames taken a delay apart: what stays still, dust and uneven light included, cancels; only what moved is left.</figcaption></figure>
+      <figure><div class="pane"><canvas id="pp-fft" class="px" width="64" height="64" aria-label="Fourier power of the difference, averaged"></canvas>
+        <svg class="rings" viewBox="0 0 100 100" aria-hidden="true"><circle class="halo" cx="50.8" cy="50.8" r="10"/><circle class="r1" cx="50.8" cy="50.8" r="10"/><circle class="halo" cx="50.8" cy="50.8" r="30"/><circle class="r2" cx="50.8" cy="50.8" r="30"/></svg></div>
+        <figcaption><b>Fourier map</b>Sort the difference by pattern size and average over the movie. Each ring holds one size: wide patterns near the centre (blue), small ones farther out (red).</figcaption></figure>
       <figure><div class="pane light"><svg viewBox="0 0 100 100" role="img" aria-label="Curves rising with the delay, faster for smaller patterns">
         <path class="ax" d="M14 86 H94 M14 86 V8"/>
-        <path class="ln c1" d="M14 80 C34 80 34 22 54 20 S80 20 94 20"/>
+        <path class="ln c3" d="M14 80 C34 80 34 22 54 20 S80 20 94 20"/>
         <path class="ln c2" d="M14 82 C24 82 26 30 38 28 S70 28 94 28"/>
-        <path class="ln c3" d="M14 78 C50 78 56 44 80 38 S90 37 94 37"/>
+        <path class="ln c1" d="M14 78 C50 78 56 44 80 38 S90 37 94 37"/>
         <text class="lab" x="54" y="97" text-anchor="middle">delay (log)</text>
         <text class="lab" x="8" y="48" text-anchor="middle" transform="rotate(-90 8 48)">difference</text>
       </svg></div>
-        <figcaption><b>Curves</b>For each pattern size, how the difference grows with the delay.</figcaption></figure>
+        <figcaption><b>Curves</b>For each pattern size, how the difference grows with the delay. Small patterns (red) change first, wide ones (blue) last.</figcaption></figure>
       <figure><div class="pane light"><svg viewBox="0 0 100 100" role="img" aria-label="Rates against pattern size on log scales: slope 2 for diffusion, slope 1 for swimming">
         <path class="ax" d="M14 86 H94 M14 86 V8"/>
-        <path class="ln c1" d="M18 80 L90 16"/>
-        <path class="ln c2" d="M18 64 L90 32"/>
-        <circle class="dot c1" cx="30" cy="69.3" r="2.6"/><circle class="dot c1" cx="50" cy="51.6" r="2.6"/><circle class="dot c1" cx="72" cy="32" r="2.6"/>
-        <circle class="dot c2" cx="30" cy="58.7" r="2.6"/><circle class="dot c2" cx="50" cy="49.8" r="2.6"/><circle class="dot c2" cx="72" cy="40" r="2.6"/>
-        <text class="lab k1" x="18" y="15">diffusion</text>
-        <text class="lab k2" x="18" y="25">swimming</text>
+        <path class="ln k" d="M18 80 L90 16"/>
+        <path class="ln k dash" d="M18 64 L90 32"/>
+        <circle class="dot c1" cx="30" cy="69.3" r="3"/><circle class="dot c3" cx="50" cy="51.6" r="3"/><circle class="dot c2" cx="72" cy="32" r="3"/>
+        <path class="ln k" d="M18 13 H28"/><text class="lab" x="31" y="15.5">diffusion</text>
+        <path class="ln k dash" d="M18 23 H28"/><text class="lab" x="31" y="25.5">swimming</text>
         <text class="lab" x="54" y="97" text-anchor="middle">1 / pattern size (log)</text>
         <text class="lab" x="8" y="48" text-anchor="middle" transform="rotate(-90 8 48)">rate (log)</text>
       </svg></div>
-        <figcaption><b>Model</b>Fit each curve; how the rates change with pattern size (steeper for diffusion than for swimming) gives the size, the speed, and more.</figcaption></figure>
+        <figcaption><b>Model</b>Fit each curve to get one rate per pattern size (the dots, in the same colours). How the rates change with size (steeper for diffusion than for swimming) gives the size, the speed, and more.</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="wrap next" aria-labelledby="h-next">
+    <p class="eyebrow">From the browser to the lab</p>
+    <h2 id="h-next">Your own movies</h2>
+    <div class="next-grid">
+      <div><h3><a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a></h3>
+        <p>Lattuada et al., J. Chem. Phys. 163, 161501 (2025). How DDM works in practice: choosing the microscope and camera, recording the movie, analysing it and checking the result.</p></div>
+      <div><h3><a href="https://github.com/somexlab/fastddm">fastDDM</a></h3>
+        <p>Our open-source code to analyse your own movies: a Python library that runs on the processor or the graphics card and computes the structure function of long movies quickly.</p></div>
     </div>
   </section>
 
   <section class="wrap about" aria-labelledby="h-about">
     <h2 id="h-about">About these pages</h2>
     <p class="prose">These pages are a divertissement. For fun, we took configurations close to those of our <a href="https://somexlab.github.io/">SoMeX lab</a> and used them to simulate some typical DDM experiments in your browser. The simulations are simple and rely on many approximations; each page says which. More applications will follow. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
-    <p class="prose">If you like them, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice, and <a href="https://github.com/somexlab/fastddm">fastDDM</a> is our open-source code to analyse your own movies.</p>
   </section>
 </main>
 
