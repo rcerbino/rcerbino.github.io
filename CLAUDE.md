@@ -242,7 +242,7 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
   published row: B from the first delays, line through f = 1, D = Gamma / q^2, reference bin by bin) and `worker-crowd.js`
   (simulates the movie and the reference). The particles push each other in `movie.js` option `interact`: Brownian dynamics
   of hard spheres (Heyes-Melrose overlap removal) or hard spheres plus Yukawa repulsion, periodic box, no hydrodynamic
-  interactions (said on the page; H(q) left for later); `truth.interact` holds the simulation's own S(q). Method: Lu et al.,
+  interactions (said on the page; tried and dropped: a theory density field, and a grid flow solver, branch ddm-flow-wip); `truth.interact` holds the simulation's own S(q). Method: Lu et al.,
   Phys. Rev. Lett. 108, 218103 (2012). Check: `node test-crowd.js` (about a minute).
 
 All application pages have a fourth reader level, "Addict" (`#addict`): one switch for each step the

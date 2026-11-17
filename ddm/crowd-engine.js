@@ -30,79 +30,6 @@
     return 1 / (1 - rc);
   }
 
-  /* Hydrodynamic interactions, from theory: the hydrodynamic function H(q) of hard spheres in the delta-gamma scheme of
-   * Beenakker and Mazur (Physica A 126, 349, 1984), as written by Genz and Klein (Physica A 171, 26, 1991):
-   *   H(q) = Ds/D0 + (3/2 pi) int d(ak) [sin(ak)/(ak)]^2 / [1 + phi S_g(ak)] int_-1^1 dx (1 - x^2) [S(|q - k|) - 1],
-   *   Ds/D0 = (2/pi) int dy [sin(y)/y]^2 / [1 + phi S_g(y)],
-   * a the radius, S(q) from Percus-Yevick, S_g with the renormalised coefficients gamma0 of Beenakker and Mazur's
-   * table 1 (fitted with a fourth-order polynomial in phi). Returns tables against q sigma. */
-  const GAMMA0 = [[0, 0, 0, 0, 0], [0.05, 0.0553, 0.0542, 0.0533, 0.0525], [0.10, 0.1228, 0.1177, 0.1135, 0.1104], [0.15, 0.2048, 0.1918, 0.1813, 0.1738],
-    [0.20, 0.3038, 0.2777, 0.2574, 0.2432], [0.25, 0.4224, 0.3766, 0.3423, 0.3186], [0.30, 0.5627, 0.4895, 0.4364, 0.4005], [0.35, 0.7267, 0.6172, 0.5402, 0.4888],
-    [0.40, 0.9157, 0.7601, 0.6538, 0.5839], [0.45, 1.1310, 0.9183, 0.7776, 0.6856]];
-  function gamma0(phi, c) {
-    // phi gamma0 at the table points, linear interpolation (the table is smooth), divided by phi
-    let k = 1; while (k < GAMMA0.length - 1 && GAMMA0[k][0] < phi) k++;
-    const a = GAMMA0[k - 1], b = GAMMA0[k], w = (phi - a[0]) / (b[0] - a[0]), v = a[c] + w * (b[c] - a[c]);
-    return phi > 0 ? v / phi : 1;
-  }
-  let SI_TAB = null; const SI_DX = 0.005;
-  function sineIntegral(x) {
-    if (!SI_TAB) { const n = Math.ceil(400 / SI_DX) + 2; SI_TAB = new Float64Array(n); let acc = 0; const f = function (t) { return t === 0 ? 1 : Math.sin(t) / t; };
-      for (let i = 1; i < n; i++) { const t0 = (i - 1) * SI_DX, t1 = i * SI_DX; acc += SI_DX / 6 * (f(t0) + 4 * f(0.5 * (t0 + t1)) + f(t1)); SI_TAB[i] = acc; } }
-    if (x >= (SI_TAB.length - 2) * SI_DX) return Math.PI / 2 - Math.cos(x) / x;
-    const t = x / SI_DX, i = Math.floor(t); return SI_TAB[i] + (t - i) * (SI_TAB[i + 1] - SI_TAB[i]);
-  }
-  // spherical Bessel j_n(x), n = 1..4 (series near 0, upward recurrence beyond)
-  function sphJ(n, x) {
-    if (x < 1.5) { let df = 1; for (let k = 1; k <= 2 * n + 1; k += 2) df *= k; const x2 = x * x; return Math.pow(x, n) / df * (1 - x2 / (2 * (2 * n + 3)) + x2 * x2 / (8 * (2 * n + 3) * (2 * n + 5)) - x2 * x2 * x2 / (48 * (2 * n + 3) * (2 * n + 5) * (2 * n + 7))); }
-    let j0 = Math.sin(x) / x, j1 = Math.sin(x) / (x * x) - Math.cos(x) / x;
-    for (let k = 1; k < n; k++) { const j2 = (2 * k + 1) / x * j1 - j0; j0 = j1; j1 = j2; }
-    return j1;
-  }
-  function Sgamma(x, mm1) {
-    if (x < 1e-4) x = 1e-4;
-    const x2 = 2 * x, x3 = x * x * x, x4 = x3 * x, sx = Math.sin(x), cx = Math.cos(x);
-    let C = 4.5 * (sineIntegral(x2) / x + 0.5 * Math.cos(x2) / (x * x) + 0.25 * Math.sin(x2) / x3 - sx * sx / x4 - 4 / (x3 * x3) * Math.pow(sx - x * cx, 2));
-    if (x < 0.05) C = 2.5;
-    // J_{n+1/2}(x)^2 = (2x / pi) j_n(x)^2
-    const J2 = function (n) { const j = sphJ(n, x); return 2 * x / Math.PI * j * j; };
-    return C + 2.25 * Math.PI * (5 * mm1[0] / x3 * J2(1) + 25 * mm1[1] / x3 * J2(2) + 49 * mm1[2] / x3 * J2(3) + 81 * mm1[3] / x3 * J2(4));
-  }
-  const HYDRO_CACHE = {};
-  function hydroTheory(phi) {
-    const key = phi.toFixed(4); if (HYDRO_CACHE[key]) return HYDRO_CACHE[key];
-    need(phi > 0 && phi <= 0.45, "hydrodynamic theory needs a volume fraction between 0 and 0.45");
-    const mm1 = [1, 2, 3, 4].map(function (c) { return gamma0(phi, c) - 1; });
-    // y = a k (a the radius); S on a fine table in q sigma = 2 y for |q - k|
-    const dS = 0.01, nS = 40000, Stab = new Float64Array(nS);
-    for (let i = 0; i < nS; i++) Stab[i] = percusYevick(phi, i * dS) - 1;
-    const Sm1 = function (qs) { const t = qs / dS; if (t >= nS - 1) return 0; const i = Math.floor(t); return Stab[i] + (t - i) * (Stab[i + 1] - Stab[i]); };
-    const dy = 0.04, yMax = 60 * Math.PI, ny = Math.ceil(yMax / dy);
-    const wY = new Float64Array(ny + 1), yv = new Float64Array(ny + 1);
-    let Ds = 0;
-    for (let i = 0; i <= ny; i++) {
-      const y = i * dy, sc = y === 0 ? 1 : Math.sin(y) / y, w = (i === 0 || i === ny ? 0.5 : 1) * dy * sc * sc / (1 + phi * Sgamma(y, mm1));
-      yv[i] = y; wY[i] = w; Ds += w;
-    }
-    Ds = Ds * 2 / Math.PI + 2 / Math.PI / yMax * 0.5;   // tail of (sin y / y)^2: about 1 / (2 y)
-    // Gauss-Legendre in x = cos(angle), 48 points
-    const ng = 48, gx = [], gw = [];
-    for (let i = 1; i <= ng; i++) { let z = Math.cos(Math.PI * (i - 0.25) / (ng + 0.5)), pp = 0; for (let it = 0; it < 50; it++) { let p1 = 1, p2 = 0; for (let j = 1; j <= ng; j++) { const p3 = p2; p2 = p1; p1 = ((2 * j - 1) * z * p2 - (j - 1) * p3) / j; } pp = ng * (z * p1 - p2) / (z * z - 1); const z1 = z; z = z1 - p1 / pp; if (Math.abs(z - z1) < 1e-14) break; } gx.push(z); gw.push(2 / ((1 - z * z) * pp * pp)); }
-    const qs = [], Sq = [], Hq = [];
-    for (let iqs = 1; iqs <= 400; iqs++) {
-      const qsig = 0.1 * iqs;
-      const qa = qsig / 2; let I = 0;
-      for (let i = 1; i <= ny; i++) {
-        const ya = yv[i]; let inner = 0;
-        for (let g = 0; g < ng; g++) { const x = gx[g], d = Math.sqrt(Math.max(0, qa * qa + ya * ya - 2 * qa * ya * x)); inner += gw[g] * (1 - x * x) * Sm1(2 * d); }
-        I += wY[i] * inner;
-      }
-      qs.push(qsig); Sq.push(Sm1(qsig) + 1); Hq.push(Ds + 1.5 / Math.PI * I);
-    }
-    const out = { q_sigma: qs, S: Sq, H: Hq, Ds_over_D0: Ds, phi: phi };
-    HYDRO_CACHE[key] = out; return out;
-  }
-
   /* the reference movie (dilute, same optics): the amplitude per particle A_ref(q) / N_ref and the short-time rate of each q
      bin for particles that do not interact. The rate holds D0 q^2 and what motion along the axis adds (particles leaving
      the layer in focus), so that the ratio of the rates removes the optics, as the ratio of the amplitudes does for S(q). */
@@ -252,6 +179,6 @@
     return { has_peak: hp, peak_q_per_um: r.peak.q_per_um, peak_S: r.peak.S, peak_D_um2_s: r.peak.D_um2_s, S_low: r.S_low, D_low_um2_s: r.D_low_um2_s };
   }
 
-  const api = { analyse: analyse, hydroTheory: hydroTheory, referenceAmplitude: referenceAmplitude, referenceConfig: referenceConfig, publishedSummary: publishedSummary, percusYevick: percusYevick, _test: { shortRate: shortRate, Sgamma: Sgamma, sineIntegral: sineIntegral, sphJ: sphJ } };
+  const api = { analyse: analyse, referenceAmplitude: referenceAmplitude, referenceConfig: referenceConfig, publishedSummary: publishedSummary, percusYevick: percusYevick, _test: { shortRate: shortRate } };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.CROWD = api;
 })(typeof self !== "undefined" ? self : this);

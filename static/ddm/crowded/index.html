@@ -279,7 +279,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
     </nav>
   </div>
 </header>
-<div class="proto-note"><div class="wrap"><span>This web page is a divertissement.</span><span class="pn-rest" id="pn-rest"> For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the flow of the liquid between the particles enters only through theory) and rely on many approximations. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>. If you like it, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice.</span> <button type="button" class="pn-more" aria-expanded="false" aria-controls="pn-rest">More</button></div></div>
+<div class="proto-note"><div class="wrap"><span>This web page is a divertissement.</span><span class="pn-rest" id="pn-rest"> For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the particles push each other only by touching or by their charge, not through the liquid around them) and rely on many approximations. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>. If you like it, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice.</span> <button type="button" class="pn-more" aria-expanded="false" aria-controls="pn-rest">More</button></div></div>
 
 
 <main>
@@ -350,8 +350,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <p>As on the <a href="../sizing/">sizing page</a>: each dyed particle is convolved with the point spread function of the microscope (fluorescence and confocal), or its scattered light interferes with the transmitted light (bright field and the other transmitted-light modes). Each frame is the sum of the images of the dyed particles at their positions, with the detector's pixel size, quantum efficiency, shot noise, read noise and full well. Undyed particles push like the others but do not show.</p>
           <p><b>Motion.</b> Brownian dynamics in a box that repeats sideways and in depth (no walls). At each time step <i>h</i> every particle gets a random kick of variance 2<i>D</i><sub>0</sub><i>h</i> along x, y and z, with <i>D</i><sub>0</sub> = <i>k</i><sub>B</sub><i>T</i> / 3&pi;<i>&eta;&sigma;</i>, plus the push of its neighbours; then any two spheres that overlap are moved apart along the line of their centres (Heyes and Melrose 1993). Charged spheres also repel with a screened Coulomb (Yukawa) potential,</p>
           <div class="eq"><i>U</i>(<i>r</i>) / <i>k</i><sub>B</sub><i>T</i> = <i>U</i><sub>0</sub> <i>&sigma;</i> e<sup>&minus;<i>&kappa;</i>(<i>r</i> &minus; <i>&sigma;</i>)</sup> / <i>r</i>, &nbsp;&nbsp; <i>r</i> &gt; <i>&sigma;</i></div>
-          <p>with 1/<i>&kappa;</i> the Debye length. The free kicks are 3 % of the diameter, and the repulsion moves a particle by no more than that where it is 10 <i>k</i><sub>B</sub><i>T</i>. The particles start at random, are pushed apart, and wander for one Brownian time <i>&tau;</i><sub>B</sub> = <i>&sigma;</i><sup>2</sup>/<i>D</i><sub>0</sub> before the movie starts. The liquid between them is not simulated: no hydrodynamic interactions. The true S(q) shown below is computed from the positions of all particles at eight moments of the movie.</p>
-          <p><b>With the flow of the liquid (hard spheres, fluorescence and confocal).</b> Following particles that push each other through the liquid takes a computation far beyond a browser, so the movie is then drawn from theory as a Gaussian field of density, in the same periodic box. Each Fourier mode <b>Q</b> = (<b>k</b>, <i>k<sub>z</sub></i>) of the density fluctuates with variance <i>N S</i>(<i>Q</i>) (Percus-Yevick) and fades as exp[&minus;<i>D</i><sub>0</sub><i>Q</i><sup>2</sup><i>H</i>(<i>Q</i>)&Delta;<i>t</i> / <i>S</i>(<i>Q</i>)], the short-time rate, at all delays; <i>H</i>(<i>Q</i>) is the hydrodynamic function in the &delta;&gamma; scheme of Beenakker and Mazur (1984), as written by Genz and Klein (1991). With a share <i>x</i> dyed, the dyed density adds the fluctuation of the dye among the particles (variance <i>N x</i>(1 &minus; <i>x</i>), rate <i>D</i><sub>s</sub><i>Q</i><sup>2</sup>, with the short-time self-diffusion <i>D</i><sub>s</sub> of the same theory). The image of one particle at each depth (step 1) turns each mode into the image. Checked against particles that do not interact (S = H = 1): the same amplitudes within 2 %. Left out: blur during the exposure, the row timing of the scanner, and the slowing of the cages at long delays.</p>
+          <p>with 1/<i>&kappa;</i> the Debye length. The free kicks are 3 % of the diameter, and the repulsion moves a particle by no more than that where it is 10 <i>k</i><sub>B</sub><i>T</i>. The particles start at random, are pushed apart, and wander for one Brownian time <i>&tau;</i><sub>B</sub> = <i>&sigma;</i><sup>2</sup>/<i>D</i><sub>0</sub> before the movie starts. The liquid between them is not simulated: no hydrodynamic interactions (see What matters). The true S(q) shown below is computed from the positions of all particles at eight moments of the movie.</p>
         </details>
       </section>
 
@@ -516,7 +515,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
 
   <section class="wrap further" aria-labelledby="h-about">
     <h2 id="h-about">About this tool</h2>
-    <p class="prose">This page is a simple tool, generated with Claude Opus 5.5, that simulates a realistic microscopy experiment in which DDM is used to measure the structure and the collective motion of a concentrated suspension. The microscope, light sources, cameras, spinning disk and point scanner are modelled mostly on the instruments of our SoMeX lab. The particles are identical spheres that push each other by touching or by a screened charge repulsion, in a small box that repeats in every direction. The liquid between them is not simulated; its flow (hydrodynamic interactions) can be added for hard spheres through theory, and the movie is then drawn as a field of density rather than particle by particle. The aim is not to produce research-quality data, but to give anyone thinking of using DDM an idea of what it can see in a crowd, and of what limits it.</p>
+    <p class="prose">This page is a simple tool, generated with Claude Opus 5.5, that simulates a realistic microscopy experiment in which DDM is used to measure the structure and the collective motion of a concentrated suspension. The microscope, light sources, cameras, spinning disk and point scanner are modelled mostly on the instruments of our SoMeX lab. The particles are identical spheres that push each other by touching or by a screened charge repulsion, in a small box that repeats in every direction; the liquid between them is not simulated, so there are no hydrodynamic interactions. The aim is not to produce research-quality data, but to give anyone thinking of using DDM an idea of what it can see in a crowd, and of what limits it.</p>
     <p class="prose">If you find something that looks wrong or does not work, please let us know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
     <p class="prose">To cite this page: R. Cerbino, <i>DDM, hands on: crowded particles</i>, <a href="https://rcerbino.github.io/ddm/crowded/">rcerbino.github.io/ddm/crowded/</a> (2026), with the date you used it.</p>
   </section>
@@ -531,7 +530,6 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     <ul class="lvl-2">
       <li>P. J. Lu, F. Giavazzi, T. E. Angelini, E. Zaccarelli, F. Jargstorff, A. B. Schofield, J. N. Wilking, M. B. Romanowsky, D. A. Weitz and R. Cerbino, <a href="https://doi.org/10.1103/PhysRevLett.108.218103">Characterizing concentrated, multiply scattering, and actively driven fluorescent systems with confocal differential dynamic microscopy</a>, Phys. Rev. Lett. 108, 218103 (2012). Confocal DDM, and S(q) of concentrated colloids from the ratio to a dilute sample.</li>
       <li>P. N. Segre, O. P. Behrend and P. N. Pusey, <a href="https://doi.org/10.1103/PhysRevE.52.5070">Short-time Brownian motion in colloidal suspensions: experiment and simulation</a>, Phys. Rev. E 52, 5070 (1995). D(q), S(q) and the hydrodynamic function H(q) of hard spheres by light scattering.</li>
-      <li>C. W. J. Beenakker and P. Mazur, Diffusion of spheres in a concentrated suspension II, Physica A 126, 349 (1984); U. Genz and R. Klein, Collective diffusion of charged spheres in the presence of hydrodynamic interaction, Physica A 171, 26 (1991). The hydrodynamic function used here.</li>
       <li>A. J. Banchio and G. Nagele, <a href="https://doi.org/10.1063/1.2868773">Short-time transport properties in dense suspensions: from neutral to charge-stabilized colloidal spheres</a>, J. Chem. Phys. 128, 104903 (2008). H(q) of hard and charged spheres, computed with hydrodynamic interactions.</li>
       <li>D. M. Heyes and J. R. Melrose, Brownian dynamics simulations of model hard-sphere suspensions, J. Non-Newtonian Fluid Mech. 46, 1 (1993). The simulation method used here.</li>
       <li>M. S. Wertheim, <a href="https://doi.org/10.1103/PhysRevLett.10.321">Exact solution of the Percus-Yevick integral equation for hard spheres</a>, Phys. Rev. Lett. 10, 321 (1963).</li>
@@ -1786,13 +1784,6 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     const oriented = shape !== "sphere";                                          // carries an axis that rotates
     const pAsp = body ? num(cfg, "aspect", 1, 30) : 1;
     const visco = cfg.visco || null;
-    // hydrodynamic interactions from theory: the movie is drawn as a density field (setupField below)
-    const HYD = INTC && INTC.hydro ? INTC.hydro : null;
-    if (HYD) {
-      need(INTC.kind === "hard", "hydrodynamic interactions are drawn for hard spheres only");
-      need(mode === "fluorescence" || confocal, "hydrodynamic interactions are drawn for fluorescence and confocal movies only");
-      need(Array.isArray(HYD.q_sigma) && Array.isArray(HYD.S) && Array.isArray(HYD.H) && HYD.Ds_over_D0 > 0, "hydrodynamic interactions: the theory tables are missing");
-    }
     if (INTC) {
       need(INTC.kind === "hard" || INTC.kind === "yukawa", "interact.kind must be hard or yukawa");
       need(shape === "sphere" && !visco && !cfg.swim && cfg.gravity !== true && cfg.walls !== true && !(cfg.drift_um_s > 0) && !(spread > 0), "particles that interact: spheres of one size, without swimming, gravity, walls, drift or a material");
@@ -2035,7 +2026,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     }
     // particles that push each other: Brownian dynamics of the whole box (see the header)
     let INT = null;
-    if (INTC && !HYD) INT = setupInteract();
+    if (INTC) INT = setupInteract();
     function setupInteract() {
       const sg = classes[0].d, D0 = classes[0].hyd.D_t, tauB = sg * sg / D0, kind = INTC.kind;
       const U0 = kind === "yukawa" ? num(INTC, "U0", 0, 1000) : 0, ks = kind === "yukawa" ? num(INTC, "kappa_sigma", 0.5, 100) : 1, kap = ks / sg;
@@ -2473,94 +2464,13 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     const seenAcc = (!split && !body && classes.length > 1) ? classes.map(function () { return new Float64Array(nq); }) : null;
     const seenEvery = Math.max(1, Math.floor(T / 32));
     const swSeen = { ws: new Float64Array(nq), wn: new Float64Array(nq), wv: new Float64Array(nq), wv2: new Float64Array(nq) };
-    /* Hydrodynamic interactions from theory (HYD): instead of particles, the movie is drawn from the density of the
-     * particles as a Gaussian field. Each Fourier mode Q = (k, kz) of the density in the periodic box is an
-     * Ornstein-Uhlenbeck process with variance N S(Q) (Percus-Yevick) and rate D0 Q^2 H(Q) / S(Q) (H from theory), as in
-     * the short-time limit, at all delays. With a share x of the particles dyed, the dyed density is x times that field
-     * plus the fluctuation of the dye among the particles (variance N x (1 - x), rate Ds Q^2, Ds the short-time
-     * self-diffusion). The image of one particle at depth z, K(k, z), becomes K_m(k) = int dH K(k, focus - H)
-     * exp(-i kz_m H) over the depth of the box, kz_m = 2 pi m / Lz, and the image spectrum is sum_m K_m(k) rho(k, m) / Lz,
-     * on the camera grid (no aliasing beyond its Nyquist frequency, no blur during the exposure, no row timing).
-     * Modes are drawn with twice the variance and the real part of the image kept: that is the same as a field with the
-     * symmetry of a real density. */
-    let FIELD = null;
-    if (HYD) FIELD = (function () {
-      const sg = classes[0].d, D0 = classes[0].hyd.D_t, lf = INTC.label_fraction === undefined ? 1 : num(INTC, "label_fraction", 0, 1);
-      const Ds = D0 * HYD.Ds_over_D0, qsT = HYD.q_sigma, nT = qsT.length, dqT = qsT[1] - qsT[0];
-      const tab = function (arr, Q, far) { const t = (Q * sg - qsT[0]) / dqT; if (t <= 0) return arr[0]; if (t >= nT - 1) return far; const i = Math.floor(t); return arr[i] + (t - i) * (arr[i + 1] - arr[i]); };
-      const B = blocks[chans[0].all], nzb = B.z_um.length;
-      const nH = Math.max(256, Math.ceil(Lz / 0.02)), dH = Lz / nH;
-      // K(q, focus - H) on the H grid, for every kernel q
-      const Kz = new Float64Array(nq * nH);
-      for (let j = 0; j < nH; j++) { zLocate(B, hf - (j + 0.5) * dH); const lo = zw.col - B.off, f = zw.f; for (let iq = 0; iq < nq; iq++) { const o = iq * nzb + lo; Kz[iq * nH + j] = B.Kr[o] + f * (B.Kr[o + 1] - B.Kr[o]); } }
-      // K_m(q) for m >= 0 (K real: K_-m = conj K_m); kept while the largest |K_m| is above 1e-3 of K_0(0)
-      const KmR = [], KmI = [];
-      const k00 = (function () { let v = 0; for (let j = 0; j < nH; j++) v += Kz[j] * dH; return Math.abs(v); })();
-      for (let m = 0; m <= Math.min(200, nH / 2); m++) {
-        const r = new Float64Array(nq), im = new Float64Array(nq), kz = TWO_PI * m / Lz;
-        let mx = 0;
-        for (let iq = 0; iq < nq; iq++) { let ar = 0, ai = 0; for (let j = 0; j < nH; j++) { const ph = kz * (j + 0.5) * dH, v = Kz[iq * nH + j] * dH; ar += v * Math.cos(ph); ai -= v * Math.sin(ph); } r[iq] = ar; im[iq] = ai; mx = Math.max(mx, Math.hypot(ar, ai)); }
-        if (m > 0 && mx < 1e-3 * k00) break;
-        KmR.push(r); KmI.push(im);
-      }
-      const Mz = KmR.length - 1;
-      // camera-grid wave vectors (transposed layout: index k1 * N + k2, k1 along x) inside the kernel range
-      const qn = new Float64Array(N); for (let k = 0; k < N; k++) qn[k] = (k < N / 2 ? k : k - N) * TWO_PI / L;
-      const pixN = new Float64Array(N); for (let k = 0; k < N; k++) { const u = qn[k] * a / 2; pixN[k] = det.kind === "scanner" || Math.abs(u) < 1e-12 ? 1 : Math.sin(u) / u; }
-      const idx = [], wr = [], wi = [], gc = [], vc = [], gs = [], vs = [];
-      const Nlab = lf * nTot;
-      let mean0 = 0;
-      for (let k1 = 0; k1 < N; k1++) for (let k2 = 0; k2 < N; k2++) {
-        const kk = Math.hypot(qn[k1], qn[k2]), t = kk / qKmax * (nq - 2);
-        if (t >= nq - 2) continue;
-        const i = Math.floor(t), f = t - i, w0 = pixN[k1] * pixN[k2] / (a * a * Lz);
-        for (let m = -Mz; m <= Mz; m++) {
-          const R = KmR[Math.abs(m)], I = KmI[Math.abs(m)];
-          const kr = (R[i] + f * (R[i + 1] - R[i])) * w0, ki = (I[i] + f * (I[i + 1] - I[i])) * w0 * (m < 0 ? -1 : 1);
-          if (k1 === 0 && k2 === 0) { if (m === 0) mean0 = kr * Nlab; continue; }
-          const kz = TWO_PI * m / Lz, Q = Math.hypot(kk, kz), Sq = tab(HYD.S, Q, 1), Hq = tab(HYD.H, Q, HYD.Ds_over_D0);
-          idx.push(k1 * N + k2); wr.push(kr); wi.push(ki);
-          gc.push(D0 * Q * Q * Hq / Sq); vc.push(2 * nTot * Sq * lf * lf);       // collective part, times x
-          gs.push(Ds * Q * Q); vs.push(2 * nTot * lf * (1 - lf));               // the dye among the particles
-        }
-      }
-      const nV = idx.length, two = lf < 1;
-      const IDX = Int32Array.from(idx), WR = Float64Array.from(wr), WI = Float64Array.from(wi), GC = Float64Array.from(gc), VC = Float64Array.from(vc), GS = Float64Array.from(gs), VS = Float64Array.from(vs);
-      need(nV * (two ? 4 : 2) <= 12e6, "too many density modes for the browser: use a smaller field or a thinner cell");
-      const cR = new Float32Array(nV), cI = new Float32Array(nV), sR = two ? new Float32Array(nV) : null, sI = two ? new Float32Array(nV) : null;
-      for (let v = 0; v < nV; v++) { const sc = Math.sqrt(VC[v] / 2); cR[v] = sc * rng.g(); cI[v] = sc * rng.g(); if (two) { const ss = Math.sqrt(VS[v] / 2); sR[v] = ss * rng.g(); sI[v] = ss * rng.g(); } }
-      let tNow = 0;
-      const evolve = function (dt, Re, Im, G, V) {
-        for (let v = 0; v < nV; v++) {
-          const x = G[v] * dt;
-          if (x > 20) { const sc = Math.sqrt(V[v] / 2); Re[v] = sc * rng.g(); Im[v] = sc * rng.g(); continue; }
-          const e = Math.exp(-x), sc = Math.sqrt(V[v] / 2 * (1 - e * e));
-          Re[v] = e * Re[v] + sc * rng.g(); Im[v] = e * Im[v] + sc * rng.g();
-        }
-      };
-      return {
-        frame: function (t0) {
-          const dt = t0 - tNow; if (dt > 0) { evolve(dt, cR, cI, GC, VC); if (two) evolve(dt, sR, sI, GS, VS); tNow = t0; }
-          Fr.fill(0); Fi.fill(0); Fr[0] = mean0;
-          for (let v = 0; v < nV; v++) {
-            let r = cR[v], im = cI[v]; if (two) { r += sR[v]; im += sI[v]; }
-            const p = IDX[v]; Fr[p] += WR[v] * r - WI[v] * im; Fi[p] += WR[v] * im + WI[v] * r;
-          }
-        },
-        truth: function (span) {
-          return { kind: "hard", hydro: true, sigma_um: sg, phi: phi, D0_um2_s: D0, tau_B_s: sg * sg / D0, Ds_over_D0: HYD.Ds_over_D0, D_self_movie_um2_s: null, movie_s: span,
-                   q_per_um: qsT.map(function (x) { return x / sg; }), S: HYD.S.slice(), H: HYD.H.slice(), n_labelled: Math.round(Nlab), label_fraction: lf, step_s: null, n_modes: nV, kz_modes: 2 * Mz + 1 };
-        }
-      };
-    })();
     // particles that interact: equilibrate, then move the whole box to each frame time; snapshots for the true S(q)
     const snapAt = INT ? new Set(Array.from({ length: 8 }, function (_, k) { return Math.round(k * (T - 1) / 7); })) : null, snaps = [];
     let disp0 = null;
     if (INT) for (let k = 0; k < INT.nEq; k++) { INT.step(); if (k % 2000 === 1999) yield { stage: "Letting the particles settle", frac: 0.2 * k / INT.nEq }; }
     for (let t = 0; t < T; t++) {
-      const t0 = times ? times[t] : t * dtFrame;
-      if (FIELD) FIELD.frame(t0); else {
       grid.fill(0);
+      const t0 = times ? times[t] : t * dtFrame;
       if (INT) {
         while (INT.t + INT.h <= t0) { INT.step(); INT.t += INT.h; }
         if (t === 0) disp0 = [Float64Array.from(INT.UXd), Float64Array.from(INT.UYd)];
@@ -2650,17 +2560,14 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
       // fold the fine spectrum onto the camera grid (aliasing); still transposed layout
       Fr.fill(0); Fi.fill(0);
       for (let j = 0; j < act.length; j++) { const p = act[j], pc = foldIdx[j]; Fr[pc] += S_r[p]; Fi[pc] += S_i[p]; }
-      }   // particles (not FIELD)
       // inverse transform from transposed layout returns the image in normal layout
       O.FFT.fft2T(Fr, Fi, N, tbN, +1);
       const fo = t * N * N, inv = 1 / (N * N);
       for (let p = 0; p < N * N; p++) {
         const signal = Fr[p] * inv;                // particle part of the pixel value
         let e = (bgE + sigScale * signal) * colGain[p % N];
-        // a density field (FIELD) is Gaussian and can dip below zero where the crowd is sparse: kept, so that its
-        // fluctuations stay as the theory says (shot noise from the positive part only)
-        if (e < 0 && !FIELD) e = 0;
-        e += Math.sqrt(enf * Math.max(0, e)) * rng.g() + readE * rng.g();
+        if (e < 0) e = 0;
+        e += Math.sqrt(enf * e) * rng.g() + readE * rng.g();
         if (e > fullWell) e = fullWell;
         frames[fo + p] = e; re[p] = e; im[p] = 0;
       }
@@ -2712,7 +2619,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
               particle: { shape: shape, oriented: oriented, body: body, aspect: pAsp, birefringence: dn, geometry: cm.geo, points: body ? { xyz: cm.pts.xyz, n: cm.pts.n, spacing: cm.pts.spacing } : null,
                           alpha_perp: cm.aPerp, dalpha: cm.dA, alpha_ref: cm.aRef, Wtab: cm.Wtab || null, polarization: pol, background_share: bgf } },
       truth: { diameter_um: d0, mean_diameter_um: dnum, D_um2_s: hd0.D_t, D_seen_um2_s: Dseen, seen_table: seenTable, diameter_seen_um: kT / (3 * Math.PI * eta * Dseen * 1e-12) * 1e6, drift_um_s: drift, drift_deg: driftDeg, drift_profile: driftProfile, drift_z_um_s: driftZ,
-               interact: INT ? interactTruth() : FIELD ? FIELD.truth(times ? times[T - 1] : (T - 1) * dtFrame) : null,
+               interact: INT ? interactTruth() : null,
                visco: VE ? { lam: Array.from(VE[Math.floor(VE.length / 2)].lam), c: Array.from(VE[Math.floor(VE.length / 2)].c), a_um: VE[Math.floor(VE.length / 2)].a_um, eta_s_Pa_s: eta } : null,
                D_plane_um2_s: hd0.D_t * fParFocus, D_plane_all_um2_s: hd0.D_t * fParMean, walls: walls, gravity: gravity, gravitational_length_um: isFinite(classes[0].lg) ? classes[0].lg : null,
                swim: sw ? (function () {
@@ -4102,79 +4009,6 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     return 1 / (1 - rc);
   }
 
-  /* Hydrodynamic interactions, from theory: the hydrodynamic function H(q) of hard spheres in the delta-gamma scheme of
-   * Beenakker and Mazur (Physica A 126, 349, 1984), as written by Genz and Klein (Physica A 171, 26, 1991):
-   *   H(q) = Ds/D0 + (3/2 pi) int d(ak) [sin(ak)/(ak)]^2 / [1 + phi S_g(ak)] int_-1^1 dx (1 - x^2) [S(|q - k|) - 1],
-   *   Ds/D0 = (2/pi) int dy [sin(y)/y]^2 / [1 + phi S_g(y)],
-   * a the radius, S(q) from Percus-Yevick, S_g with the renormalised coefficients gamma0 of Beenakker and Mazur's
-   * table 1 (fitted with a fourth-order polynomial in phi). Returns tables against q sigma. */
-  const GAMMA0 = [[0, 0, 0, 0, 0], [0.05, 0.0553, 0.0542, 0.0533, 0.0525], [0.10, 0.1228, 0.1177, 0.1135, 0.1104], [0.15, 0.2048, 0.1918, 0.1813, 0.1738],
-    [0.20, 0.3038, 0.2777, 0.2574, 0.2432], [0.25, 0.4224, 0.3766, 0.3423, 0.3186], [0.30, 0.5627, 0.4895, 0.4364, 0.4005], [0.35, 0.7267, 0.6172, 0.5402, 0.4888],
-    [0.40, 0.9157, 0.7601, 0.6538, 0.5839], [0.45, 1.1310, 0.9183, 0.7776, 0.6856]];
-  function gamma0(phi, c) {
-    // phi gamma0 at the table points, linear interpolation (the table is smooth), divided by phi
-    let k = 1; while (k < GAMMA0.length - 1 && GAMMA0[k][0] < phi) k++;
-    const a = GAMMA0[k - 1], b = GAMMA0[k], w = (phi - a[0]) / (b[0] - a[0]), v = a[c] + w * (b[c] - a[c]);
-    return phi > 0 ? v / phi : 1;
-  }
-  let SI_TAB = null; const SI_DX = 0.005;
-  function sineIntegral(x) {
-    if (!SI_TAB) { const n = Math.ceil(400 / SI_DX) + 2; SI_TAB = new Float64Array(n); let acc = 0; const f = function (t) { return t === 0 ? 1 : Math.sin(t) / t; };
-      for (let i = 1; i < n; i++) { const t0 = (i - 1) * SI_DX, t1 = i * SI_DX; acc += SI_DX / 6 * (f(t0) + 4 * f(0.5 * (t0 + t1)) + f(t1)); SI_TAB[i] = acc; } }
-    if (x >= (SI_TAB.length - 2) * SI_DX) return Math.PI / 2 - Math.cos(x) / x;
-    const t = x / SI_DX, i = Math.floor(t); return SI_TAB[i] + (t - i) * (SI_TAB[i + 1] - SI_TAB[i]);
-  }
-  // spherical Bessel j_n(x), n = 1..4 (series near 0, upward recurrence beyond)
-  function sphJ(n, x) {
-    if (x < 1.5) { let df = 1; for (let k = 1; k <= 2 * n + 1; k += 2) df *= k; const x2 = x * x; return Math.pow(x, n) / df * (1 - x2 / (2 * (2 * n + 3)) + x2 * x2 / (8 * (2 * n + 3) * (2 * n + 5)) - x2 * x2 * x2 / (48 * (2 * n + 3) * (2 * n + 5) * (2 * n + 7))); }
-    let j0 = Math.sin(x) / x, j1 = Math.sin(x) / (x * x) - Math.cos(x) / x;
-    for (let k = 1; k < n; k++) { const j2 = (2 * k + 1) / x * j1 - j0; j0 = j1; j1 = j2; }
-    return j1;
-  }
-  function Sgamma(x, mm1) {
-    if (x < 1e-4) x = 1e-4;
-    const x2 = 2 * x, x3 = x * x * x, x4 = x3 * x, sx = Math.sin(x), cx = Math.cos(x);
-    let C = 4.5 * (sineIntegral(x2) / x + 0.5 * Math.cos(x2) / (x * x) + 0.25 * Math.sin(x2) / x3 - sx * sx / x4 - 4 / (x3 * x3) * Math.pow(sx - x * cx, 2));
-    if (x < 0.05) C = 2.5;
-    // J_{n+1/2}(x)^2 = (2x / pi) j_n(x)^2
-    const J2 = function (n) { const j = sphJ(n, x); return 2 * x / Math.PI * j * j; };
-    return C + 2.25 * Math.PI * (5 * mm1[0] / x3 * J2(1) + 25 * mm1[1] / x3 * J2(2) + 49 * mm1[2] / x3 * J2(3) + 81 * mm1[3] / x3 * J2(4));
-  }
-  const HYDRO_CACHE = {};
-  function hydroTheory(phi) {
-    const key = phi.toFixed(4); if (HYDRO_CACHE[key]) return HYDRO_CACHE[key];
-    need(phi > 0 && phi <= 0.45, "hydrodynamic theory needs a volume fraction between 0 and 0.45");
-    const mm1 = [1, 2, 3, 4].map(function (c) { return gamma0(phi, c) - 1; });
-    // y = a k (a the radius); S on a fine table in q sigma = 2 y for |q - k|
-    const dS = 0.01, nS = 40000, Stab = new Float64Array(nS);
-    for (let i = 0; i < nS; i++) Stab[i] = percusYevick(phi, i * dS) - 1;
-    const Sm1 = function (qs) { const t = qs / dS; if (t >= nS - 1) return 0; const i = Math.floor(t); return Stab[i] + (t - i) * (Stab[i + 1] - Stab[i]); };
-    const dy = 0.04, yMax = 60 * Math.PI, ny = Math.ceil(yMax / dy);
-    const wY = new Float64Array(ny + 1), yv = new Float64Array(ny + 1);
-    let Ds = 0;
-    for (let i = 0; i <= ny; i++) {
-      const y = i * dy, sc = y === 0 ? 1 : Math.sin(y) / y, w = (i === 0 || i === ny ? 0.5 : 1) * dy * sc * sc / (1 + phi * Sgamma(y, mm1));
-      yv[i] = y; wY[i] = w; Ds += w;
-    }
-    Ds = Ds * 2 / Math.PI + 2 / Math.PI / yMax * 0.5;   // tail of (sin y / y)^2: about 1 / (2 y)
-    // Gauss-Legendre in x = cos(angle), 48 points
-    const ng = 48, gx = [], gw = [];
-    for (let i = 1; i <= ng; i++) { let z = Math.cos(Math.PI * (i - 0.25) / (ng + 0.5)), pp = 0; for (let it = 0; it < 50; it++) { let p1 = 1, p2 = 0; for (let j = 1; j <= ng; j++) { const p3 = p2; p2 = p1; p1 = ((2 * j - 1) * z * p2 - (j - 1) * p3) / j; } pp = ng * (z * p1 - p2) / (z * z - 1); const z1 = z; z = z1 - p1 / pp; if (Math.abs(z - z1) < 1e-14) break; } gx.push(z); gw.push(2 / ((1 - z * z) * pp * pp)); }
-    const qs = [], Sq = [], Hq = [];
-    for (let iqs = 1; iqs <= 400; iqs++) {
-      const qsig = 0.1 * iqs;
-      const qa = qsig / 2; let I = 0;
-      for (let i = 1; i <= ny; i++) {
-        const ya = yv[i]; let inner = 0;
-        for (let g = 0; g < ng; g++) { const x = gx[g], d = Math.sqrt(Math.max(0, qa * qa + ya * ya - 2 * qa * ya * x)); inner += gw[g] * (1 - x * x) * Sm1(2 * d); }
-        I += wY[i] * inner;
-      }
-      qs.push(qsig); Sq.push(Sm1(qsig) + 1); Hq.push(Ds + 1.5 / Math.PI * I);
-    }
-    const out = { q_sigma: qs, S: Sq, H: Hq, Ds_over_D0: Ds, phi: phi };
-    HYDRO_CACHE[key] = out; return out;
-  }
-
   /* the reference movie (dilute, same optics): the amplitude per particle A_ref(q) / N_ref and the short-time rate of each q
      bin for particles that do not interact. The rate holds D0 q^2 and what motion along the axis adds (particles leaving
      the layer in focus), so that the ratio of the rates removes the optics, as the ratio of the amplitudes does for S(q). */
@@ -4324,7 +4158,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     return { has_peak: hp, peak_q_per_um: r.peak.q_per_um, peak_S: r.peak.S, peak_D_um2_s: r.peak.D_um2_s, S_low: r.S_low, D_low_um2_s: r.D_low_um2_s };
   }
 
-  const api = { analyse: analyse, hydroTheory: hydroTheory, referenceAmplitude: referenceAmplitude, referenceConfig: referenceConfig, publishedSummary: publishedSummary, percusYevick: percusYevick, _test: { shortRate: shortRate, Sgamma: Sgamma, sineIntegral: sineIntegral, sphJ: sphJ } };
+  const api = { analyse: analyse, referenceAmplitude: referenceAmplitude, referenceConfig: referenceConfig, publishedSummary: publishedSummary, percusYevick: percusYevick, _test: { shortRate: shortRate } };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.CROWD = api;
 })(typeof self !== "undefined" ? self : this);
 
@@ -4348,9 +4182,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     try {
       let out = null;
       if (m.type === "simulate" || !movie) {
-        // hydrodynamic interactions from theory: the tables of S(q) and H(q) for this volume fraction
-        const c2 = m.cfg.interact && m.cfg.interact.hydro === true ? Object.assign({}, m.cfg, { interact: Object.assign({}, m.cfg.interact, { hydro: CROWD.hydroTheory(m.cfg.volume_fraction) }) }) : m.cfg;
-        movie = drive(MOVIE.simulate(c2), m.token, 0, 0.75);
+        movie = drive(MOVIE.simulate(m.cfg), m.token, 0, 0.75);
         const rv = drive(MOVIE.simulate(CROWD.referenceConfig(m.cfg, movie.truth.interact.tau_B_s)), m.token, 0.75, 0.82);
         ref = drive(CROWD.referenceAmplitude(rv), m.token, 0.82, 0.85);
         out = { n: movie.n, T: movie.T, frames: movie.frames.slice(0), pixel_um: movie.pixel_um, L_um: movie.L_um, frame_rate_hz: movie.frame_rate_hz,
@@ -4542,14 +4374,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     const s = Math.sin(x), c = Math.cos(x);
     return 1 / (1 + 24 * eta / Math.pow(x, 6) * (a * x * x * x * (s - x * c) + b * x * x * (2 * x * s - (x * x - 2) * c - 2) + g * ((4 * x * x * x - 24 * x) * s - (x * x * x * x - 12 * x * x + 24) * c + 24)));
   }
-  // hydrodynamic interactions from theory: hard spheres seen in fluorescence or confocal (the worker fills in the tables)
-  function HYDRO() { return state.hydro === "theory" && state.inter === "hard" && !TRANS(); }
-  function interactSpec() { const o = { kind: state.inter, U0: state.U0, kappa_sigma: state.kappa_sigma, label_fraction: state.label }; if (HYDRO()) o.hydro = true; return o; }
-  function hydroHint() {
-    if (state.inter !== "hard") return "Drawn for hard spheres only.";
-    if (TRANS()) return "Drawn for fluorescence and confocal movies only.";
-    return HYDRO() ? "The particles also push each other through the liquid. Simulating that particle by particle is beyond a browser, so the movie is drawn from theory instead: a field of density whose stripe patterns have the strength S(q) of hard spheres (Percus-Yevick) and fade at D0 q\u00b2 H(q) / S(q), with the hydrodynamic function H(q) of Beenakker and Mazur. Its blobs are not single particles." : "The particles push each other only by touching: no flow of the liquid between them (H = 1).";
-  }
+  function interactSpec() { return { kind: state.inter, U0: state.U0, kappa_sigma: state.kappa_sigma, label_fraction: state.label }; }
   function interHint() {
     const ph = state.phi_c, gap = state.diameter_um * (Math.pow(0.74 / ph, 1 / 3) - 1);
     let h = "Volume fraction " + fmtSig(ph, 2) + ": " + (ph < 0.1 ? "dilute enough that the particles rarely meet." : ph < 0.3 ? "each particle often bumps into its neighbours." : "crowded: each particle sits in a cage of neighbours, about " + fmtSig(Math.max(0, gap) * 1000, 2) + " nm apart at the surfaces on average.");
@@ -4564,7 +4389,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
   const BASE = {
     mode: "spinning", particle: "pmma", n_custom: 1.59, diameter_um: 1, size_spread: 0, size_dist: "schulz", phi: 1e-3,
     liquid: "glycerol", glycerol_w: 0.5, n_liquid: 1.333, visc_mPa_s: 1.0, T_C: 22, cell_um: 8, focus_frac: 0.5, optics: "auto",
-    phi_c: 0.3, inter: "hard", U0: 30, kappa_sigma: 10, hydro: "off", label: 1,
+    phi_c: 0.3, inter: "hard", U0: 30, kappa_sigma: 10, label: 1,
     objective: objIndexByName("CFI Plan Apochromat VC 60XC WI"), condenser: "elwd", na_c: 0.3, source: "green",
     dye: "green", rate_ph_ms: 1000, bg_e_ms: 2, light_frac: 0.5,
     camera: "orca", cam_mode: "standard", iface: "cameralink", binning: 1, roi: 256, sim_px: 128, n_frames: 512,
@@ -4601,8 +4426,8 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
   function particlesFor(n) { return state.phi_c / geometry().volume * Math.pow(n * pixelUm(), 2) * state.cell_um; }
   // time step of the simulation (free steps of 3 % of the diameter) and particle-steps for a field of n pixels
   function stepS() { return Math.pow(0.03 * state.diameter_um, 2) / (2 * dSE()); }
-  function workFor(n) { if (HYDRO()) return 0; const T = Math.min(state.n_frames, maxFrames(n)), dt = 1 / state.frame_rate_hz, span = BURSTS() ? MOVIE.logTimes(T, dt, state.log_factor)[T - 1] + dt : T * dt; return particlesFor(n) * (span + tauB()) / stepS() * (state.inter === "yukawa" ? 1.5 : 1); }
-  function simSeconds() { if (HYDRO()) { const n = simPx(); return n * n * 20 * (state.label < 1 ? 2 : 1) * Math.min(state.n_frames, maxFrames(n)) * 1e-7 + 2; } return workFor(simPx()) / 5e5; }
+  function workFor(n) { const T = Math.min(state.n_frames, maxFrames(n)), dt = 1 / state.frame_rate_hz, span = BURSTS() ? MOVIE.logTimes(T, dt, state.log_factor)[T - 1] + dt : T * dt; return particlesFor(n) * (span + tauB()) / stepS() * (state.inter === "yukawa" ? 1.5 : 1); }
+  function simSeconds() { return workFor(simPx()) / 5e5; }
   function pointsPerParticle() {
     if (!BODY()) return 1;
     const lam = 0.85 * centralWavelength(), na = Math.min(objective().na, 1.34);   // shortest wavelengths set the spacing
@@ -4726,7 +4551,6 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     { key: "inter", group: "Sample", lvl: 1, label: "How they interact", kind: "select", options: Object.keys(INTER).map(function (k) { return [k, INTER[k]]; }) },
     { key: "U0", group: "Sample", lvl: 2, label: "Repulsion at contact", kind: "log", min: 3, max: 300, fmt: function (v) { return fmtSig(v, 2) + " kT"; }, when: function () { return state.inter === "yukawa"; } },
     { key: "kappa_sigma", group: "Sample", lvl: 2, label: "Range of the repulsion: diameter / Debye length", kind: "log", min: 2, max: 30, fmt: function (v) { return fmtSig(v, 2); }, when: function () { return state.inter === "yukawa"; }, hint: function () { return "Smaller numbers: less salt, a longer reach."; } },
-    { key: "hydro", group: "Sample", lvl: 1, label: "Flow of the liquid between the particles (hydrodynamic interactions)", kind: "select", options: [["off", "Left out"], ["theory", "From theory (the movie becomes a density field)"]], when: function () { return state.inter === "hard" && !TRANS(); }, hint: hydroHint },
     { key: "label", group: "Sample", lvl: 1, label: "Share of the particles that are dyed", kind: "select", options: [[1, "All"], [0.5, "Half"], [0.2, "One in five"], [0.05, "One in twenty"]], hint: labelHint },
     { key: "liquid", group: "Sample", lvl: 2, label: "Liquid", kind: "select", options: Object.keys(LIQUIDS).map(function (k) { return [k, LIQUIDS[k]]; }) },
     { key: "glycerol_w", group: "Sample", lvl: 2, label: "Glycerol (by mass)", kind: "lin", min: 0, max: 0.95, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, when: function () { return state.liquid === "glycerol"; }, hint: function () { return "Viscosity " + fmtSig(viscosity_mPa_s(), 2) + " mPa s at " + Math.round(state.T_C) + " " + DEG + "C."; } },
@@ -4776,7 +4600,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     { key: "log_factor", group: "Camera and recording", lvl: 2, label: "Log-spaced: how much longer the movie lasts", kind: "select", num: true, when: function () { return state.frame_timing === "log"; },
       options: function () { return [2, 5, 10, 20, 50].map(function (k) { return [k, k + " times (" + fmtDur(movieSpanS(k)) + ")"]; }); } },
     { key: "sim_px", group: "Camera and recording", lvl: 3, label: "Simulated part of the image", kind: "select", num: true, options: [[64, "64 x 64 pixels (fast)"], [128, "128 x 128 pixels"], [256, "256 x 256 pixels (slow)"]],
-      hint: function () { if (HYDRO()) return "Drawn from theory as a density field: about " + fmtSig(Math.max(1, simSeconds()), 1) + " s to simulate."; return "The particles push each other at every step of " + fmtTime(stepS()) + ": about " + fmtSig(Math.max(1, simSeconds()), 1) + " s to simulate" + (simPx() < Math.min(state.sim_px, outPx()) ? ", after halving the simulated part to " + simPx() + " x " + simPx() + " pixels to keep it short" : "") + "."; } },
+      hint: function () { return "The particles push each other at every step of " + fmtTime(stepS()) + ": about " + fmtSig(Math.max(1, simSeconds()), 1) + " s to simulate" + (simPx() < Math.min(state.sim_px, outPx()) ? ", after halving the simulated part to " + simPx() + " x " + simPx() + " pixels to keep it short" : "") + "."; } },
 
     { key: "windowing", group: "Analysis", lvl: 2, label: "Windowing (Giavazzi et al. 2017)", kind: "select", options: [["off", "Off"], ["on", "On: each frame multiplied by a window that falls to zero at the edges"]],
       hint: function () { return state.windowing === "on" ? "Cells or particles that cross the edge of the image no longer leave bands along the axes of the map in step 4, nor a fast decay that swamps the finest patterns. The price: the window darkens the edges, so less of the field counts and the results scatter more, and patterns wider than a fifth of the field are left out (the window mixes each pattern with its neighbours)." : "The Fourier transform treats the image as one tile of a repeating pattern, so cells or particles crossing the edges make jumps at the tile borders. The central cross of the map is left out to remove most of their effect."; } },
@@ -4799,7 +4623,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
   // light is collected and recorded. Every control appears exactly once (checked at start-up).
   const LAYOUT = [
     ["Sample", [
-      ["The particles", ["phi_c", "inter", "U0", "kappa_sigma", "hydro", "diameter_um", "particle", "n_custom", "label", "dye"]],
+      ["The particles", ["phi_c", "inter", "U0", "kappa_sigma", "diameter_um", "particle", "n_custom", "label", "dye"]],
       ["Liquid and temperature", ["liquid", "glycerol_w", "n_liquid", "visc_mPa_s", "T_C"]],
       ["Chamber", ["cell_um"]]]],
     ["Microscope (Nikon Ti2-E)", [
@@ -4816,7 +4640,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
   ];
   // one-line summary under each block title: [setting, text before, text after]
   const SUMMARY = {
-    "Sample": [["phi_c", "", " full"], ["inter"], ["hydro", "flow "], ["diameter_um"], ["liquid", "in "]],
+    "Sample": [["phi_c", "", " full"], ["inter"], ["diameter_um"], ["liquid", "in "]],
     "Microscope (Nikon Ti2-E)": [["mode"], ["objective"], ["na_c", "condenser NA "]],
     "Camera and recording": [["camera"], ["scanner"], ["frame_rate_hz"], ["exposure_ms", "exposure "], ["n_frames", "", " frames"]],
     "Analysis": [["windowing"]]
@@ -5002,8 +4826,8 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     }
     // particle limit: the simulated field is halved down to 32 pixels (simPx); beyond that the concentration is lowered
     const n32 = particlesFor(32), ppp = pointsPerParticle(), over = Math.max(n32 / MAX_PARTICLES, n32 * ppp / MAX_POINTS);
-    phiCapped = over > 1 && !HYDRO();
-    if (phiCapped && !HYDRO()) state.phi_c *= 0.95 / over;
+    phiCapped = over > 1;
+    if (phiCapped) state.phi_c *= 0.95 / over;
   }
   // zoom that samples the confocal spot at about Nyquist (pixel near lambda / 4 NA)
   function autoZoom() {
@@ -5110,8 +4934,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
   async function runHere(kind, token, cfg, opts) {
     let movie = cache.movie;
     if (kind === "simulate" || !movie) {
-      const c2 = cfg.interact && cfg.interact.hydro === true ? Object.assign({}, cfg, { interact: Object.assign({}, cfg.interact, { hydro: CROWD.hydroTheory(cfg.volume_fraction) }) }) : cfg;
-      movie = await drive(MOVIE.simulate(c2), token, 0, 0.75); if (!movie) return;
+      movie = await drive(MOVIE.simulate(cfg), token, 0, 0.75); if (!movie) return;
       const rv = await drive(MOVIE.simulate(CROWD.referenceConfig(cfg, movie.truth.interact.tau_B_s)), token, 0.75, 0.82); if (!rv) return;
       refHere = await drive(CROWD.referenceAmplitude(rv), token, 0.82, 0.85); if (!refHere) return;
     }
@@ -5541,16 +5364,6 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     const S = sm(k) * (1 - w) + sm(k + 1) * w;
     return 1 + tr.label_fraction * (S - 1);
   }
-  // what the shortest delays should show: D(q) / D0 = [x H(q) + (1 - x) Ds/D0] / [1 + x (S - 1)], H = Ds/D0 = 1 without
-  // hydrodynamic interactions
-  function trueD(q) {
-    const tr = cache.movie.truth.interact, Sx = trueS(q); if (!Sx) return null;
-    if (!tr.hydro) return 1 / Sx;
-    const qs = tr.q_per_um; let k = 0; while (k < qs.length - 2 && qs[k + 1] < q) k++;
-    const w = (q - qs[k]) / (qs[k + 1] - qs[k]), H = tr.H[k] + w * (tr.H[k + 1] - tr.H[k]), x = tr.label_fraction;
-    return (x * H + (1 - x) * tr.Ds_over_D0) / Sx;
-  }
-  function trueH(q) { const tr = cache.movie.truth.interact; if (!tr.hydro) return 1; const qs = tr.q_per_um; let k = 0; while (k < qs.length - 2 && qs[k + 1] < q) k++; const w = (q - qs[k]) / (qs[k + 1] - qs[k]); return tr.H[k] + w * (tr.H[k + 1] - tr.H[k]); }
   function pyS(q) { const tr = cache.movie.truth.interact; return 1 + tr.label_fraction * (CROWD.percusYevick(tr.phi, q * tr.sigma_um) - 1); }
   // the true peak of S(q) within the q used
   function truePeak() {
@@ -5609,14 +5422,13 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
   function drawDq() {
     const res = cache.res, rows = res.rows, D0 = res.D0_um2_s, x1 = res.window.q_max_used * 1.08;
     let top = 1.4; rows.forEach(function (r) { if (r.D_um2_s > 0) top = Math.max(top, (r.D_um2_s + (r.D_err_um2_s || 0)) / D0); });
-    for (let i = 1; i <= 100; i++) { const v = trueD(x1 * i / 100); if (v) top = Math.max(top, v); }
+    for (let i = 1; i <= 100; i++) { const v = trueS(x1 * i / 100); if (v) top = Math.max(top, 1 / v); }
     top = Math.min(top, 12);
-    const hyd = !!cache.movie.truth.interact.hydro;
     const a = axes($("chart-dq"), { xlog: false, ylog: false, x0: 0, x1: x1, y0: 0, y1: top * 1.1, xlabel: "q (" + MU + "m\u207b\u00b9)", ylabel: level === "curious" ? "How fast (alone = 1)" : "D(q) / D0" }), ctx = a.ctx;
     ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(a.m.l, a.fy(1)); ctx.lineTo(a.m.l + a.pw, a.fy(1)); ctx.stroke(); ctx.setLineDash([]);
-    const curve = function (f, col, dash, wd) { ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.setLineDash(dash); ctx.beginPath(); let on = false; for (let i = 1; i <= 240; i++) { const q = x1 * i / 240, v = f(q); if (v === null || !isFinite(v)) { on = false; continue; } const X = a.fx(q), Y = a.fy(Math.min(top * 1.1, v)); if (!on) { ctx.moveTo(X, Y); on = true; } else ctx.lineTo(X, Y); } ctx.stroke(); ctx.setLineDash([]); };
-    if (hyd) curve(function (q) { const v = trueS(q); return v ? 1 / v : null; }, C.muted, [7, 4], 1.3);
-    curve(trueD, C["accent-2"], [], 1.8);
+    ctx.strokeStyle = C["accent-2"]; ctx.lineWidth = 1.8; ctx.beginPath(); let on = false;
+    for (let i = 1; i <= 240; i++) { const q = x1 * i / 240, v = trueS(q); if (!v) { on = false; continue; } const X = a.fx(q), Y = a.fy(Math.min(top * 1.1, 1 / v)); if (!on) { ctx.moveTo(X, Y); on = true; } else ctx.lineTo(X, Y); }
+    ctx.stroke();
     rows.forEach(function (r) {
       if (!(r.D_um2_s > 0)) return; const X = a.fx(r.q_per_um), col = qColor(qPos(r.q_per_um)), v = r.D_um2_s / D0;
       if (r.D_err_um2_s > 0 && level !== "curious") { ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X, a.fy(v - r.D_err_um2_s / D0)); ctx.lineTo(X, a.fy(v + r.D_err_um2_s / D0)); ctx.stroke(); }
@@ -5625,9 +5437,8 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     a.done();
     const ul = $("dq-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
-    add(level === "curious" ? "Dots: how fast each pattern fades at first, against the same particles far apart. Red line: what to expect right after the start, before the particles have moved far: fastest where the crowd is smoothest, slowest at the spacing of neighbours." : (cache.res.ref_rate ? "Dots: D(q) / D0 = \u0393(q) / \u0393ref(q), the rate of each pattern at the first delays against that of the same pattern in the dilute reference (bars: jackknife over ten parts of the movie); D0 = " : "Dots: D(q) = \u0393(q) / q\u00b2 from the first delays (bars: jackknife over ten parts of the movie), against D0 = ") + fmtSig(D0, 3) + " " + MU + "m\u00b2/s. " + (hyd ? "Red: D0 H(q) / S(q), what the shortest delays should show with the hydrodynamic function H(q) of the theory drawn here; dashed: D0 / S(q), without the flow of the liquid." : "Red: D0 / S(q), what the shortest delays should show without hydrodynamic interactions (this simulation has none)."));
-    if (level !== "curious") add(hyd ? "Here every pattern fades exponentially at its short-time rate, so the fit is not slowed by the cages; at the widest patterns each pattern of the image still takes in finer ones along the axis of the microscope." : "At the widest patterns the dots fall below the red line: each pattern of the image also takes in finer ones along the axis of the microscope, which fade more slowly, and the fit reaches delays where the crowd has begun to rearrange.");
-    if (hyd && level !== "curious") add("Dividing by the measured S(q) gives the hydrodynamic function: H(q) = D(q) S(q) / D0, below 1 because the flow each particle makes holds its neighbours back. At the peak this page measures " + (cache.res.peak.D_um2_s ? fmtSig(cache.res.peak.D_um2_s * cache.res.peak.S / D0, 2) : "-") + ", the theory " + fmtSig(trueH(cache.res.peak.q_per_um), 2) + ".");
+    add(level === "curious" ? "Dots: how fast each pattern fades at first, against the same particles far apart. Red line: what to expect right after the start, before the particles have moved far: fastest where the crowd is smoothest, slowest at the spacing of neighbours." : (cache.res.ref_rate ? "Dots: D(q) / D0 = \u0393(q) / \u0393ref(q), the rate of each pattern at the first delays against that of the same pattern in the dilute reference (bars: jackknife over ten parts of the movie); D0 = " : "Dots: D(q) = \u0393(q) / q\u00b2 from the first delays (bars: jackknife over ten parts of the movie), against D0 = ") + fmtSig(D0, 3) + " " + MU + "m\u00b2/s. Red: D0 / S(q), what the shortest delays should show without hydrodynamic interactions (this simulation has none).");
+    if (level !== "curious") add("At the widest patterns the dots fall below the red line: each pattern of the image also takes in finer ones along the axis of the microscope, which fade more slowly, and the fit reaches delays where the crowd has begun to rearrange.");
   }
 
   // ---- result -------------------------------------------------------------------------------
@@ -5653,8 +5464,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     h += '<span class="chip ' + v.cls + '">' + v.text + '</span>';
     const nums = [], low = res.rows[0];
     if (hasPeak(res)) nums.push("S(q) peaks at " + fmtSig(res.peak.S, 3) + " at q = " + fmtSig(res.peak.q_per_um, 3) + " " + MU + "m\u207b\u00b9" + (tp ? " (simulation " + fmtSig(tp.S, 3) + " at " + fmtSig(tp.q_per_um, 3) + ")" : ""));
-    if (hasPeak(res) && res.peak.D_um2_s) nums.push("there the patterns fade " + fmtSig(D0 / res.peak.D_um2_s, 2) + " times more slowly than for one particle alone (expected about " + fmtSig(1 / trueD(tp.q_per_um), 2) + " at the shortest delays" + (tr.hydro ? ", with the flow of the liquid; " + fmtSig(tp.S, 2) + " without" : "") + ")");
-    if (tr.hydro && hasPeak(res) && res.peak.D_um2_s) nums.push("the hydrodynamic function there, D S / D0, is " + fmtSig(res.peak.D_um2_s * res.peak.S / D0, 2) + " (theory " + fmtSig(trueH(tp.q_per_um), 2) + ")");
+    if (hasPeak(res) && res.peak.D_um2_s) nums.push("there the patterns fade " + fmtSig(D0 / res.peak.D_um2_s, 2) + " times more slowly than for one particle alone (expected about " + fmtSig(tp.S, 2) + " at the shortest delays)");
     nums.push("at the widest patterns (q = " + fmtSig(low.q_per_um, 2) + ") S = " + fmtSig(res.S_low, 2) + (res.D_low_um2_s ? " and D = " + fmtSig(res.D_low_um2_s / D0, 2) + " D0" : ""));
     h += '<p class="small" style="margin:0">' + nums.join("; ") + '.</p>';
     if (level !== "curious") {
@@ -5668,14 +5478,14 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
         t += pb.failed ? row("pub", "Published method only", "-", "-", "-", "-", "-", "could not run: " + pb.failed) : row("pub", "Published method only", pb.has_peak ? f2(pb.peak_q_per_um) : "-", pb.has_peak ? f2(pb.peak_S) : "-", pb.has_peak && pb.peak_D_um2_s ? f2(pb.peak_D_um2_s / D0) : "-", f2(pb.S_low), pb.D_low_um2_s ? f2(pb.D_low_um2_s / D0) : "-", "the same movies: B from the first delays, the line through f = 1, D = \u0393 / q\u00b2, the reference bin by bin");
       }
       const sLowT = trueS(low.q_per_um);
-      t += row("truth", "Simulation", pk && tp ? f2(tp.q_per_um) : "-", pk && tp ? f2(tp.S) : "-", pk && tp ? f2(trueD(tp.q_per_um)) + " (short times)" : "-", f2(sLowT), sLowT ? f2(trueD(low.q_per_um)) + " (short times)" : "-", tr.hydro ? "Percus-Yevick S(q), Beenakker-Mazur H(q)" : "");
+      t += row("truth", "Simulation", pk && tp ? f2(tp.q_per_um) : "-", pk && tp ? f2(tp.S) : "-", pk && tp ? f2(1 / tp.S) + " (short times)" : "-", f2(sLowT), sLowT ? f2(1 / sLowT) + " (short times)" : "-", "");
       t += '</tbody></table></div>';
       h += t;
       h += '<details class="more"><summary>Details</summary><dl>';
       h += '<dt>Patterns used</dt><dd>q from ' + fmtSig(res.window.q_min_used, 2) + ' to ' + fmtSig(res.window.q_max_used, 2) + ' ' + MU + 'm\u207b\u00b9 (' + res.rows.length + ' q), where both this movie and the reference carry more signal than the camera noise</dd>';
       h += '<dt>Reference</dt><dd>a dilute movie of the same particles (volume fraction 4 %, ' + res.n_reference + ' particles), same optics and camera: the amplitude of one particle alone</dd>';
       h += '<dt>Rates</dt><dd>a straight line through ln f over the first delays, down to f = 0.6 (at least three delays)' + (res.offset ? ', with its own intercept' : ', through f = 1 at zero delay') + '; ' + (res.B_camera ? 'B = ' + fmtSig(res.B_camera, 3) + ' from the mean count and the read noise' : 'B at each q from the first delays') + '</dd>';
-      h += '<dt>Simulation</dt><dd>' + (tr.hydro ? 'a density field from theory, ' + tr.n_modes + ' Fourier modes (' + tr.kz_modes + ' along the axis), each fading at D0 Q\u00b2 H(Q) / S(Q); short-time self-diffusion Ds = ' + fmtSig(tr.Ds_over_D0, 2) + ' D0' : 'Brownian dynamics, time step ' + fmtTime(tr.step_s) + ' (free steps of 3 % of the diameter, overlaps pushed apart); no hydrodynamic interactions') + '; D0 = ' + fmtSig(tr.D0_um2_s, 3) + ' ' + MU + 'm\u00b2/s, Brownian time ' + fmtTime(tr.tau_B_s) + '; ' + tr.n_labelled + ' of ' + mv.info.n_particles + ' particles dyed</dd>';
+      h += '<dt>Simulation</dt><dd>Brownian dynamics, time step ' + fmtTime(tr.step_s) + ' (free steps of 3 % of the diameter, overlaps pushed apart), D0 = ' + fmtSig(tr.D0_um2_s, 3) + ' ' + MU + 'm\u00b2/s, Brownian time ' + fmtTime(tr.tau_B_s) + '; no hydrodynamic interactions; ' + tr.n_labelled + ' of ' + mv.info.n_particles + ' particles dyed</dd>';
       h += '</dl></details>';
     }
     $("result").innerHTML = h;
@@ -5685,7 +5495,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
   function renderText() {
     const m = cache.movie, cfg = cache.cfg, tr = m.truth.interact;
     const modeTxt = { brightfield: "a bright-field microscope", phase: "a phase-contrast microscope", darkfield: "a dark-field microscope", dic: "a DIC microscope", fluorescence: "a widefield fluorescence microscope", spinning: "a spinning-disk confocal microscope", scanning: "a point-scanning confocal microscope" }[state.mode];
-    $("movie-text").textContent = "The movie shows " + fmtSize(cfg.diameter_um) + " " + ({ ps: "polystyrene", pmma: "PMMA", silica: "silica" }[state.particle] || "") + " spheres filling " + Math.round(100 * tr.phi) + " % of the volume, " + (tr.kind === "hard" ? "which only touch" : "which repel each other before they touch") + ", filmed through " + modeTxt + (tr.label_fraction < 1 ? "; only " + tr.n_labelled + " of the " + m.info.n_particles + " are dyed and show" : "") + ". " + (tr.hydro ? "With the flow of the liquid switched on, the movie is drawn from theory as a field of density, not particle by particle: its blobs have the spacing of neighbouring particles but are not single particles, and where the crowd is sparse the field can even dip below the background. " : "Each particle jiggles in a cage of neighbours and slowly escapes from it. ") + (state.mode === "spinning" || state.mode === "scanning" ? "The confocal pinholes keep only a thin layer in focus, so the crowd does not blur into a grey haze." : "Particles above and below the focus add a blurred haze.");
+    $("movie-text").textContent = "The movie shows " + fmtSize(cfg.diameter_um) + " " + ({ ps: "polystyrene", pmma: "PMMA", silica: "silica" }[state.particle] || "") + " spheres filling " + Math.round(100 * tr.phi) + " % of the volume, " + (tr.kind === "hard" ? "which only touch" : "which repel each other before they touch") + ", filmed through " + modeTxt + (tr.label_fraction < 1 ? "; only " + tr.n_labelled + " of the " + m.info.n_particles + " are dyed and show" : "") + ". Each particle jiggles in a cage of neighbours and slowly escapes from it. " + (state.mode === "spinning" || state.mode === "scanning" ? "The confocal pinholes keep only a thin layer in focus, so the crowd does not blur into a grey haze." : "Particles above and below the focus add a blurred haze.");
     $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + (m.times_s ? m.T + " frames at log-spaced times over " + fmtDur(m.times_s[m.T - 1] + 1 / m.frame_rate_hz) + ", the closest " + fmtTime(1 / m.frame_rate_hz) + " apart" : m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s = " + fmtSig(m.T / m.frame_rate_hz, 3) + " s") + ". Box " + cfg.cell_um + " " + MU + "m deep, repeating in all directions, focus " + fmtSig(cfg.focus_um, 2) + " " + MU + "m from its bottom, " + m.info.n_particles + " particles.";
     $("diff-note").textContent = "A particle that moved leaves a pair of spots, one darker and one brighter. In a crowd the pairs line up with the neighbours: a particle can only move where another has made room.";
     const sb = $("movie-scale"), target = m.L_um / 4, nice = niceStep(target) > target ? niceStep(target) / 2 : niceStep(target);
@@ -5715,8 +5525,8 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
       shows: [{ label: "All dyed", set: {}, go: "step-rates" }, { label: "One in twenty", set: { label: 0.05 }, go: "step-rates" }] },
     { lvl: 2, title: "Confocal or widefield", text: "In a widefield microscope the particles above and below the focus add a blurred haze to every frame. It brings shot noise but almost no fine pattern, so the finest patterns sink into the noise sooner: in this thin chamber the range used shrinks, but still reaches past the peak of S(q). In thicker samples, or with smaller particles, whose peak lies at finer patterns, widefield loses the peak; the pinholes of a confocal remove the haze. That is why Lu et al. (2012) used confocal DDM for concentrated suspensions.",
       shows: [{ label: "Widefield fluorescence", set: { mode: "fluorescence" }, go: "step-rates" }, { label: "Spinning-disk confocal", set: {}, go: "step-rates" }] },
-    { lvl: 1, title: "Hydrodynamic interactions", text: "Real particles in a liquid also push each other through the flow each one makes as it moves. This changes the collective rate to D0 q\u00b2 H(q) / S(q): in concentrated hard spheres the hydrodynamic function H(q) is below 1 at all q, lowest near the peak of S(q), about 0.6 at 30 % (Segre, Behrend and Pusey 1995; Banchio and Nagele 2008). Simulating the flow particle by particle is beyond a browser, so with the flow switched on the page draws the movie from theory, as a field of density with H(q) of Beenakker and Mazur, and DDM measures H(q) back: D(q) S(q) / D0. Without the flow the particles are simulated one by one, and H = 1.",
-      shows: [{ label: "Without the flow", set: {}, go: "step-rates" }, { label: "With the flow (theory)", set: { hydro: "theory" }, go: "step-rates" }] }
+    { lvl: 2, title: "Hydrodynamic interactions", text: "Real particles in a liquid also push each other through the flow each one makes as it moves. This changes the collective rate to D0 q\u00b2 H(q) / S(q): the hydrodynamic function H(q) is below 1 at most q in concentrated hard spheres, with a minimum near the peak of S(q), about 0.6 at 30 % (Segre, Behrend and Pusey 1995; Banchio and Nagele 2008). This simulation leaves the flow out (H = 1), so D(q) S(q) / D0 should come out as 1 at the shortest delays. It comes out somewhat lower, because the fit reaches delays where the cages are already felt, and because the particles move in finite steps. Measuring H(q) is how DDM, like light scattering, sees hydrodynamics in real samples.",
+      shows: [] }
   ];
   function buildCards() {
     const host = $("cards");
