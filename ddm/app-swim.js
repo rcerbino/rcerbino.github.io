@@ -579,9 +579,9 @@
         const inp = wrap.querySelector("input"), out = wrap.querySelector("output");
         if (c.kind === "log") { inp.min = 0; inp.max = 1000; inp.step = 1; } else { inp.min = c.min; inp.max = c.max; inp.step = c.step; }
         const read = function () { return c.kind === "log" ? c.min * Math.pow(c.max / c.min, inp.value / 1000) : parseFloat(inp.value); };
-        inp.addEventListener("input", function () { out.textContent = c.fmt(read()); });
+        inp.addEventListener("input", function () { out.textContent = c.fmt(read()); inp.setAttribute("aria-valuetext", out.textContent); });
         inp.addEventListener("change", function () { state[c.key] = read(); onChange(c.key); });
-        ctlEls[c.key] = { wrap: wrap, set: function (v) { inp.value = c.kind === "log" ? 1000 * Math.log(v / c.min) / Math.log(c.max / c.min) : v; out.textContent = c.fmt(v); } };
+        ctlEls[c.key] = { wrap: wrap, set: function (v) { inp.value = c.kind === "log" ? 1000 * Math.log(v / c.min) / Math.log(c.max / c.min) : v; out.textContent = c.fmt(v); inp.setAttribute("aria-valuetext", out.textContent); } };
       } else if (c.kind === "select" || c.kind === "objective") {
         wrap.innerHTML = '<label for="' + id + '"></label><select id="' + id + '"></select>';
         wrap.querySelector("label").textContent = typeof c.label === "function" ? c.label() : c.label;
@@ -723,6 +723,9 @@
     level = lv;
     document.documentElement.setAttribute("data-level", lv);
     $("lv-" + lv).checked = true;
+    // Curious starts from the sample: the other blocks fold to their one-line summary (all open on wide screens otherwise)
+    const wide = !window.matchMedia("(max-width: 63.99rem)").matches;
+    Object.keys(blockEls).forEach(function (b) { blockEls[b].el.open = wide && (lv !== "curious" || b === "Sample"); });
     const lvOpen = lv === "addict" ? "researcher" : lv;
     document.querySelectorAll("details.math[data-open-at]").forEach(function (d) { d.open = (lvOpen === d.getAttribute("data-open-at")); });
     // controls hidden at this level go back to the standard value of the chosen organism (its size and shape, not those of
@@ -1228,7 +1231,7 @@
       let x0 = Infinity, x1 = 0; M.forEach(function (m) { const s0 = Math.pow(m.q, pow); x0 = Math.min(x0, s0 * taus[0]); x1 = Math.max(x1, s0 * taus[taus.length - 1]); });
       const a = axes(cv, { xlog: true, ylog: false, x0: x0, x1: x1, y0: -0.1, y1: 1.1,
         xlabel: k === 0 ? (level === "curious" ? "pattern fineness x delay (q \u0394t)" : "q \u0394t (" + MU + "m\u207b\u00b9 s)") : (level === "curious" ? "fineness squared x delay (q\u00b2 \u0394t)" : "q\u00b2 \u0394t (" + MU + "m\u207b\u00b2 s)"),
-        ylabel: level === "curious" ? "How alike (1 = same)" : "f(q, \u0394t)" });
+        ylabel: level === "curious" ? "How much is left (1 = all)" : "f(q, \u0394t)" });
       const ctx = a.ctx;
       // the level of the cells that do not swim (between the two steps)
       if (h && !h.no_swim) { const y = a.fy(1 - h.alpha); ctx.setLineDash([5, 4]); ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.m.l, y); ctx.lineTo(a.m.l + a.pw, y); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = C.muted; ctx.textAlign = "left"; ctx.textBaseline = h.alpha > 0.85 ? "bottom" : "top"; ctx.fillText("cells that do not swim: " + Math.round(100 * (1 - h.alpha)) + " %", a.m.l + 6, h.alpha > 0.85 ? y - 3 : y + 3); }
@@ -1475,7 +1478,11 @@
     html += '<span class="chip ' + v.cls + '">' + v.text + '</span>' + (sv ? ' <span class="chip ' + sv.cls + '">' + sv.text + '</span>' : '');
     if (v.why) html += '<p class="small" style="margin:0">' + v.why + '</p>';
     if (h && h.no_swim) html += '<p class="small" style="margin:0">The curves are described as well by cells that only jiggle (and, for rods, turn) as by any share of swimmers.</p>';
-    else if (h) html += '<p class="small" style="margin:0">Mean swimming speed and share of cells that swim (' + Math.round(100 * h.alpha) + (h.alpha_err ? ' &plusmn; ' + Math.max(1, Math.round(100 * h.alpha_err)) : '') + ' %, true ' + Math.round(100 * st.share) + ' % as seen), from the model of ' + MODEL_LABEL[swimModel()] + ' fitted to all q at once. True mean speed ' + fmtV(swt.v_mean_um_s) + (Math.abs(st.v / swt.v_mean_um_s - 1) > 0.02 ? ', ' + fmtV(st.v) + ' as weighted by the signal' : '') + '.</p>';
+    else if (h) html += '<p class="small" style="margin:0">Mean swimming speed from the model of ' + MODEL_LABEL[swimModel()] + ' fitted to all q at once. True mean speed ' + fmtV(swt.v_mean_um_s) + (Math.abs(st.v / swt.v_mean_um_s - 1) > 0.02 ? ', ' + fmtV(st.v) + ' as weighted by the signal' : '') + '.</p>';
+    if (h && !h.no_swim && swt && mv.info.n_particles) html += '<div class="shares small"><b>Share of cells that swim</b><ul>' +
+      '<li><span>in the simulated sample</span><b>' + Math.round(100 * swt.n_swimmers / mv.info.n_particles) + ' %</b><span class="note">' + swt.n_swimmers + ' of ' + mv.info.n_particles + ' cells</span></li>' +
+      '<li><span>as the microscope sees it</span><b>' + Math.round(100 * st.share) + ' %</b><span class="note">each cell counted by how much it shows in the images: this is what DDM can measure</span></li>' +
+      '<li><span>measured by DDM</span><b>' + Math.round(100 * h.alpha) + (h.alpha_err ? ' &plusmn; ' + Math.max(1, Math.round(100 * h.alpha_err)) : '') + ' %</b><span class="note">to compare with the line above</span></li></ul></div>';
     if (h && !h.no_swim && h.err_from === "jackknife" && level !== "curious") html += '<p class="small" style="margin:0">&plusmn;: how much the result changes with the part of the movie it comes from (the fits repeated ' + h.jackknife.blocks + ' times, each time with one ' + ["", "", "half", "third", "quarter", "fifth", "sixth"][h.jackknife.blocks] + ' of the movie left out). Errors of the model itself are not included: compare with the true values, or repeat with new cells.</p>';
     if (h && h.stroke_um) html += '<p class="small" style="margin:0">Stroke of each swimmer: ' + fmtSig(h.stroke_um, 2) + (h.stroke_um_err ? ' &plusmn; ' + fmtSig(h.stroke_um_err, 1) : '') + ' ' + MU + 'm at ' + fmtSig(h.stroke_hz, 3) + (h.stroke_hz_err ? ' &plusmn; ' + fmtSig(h.stroke_hz_err, 1) : '') + ' Hz (true ' + fmtSig(swt.osc_amp_um || 0, 2) + ' ' + MU + 'm at ' + fmtSig(swt.osc_hz || 0, 3) + ' Hz' + (swt.osc_amp_um > 0 && swt.osc_dir === "across" && swimModel() === "stroke" ? '; the cells stroke sideways, the model assumes along' : '') + ').</p>';
     if (level !== "curious" && h) {
@@ -1575,7 +1582,7 @@
     L.push("True values: mean speed " + fmtSig(tr.swim.v_mean_um_s, 3) + " um/s (relative spread " + Math.round(100 * tr.swim.v_sd_um_s / Math.max(1e-9, tr.swim.v_mean_um_s)) + " %), " + Math.round(100 * tr.swim.fraction) + " % swimming; as seen by the microscope over the q used: " + fmtSig(seenTruth().v, 3) + " um/s, " + Math.round(100 * seenTruth().share) + " %.");
     el.textContent = L.join("\n");
   }
-  function renderLag() { const res = cache.res, li = lagIndex(); $("lag").max = res.lags.length - 1; $("lag-out").textContent = fmtDur(res.taus_s[li]) + (res.pairs ? " (" + res.lags[li] + (res.lags[li] === 1 ? " frame interval, " : " frame intervals, ") + res.pairs[li].length / 2 + " pairs of frames)" : " (" + res.lags[li] + (res.lags[li] === 1 ? " frame)" : " frames)")); }
+  function renderLag() { const res = cache.res, li = lagIndex(); $("lag").max = res.lags.length - 1; $("lag-out").textContent = fmtDur(res.taus_s[li]) + (res.pairs ? " (" + res.lags[li] + (res.lags[li] === 1 ? " frame interval, " : " frame intervals, ") + res.pairs[li].length / 2 + " pairs of frames)" : " (" + res.lags[li] + (res.lags[li] === 1 ? " frame)" : " frames)")); $("lag").setAttribute("aria-valuetext", fmtDur(res.taus_s[li])); }
   function renderAll() {
     if (!cache.res) return;
     readColors(); grey = greyRange(cache.movie); diffScale = null;

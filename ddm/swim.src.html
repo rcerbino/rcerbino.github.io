@@ -240,6 +240,12 @@ pre.code { font-family: var(--mono); font-size: 0.8rem; background: var(--paper)
 .predict .q { font-weight: 600; }
 .predict .a { color: var(--ink); }
 .predict .verdict { font-weight: 600; }
+.shares { margin: 0; }
+.shares ul { list-style: none; margin: 0.25rem 0 0; padding: 0; display: grid; gap: 0.2rem; }
+.shares li { display: grid; grid-template-columns: minmax(9rem, 13rem) 5.5rem 1fr; gap: 0.6rem; align-items: baseline; }
+.shares li > b { font-variant-numeric: tabular-nums; }
+.shares .note { color: var(--muted); }
+@media (max-width: 34rem) { .shares li { grid-template-columns: 1fr auto; } .shares .note { grid-column: 1 / -1; } }
 .predict button:disabled { cursor: default; opacity: 0.55; }
 .predict button[aria-pressed="true"] { opacity: 1; border-color: var(--accent); font-weight: 600; }
 
@@ -288,7 +294,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
       <p class="eyebrow">Differential dynamic microscopy</p>
       <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><span aria-current="page">Swimming cells</span><a href="../drift/">Drifting particles</a></nav>
       <h1>How fast do cells swim?</h1>
-      <p class="lede">Many bacteria swim, and so do algae and sperm. How fast they swim and how many of them do it tells a biologist whether they are healthy, hungry or poisoned, and a clinician whether sperm are fit to fertilise. Following cells one by one is slow and gives a few hundred tracks at best. Differential dynamic microscopy (DDM) reads the swimming speeds and the share of swimmers from an ordinary microscope movie of thousands of cells in a few minutes, without following any of them (Wilson et al. 2011). Here a simulated microscope lets you run this motility assay yourself, from the raw movie to the distribution of swimming speeds, and see where it can go wrong.</p>
+      <p class="lede">Many bacteria swim, and so do algae and sperm. How fast they swim and how many of them do it tells a biologist whether they are healthy, hungry or poisoned, and a clinician how well sperm move, one of the main measures of a semen analysis. Following cells one by one is slow and gives a few hundred tracks at best. Differential dynamic microscopy (DDM) reads the swimming speeds and the share of swimmers from an ordinary microscope movie of thousands of cells in a few minutes, without following any of them (Wilson et al. 2011). Here a simulated microscope lets you run this motility assay yourself, from the raw movie to the distribution of swimming speeds, and see where it can go wrong.</p>
       <fieldset class="levels">
         <legend>How deep do you want to go?</legend>
         <div class="level-opts" role="radiogroup">
@@ -487,7 +493,7 @@ A_est = 2 * aa.var - B_est
         <div class="step-title"><span class="num">6</span><h2 id="h-rates">Who swims, who only diffuses, and how fast</h2></div>
         <div class="step-body">
           <div class="text">
-            <p>Each curve of step 5 falls in two steps when only some cells swim. Two ways of plotting the same curves tell the two kinds of motion apart. A swimmer at constant speed covers a distance in a time proportional to it, so a pattern renews when <i>q</i>&Delta;<i>t</i> reaches a fixed value: against <i>q</i>&Delta;<i>t</i> (first chart) the fast first steps of all patterns fall on one curve. A cell that only diffuses needs four times as long to go twice as far, so against <i>q</i><sup>2</sup>&Delta;<i>t</i> (second chart) the slow last steps fall on one curve instead. The level between the two steps is the share of cells that do not swim.</p>
+            <p>The charts below show the curves of step 5 the other way up: how much of each pattern is still there after the delay (1, all of it; 0, gone). When only some cells swim, this falls in two steps, just as the change of step 5 rises in two. Two ways of plotting the same curves tell the two kinds of motion apart. A swimmer at constant speed covers a distance in a time proportional to it, so a pattern renews when <i>q</i>&Delta;<i>t</i> reaches a fixed value: against <i>q</i>&Delta;<i>t</i> (first chart) the fast first steps of all patterns fall on one curve. A cell that only diffuses needs four times as long to go twice as far, so against <i>q</i><sup>2</sup>&Delta;<i>t</i> (second chart) the slow last steps fall on one curve instead. The level between the two steps is the share of cells that do not swim.</p>
           </div>
           <div class="result motion" id="motion" aria-live="polite"></div>
           <figure class="viz">

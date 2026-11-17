@@ -550,9 +550,9 @@
         const inp = wrap.querySelector("input"), out = wrap.querySelector("output");
         if (c.kind === "log") { inp.min = 0; inp.max = 1000; inp.step = 1; } else { inp.min = c.min; inp.max = c.max; inp.step = c.step; }
         const read = function () { return c.kind === "log" ? c.min * Math.pow(c.max / c.min, inp.value / 1000) : parseFloat(inp.value); };
-        inp.addEventListener("input", function () { out.textContent = c.fmt(read()); });
+        inp.addEventListener("input", function () { out.textContent = c.fmt(read()); inp.setAttribute("aria-valuetext", out.textContent); });
         inp.addEventListener("change", function () { state[c.key] = read(); onChange(c.key); });
-        ctlEls[c.key] = { wrap: wrap, set: function (v) { inp.value = c.kind === "log" ? 1000 * Math.log(v / c.min) / Math.log(c.max / c.min) : v; out.textContent = c.fmt(v); } };
+        ctlEls[c.key] = { wrap: wrap, set: function (v) { inp.value = c.kind === "log" ? 1000 * Math.log(v / c.min) / Math.log(c.max / c.min) : v; out.textContent = c.fmt(v); inp.setAttribute("aria-valuetext", out.textContent); } };
       } else if (c.kind === "select" || c.kind === "objective") {
         wrap.innerHTML = '<label for="' + id + '"></label><select id="' + id + '"></select>';
         wrap.querySelector("label").textContent = typeof c.label === "function" ? c.label() : c.label;
@@ -692,6 +692,9 @@
     level = lv;
     document.documentElement.setAttribute("data-level", lv);
     $("lv-" + lv).checked = true;
+    // Curious starts from the sample: the other blocks fold to their one-line summary (all open on wide screens otherwise)
+    const wide = !window.matchMedia("(max-width: 63.99rem)").matches;
+    Object.keys(blockEls).forEach(function (b) { blockEls[b].el.open = wide && (lv !== "curious" || b === "Sample"); });
     const lvOpen = lv === "addict" ? "researcher" : lv;
     document.querySelectorAll("details.math[data-open-at]").forEach(function (d) { d.open = (lvOpen === d.getAttribute("data-open-at")); });
     // controls hidden at this level go back to the standard value, so the bench shows what is simulated
@@ -1376,7 +1379,7 @@
       result: { v_um_s: +r.v_um_s.toPrecision(4), v_err_um_s: r.v_err_um_s ? +r.v_err_um_s.toPrecision(2) : null, direction_deg: +r.v_dir_deg.toFixed(1), detected: r.detected, D_um2_s: +r.D_um2_s.toPrecision(4), diameter_nm: Math.round(r.diameter_um * 1000), visibility: { q_star_per_um: +r.visibility.q_star.toPrecision(3), peclet: +r.visibility.peclet.toPrecision(3), n_q: r.visibility.n_q } } };
     $("settings-json").textContent = JSON.stringify(obj, null, 1);
   }
-  function renderLag() { const res = cache.res, li = lagIndex(); $("lag").max = res.lags.length - 1; $("lag-out").textContent = fmtDur(res.taus_s[li]) + (res.pairs ? " (" + res.lags[li] + (res.lags[li] === 1 ? " frame interval, " : " frame intervals, ") + res.pairs[li].length / 2 + " pairs of frames)" : " (" + res.lags[li] + (res.lags[li] === 1 ? " frame)" : " frames)")); }
+  function renderLag() { const res = cache.res, li = lagIndex(); $("lag").max = res.lags.length - 1; $("lag-out").textContent = fmtDur(res.taus_s[li]) + (res.pairs ? " (" + res.lags[li] + (res.lags[li] === 1 ? " frame interval, " : " frame intervals, ") + res.pairs[li].length / 2 + " pairs of frames)" : " (" + res.lags[li] + (res.lags[li] === 1 ? " frame)" : " frames)")); $("lag").setAttribute("aria-valuetext", fmtDur(res.taus_s[li])); }
   function renderAll() {
     if (!cache.res) return;
     readColors(); grey = greyRange(cache.movie); diffScale = null;
@@ -1385,9 +1388,11 @@
 
   // ---- "what matters" cards ---------------------------------------------------------------
   const SILICA2 = { particle: "silica", diameter_um: 2, phi: 2e-3, frame_rate_hz: 20, exposure_ms: 1, cause: "sediment" };
+  // 200 nm polystyrene settling with the microscope on its side: a drift far below what the movie can show
+  const SLOW_SET = { cause: "sediment", orient: "side", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X") };
   const CARDS = [
     { lvl: 1, title: "Too slow to see", text: "200 nm polystyrene beads are only 5 % denser than water and settle at about 1 nm/s, while they wander by about 1.5 " + MU + "m every half second. To tell such a drift from the random motion, DDM, like tracking, would need to average over a movie tens of thousands of times longer than this one: the page says how slow a drift this movie can show.",
-      shows: [{ label: "Show me", set: { cause: "sediment", orient: "side", particle: "ps", diameter_um: 0.2, phi: 2e-4, frame_rate_hz: 100, exposure_ms: 0.2, objective: objIndexByName("CFI Plan Fluor 20X") }, go: "step-rates" }] },
+      shows: [{ label: "Show me", set: SLOW_SET, go: "step-rates" }] },
     { lvl: 1, title: "Heavy beads, microscope on its side", text: "Silica beads of 2 " + MU + "m settle at about 2 " + MU + "m/s and diffuse slowly. With the microscope on its side gravity points down the image: the fringes of step 4 appear, the curves along the drift swing, and the speed comes out with its direction. With the microscope upright the same beads settle onto the bottom glass: no drift in the image, and slower diffusion near the glass.",
       shows: [{ label: "On its side", set: Object.assign({ orient: "side" }, SILICA2), go: "step-map" }, { label: "Upright", set: Object.assign({ orient: "upright", focus_frac: 0.05 }, SILICA2), go: "step-rates" }] },
     { lvl: 1, title: "Faster flow, closer fringes", text: "Twice the speed, twice as many fringes in the maps of step 4 at the same delay. Move the delay slider to watch them close in.",
@@ -1438,6 +1443,7 @@
   function syncPredictions() {
     document.querySelectorAll(".predict").forEach(function (box) {
       const kind = box.getAttribute("data-predict");
+      if (kind === "slow") { box.hidden = false; return; }   // about any sample: what a movie can and cannot rule out
       box.hidden = state.cause !== "flow" || (kind === "double" && state.flow_v > 10 && !box.classList.contains("answered"));
     });
   }
@@ -1456,6 +1462,7 @@
           const kind = box.getAttribute("data-predict");
           if (kind === "reverse") state.flow_deg = (state.flow_deg + 180) % 360;
           if (kind === "double") state.flow_v = Math.min(20, 2 * state.flow_v);
+          if (kind === "slow") { const keep = state.seed, sp = state.sim_px; state = Object.assign({}, BASE, SLOW_SET); state.seed = LEVEL_RANK[level] >= 3 ? keep : BASE.seed; state.sim_px = sp; }
           predicting = true; constrain(); syncControls(); predicting = false; schedule();
         });
       });

@@ -115,6 +115,7 @@ p { margin: 0 0 1rem; }
 .pipe svg .ax { stroke: var(--rule); stroke-width: 1; fill: none; }
 .pipe svg .lab { fill: var(--muted); font-family: var(--sans); font-size: 7.5px; }
 .pipe svg .lab.k1 { fill: var(--accent); }
+.pipe svg .lab.sm { font-size: 6.5px; }
 .pipe svg .lab.k2 { fill: var(--accent-2); }
 .pipe svg .c1 { stroke: var(--accent); }
 .pipe svg .c2 { stroke: var(--accent-2); }
@@ -215,17 +216,17 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
         <text class="lab" x="8" y="48" text-anchor="middle" transform="rotate(-90 8 48)">difference</text>
       </svg></div>
         <figcaption><b>Curves</b>For each pattern size, how the difference grows with the delay. Small patterns (red) change first, wide ones (blue) last.</figcaption></figure>
-      <figure><div class="pane light"><svg viewBox="0 0 100 100" role="img" aria-label="Rates against pattern size on log scales: slope 2 for diffusion, slope 1 for swimming">
+      <figure><div class="pane light"><svg viewBox="0 0 100 100" role="img" aria-label="Rates against q, one over the pattern size, on log scales: slope 2 for diffusion, slope 1 for swimming">
         <path class="ax" d="M14 86 H94 M14 86 V8"/>
         <path class="ln k" d="M18 80 L90 16"/>
         <path class="ln k dash" d="M18 64 L90 32"/>
         <circle class="dot c1" cx="30" cy="69.3" r="3"/><circle class="dot c3" cx="50" cy="51.6" r="3"/><circle class="dot c2" cx="72" cy="32" r="3"/>
         <path class="ln k" d="M18 13 H28"/><text class="lab" x="31" y="15.5">diffusion</text>
         <path class="ln k dash" d="M18 23 H28"/><text class="lab" x="31" y="25.5">swimming</text>
-        <text class="lab" x="54" y="97" text-anchor="middle">1 / pattern size (log)</text>
+        <text class="lab" x="54" y="97" text-anchor="middle">q (log)</text><text class="lab sm" x="15" y="97">wide</text><text class="lab sm" x="94" y="97" text-anchor="end">fine</text>
         <text class="lab" x="8" y="48" text-anchor="middle" transform="rotate(-90 8 48)">rate (log)</text>
       </svg></div>
-        <figcaption><b>Model</b>Fit each curve to get one rate per pattern size (the dots, in the same colours). How the rates change with size (steeper for diffusion than for swimming) gives the size, the speed, and more.</figcaption></figure>
+        <figcaption><b>Model</b>Fit each curve to get one rate per pattern size (the dots, in the same colours). The axis is q, larger for finer patterns. How fast the rates grow with q (slope 2 for diffusion, 1 for swimming) gives the size, the speed, and more.</figcaption></figure>
     </div>
   </section>
 

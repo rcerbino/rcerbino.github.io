@@ -493,9 +493,9 @@
         const inp = wrap.querySelector("input"), out = wrap.querySelector("output");
         if (c.kind === "log") { inp.min = 0; inp.max = 1000; inp.step = 1; } else { inp.min = c.min; inp.max = c.max; inp.step = c.step; }
         const read = function () { return c.kind === "log" ? c.min * Math.pow(c.max / c.min, inp.value / 1000) : parseFloat(inp.value); };
-        inp.addEventListener("input", function () { out.textContent = c.fmt(read()); });
+        inp.addEventListener("input", function () { out.textContent = c.fmt(read()); inp.setAttribute("aria-valuetext", out.textContent); });
         inp.addEventListener("change", function () { state[c.key] = read(); onChange(c.key); });
-        ctlEls[c.key] = { wrap: wrap, set: function (v) { inp.value = c.kind === "log" ? 1000 * Math.log(v / c.min) / Math.log(c.max / c.min) : v; out.textContent = c.fmt(v); } };
+        ctlEls[c.key] = { wrap: wrap, set: function (v) { inp.value = c.kind === "log" ? 1000 * Math.log(v / c.min) / Math.log(c.max / c.min) : v; out.textContent = c.fmt(v); inp.setAttribute("aria-valuetext", out.textContent); } };
       } else if (c.kind === "select" || c.kind === "objective") {
         wrap.innerHTML = '<label for="' + id + '"></label><select id="' + id + '"></select>';
         wrap.querySelector("label").textContent = typeof c.label === "function" ? c.label() : c.label;
@@ -605,7 +605,7 @@
   }
   let lastKey = null;
   function onChange(key) {
-    lastKey = key;
+    lastKey = key; compare = null;
     // switching to phase contrast with an objective that has no phase ring: take the phase objective of the same
     // magnification with the closest NA (Plan Fluor 20X -> Plan Fluor DLL 20X Ph1), so phase contrast is really on
     if (key === "mode" && state.mode === "phase" && !objRing()) {
@@ -632,6 +632,9 @@
     level = lv;
     document.documentElement.setAttribute("data-level", lv);
     $("lv-" + lv).checked = true;
+    // Curious starts from the sample: the other blocks fold to their one-line summary (all open on wide screens otherwise)
+    const wide = !window.matchMedia("(max-width: 63.99rem)").matches;
+    Object.keys(blockEls).forEach(function (b) { blockEls[b].el.open = wide && (lv !== "curious" || b === "Sample"); });
     const lvOpen = lv === "addict" ? "researcher" : lv;
     document.querySelectorAll("details.math[data-open-at]").forEach(function (d) { d.open = (lvOpen === d.getAttribute("data-open-at")); });
     // controls hidden at this level go back to the standard value, so the bench shows what is simulated
@@ -1077,6 +1080,38 @@
   function dot(ctx, x, y, r, fill, stroke) { ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * Math.PI); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.2; ctx.stroke(); } }
 
   let curveView = "change", qSpan = null;
+  // before and after a prediction: the curves of the earlier run stay, dashed, at the same stripe spacing
+  let compare = null;
+  const COMPARE_LABEL = { size: function () { return fmtSize(state.diameter_um); }, warm: function () { return Math.round(state.T_C) + " " + DEG + "C"; } };
+  function takeSnapshot(kind) {
+    compare = null;
+    const res = cache.res; if (!res || !COMPARE_LABEL[kind]) return;
+    const pool = res.fits.filter(function (f) { return f.ok && f.gamma_hz > 0 && Number.isFinite(f.gamma_hz); });
+    if (!pool.length) return;
+    const mid = pool[Math.floor(pool.length / 2)].q_per_um, sf = res.fits.find(function (f) { return f.bin === selBin(); });
+    const order = pool.slice().sort(function (a, b) { return Math.abs(Math.log(a.q_per_um / mid)) - Math.abs(Math.log(b.q_per_um / mid)); });
+    if (sf && sf.ok && sf.gamma_hz > 0) order.unshift(sf);
+    compare = { kind: kind, label: COMPARE_LABEL[kind](), fits: order.map(function (f) { return Object.assign({}, f); }) };
+  }
+  // the delay at which a curve has gone halfway, from its fitted model
+  function halfRise(f) {
+    const g = function (t) { return (modelAt(f, t) - f.B) / f.A - 0.5; };
+    let lo = 1e-7, hi = 1e7; if (!(g(lo) < 0 && g(hi) > 0)) return null;
+    for (let i = 0; i < 80; i++) { const m = Math.sqrt(lo * hi); if (g(m) < 0) lo = m; else hi = m; }
+    return Math.sqrt(lo * hi);
+  }
+  // the pair of curves to compare: the same q bin in both runs, both halfway points within the delays measured
+  function comparePair(res) {
+    if (!compare) return null;
+    const t0 = res.taus_s[0], t1 = res.taus_s[res.taus_s.length - 1];
+    for (let i = 0; i < compare.fits.length; i++) {
+      const o = compare.fits[i], n = res.fits.find(function (f) { return f.bin === o.bin; });
+      if (!n || !n.ok || !(n.gamma_hz > 0)) continue;
+      const ho = halfRise(o), hn = halfRise(n);
+      if (ho && hn && ho > t0 && hn > t0 && ho < t1 && hn < t1) return { old: o, now: n, ho: ho, hn: hn };
+    }
+    return null;
+  }
   function setCurveView(v) { curveView = v; $("view-change").setAttribute("aria-pressed", v === "change"); $("view-d").setAttribute("aria-pressed", v === "d"); if (cache.res) drawCurves(); }
   function setQSpan() { const u = cache.res.used.length >= 2 ? cache.res.used : cache.res.fits.filter(function (f) { return f.ok; }); qSpan = [u[0].q_per_um, u[u.length - 1].q_per_um]; }
   function qPos(q) { const lo = Math.log(qSpan[0]), hi = Math.log(qSpan[1]); return hi > lo ? (Math.log(q) - lo) / (hi - lo) : 0.5; }
@@ -1087,6 +1122,8 @@
     for (let i = 0; i < k; i++) pick.push(pool[Math.round(i * (pool.length - 1) / Math.max(1, k - 1))]);
     const selF = res.fits.find(function (f) { return f.bin === selBin(); });
     if (selF && pick.indexOf(selF) < 0 && selF.ok) pick.push(selF);
+    const pair = curveView === "change" ? comparePair(res) : null;
+    if (pair && pick.indexOf(pair.now) < 0) pick.push(pair.now);
     const x0 = taus[0] * 0.8, x1 = taus[taus.length - 1] * 1.25;
     let o;
     if (curveView === "change") o = { xlog: true, ylog: false, x0: x0, x1: x1, y0: -0.15, y1: 1.25, xlabel: "Delay (s)", ylabel: level === "curious" ? "How much has changed" : "1 \u2212 f(q, \u0394t)" };
@@ -1097,15 +1134,31 @@
     }
     const a = axes($("chart-curves"), o), ctx = a.ctx;
     pick.forEach(function (f) {
-      const isSel = f === selF, col = qColor(qPos(f.q_per_um));
+      const isSel = f === selF || (pair && f === pair.now), col = qColor(qPos(f.q_per_um));
+      ctx.globalAlpha = pair && f !== pair.now ? 0.3 : 1;   // during a comparison the other curves step back
       const tr = function (v) { return curveView === "change" ? (v - f.B) / f.A : v; };
       ctx.strokeStyle = col; ctx.lineWidth = isSel ? 3 : 1.5; ctx.beginPath();
       for (let i = 0; i <= 120; i++) { const t = x0 * Math.pow(x1 / x0, i / 120), v = tr(modelAt(f, t)); if (curveView === "d" && !(v > 0)) continue; const X = a.fx(t), Y = a.fy(v); if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }
       ctx.stroke();
       res.dq.forEach(function (row, li) { const v = tr(row[f.bin]); if (curveView === "d" && !(v > 0)) return; dot(ctx, a.fx(taus[li]), a.fy(v), isSel ? 3.2 : 2.4, col, null); });
     });
+    ctx.globalAlpha = 1;
+    if (pair) {
+      const col = qColor(qPos(pair.now.q_per_um)), Y = a.fy(0.5);
+      ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.setLineDash([6, 4]); ctx.beginPath();
+      for (let i = 0; i <= 120; i++) { const t = x0 * Math.pow(x1 / x0, i / 120), X = a.fx(t), V = a.fy((modelAt(pair.old, t) - pair.old.B) / pair.old.A); if (i === 0) ctx.moveTo(X, V); else ctx.lineTo(X, V); }
+      ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(a.fx(pair.ho), Y); ctx.lineTo(a.fx(pair.hn), Y); ctx.stroke();
+      dot(ctx, a.fx(pair.ho), Y, 4.5, C.paper, C.ink); dot(ctx, a.fx(pair.hn), Y, 4.5, C.ink, null);
+    }
     a.done();
     const leg = $("curves-legend"); leg.innerHTML = "";
+    if (pair) {
+      const r = pair.hn / pair.ho, sp = fmtSig(2 * Math.PI / pair.now.q_per_um, 2) + " " + MU + "m", s = document.createElement("span");
+      s.className = "compare";
+      s.textContent = "Dashed: the earlier run (" + compare.label + "); solid: now (" + COMPARE_LABEL[compare.kind]() + "). At a stripe spacing of " + sp + " the pattern changes halfway after " + fmtDur(pair.ho) + " (open dot) and now after " + fmtDur(pair.hn) + " (filled dot): " + (r >= 1 ? fmtSig(r, 2) + " times longer." : fmtSig(1 / r, 2) + " times sooner.");
+      leg.appendChild(s);
+    }
     pick.forEach(function (f) { const s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(f.q_per_um)) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / f.q_per_um, 2) + " " + MU + "m" : "q = " + f.q_per_um.toFixed(2)) + (f === selF ? " (picked)" : ""); leg.appendChild(s); });
     if (level !== "curious") { const s = document.createElement("span"); s.textContent = "q in " + MU + "m\u207b\u00b9"; leg.appendChild(s); }
   }
@@ -1503,7 +1556,7 @@
     L.push("True values of the simulation: diameter " + fmtSize(tr.diameter_um) + (cfg.size_spread > 0 ? ", signal-weighted " + fmtSize(seenDiameter(tr, r)) : "") + ".");
     el.textContent = L.join("\n");
   }
-  function renderLag() { const res = cache.res, li = lagIndex(); $("lag").max = res.lags.length - 1; $("lag-out").textContent = fmtDur(res.taus_s[li]) + (res.pairs ? " (" + res.lags[li] + (res.lags[li] === 1 ? " frame interval, " : " frame intervals, ") + res.pairs[li].length / 2 + " pairs of frames)" : " (" + res.lags[li] + (res.lags[li] === 1 ? " frame)" : " frames)")); }
+  function renderLag() { const res = cache.res, li = lagIndex(); $("lag").max = res.lags.length - 1; $("lag-out").textContent = fmtDur(res.taus_s[li]) + (res.pairs ? " (" + res.lags[li] + (res.lags[li] === 1 ? " frame interval, " : " frame intervals, ") + res.pairs[li].length / 2 + " pairs of frames)" : " (" + res.lags[li] + (res.lags[li] === 1 ? " frame)" : " frames)")); $("lag").setAttribute("aria-valuetext", fmtDur(res.taus_s[li])); }
   function renderAll() {
     if (!cache.res) return;
     readColors(); grey = greyRange(cache.movie); diffScale = null;
@@ -1577,7 +1630,7 @@
   }
   function applyPreset(set) {
     const keep = state.seed, sp = state.sim_px;
-    state = Object.assign({}, BASE, set); state.seed = LEVEL_RANK[level] >= 3 ? keep : BASE.seed; state.sim_px = set.sim_px || sp;
+    compare = null; state = Object.assign({}, BASE, set); state.seed = LEVEL_RANK[level] >= 3 ? keep : BASE.seed; state.sim_px = set.sim_px || sp;
     if (state.mode === "scanning" && !set.zoom) autoZoom();
     if (set.camera && !set.cam_mode) { const c = cam(); state.cam_mode = Object.keys(c.modes)[0]; state.iface = Object.keys(c.ifaces)[0]; }
     constrain(); syncControls(); drawFov(); schedule();
@@ -1592,8 +1645,10 @@
           box.querySelector(".verdict").textContent = btn.getAttribute("data-guess") === box.getAttribute("data-right") ? "Well guessed." : "Not quite.";
           box.querySelector(".a").hidden = false;
           const kind = box.getAttribute("data-predict");
+          takeSnapshot(kind);
           if (kind === "size") state.diameter_um = Math.min(5, state.diameter_um * 2);
           if (kind === "warm") state.T_C = 45;
+          if (kind === "slowcam") { state.frame_rate_hz = 8; state.exposure_ms = 1; constrain(); }
           syncControls(); schedule();
         });
       });
@@ -1604,7 +1659,7 @@
   buildControls(); buildCards(); buildPredictions();
   document.querySelectorAll('input[name="level"]').forEach(function (r) { r.addEventListener("change", function () { if (r.checked) setLevel(r.value, true); }); });
   document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }); });
-  $("btn-reset").addEventListener("click", function () { const keep = LEVEL_RANK[level] >= 3 ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
+  $("btn-reset").addEventListener("click", function () { compare = null; const keep = LEVEL_RANK[level] >= 3 ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
   $("btn-seed").addEventListener("click", function () { state.seed = (state.seed * 1103515245 + 12345) % 2147483647; schedule(); });
   $("btn-play").addEventListener("click", function () { playing = !playing; $("btn-play").textContent = playing ? "Pause" : "Play"; });
   $("btn-play").textContent = playing ? "Pause" : "Play";
