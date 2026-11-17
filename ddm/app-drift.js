@@ -1325,7 +1325,7 @@
     h += '<p class="small" style="margin:0">Set: ' + causeText() + '. Diffusion ' + fmtSig(res.D_um2_s, 3) + ' ' + MU + 'm\u00b2/s, so a size of ' + fmtSize(res.diameter_um) + ' (true ' + fmtSize(tr.diameter_um) + (Math.abs(trD / tr.D_um2_s - 1) > 0.05 ? '; near the glass they diffuse at ' + fmtSig(trD, 3) + ' ' + MU + 'm\u00b2/s, as ' + fmtSize(tr.diameter_um * tr.D_um2_s / trD) + ' particles would far from it' : '') + ').' + (state.cause === "flow" && state.flow_profile === "poiseuille" ? ' The fit of D assumes one speed: the spread of speeds through the depth of field reads as extra diffusion, so D comes out too large and the size too small.' : '') + '</p>';
     // the answer to the slow-drift question quotes this run: the drift set and the slowest one the movie shows, same unit
     const sl = $("slow-live");
-    if (sl) {
+    if (sl && cache.res !== slowRes0) {
       const vm = res.visibility.v_min_um_s;
       if (ev.plane && ev.speed > 0 && vm > 0) {
         const nm = Math.min(ev.speed, vm) < 0.1, f = function (v) { return nm ? fmtSig(v * 1000, 2) + " nm/s" : fmtSig(v, 2) + " " + MU + "m/s"; };
@@ -1465,7 +1465,7 @@
   }
   // the predictions apply to a flow: shown only then (and "double" only while doubling stays on the slider); answered
   // boxes are reset when the reader changes the settings
-  let predicting = false;
+  let predicting = false, slowRes0 = null;   // the result on screen when the slow-drift question was answered
   function syncPredictions() {
     document.querySelectorAll(".predict").forEach(function (box) {
       const kind = box.getAttribute("data-predict");
@@ -1488,7 +1488,7 @@
           const kind = box.getAttribute("data-predict");
           if (kind === "reverse") state.flow_deg = (state.flow_deg + 180) % 360;
           if (kind === "double") state.flow_v = Math.min(20, 2 * state.flow_v);
-          if (kind === "slow") { const keep = state.seed, sp = state.sim_px; state = Object.assign({}, BASE, SLOW_SET); state.seed = LEVEL_RANK[level] >= 3 ? keep : BASE.seed; state.sim_px = sp; }
+          if (kind === "slow") { slowRes0 = cache.res; $("slow-live").textContent = "Computing the detection limit for these beads..."; const keep = state.seed, sp = state.sim_px; state = Object.assign({}, BASE, SLOW_SET); state.seed = LEVEL_RANK[level] >= 3 ? keep : BASE.seed; state.sim_px = sp; }
           predicting = true; constrain(); syncControls(); predicting = false; schedule();
         });
       });
