@@ -216,22 +216,31 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
   analysis, `worker.js`, `data/` Nikon objectives.
 - "Swimming cells" /ddm/swimmers/ (`static/ddm/swimmers/index.html`): `swim.src.html`, `app-swim.js`,
   `active-engine.js` and `worker-swim.js`; it shares the optics, movie and engine files.
+- "Drifting particles" /ddm/drift/ (`static/ddm/drift/index.html`): `drift.src.html`, `app-drift.js`,
+  `drift-engine.js` (velocity from the cross spectrum, fitted through its imaginary part at all delays and all q so that
+  drifts too slow to make any pattern swing still count, as in tracking; uncertainty from two jackknifes in quadrature;
+  a drift is reported when it exceeds three times its uncertainty; D from the structure function with the depth of
+  field; the published method for the Addict row is phase differential microscopy, phiDM, Colin, Zhang and Wilson 2014) and
+  `worker-drift.js`; spheres only (colloids, no interactions). Causes: flow (plug or Poiseuille), sedimentation
+  (microscope upright or on its side), thermophoresis with Soret coefficients from Duhr and Braun 2006, Iacopini,
+  Rusconi and Piazza 2006, Braibanti, Vigolo and Piazza 2008, and Helden, Eichhorn and Bechinger 2015 (`THERMO` in
+  `app-drift.js`).
 
-Both application pages have a fourth reader level, "Addict" (`#addict`): one switch for each step the
-analysis adds to the published method (`x_*` settings in `app.js` and `app-swim.js`, mapped to engine options;
+All application pages have a fourth reader level, "Addict" (`#addict`): one switch for each step the
+analysis adds to the published method (`x_*` settings in `app.js`, `app-swim.js` and `app-drift.js`, mapped to engine options;
 `opts.published_only` switches them all off), and a "published method only" row computed on the same movie.
 Each such step is described in the methods text and listed under "What this page adds to the published
 methods" (no tags in the text). A new step that is not in the cited papers gets both a list entry and a switch.
 
 Shared links: the address of an application page holds the level and every setting that differs from `BASE`
 (`#student/diameter_um=0.5&mode=fluorescence`, objectives by name); a new setting must live in `BASE` to be
-shareable. "Download the movie" writes the analysed frames as a 32-bit TIFF (`tiff.js`, used by both pages).
+shareable. "Download the movie" writes the analysed frames as a 32-bit TIFF (`tiff.js`, used by all application pages).
 
 After any change to the sources: run `python3 ddm/build.py`, then `python3 build.py --check`, and commit
 both. Checks: `cd ddm && node test-optics.js data/mie_ref.json && node test-engine.js && node test-movie.js`
-(the last takes several minutes), and for the swimmers `node test-swim.js && node test-active.js`.
+(the last takes several minutes), for the swimmers `node test-swim.js && node test-active.js`, and for the drift page `node test-drift.js`.
 `python3 ddm/build.py --preview` writes stand-alone copies (`ddm-landing.html`, `ddm-hands-on.html`,
-`ddm-swimmers.html`, linked to each other, Google Fonts) for previews outside the site; do not commit them.
+`ddm-swimmers.html`, `ddm-drift.html`, linked to each other, Google Fonts) for previews outside the site; do not commit them.
 The page text follows the writing style above; it must stay ASCII (the build refuses other characters).
 
 ## Analytics

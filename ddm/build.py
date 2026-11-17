@@ -31,11 +31,11 @@ DOC_START = """<!doctype html>
 """
 
 
-# the pages: landing (/ddm/), sizing (/ddm/sizing/) and swimming cells (/ddm/swimmers/)
+# the pages: landing (/ddm/), sizing (/ddm/sizing/), swimming cells (/ddm/swimmers/) and drifting particles (/ddm/drift/)
 PAGES = {
     "landing": {"src": "landing.src.html", "out": "static/ddm/index.html", "preview": "ddm-landing.html", "title": "DDM, hands on",
                 "canonical": "https://rcerbino.github.io/ddm/", "up": "../",
-                "description": "Differential dynamic microscopy (DDM) hands on: simulated microscopy experiments in your browser, analysed step by step from the raw movie to the result. Size particles from how they move, or measure how fast cells swim.",
+                "description": "Differential dynamic microscopy (DDM) hands on: simulated microscopy experiments in your browser, analysed step by step from the raw movie to the result. Size particles from how they move, measure how fast cells swim, or follow particles carried by a flow, gravity or heat.",
                 "parts": {}},
     "sizing": {"src": "page.src.html", "out": "static/ddm/sizing/index.html", "preview": "ddm-hands-on.html", "title": "Sizing particles with DDM",
                "canonical": "https://rcerbino.github.io/ddm/sizing/", "up": "../../",
@@ -47,12 +47,18 @@ PAGES = {
                  "description": "Differential dynamic microscopy (DDM) of swimming cells (bacteria, algae, sperm): simulate a motility assay in your browser and measure swimming speeds, step by step, from the raw movie to the distribution of speeds.",
                  "parts": {"/*OBJECTIVES*/": "data/objectives.min.json", "/*OPTICS*/": "optics.js", "/*MOVIE*/": "movie.js",
                            "/*ENGINE*/": "ddm-engine.js", "/*ACTIVE*/": "active-engine.js", "/*WORKER*/": "worker-swim.js", "/*TIFF*/": "tiff.js", "/*APP*/": "app-swim.js"}},
+    "drift": {"src": "drift.src.html", "out": "static/ddm/drift/index.html", "preview": "ddm-drift.html", "title": "DDM of drifting particles",
+              "canonical": "https://rcerbino.github.io/ddm/drift/", "up": "../../",
+              "description": "Differential dynamic microscopy (DDM) of particles carried by a flow, by gravity or by a temperature gradient (thermophoresis): simulate the experiment in your browser and measure the speed and direction of the drift, step by step.",
+              "parts": {"/*OBJECTIVES*/": "data/objectives.min.json", "/*OPTICS*/": "optics.js", "/*MOVIE*/": "movie.js",
+                        "/*ENGINE*/": "ddm-engine.js", "/*DRIFT*/": "drift-engine.js", "/*WORKER*/": "worker-drift.js", "/*TIFF*/": "tiff.js", "/*APP*/": "app-drift.js"}},
 }
 # links between the pages, as written in the sources (site addresses), and the file each points to in the previews
 PREVIEW_LINKS = {
-    "landing": {'href="sizing/': 'href="ddm-hands-on.html', 'href="swimmers/': 'href="ddm-swimmers.html', '"sizing/" + location.hash': '"ddm-hands-on.html" + location.hash'},
-    "sizing": {'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../"': 'href="ddm-landing.html"'},
-    "swimmers": {'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "landing": {'href="sizing/': 'href="ddm-hands-on.html', 'href="swimmers/': 'href="ddm-swimmers.html', 'href="drift/': 'href="ddm-drift.html', '"sizing/" + location.hash': '"ddm-hands-on.html" + location.hash'},
+    "sizing": {'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "swimmers": {'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "drift": {'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../"': 'href="ddm-landing.html"'},
 }
 
 
