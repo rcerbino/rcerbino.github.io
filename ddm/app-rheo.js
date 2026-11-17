@@ -145,7 +145,7 @@
     else parts.push("Flows at long times, with a viscosity of " + fmtPas(f.eta0) + " (the solvent: " + fmtPas(solventPa_s()) + ").");
     const c = f.cross.filter(function (x) { return x.elastic_above; })[0];
     if (c && level !== "curious") parts.push("G' and G'' cross at " + fmtW(c.w) + ": more elastic above, more viscous below.");
-    if (state.mat === "critical" || state.mat === "pregel" || state.mat === "gel") parts.push(level === "curious" ? "As a gel forms, its relaxation times stretch out until, at the gel point, they have no end." : "Power law G(t) = S t^-1/2 (Winter and Chambon), S = 0.05 Pa s^1/2" + (state.mat === "pregel" ? ", cut off at 1 s: still a liquid." : state.mat === "gel" ? ", plus a plateau of 0.05 Pa: a solid." : " at all times: neither liquid nor solid."));
+    if (state.mat === "critical" || state.mat === "pregel" || state.mat === "gel") parts.push(level === "curious" ? "As a gel forms, its relaxation times stretch out until, at the gel point, they have no end." : "Power law G(t) = S t^-1/2 (Winter and Chambon), S = 0.05 Pa s^1/2" + (state.mat === "pregel" ? ", cut off at 1 s: still a liquid." : state.mat === "gel" ? ", plus a plateau of 0.05 Pa: a solid." : " from 0.1 ms to about 3 hours: neither liquid nor solid within any movie."));
     if (state.mat === "stiff") parts.push("Measured with a rheometer by Lennon et al. (2020): relaxation time 0.64 s, plateau 40 Pa. Stiff for DDM: the beads hardly move.");
     return parts.join(" ");
   }
@@ -154,7 +154,7 @@
     const a = state.diameter_um / 2 * 1e-6, f = materialFacts(), kT = KB * (state.T_C + 273.15);
     if (!(f.Ginf > 0)) return "";
     const r = Math.sqrt(kT / (Math.PI * a * f.Ginf) * 2 / 3) * 1e6;   // rms displacement in the image plane, um
-    return "In this gel each bead rattles by about " + fmtSig(r * 1000, 2) + " nm in the image plane.";
+    return "In this gel two looks at a bead, far apart in time, find it on average about " + fmtSig(r * 1000, 2) + " nm apart in the image plane.";
   }
   // the standard sample: 500 nm polystyrene tracer beads (as the LB5 latex of Edera et al. 2017) in a soft solution of
   // wormlike micelles, bright field through a 40x objective, 512 log-spaced frames from 2 ms to about 100 s
@@ -383,7 +383,7 @@
   const ONOFF = function (off) { return [["on", "On"], ["off", "Off: " + off]]; };
   CONTROLS.push(
     { key: "x_amp", lvl: 4, label: "Amplitude A from the mean power", kind: "select", options: ONOFF("A = 2 var - B, from the variance in time"),
-      hint: function () { return "On: A = 2 <|F(q)|\u00b2> - B, the whole amplitude, including the part of each pattern that does not change during the movie (all of it in a solid). Off: A = 2 var - B, the usual estimate, which misses that part."; } },
+      hint: function () { return "On: A = 2 <|F(q)|\u00b2> - B, the whole amplitude, including the part of each pattern that the beads do not renew within the movie (all of it in a solid, much of it for the widest patterns of a slowly flowing liquid). Off: A = 2 var - B, the usual estimate, which misses that part."; } },
     { key: "x_noise", lvl: 4, label: "Camera noise known from the detector", kind: "select", options: ONOFF("B at each q from the first delays"),
       hint: function () { return "On: B = 2 (excess-noise factor x mean count + read noise\u00b2), the same at every q. Off: B at each q from a quadratic through the first five delays."; } },
     { key: "x_depth", lvl: 4, label: "Depth of field", kind: "select", options: ONOFF("only sideways motion"),
@@ -1149,7 +1149,7 @@
     });
     a.done();
     const leg = $("curves-legend"); leg.innerHTML = "";
-    pick.forEach(function (k) { const q = res.q_per_um[res.bins[k]], s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(q)) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / q, 2) + " " + MU + "m" : "q = " + q.toFixed(2)); leg.appendChild(s); });
+    pick.forEach(function (k) { const q = res.q_per_um[res.bins[k]], s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(q)) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / q, 2) + " " + MU + "m" : "q = " + q.toFixed(2) + " " + MU + "m\u207b\u00b9"); leg.appendChild(s); });
   }
   // mean squared displacement: from each q (coloured), combined (black, with its uncertainty), and the truth
   function drawMsd() {
@@ -1171,7 +1171,7 @@
     a.done();
     const ul = $("msd-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
-    add(level === "curious" ? "Coloured dots: from each stripe spacing alone, in the colours of step 5. Black: all of them together, with the curve through them." : "Coloured dots: <\u0394r\u00b2> = -(4/q\u00b2) ln f from each q alone (colours of step 5), where f is clearly below 1 and above 0.15. Black: combined over q, with its uncertainty (jackknife over ten parts of the movie), and the smooth curve used below.");
+    add(level === "curious" ? "Coloured dots: from each stripe spacing alone, in the colours of step 5. Black: all of them together, with the curve through them." : "Coloured dots: the displacement that gives the measured f at each q alone (colours of step 5; with the depth of field, see the math), where f is clearly below 1 and above 0.15. Black: combined over q, with its uncertainty (jackknife over ten parts of the movie), and the smooth curve used below.");
     if (level !== "curious") add("Dashed red: what the simulated beads do in this material (exact). A slope of 1 on these axes is free diffusion; a flat stretch, beads held in cages.");
   }
   // storage (G') and loss (G'') moduli against frequency, with the rheometer (the material simulated)
@@ -1200,7 +1200,7 @@
     a.done();
     const ul = $("mod-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
-    add(level === "curious" ? "Blue dots: how elastic the material is (G', the storage modulus). Red squares: how viscous (G'', the loss modulus). Dashed lines: what a rheometer would measure on the material simulated." : "Blue dots: G', red squares: G'', from the beads (bars: jackknife over ten parts of the movie). Dashed: the moduli of the material simulated, as a rheometer would give them.");
+    add(level === "curious" ? "Blue dots: how elastic the material is (G', the storage modulus). Red squares: how viscous (G'', the loss modulus). Dashed lines: what a rheometer would measure on the material simulated." : "Blue dots: G', red squares: G'', from the beads (bars: jackknife over ten parts of the movie). Dashed: the moduli of the material simulated, as a rheometer would give them. A modulus less than a tenth of the other is left out of the comparison in the result: no method resolves it next to the larger one.");
     if (LEVEL_RANK[level] >= 3) add("Dotted: Mason's local power-law formulas on the same mean squared displacement.");
   }
 
@@ -1210,9 +1210,10 @@
   function pctTxt(x) { return x === null || x === undefined || !isFinite(x) ? "-" : (100 * x < 1 ? "<1" : Math.round(100 * x)) + " %"; }
   // how far a set of moduli is from the material's: mean |ln ratio| over the frequencies measured, counting each modulus
   // where it is at least a tenth of the larger one (a modulus far below the other is beyond what any method resolves)
+  let offUsed = [0, 0];      // how many G' and G'' values the last comparison counted
   function offFromTruth(ws, gp, gpp) {
-    const mat = materialSpec(), es = cache.movie.viscosity_Pa_s; let s = 0, n = 0;
-    ws.forEach(function (w, k) { const g = VISCO.gstar(mat, es, w), mx = Math.max(g[0], g[1]); [[gp[k], g[0]], [gpp[k], g[1]]].forEach(function (p) { if (p[1] >= 0.1 * mx && p[0] > 0) { s += Math.abs(Math.log(p[0] / p[1])); n++; } }); });
+    const mat = materialSpec(), es = cache.movie.viscosity_Pa_s; let s = 0, n = 0; offUsed = [0, 0];
+    ws.forEach(function (w, k) { const g = VISCO.gstar(mat, es, w), mx = Math.max(g[0], g[1]); [[gp[k], g[0]], [gpp[k], g[1]]].forEach(function (p, j) { if (p[1] >= 0.1 * mx && p[0] > 0) { s += Math.abs(Math.log(p[0] / p[1])); n++; offUsed[j]++; } }); });
     return n ? s / n : null;
   }
   // G' and G'' nearly equal over the range (a gel point): crossings there are only noise
@@ -1228,10 +1229,12 @@
     if (r.eta_long_Pa_s) return { word: "A liquid", text: "at long times the beads diffuse freely: the material flows" };
     return { word: "In between", text: "the beads neither diffuse freely nor stay put within the movie" };
   }
+  // the verdict names the window it covers, and which modulus it could compare when one is too small to resolve
   function verdict() {
-    const r = cache.res, off = offFromTruth(r.w_rad_s, r.Gp_Pa, r.Gpp_Pa);
+    const r = cache.res, off = offFromTruth(r.w_rad_s, r.Gp_Pa, r.Gpp_Pa), ws = r.w_rad_s;
     if (off === null) return { cls: "info", text: "No moduli to compare" };
-    return off < 0.2 ? { cls: "good", text: "Matches the rheometer (within about 20 %)" } : off < 0.5 ? { cls: "warn", text: "Off from the rheometer by about " + Math.round(100 * (Math.exp(off) - 1)) + " %" } : { cls: "bad", text: "Far from the rheometer (a factor " + fmtSig(Math.exp(off), 2) + " on average)" };
+    const win = " from " + fmtSig(ws[0], 2) + " to " + fmtSig(ws[ws.length - 1], 2) + " rad/s", only = !offUsed[0] ? ", G'' only (G' too small there)" : !offUsed[1] ? ", G' only (G'' too small there)" : "";
+    return off < 0.2 ? { cls: only ? "info" : "good", text: "Matches the rheometer" + win + only } : off < 0.5 ? { cls: "warn", text: "Off from the rheometer by about " + Math.round(100 * (Math.exp(off) - 1)) + " %" + win + only } : { cls: "bad", text: "Far from the rheometer (a factor " + fmtSig(Math.exp(off), 2) + " on average)" + win + only };
   }
   function renderResult() {
     const res = cache.res, mv = cache.movie, v = verdict(), k = kindOf(res), facts = materialFacts();
@@ -1253,7 +1256,7 @@
       const row = function (cls, name, cross, eta, plat, off, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + cross + '</td><td>' + eta + '</td><td>' + plat + '</td><td>' + off + '</td></tr>'; };
       const crossTxt = function (cs, ws, gp, gpp) { if (ws && parallelOf(ws, gp, gpp)) return "side by side"; const c = cs.filter(function (x) { return x.elastic_above; }); return c.length ? fmtW(c[0].w) : "none"; };
       let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">G\' = G\'\'</th><th scope="col">Viscosity</th><th scope="col">Plateau</th><th scope="col">Off from the rheometer</th></tr></thead><tbody>';
-      const offTxt = function (o) { return o === null ? "-" : Math.round(100 * (Math.exp(o) - 1)) + " %"; };
+      const offTxt = function (o) { return o === null ? "-" : o > Math.log(2) ? "a factor " + fmtSig(Math.exp(o), 2) : Math.round(100 * (Math.exp(o) - 1)) + " %"; };
       t += row("main", res.inversion === "mason" ? "Mason's formulas" : "Retardation spectrum", crossTxt(res.crossings, res.w_rad_s, res.Gp_Pa, res.Gpp_Pa), res.eta_long_Pa_s ? fmtPas(res.eta_long_Pa_s) : "-", res.plateau_Pa ? fmtPa(res.plateau_Pa) : "-", offTxt(offFromTruth(res.w_rad_s, res.Gp_Pa, res.Gpp_Pa)), "the headline");
       if (LEVEL_RANK[level] >= 3 && res.inversion !== "mason") t += row("", "Mason's formulas, same displacement", crossTxt(crossingsOf(res.w_rad_s, res.mason.Gp_Pa, res.mason.Gpp_Pa), res.w_rad_s, res.mason.Gp_Pa, res.mason.Gpp_Pa), "-", "-", offTxt(offFromTruth(res.w_rad_s, res.mason.Gp_Pa, res.mason.Gpp_Pa)), "G* from the local slope of <\u0394r\u00b2> (Mason 2000)");
       if (level === "addict" && res.published) {
@@ -1309,17 +1312,17 @@
   const CARDS = [
     { lvl: 1, title: "A liquid, a solid, and in between", text: "In water the beads diffuse freely: the mean squared displacement grows in proportion to time and only G'' shows, growing with frequency. In a solution of wormlike micelles they first rattle in a cage, then escape once the micelles relax: elastic at high frequencies, viscous at low ones, with G' and G'' crossing in between. In a soft gel they never escape: the displacement levels off and G' keeps a plateau down to the lowest frequencies.",
       shows: [{ label: "Water", set: { mat: "newtonian", log_factor: 10 }, go: "step-rates" }, { label: "Wormlike micelles", set: { mat: "micelles" }, go: "step-rates" }, { label: "Soft gel", set: { mat: "gel" }, go: "step-rates" }] },
-    { lvl: 1, title: "Watching a gel form", text: "As a sample gels, its slowest relaxation gets slower and slower. Just before the gel point it still flows at long times. At the gel point the relaxation times have no end: G' and G'' are parallel lines, equal at every frequency (G ~ \u03c9^1/2 here), and the beads' displacement grows as the square root of time for ever. Past it a plateau appears: a solid, still very soft.",
+    { lvl: 1, title: "Watching a gel form", text: "As a sample gels, its slowest relaxation gets slower and slower. Just before the gel point it still flows at long times. At the gel point the relaxation times have no end: G' and G'' are parallel lines, equal at every frequency (both grow as the square root of frequency here), and the beads' mean squared displacement grows as the square root of time over the whole movie. Past it a plateau appears: a solid, still very soft.",
       shows: [{ label: "Before", set: { mat: "pregel" }, go: "step-rates" }, { label: "At the gel point", set: { mat: "critical" }, go: "step-rates" }, { label: "After", set: { mat: "gel" }, go: "step-rates" }] },
-    { lvl: 1, title: "Too stiff for these beads", text: "Concentrated wormlike micelles (Lennon et al. 2020) have a plateau of 40 Pa: a 500 nm bead rattles by only about 10 nm, which changes the patterns of this movie by far less than the noise, and within the movie the micelles barely let it flow. With 200 nm beads, which move further, the end of the movie shows them flowing: DDM gets the viscosity, but still not the elastic plateau. Rheometers, or light scattering through the whole sample (DWS), reach stiffer materials.",
+    { lvl: 1, title: "Too stiff for these beads", text: "Concentrated wormlike micelles (Lennon et al. 2020) have a plateau of 40 Pa: in it a 500 nm bead rattles by only about 10 nm, far below what these patterns can see. DDM sees nothing until a few seconds, when the micelles let the beads flow: it gets the viscosity, but not the elastic part. Beads of 200 nm move further and open the window a little earlier (up to about 0.7 rad/s), still short of where G' and G'' cross (1.6 rad/s). Rheometers, or light scattering through the whole sample (DWS), reach stiffer materials.",
       shows: [{ label: "500 nm beads", set: { mat: "stiff" }, go: "step-rates" }, { label: "200 nm beads", set: { mat: "stiff", diameter_um: 0.2 }, go: "step-rates" }] },
-    { lvl: 2, title: "The size of the beads", text: "In the same material, beads half as large move twice as far in the same time (the mean squared displacement goes as one over the size), which suits DDM, but they show less, and the signal can sink into the camera noise. The moduli do not change: they belong to the material. In real samples the beads must also be larger than the mesh of the material, or they slip through it and feel the solvent instead.",
+    { lvl: 2, title: "The size of the beads", text: "In the same material, beads half as large have twice the mean squared displacement in the same time (they get about 1.4 times as far), which suits DDM, but they show less, and the signal can sink into the camera noise. The moduli do not change: they belong to the material. In real samples the beads must also be larger than the mesh of the material, or they slip through it and feel the solvent instead.",
       shows: [{ label: "200 nm", set: { diameter_um: 0.2 }, go: "step-rates" }, { label: "1 " + MU + "m", set: { diameter_um: 1 }, go: "step-rates" }] },
     { lvl: 2, title: "Fast and slow in one movie", text: "Microrheology wants many decades of frequency: frames close together for the fast relaxations and a long movie for the slow ones. Evenly spaced, 512 frames at 500 per second last one second and miss everything slower. Log-spaced frames, in repeating cycles like a multi-tau correlator, stretch the same frames over about 100 s. Edera et al. (2017) recorded two movies instead, at 777 and 10 frames per second.",
       shows: [{ label: "Evenly spaced", set: { frame_timing: "even" }, go: "step-rates" }, { label: "Log-spaced, 100 times longer", set: {}, go: "step-rates" }] },
     { lvl: 2, title: "Dim light", text: "With the lamp at 0.2 % the camera noise is as large as the signal of the finest stripes. Here that costs little: the noise is known from the photon count and averages out over the movie, so the displacement and the moduli barely change, only their scatter grows. In real movies, noise that is not known as well (dust, vibration, a flickering lamp) hurts more.",
       shows: [{ label: "Lamp at 0.2 %", set: { light_frac: 0.002 }, go: "step-rates" }] },
-    { lvl: 3, title: "Why the mean power", text: "The usual estimate of the amplitude, A = 2 var - B, uses how much each pattern changes during the movie. In a solid part of every pattern never changes, so this misses it, and in a viscoelastic material whose slowest relaxation outlasts the movie it misses part of it: the displacements then come out too large, the moduli too small. The mean power of each pattern holds the whole amplitude. At the Addict level the switch Amplitude A from the mean power, and the Plain method row of the result, show the difference.",
+    { lvl: 3, title: "Why the mean power", text: "The usual estimate of the amplitude, A = 2 var - B, uses how much each pattern changes during the movie. It is right only for patterns the beads renew completely within the movie. In a solid part of every pattern never changes; in a slowly flowing liquid the widest patterns are only partly renewed by the end. In both cases the variance misses part of A: the displacements come out too large, the moduli too small. The mean power of each pattern holds the whole amplitude. At the Addict level the switch \"Amplitude A from the mean power\", and the \"Plain method\" row of the result, show the difference.",
       shows: [] }
   ];
   function buildCards() {

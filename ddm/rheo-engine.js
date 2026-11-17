@@ -217,7 +217,7 @@
     });
     yield { stage: "From each pattern to a displacement", frac: 0.4 };
 
-    // usable points: f clearly below 1 (3 times its noise) and above 0.05; published: <dr^2> < 1 / q^2 (Edera et al.)
+    // usable points: f clearly below 1 (3 times its noise) and above 0.15; published: <dr^2> < 1 / q^2 (Edera et al.)
     const msdQ = {}, wQ = {};
     const lnMsdFrom = function (dqAt, b, li) { const f = 1 - (dqAt[li][b] - B[b]) / A[b]; const M = invert(b, f); return M > 0 ? Math.log(M) : NaN; };
     bins.forEach(function (b) {

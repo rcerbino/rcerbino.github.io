@@ -79,7 +79,7 @@ p { margin: 0 0 1rem; }
 
 /* reader levels: what each reader sees */
 html[data-level="curious"] .lvl-2, html[data-level="curious"] .lvl-3, html[data-level="student"] .lvl-3 { display: none !important; }
-html[data-level="student"] .only-1, html[data-level="researcher"] .only-1 { display: none !important; }
+html[data-level="student"] .only-1, html[data-level="researcher"] .only-1, html[data-level="addict"] .only-1 { display: none !important; }
 html[data-level="curious"] details.math { display: none; }
 html:not([data-level="addict"]) .lvl-4 { display: none !important; }
 /* what this page adds to the published methods */
@@ -290,7 +290,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
       <p class="eyebrow">Differential dynamic microscopy</p>
       <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a><span aria-current="page">Crowded particles</span></nav>
       <h1>Crowded particles: how they arrange, and how the crowd moves</h1>
-      <p class="lede">Fill a liquid with particles and they start to get in each other's way. Each one sits in a cage of neighbours, and the crowd takes on an order: not the rows of a crystal, but a typical distance between neighbours. That order shows up as a peak in the structure factor S(q), and it changes how the crowd moves: density patterns at the spacing of neighbours fade slowly, wide ones fast, because the crowd pushes back when it is squeezed. Light scattering has measured this for decades. Differential dynamic microscopy (DDM) does it with a confocal microscope, from the same movie, for structure and motion together (Lu et al. 2012). Here the particles of a simulated crowd push each other, and the page compares what DDM finds with what they really do.</p>
+      <p class="lede">Fill a liquid with particles and they start to get in each other's way. Each one sits in a cage of neighbours, and the crowd takes on an order: not the rows of a crystal, but a typical distance between neighbours. That order shows up as a peak in the structure factor S(q), and it changes how the crowd moves: compared with particles on their own, density patterns at the spacing of neighbours fade more slowly and wide ones faster, because the crowd pushes back when it is squeezed. Light scattering has measured this for decades. Differential dynamic microscopy (DDM) can do it with a microscope (a confocal one for dense samples), from the same movie, for structure and motion together (Lu et al. 2012). Here the particles of a simulated crowd push each other, and the page compares what DDM finds with what they really do.</p>
       <fieldset class="levels">
         <legend>How deep do you want to go?</legend>
         <div class="level-opts" role="radiogroup">
@@ -367,7 +367,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           </figure>
           <div class="text">
             <p id="movie-text"></p>
-            <p>A second, short movie of the same particles, dilute, is recorded with the same microscope and camera: it gives how strong the pattern of one particle alone is, against which the crowd is measured. It is not shown.</p>
+            <p>A second movie of the same particles, dilute (4 %), is recorded with the same microscope and camera, long enough for them to wander through the whole chamber: it tells how strong the pattern of one particle alone is, and how fast it fades. It is not shown.</p>
             <p class="readout lvl-2" id="movie-specs"></p>
           </div>
         </div>
@@ -417,7 +417,7 @@ ref_seq = fd.read_images(reference_file_names)</pre>
           </figure>
           <div class="text">
             <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie. The centre of the map holds wide stripes, the edge fine ones.</p>
-            <p>In a crowd each pattern is a wave of density: more particles along the bright stripes, fewer along the dark ones. A pattern whose spacing matches the distance between neighbours fits the crowd's own order, so it is strong; wide patterns would need many particles to bunch up, which the crowd resists, so they are weak. A ring at the spacing of neighbours appears on the map.</p>
+            <p>In a crowd each pattern is a wave of density: more particles along the bright stripes, fewer along the dark ones. A pattern whose spacing matches the distance between neighbours fits the crowd's own order, so it is strong; wide patterns would need many particles to bunch up, which the crowd resists, so they are weak. The map does not show this order directly: the image of each particle, which fades at fine patterns, weighs on it more. Step 6 divides it out, using the dilute movie.</p>
             <p>The second map shows how much of each pattern is left after the delay: red where it is still all there, the colour of the page where it has faded.</p>
             <p class="lvl-2">The dashed circle on the strength map marks the finest pattern the objective can resolve.</p>
           </div>
@@ -438,7 +438,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
         <div class="step-title"><span class="num">5</span><h2 id="h-curves">Watch each pattern change</h2></div>
         <div class="step-body">
           <div class="text">
-            <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. In a dilute sample fine stripes (red) fade first and wide ones (blue) last, each at the rate set by one particle diffusing. In a crowd the order is broken: the pattern at the spacing of neighbours fades more slowly than its neighbours on either side, because changing it means rearranging the cages.</p>
+            <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. In a dilute sample fine stripes (red) fade first and wide ones (blue) last, each at the rate set by one particle diffusing. In a crowd this order breaks down: wide patterns fade faster than one particle alone would make them, and the pattern at the spacing of neighbours more slowly, because changing it means rearranging the cages. At 30 % several middle curves fade together; at 45 % the pattern at the spacing of neighbours is the slowest of all.</p>
             <p class="lvl-2">The points are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i>. The dashed lines are exp(&minus;&Gamma;&Delta;<i>t</i>), with &Gamma; the rate at which each pattern starts to fade, from the first delays (step 6).</p>
           </div>
           <figure class="viz">
@@ -448,7 +448,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
           <div class="predict" data-predict="crowd" data-right="slower">
             <div class="q">Predict first: the volume fraction goes from 30 % to 45 %. Does the pattern at the spacing of neighbours fade faster or more slowly?</div>
             <div class="btns"><button type="button" data-guess="faster">Faster</button><button type="button" data-guess="slower">More slowly</button><button type="button" data-guess="same">The same</button></div>
-            <div class="a" hidden><span class="verdict"></span> More slowly. A tighter crowd has a stronger order: the peak of S(q) grows, and the rate at the peak, D0 q&sup2; / S(q) at short times, drops with it. Each particle also has less room to move. The bench now runs at 45 %.</div>
+            <div class="a" hidden><span class="verdict"></span> More slowly. A tighter crowd has a stronger order: the peak of S(q) grows, and and the stronger the order, the more slowly that pattern fades. Each particle also has less room to move. The bench now runs at 45 %.</div>
           </div>
         </div>
       </section>
@@ -458,7 +458,8 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
         <div class="step-title"><span class="num">6</span><h2 id="h-rates">Structure and collective motion</h2></div>
         <div class="step-body">
           <div class="text">
-            <p>How strong each pattern is, against the same particles far apart, is the structure factor S(q): the order of the crowd. It peaks at the spacing of neighbours, about 2&pi; / q, and is low for wide patterns, because a crowd is hard to compress. The rate at which each pattern starts to fade, against one particle alone, gives the collective diffusion D(q): roughly D0 / S(q), slowest at the peak (de Gennes narrowing) and fastest for the widest patterns.</p>
+            <p class="only-1">How strong each pattern is, compared with the same particles far apart, tells how the crowd is arranged (the structure factor). It is highest at the spacing of neighbours and low for wide patterns, because a crowd is hard to squeeze. How fast each pattern starts to fade, compared with one particle alone, tells how the crowd moves (collective diffusion): slowest at the spacing of neighbours, fastest for the widest patterns.</p>
+            <p class="lvl-2">How strong each pattern is, against the same particles far apart, is the structure factor S(q): the order of the crowd. It peaks at the spacing of neighbours, about 2&pi; / q, and is low for wide patterns, because a crowd is hard to compress. The rate at which each pattern starts to fade, against one particle alone, gives the collective diffusion D(q): roughly D0 / S(q), slowest at the peak (de Gennes narrowing) and fastest for the widest patterns.</p>
             <p class="lvl-2">Both come out as ratios to the dilute reference movie: the optics, which make each particle's pattern weaker at fine stripes and add motion along the axis of the microscope, cancel out.</p>
           </div>
           <figure class="viz">
@@ -476,7 +477,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             <div class="predict" data-predict="dyed" data-right="gone">
               <div class="q">Predict first: same crowd, but only one particle in twenty is dyed. What happens to the peak of S(q)?</div>
               <div class="btns"><button type="button" data-guess="stays">It stays</button><button type="button" data-guess="gone">It disappears</button><button type="button" data-guess="moves">It moves</button></div>
-              <div class="a" hidden><span class="verdict"></span> It disappears. The undyed particles still crowd the dyed ones, but the dyed ones are too far apart to show any order among themselves: S(q) becomes 1 + x (S - 1), nearly flat at x = 0.05. The patterns now follow single particles, which diffuse more slowly than alone, held back by their cages. The bench now runs with one particle in twenty dyed.</div>
+              <div class="a" hidden><span class="verdict"></span> It disappears. The undyed particles still crowd the dyed ones, but pairs of dyed neighbours are rare, so the order hardly shows: S(q) becomes 1 + x (S - 1), nearly flat at x = 0.05. The patterns now follow single particles, which diffuse more slowly than alone, held back by their cages. The bench now runs with one particle in twenty dyed.</div>
             </div>
           </div>
         </div>
@@ -533,7 +534,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
       <li>P. J. Lu, F. Giavazzi, T. E. Angelini, E. Zaccarelli, F. Jargstorff, A. B. Schofield, J. N. Wilking, M. B. Romanowsky, D. A. Weitz and R. Cerbino, <a href="https://doi.org/10.1103/PhysRevLett.108.218103">Characterizing concentrated, multiply scattering, and actively driven fluorescent systems with confocal differential dynamic microscopy</a>, Phys. Rev. Lett. 108, 218103 (2012). Confocal DDM, and S(q) of concentrated colloids from the ratio to a dilute sample.</li>
       <li>P. N. Segre, O. P. Behrend and P. N. Pusey, <a href="https://doi.org/10.1103/PhysRevE.52.5070">Short-time Brownian motion in colloidal suspensions: experiment and simulation</a>, Phys. Rev. E 52, 5070 (1995). D(q), S(q) and the hydrodynamic function H(q) of hard spheres by light scattering.</li>
       <li>A. J. Banchio and G. Nagele, <a href="https://doi.org/10.1063/1.2868773">Short-time transport properties in dense suspensions: from neutral to charge-stabilized colloidal spheres</a>, J. Chem. Phys. 128, 104903 (2008). H(q) of hard and charged spheres, computed with hydrodynamic interactions.</li>
-      <li>D. M. Heyes and J. R. Melrose, Brownian dynamics simulations of model hard-sphere suspensions, J. Non-Newtonian Fluid Mech. 46, 1 (1993). The simulation method used here.</li>
+      <li>D. M. Heyes and J. R. Melrose, <a href="https://doi.org/10.1016/0377-0257(93)80001-R">Brownian dynamics simulations of model hard-sphere suspensions</a>, J. Non-Newtonian Fluid Mech. 46, 1 (1993). The simulation method used here.</li>
       <li>M. S. Wertheim, <a href="https://doi.org/10.1103/PhysRevLett.10.321">Exact solution of the Percus-Yevick integral equation for hard spheres</a>, Phys. Rev. Lett. 10, 321 (1963).</li>
       <li>R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope</a>, Phys. Rev. Lett. 100, 188102 (2008); E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a>, J. Chem. Phys. 163, 161501 (2025).</li>
     </ul>

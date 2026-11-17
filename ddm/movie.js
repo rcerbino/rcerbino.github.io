@@ -545,7 +545,12 @@
       // start: random places (H uniform in the box), overlaps removed, then one Brownian time
       for (let i = 0; i < nTot; i++) H[i] = rng.u() * Lz;
       for (let it = 0; it < 2000 && unlap() > 0; it++) { /* push apart */ }
-      const nEq = Math.ceil(tauB / h);
+      // settle long enough for the widest density waves of the box to relax from the random start: they relax at the
+      // collective rate D0 k^2 / S(k), with S(0) of hard spheres (Percus-Yevick) as a guide; twice that time, at
+      // least one Brownian time (INTC.settle_tauB overrides)
+      const eta0 = phi, S0 = Math.pow(1 - eta0, 4) / Math.pow(1 + 2 * eta0, 2), kmin = TWO_PI / Math.max(L, Lz);
+      const settle = INTC.settle_tauB !== undefined ? num(INTC, "settle_tauB", 0, 1000) : Math.max(1, 2 * S0 / (kmin * kmin * sg * sg));
+      const nEq = Math.ceil(settle * tauB / h);
       return { sg: sg, D0: D0, tauB: tauB, h: h, LB: LB, step: step, nEq: nEq, t: 0, UXd: UXd, UYd: UYd, U0: U0, ks: ks, lf: lf, kind: kind };
     }
     // swimmers: speeds from a Schulz (gamma) distribution with mean swV and relative SD swSpread

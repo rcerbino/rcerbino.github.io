@@ -79,7 +79,7 @@ p { margin: 0 0 1rem; }
 
 /* reader levels: what each reader sees */
 html[data-level="curious"] .lvl-2, html[data-level="curious"] .lvl-3, html[data-level="student"] .lvl-3 { display: none !important; }
-html[data-level="student"] .only-1, html[data-level="researcher"] .only-1 { display: none !important; }
+html[data-level="student"] .only-1, html[data-level="researcher"] .only-1, html[data-level="addict"] .only-1 { display: none !important; }
 html[data-level="curious"] details.math { display: none; }
 html:not([data-level="addict"]) .lvl-4 { display: none !important; }
 /* what this page adds to the published methods */
@@ -437,8 +437,8 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
         <div class="step-title"><span class="num">5</span><h2 id="h-curves">Watch each pattern change</h2></div>
         <div class="step-body">
           <div class="text">
-            <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. Fine stripes (red) change first, because a bead only has to move a little to shift them; wide ones (blue) change later. In a liquid every curve falls to zero in the end. In a gel the beads cannot leave their cages, so the curves stop at a plateau: they never forget their pattern, and the wider the stripes the higher the plateau.</p>
-            <p class="lvl-2">The points are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i>. The lines are exp[&minus;<i>q</i><sup>2</sup> &lang;&Delta;<i>r</i><sup>2</sup>&rang; / 4] with the mean squared displacement of step 6, the same for every <i>q</i>: if the beads' displacements are Gaussian, one displacement explains all the curves.</p>
+            <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. Fine stripes (red) change first, because a bead only has to move a little to shift them; wide ones (blue) change later. In a liquid every curve falls to zero in the end. In a gel the beads cannot leave their cages, so the curves level off well above zero: they never forget their pattern, and the wider the stripes the higher the level.</p>
+            <p class="lvl-2">The points are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i>. The lines are exp[&minus;<i>q</i><sup>2</sup> &lang;&Delta;<i>r</i><sup>2</sup>&rang; / 4] with the mean squared displacement of step 6 (leaving out the small effect of the depth of field), the same for every <i>q</i>: if the beads' displacements are Gaussian, one displacement explains all the curves.</p>
           </div>
           <figure class="viz">
             <div class="chart"><canvas id="chart-curves" aria-label="How much of each pattern is left against the delay"></canvas></div>
@@ -447,7 +447,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
           <div class="predict" data-predict="gel" data-right="no">
             <div class="q">Predict first: in a gel the beads cannot leave their cages. Do the curves still fall to zero at long delays?</div>
             <div class="btns"><button type="button" data-guess="yes">Yes</button><button type="button" data-guess="no">No</button></div>
-            <div class="a" hidden><span class="verdict"></span> No. Each bead only rattles in its cage, so part of every pattern never changes: the curves stop at a plateau, higher for wider stripes, which a small rattle hardly moves. The height of the plateau gives how far the beads rattle, and from it the elastic modulus of the gel. The bench now runs with a soft gel.</div>
+            <div class="a" hidden><span class="verdict"></span> No. Each bead only rattles in its cage, so part of every pattern never changes: the curves level off above zero, higher for wider stripes, which a small rattle hardly moves. The height of the plateau gives how far the beads rattle, and from it the elastic modulus of the gel. The bench now runs with a soft gel.</div>
           </div>
         </div>
       </section>
@@ -458,7 +458,8 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
         <div class="step-body">
           <div class="text">
             <p>Each curve of step 5 gives, at each delay, how far the beads have moved on average: the mean squared displacement. Fine stripes give the small displacements of short delays, wide stripes the large ones of long delays, and where they overlap they agree. Free diffusion makes the displacement grow in proportion to the delay (a slope of 1 on these axes); beads held in cages make it level off (a slope of 0).</p>
-            <p>The generalised Stokes-Einstein relation turns the displacement into the moduli: the stiffer the material, the less the beads move, and the faster it relaxes, the sooner they escape. A delay &Delta;<i>t</i> stands for a frequency of about 1/&Delta;<i>t</i>.</p>
+            <p class="only-1">A rule that goes back to Einstein turns the displacement into the moduli: the stiffer the material, the less the beads move, and the faster it relaxes, the sooner they escape. A delay &Delta;<i>t</i> stands for a frequency of about 1/&Delta;<i>t</i>.</p>
+            <p class="lvl-2">The generalised Stokes-Einstein relation turns the displacement into the moduli: the stiffer the material, the less the beads move, and the faster it relaxes, the sooner they escape. A delay &Delta;<i>t</i> stands for a frequency of about 1/&Delta;<i>t</i>.</p>
           </div>
           <figure class="viz">
             <figcaption>How far the beads get</figcaption>
@@ -505,7 +506,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     <h2 id="h-adds">What this page adds to the published methods</h2>
     <p class="prose">DDM microrheology was introduced by Edera et al. (2017), and Bayles, Squires and Helgeson (2017) did the same independently: f(q, &Delta;t) turned into a mean squared displacement at each q, then into the moduli through the generalised Stokes-Einstein relation. Edera et al. chose A and B by making the displacements from all q agree; in a simulation the camera is known, so this page gets B from the photon count and A from the mean power instead. The steps below are not in the papers we cite: we added them while testing the page against its own simulations, and some may exist elsewhere. At the "Addict" level each can be switched off, and the result table shows a plain method on the same movie (A from the variance, B from the first delays, no depth of field, q where the displacement is below 1/q&sup2;, Mason's formulas).</p>
     <ul class="adds">
-      <li><b>Amplitude from the mean power.</b> A = 2&lang;|F(q)|&sup2;&rang; &minus; B instead of 2 var &minus; B. <span class="where">Step 6. In a material whose slowest relaxation outlasts the movie the variance misses part of A: for the soft micelles the plain method read the moduli several times off.</span></li>
+      <li><b>Amplitude from the mean power.</b> A = 2&lang;|F(q)|&sup2;&rang; &minus; B instead of 2 var &minus; B. <span class="where">Step 6. When the widest patterns are not renewed within the movie the variance misses part of A: on the standard micelles this alone reads the viscosity three times too low (85 instead of 250 mPa s).</span></li>
       <li><b>Camera noise known from the detector.</b> B = 2 (excess-noise factor &times; mean count + read noise&sup2;), the same at every q. <span class="where">Step 6.</span></li>
       <li><b>Depth of field.</b> Beads moving up and down change each pattern too; the inversion includes it through the optics of step 1, as on the sizing page. <span class="where">Step 6.</span></li>
       <li><b>Points chosen by their noise.</b> Each q is used where f is clearly below 1 and above 0.15, weighted by the noise of ln &lang;&Delta;r&sup2;&rang; from a jackknife over ten parts of the movie; the widest patterns are left out. <span class="where">Step 6. The widest patterns read the displacement up to twice too large in our tests.</span></li>
@@ -530,7 +531,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     <ul class="lvl-2">
       <li>P. Edera, D. Bergamini, V. Trappe, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1103/PhysRevMaterials.1.073804">Differential dynamic microscopy microrheology of soft materials: a tracking-free determination of the frequency-dependent loss and storage moduli</a>, Phys. Rev. Materials 1, 073804 (2017). The method used here, tested on water-glycerol mixtures and on a polymer solution against a rheometer and diffusing-wave spectroscopy.</li>
       <li>A. V. Bayles, T. M. Squires and M. E. Helgeson, <a href="https://doi.org/10.1007/s00397-017-1047-7">Probe microrheology without particle tracking by differential dynamic microscopy</a>, Rheol. Acta 56, 863 (2017). The same idea, on sucrose solutions, wormlike micelles and polyacrylamide gels.</li>
-      <li>T. G. Mason, <a href="https://doi.org/10.1007/s003970000084">Estimating the viscoelastic moduli of complex fluids using the generalized Stokes-Einstein equation</a>, Rheol. Acta 39, 371 (2000). The local power-law formulas.</li>
+      <li>T. G. Mason, <a href="https://doi.org/10.1007/s003970000094">Estimating the viscoelastic moduli of complex fluids using the generalized Stokes-Einstein equation</a>, Rheol. Acta 39, 371 (2000). The local power-law formulas.</li>
       <li>H. H. Winter and F. Chambon, <a href="https://doi.org/10.1122/1.549853">Analysis of linear viscoelasticity of a crosslinking polymer at the gel point</a>, J. Rheol. 30, 367 (1986). The critical gel: G' and G'' parallel power laws.</li>
       <li>K. R. Lennon, M. Geri, G. H. McKinley and J. W. Swan, <a href="https://doi.org/10.1122/8.0000104">Medium amplitude parallel superposition (MAPS) rheology. Part 2: Experimental protocols and data analysis</a>, J. Rheol. 64, 1263 (2020). The concentrated wormlike micelles of the card "Too stiff for these beads".</li>
       <li>R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope</a>, Phys. Rev. Lett. 100, 188102 (2008); E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a>, J. Chem. Phys. 163, 161501 (2025).</li>
