@@ -312,7 +312,7 @@
 
     return {
       published: published, inversion: inversion, noise: noiseMode, depth: !!depthOn, radius_um: a_um,
-      n: S.n, lags: S.lags, taus_s: taus, pairs: S.pairs ? S.pairs.map(function (p) { return p.length / 2; }) : null, q_per_um: Array.from(qv), d2d: S.d2d, dq: S.dq.map(function (r) { return Array.from(r); }),
+      n: S.n, lags: S.lags, taus_s: taus, pairs: S.pairs, q_per_um: Array.from(qv), d2d: S.d2d, dq: S.dq.map(function (r) { return Array.from(r); }),
       A: Array.from(A), B: Array.from(B), B_camera: camB, bins: bins,
       f: bins.map(function (b) { return Array.from(fq[b]); }), f_err: bins.map(function (b) { return Array.from(sfq[b]); }),
       msd_q: bins.map(function (b) { return Array.from(msdQ[b]).map(function (x) { return isFinite(x) ? Math.exp(x) : null; }); }),

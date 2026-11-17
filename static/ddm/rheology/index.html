@@ -4274,7 +4274,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
 
     return {
       published: published, inversion: inversion, noise: noiseMode, depth: !!depthOn, radius_um: a_um,
-      n: S.n, lags: S.lags, taus_s: taus, pairs: S.pairs ? S.pairs.map(function (p) { return p.length / 2; }) : null, q_per_um: Array.from(qv), d2d: S.d2d, dq: S.dq.map(function (r) { return Array.from(r); }),
+      n: S.n, lags: S.lags, taus_s: taus, pairs: S.pairs, q_per_um: Array.from(qv), d2d: S.d2d, dq: S.dq.map(function (r) { return Array.from(r); }),
       A: Array.from(A), B: Array.from(B), B_camera: camB, bins: bins,
       f: bins.map(function (b) { return Array.from(fq[b]); }), f_err: bins.map(function (b) { return Array.from(sfq[b]); }),
       msd_q: bins.map(function (b) { return Array.from(msdQ[b]).map(function (x) { return isFinite(x) ? Math.exp(x) : null; }); }),
@@ -5667,7 +5667,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     obj.simulation = Object.assign({}, cache.cfg, { visco: { material: state.mat, G_inf_Pa: cache.cfg.visco.G_inf_Pa, modes: cache.cfg.visco.modes.map(function (m) { return [+m[0].toPrecision(3), +m[1].toPrecision(3)]; }) } });
     $("settings-json").textContent = JSON.stringify(obj, null, 1).replace(/\[\s+([-\d.e+,\s\[\]]+?)\s+\]/g, function (m, a) { return "[" + a.replace(/\s+/g, " ") + "]"; });
   }
-  function renderLag() { const res = cache.res, li = lagIndex(); $("lag").max = res.lags.length - 1; $("lag-out").textContent = fmtDur(res.taus_s[li]) + (res.pairs ? " (" + res.lags[li] + (res.lags[li] === 1 ? " frame interval, " : " frame intervals, ") + res.pairs[li] + " pairs of frames)" : " (" + res.lags[li] + (res.lags[li] === 1 ? " frame)" : " frames)")); $("lag").setAttribute("aria-valuetext", fmtDur(res.taus_s[li])); }
+  function renderLag() { const res = cache.res, li = lagIndex(); $("lag").max = res.lags.length - 1; $("lag-out").textContent = fmtDur(res.taus_s[li]) + (res.pairs ? " (" + res.lags[li] + (res.lags[li] === 1 ? " frame interval, " : " frame intervals, ") + res.pairs[li].length / 2 + " pairs of frames)" : " (" + res.lags[li] + (res.lags[li] === 1 ? " frame)" : " frames)")); $("lag").setAttribute("aria-valuetext", fmtDur(res.taus_s[li])); }
   function renderAll() {
     if (!cache.res) return;
     readColors(); grey = greyRange(cache.movie); diffScale = null;
