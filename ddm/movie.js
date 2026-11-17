@@ -230,7 +230,7 @@
       need(Array.isArray(HYD.q_sigma) && Array.isArray(HYD.S) && Array.isArray(HYD.H) && HYD.Ds_over_D0 > 0, "hydrodynamic interactions: the theory tables are missing");
     }
     if (INTC) {
-      need(INTC.kind === "hard" || INTC.kind === "yukawa", "interact.kind must be hard or yukawa");
+      need(INTC.kind === "hard" || INTC.kind === "yukawa" || INTC.kind === "sticky", "interact.kind must be hard, yukawa or sticky");
       need(shape === "sphere" && !visco && !cfg.swim && cfg.gravity !== true && cfg.walls !== true && !(cfg.drift_um_s > 0) && !(spread > 0), "particles that interact: spheres of one size, without swimming, gravity, walls, drift or a material");
     }
     if (visco) {
@@ -475,7 +475,9 @@
     function setupInteract() {
       const sg = classes[0].d, D0 = classes[0].hyd.D_t, tauB = sg * sg / D0, kind = INTC.kind;
       const U0 = kind === "yukawa" ? num(INTC, "U0", 0, 1000) : 0, ks = kind === "yukawa" ? num(INTC, "kappa_sigma", 0.5, 100) : 1, kap = ks / sg;
-      const rc = kind === "yukawa" ? Math.min(sg + 6 / kap, Math.min(L, Lz) / 2) : sg;
+      // sticky spheres (a colloidal gel): hard core plus a short attraction U/kT = -eps exp(-(r - sigma) / l)
+      const eps = kind === "sticky" ? num(INTC, "epsilon", 0, 50) : 0, ell = kind === "sticky" ? num(INTC, "range_sigma", 0.02, 0.5) * sg : 1;
+      const rc = kind === "yukawa" ? Math.min(sg + 6 / kap, Math.min(L, Lz) / 2) : kind === "sticky" ? Math.min(sg + 6 * ell, Math.min(L, Lz) / 2) : sg;
       const lf = INTC.label_fraction === undefined ? 1 : num(INTC, "label_fraction", 0, 1);
       // time step: free steps of 0.03 diameters rms, and the repulsion moving a particle by at most that much where it is
       // 10 kT (closer approaches are rare: the push there is capped at 0.1 diameters per step, and overlaps are removed)
@@ -485,6 +487,7 @@
         let rs = sg; if (U0 > 10) { let lo = sg, hi = sg + 20 / kap; for (let it = 0; it < 60; it++) { const m = 0.5 * (lo + hi); if (Ur(m) > 10) lo = m; else hi = m; } rs = 0.5 * (lo + hi); }
         h = Math.min(h, 0.03 * sg / (D0 * Ur(rs) * (kap + 1 / rs)));
       }
+      if (eps > 0) h = Math.min(h, 0.03 * sg / (D0 * eps / ell));      // the pull at contact moves a particle by at most 0.03 diameters
       const dMax = 0.1 * sg;
       const LB = new Uint8Array(nTot); for (let i = 0; i < nTot; i++) LB[i] = rng.u() < lf ? 1 : 0;
       // unwrapped displacements (for the long-time self-diffusion of the truth)
@@ -533,11 +536,12 @@
       const FX = new Float64Array(nTot), FY = new Float64Array(nTot), FZ = new Float64Array(nTot);
       const st = Math.sqrt(2 * D0 * h);
       const step = function () {
-        if (U0 > 0) {
+        if (U0 > 0 || eps > 0) {
           FX.fill(0); FY.fill(0); FZ.fill(0);
           pairs(function (i, j, ex, ey, ez, r2) {
             const r = Math.sqrt(r2); if (r < sg * 0.999) return;
-            const f = U0 * sg * Math.exp(-kap * (r - sg)) * (kap * r + 1) / (r2 * r);     // |F| / r, kT / um^2
+            // |F| / r in kT / um^2, positive pushing apart: the Yukawa repulsion, or the pull of the sticky attraction
+            const f = U0 > 0 ? U0 * sg * Math.exp(-kap * (r - sg)) * (kap * r + 1) / (r2 * r) : -eps / ell * Math.exp(-(r - sg) / ell) / r;
             FX[i] -= f * ex; FY[i] -= f * ey; FZ[i] -= f * ez; FX[j] += f * ex; FY[j] += f * ey; FZ[j] += f * ez;
           });
         }
@@ -549,11 +553,13 @@
         }
         unlap();
       };
-      // start: random places (H uniform in the box), overlaps removed, then one Brownian time
+      // start: random places (H uniform in the box), overlaps removed, then one Brownian time (sticky spheres: age_tauB
+      // Brownian times, while they stick together into a gel)
       for (let i = 0; i < nTot; i++) H[i] = rng.u() * Lz;
       for (let it = 0; it < 2000 && unlap() > 0; it++) { /* push apart */ }
-      const nEq = Math.ceil(tauB / h);
-      return { sg: sg, D0: D0, tauB: tauB, h: h, LB: LB, step: step, nEq: nEq, t: 0, UXd: UXd, UYd: UYd, U0: U0, ks: ks, lf: lf, kind: kind };
+      const age = kind === "sticky" && INTC.age_tauB !== undefined ? num(INTC, "age_tauB", 0, 1000) : 1;
+      const nEq = Math.ceil(Math.max(1, age) * tauB / h);
+      return { sg: sg, D0: D0, tauB: tauB, h: h, LB: LB, step: step, nEq: nEq, t: 0, UXd: UXd, UYd: UYd, U0: U0, ks: ks, lf: lf, kind: kind, eps: eps, ell_sigma: ell / sg, age_tauB: age };
     }
     // swimmers: speeds from a Schulz (gamma) distribution with mean swV and relative SD swSpread
     const SP = new Float64Array(nTot), PL = new Uint8Array(nTot);
@@ -617,7 +623,24 @@
       let m2 = 0; for (let j = 0; j < nTot; j++) { const dx = INT.UXd[j] - disp0[0][j], dy = INT.UYd[j] - disp0[1][j]; m2 += dx * dx + dy * dy; }
       const span = (times ? times[T - 1] : (T - 1) * dtFrame);
       let nl = 0; for (let j = 0; j < nTot; j++) nl += INT.LB[j];
-      return { kind: INT.kind, sigma_um: INT.sg, phi: phi, D0_um2_s: INT.D0, tau_B_s: INT.tauB, D_self_movie_um2_s: span > 0 ? m2 / nTot / (4 * span) : null, movie_s: span, q_per_um: q, S: Sq, n_labelled: nl, label_fraction: INT.lf, U0: INT.U0, kappa_sigma: INT.ks, step_s: INT.h };
+      // sticky spheres: the true mean squared displacement in the image plane, over all pairs of frames, in log bins of delay
+      let msd = null;
+      if (INT.trk) {
+        const tt = function (k) { return times ? times[k] : k * dtFrame; }, nb = 60, t0 = 1 / fr * 0.999, t1 = Math.max(tt(T - 1), 2 * t0), lr = Math.log(t1 / t0);
+        const sm = new Float64Array(nb), cn = new Float64Array(nb), st = new Float64Array(nb), tr = INT.trk, stride = Math.max(1, Math.floor(T * T / 2 / 60000));
+        let c = 0;
+        for (let i = 0; i < T; i++) for (let j = i + 1; j < T; j++) {
+          if ((c++ % stride) !== 0) continue;
+          const d = tt(j) - tt(i), b = Math.min(nb - 1, Math.floor(nb * Math.log(d / t0) / lr)); if (b < 0) continue;
+          let m = 0; const oi = 2 * nTot * i, oj = 2 * nTot * j;
+          for (let k = 0; k < nTot; k++) { const dx = tr[oj + 2 * k] - tr[oi + 2 * k], dy = tr[oj + 2 * k + 1] - tr[oi + 2 * k + 1]; m += dx * dx + dy * dy; }
+          sm[b] += m / nTot; st[b] += d; cn[b]++;
+        }
+        msd = { t_s: [], m_um2: [] };
+        for (let b = 0; b < nb; b++) if (cn[b] > 0) { msd.t_s.push(st[b] / cn[b]); msd.m_um2.push(sm[b] / cn[b]); }
+      }
+      return { kind: INT.kind, sigma_um: INT.sg, phi: phi, D0_um2_s: INT.D0, tau_B_s: INT.tauB, D_self_movie_um2_s: span > 0 ? m2 / nTot / (4 * span) : null, movie_s: span, q_per_um: q, S: Sq, n_labelled: nl, label_fraction: INT.lf, U0: INT.U0, kappa_sigma: INT.ks, step_s: INT.h,
+               epsilon: INT.eps, range_sigma: INT.ell_sigma, age_tauB: INT.age_tauB, msd: msd };
     }
     const blur = Math.max(Dmax * qcut * qcut * expo, oriented ? 6 * Drmax * expo : 0, Math.pow(vMax * qcut * expo, 2));
     const nsub = blur < 0.05 ? 1 : Math.min(8, Math.ceil(4 * Math.sqrt(blur)));
@@ -1000,6 +1023,7 @@
       if (INT) {
         while (INT.t + INT.h <= t0) { INT.step(); INT.t += INT.h; }
         if (t === 0) disp0 = [Float64Array.from(INT.UXd), Float64Array.from(INT.UYd)];
+        if (INT.kind === "sticky") { if (!INT.trk) INT.trk = new Float32Array(2 * nTot * T); const o = 2 * nTot * t; for (let i = 0; i < nTot; i++) { INT.trk[o + 2 * i] = INT.UXd[i] - disp0[0][i]; INT.trk[o + 2 * i + 1] = INT.UYd[i] - disp0[1][i]; } }
         if (snapAt.has(t)) snaps.push([Float64Array.from(X), Float64Array.from(Y)]);
       }
       for (let i = 0; i < nTot; i++) {
