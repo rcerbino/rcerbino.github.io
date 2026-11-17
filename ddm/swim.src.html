@@ -62,6 +62,11 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .ddm-switch a, .ddm-switch span { margin-right: 0.9rem; }
 .ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
 .proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
+.pn-more { display: none; font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+@media (max-width: 40rem) {   /* phones: one line, the rest on request */
+  .proto-note:not(.open) .pn-rest { display: none; }
+  .proto-note:not(.open) .pn-more { display: inline; }
+}
 
 h1, h2, h3 { font-weight: 500; line-height: 1.2; text-wrap: balance; }
 h1 { font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem); margin: 0 0 1rem; letter-spacing: -0.01em; }
@@ -221,6 +226,8 @@ figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(
 .motion .mkey i.msw { background: var(--accent); } .motion .mkey i.mdf { background: var(--rule); }
 .toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-family: var(--sans); font-size: 0.88rem; }
 .toolbar input[type="range"] { flex: 1 1 10rem; accent-color: var(--accent); }
+.toolbar.pickbar { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 0.8rem; margin-top: 0.5rem; }
+.toolbar.pickbar input[type="range"] { width: 100%; min-width: 0; }
 .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
 .seg button { border: 0; border-radius: 0; padding: 0.3rem 0.7rem; background: var(--panel); }
 .seg button[aria-pressed="true"] { background: var(--tint); color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
@@ -286,7 +293,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
     </nav>
   </div>
 </header>
-<div class="proto-note"><div class="wrap">This web page is a divertissement. For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the cells do not interact) and rely on many approximations. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>. If you like it, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice.</div></div>
+<div class="proto-note"><div class="wrap"><span>This web page is a divertissement.</span><span class="pn-rest" id="pn-rest"> For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the cells do not interact) and rely on many approximations. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>. If you like it, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice.</span> <button type="button" class="pn-more" aria-expanded="false" aria-controls="pn-rest">More</button></div></div>
 
 <main>
   <section class="wrap intro">
@@ -419,14 +426,15 @@ img_seq = fd.read_images(file_names)</pre>
         <div class="step-body split">
           <figure class="viz">
             <div class="pair">
-              <div><div class="imgbox"><canvas id="map" width="128" height="128" aria-label="Power spectrum of the differences; click to choose a pattern"></canvas><canvas id="map-ov" class="overlay" width="512" height="512" style="cursor:crosshair"></canvas></div><div class="cap">Strength of each pattern (click it)</div></div>
+              <div><div class="imgbox"><canvas id="map" width="128" height="128" aria-label="Power spectrum of the differences; click to choose a pattern, or use the two sliders below the maps"></canvas><canvas id="map-ov" class="overlay" width="512" height="512" style="cursor:crosshair"></canvas></div><div class="cap">Strength of each pattern (click it, or use the sliders)</div></div>
               <div><div class="imgbox"><canvas id="stripes" width="128" height="128" aria-label="The stripe pattern you selected"></canvas></div><div class="cap">The pattern you picked</div></div>
             </div>
+            <div class="toolbar pickbar"><label for="pick-k">Stripes, wide to fine</label><input type="range" id="pick-k" min="1" max="63" step="1" value="10"><label for="pick-a">Direction</label><input type="range" id="pick-a" min="0" max="179" step="1" value="30"></div>
             <div class="readout" id="pick-out"></div>
           </figure>
           <div class="text">
             <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie.</p>
-            <p>The centre of the map holds wide stripes, the edge holds fine ones. Click the map to see which pattern a point stands for. The map uses the same delay as step 3.</p>
+            <p>The centre of the map holds wide stripes, the edge holds fine ones. Click the map, or move the two sliders below it, to see which pattern a point stands for. The map uses the same delay as step 3.</p>
             <p class="lvl-2">Distance from the centre is the size of the wave vector, <i>q</i> = 2&pi; / spacing. The particles have no preferred direction, so the map is round (DIC and drift are exceptions), and we average it along circles to get one value for each <i>q</i>. The dashed circle marks the finest pattern the objective can resolve.</p>
           </div>
         </div>

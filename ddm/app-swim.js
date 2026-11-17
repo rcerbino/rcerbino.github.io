@@ -1133,7 +1133,24 @@
     if (level !== "curious") txt += ", q = <b>" + q.toFixed(2) + " " + MU + "m<sup>-1</sup></b>, direction " + ang + "&deg;";
     if (f && f.reason === null) txt += ". This pattern renews in about <b>" + fmtTime(1 / f.gamma_hz) + "</b>; it is the thick curve in step 5" + (level !== "curious" ? ", the ring at q = " + f.q_per_um.toFixed(2) + " that contains it" : "") + ".";
     else if (f) txt += ". Not used: " + f.reason + ".";
-    $("pick-out").innerHTML = txt;
+    $("pick-out").innerHTML = txt; syncPick();
+  }
+  // the same choice from the keyboard: two sliders under the map, stripe spacing (wide to fine) and direction
+  function setPick() {
+    if (!cache.res) return;
+    const k = +$("pick-k").value, a = +$("pick-a").value * Math.PI / 180;
+    let kx = Math.round(k * Math.cos(a)), ky = Math.round(k * Math.sin(a)); if (kx === 0 && ky === 0) kx = 1;
+    sel = { kx: kx, ky: ky }; fromSlider = true; drawMapOverlay(); drawStripes(); drawCurves();
+  }
+  // the pixel nearest to the sliders' setting stands for it; the sliders keep their own value, so that small steps add up
+  let fromSlider = false;
+  function syncPick() {
+    const n = cache.movie.n, k = Math.hypot(sel.kx, sel.ky), deg = ((Math.round(Math.atan2(sel.ky, sel.kx) * 180 / Math.PI) % 180) + 180) % 180, pk = $("pick-k"), pa = $("pick-a");
+    pk.max = Math.floor(n / 2) - 1;
+    if (!fromSlider) { pk.value = Math.round(k); pa.value = deg; }
+    fromSlider = false;
+    pk.setAttribute("aria-valuetext", "stripe spacing " + fmtSig(cache.movie.L_um / k, 2) + " micrometres");
+    pa.setAttribute("aria-valuetext", deg + " degrees");
   }
   function onMapClick(ev) {
     if (!cache.res) return;
@@ -1683,6 +1700,7 @@
   $("btn-play").textContent = playing ? "Pause" : "Play";
   $("lag").addEventListener("input", function () { if (!cache.res) return; renderLag(); drawDiff(frameIdx); drawMap(); });
   $("map-ov").addEventListener("click", onMapClick);
+  document.querySelectorAll(".pn-more").forEach(function (b) { b.addEventListener("click", function () { b.closest(".proto-note").classList.add("open"); b.setAttribute("aria-expanded", "true"); }); }); $("pick-k").addEventListener("input", setPick); $("pick-a").addEventListener("input", setPick);
   $("view-change").addEventListener("click", function () { setCurveView("change"); });
   $("view-d").addEventListener("click", function () { setCurveView("d"); });
   $("btn-copy-report").addEventListener("click", function () {
