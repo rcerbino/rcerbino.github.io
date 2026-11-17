@@ -238,6 +238,8 @@ details.math p { margin: 0.5rem 0; }
 code { font-family: var(--mono); font-size: 0.86em; background: var(--paper); border: 1px solid var(--rule); border-radius: 3px; padding: 0.05em 0.3em; }
 pre.code { font-family: var(--mono); font-size: 0.8rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 0.6rem; overflow-x: auto; margin: 0.5rem 0; line-height: 1.45; }
 
+.start-here { font-family: var(--sans); font-size: 0.92rem; margin: 0.6rem 0 0; max-width: 44rem; }
+#try-dyed { scroll-margin-top: 1rem; }   /* the shortcut lands on the chart, with the question right below it */
 .predict { font-family: var(--sans); font-size: 0.92rem; border: 1px dashed var(--accent); border-radius: 6px; padding: 0.7rem 0.9rem; display: grid; gap: 0.5rem; max-width: var(--measure); }
 .predict .q { font-weight: 600; }
 .predict .a { color: var(--ink); }
@@ -288,8 +290,9 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
     <div>
       <p class="eyebrow">Differential dynamic microscopy</p>
       <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a><span aria-current="page">Crowded particles</span></nav>
-      <h1>Crowded particles: how they arrange, and how the crowd moves</h1>
-      <p class="lede">Fill a liquid with particles and they start to get in each other's way. Each one sits in a cage of neighbours, and the crowd takes on an order: not the rows of a crystal, but a typical distance between neighbours. That order shows up as a peak in the structure factor S(q), and it changes how the crowd moves: compared with particles on their own, density patterns at the spacing of neighbours fade more slowly and wide ones faster, because the crowd pushes back when it is squeezed. Differential dynamic microscopy (DDM) can do it with a microscope (a confocal one for dense samples), from the same movie, for structure and motion together (Lu et al. 2012). Here a simulated crowd lets you compare what DDM finds with what the particles really do.</p>
+      <h1>How does a crowd of particles move?</h1>
+      <p class="lede">Fill a liquid with particles and each one ends up in a cage of neighbours: the crowd takes on a typical spacing, and it moves differently from particles on their own. Differential dynamic microscopy (DDM) reads both the order and the motion from one microscope movie (Lu et al. 2012); here you can check what it finds on a simulated crowd.</p>
+      <p class="start-here"><a href="#try-dyed">Try this first</a>: what changes when only a few particles are dyed? Predict, then watch the page check it.</p>
       <fieldset class="levels">
         <legend>How deep do you want to go?</legend>
         <div class="level-opts" role="radiogroup">
@@ -439,6 +442,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
         <div class="step-body">
           <div class="text">
             <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. In a dilute sample fine stripes (red) fade first and wide ones (blue) last, each at the rate set by one particle diffusing. In a crowd this order breaks down: wide patterns fade faster than one particle alone would make them, and the pattern at the spacing of neighbours more slowly, because changing it means rearranging the cages. At 30 % several middle curves fade together; at 45 % the pattern at the spacing of neighbours is the slowest of all.</p>
+            <p id="curves-few" hidden>With only a few particles dyed the usual order comes back: the curves follow single particles, fine stripes first. Yet every pattern fades more slowly than for one particle alone, because the neighbours you cannot see get in the way.</p>
             <p class="lvl-2">The points are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i>. The dashed lines are exp(&minus;&Gamma;&Delta;<i>t</i>), with &Gamma; the rate at which each pattern starts to fade, from the first delays (step 6).</p>
           </div>
           <figure class="viz">
@@ -448,7 +452,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
           <div class="predict" data-predict="crowd" data-right="slower">
             <div class="q">Predict first: the volume fraction goes from 30 % to 45 %. Does the pattern at the spacing of neighbours fade faster or more slowly?</div>
             <div class="btns"><button type="button" data-guess="faster">Faster</button><button type="button" data-guess="slower">More slowly</button><button type="button" data-guess="same">The same</button></div>
-            <div class="a" hidden><span class="verdict"></span> More slowly. A tighter crowd has a stronger order: the peak of S(q) grows, and and the stronger the order, the more slowly that pattern fades. Each particle also has less room to move. The bench now runs at 45 %.</div>
+            <div class="a" hidden><span class="verdict"></span> More slowly. A tighter crowd has a stronger order: the peak of S(q) grows, and the stronger the order, the more slowly that pattern fades. Each particle also has less room to move. The bench now runs at 45 %.</div>
           </div>
         </div>
       </section>
@@ -458,27 +462,29 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
         <div class="step-title"><span class="num">6</span><h2 id="h-rates">Structure and collective motion</h2></div>
         <div class="step-body">
           <div class="text">
-            <p class="only-1">How strong each pattern is, compared with the same particles far apart, tells how the crowd is arranged (the structure factor). It is highest at the spacing of neighbours and low for wide patterns, because a crowd is hard to squeeze. How fast each pattern starts to fade, compared with one particle alone, tells how the crowd moves (collective diffusion): slowest at the spacing of neighbours, fastest for the widest patterns.</p>
-            <p class="lvl-2">How strong each pattern is, against the same particles far apart, is the structure factor S(q): the order of the crowd. It peaks at the spacing of neighbours, about 2&pi; / q, and is low for wide patterns, because a crowd is hard to compress. The rate at which each pattern starts to fade, against one particle alone, gives the collective diffusion D(q): roughly D0 / S(q), slowest at the peak (de Gennes narrowing) and fastest for the widest patterns.</p>
+            <p class="only-1" id="sq-all-1">How strong each pattern is, compared with the same particles far apart, tells how the crowd is arranged (the structure factor). It is highest at the spacing of neighbours and low for wide patterns, because a crowd is hard to squeeze. How fast each pattern starts to fade, compared with one particle alone, tells how the crowd moves (collective diffusion): slowest at the spacing of neighbours, fastest for the widest patterns.</p>
+            <p class="lvl-2" id="sq-all-2">How strong each pattern is, against the same particles far apart, is the structure factor S(q): the order of the crowd. It peaks at the spacing of neighbours, about 2&pi; / q, and is low for wide patterns, because a crowd is hard to compress. The rate at which each pattern starts to fade, against one particle alone, gives the collective diffusion D(q): roughly D0 / S(q), slowest at the peak (de Gennes narrowing) and fastest for the widest patterns.</p>
+            <p class="only-1" id="sq-few-1" hidden>Only a few particles are dyed, so the movie shows single particles among neighbours you cannot see. Pairs of dyed neighbours are rare, so how strong each pattern is hardly shows the order of the crowd: it stays near the value for particles far apart. The crowd is still there. How fast each pattern starts to fade now follows one particle at a time, and its invisible neighbours hold it back: it moves more slowly than alone.</p>
+            <p class="lvl-2" id="sq-few-2" hidden>With a share x of the particles dyed, the structure factor the movie shows is 1 + x [S(q) - 1]: with few dyed it stays near 1, although the crowd is just as ordered. The patterns then follow single particles (self diffusion): at the shortest delays each moves as if alone, with D0, and over the delays used its cage slows it down.</p>
             <p class="lvl-2">Both come out as ratios to the dilute reference movie: the optics, which make each particle's pattern weaker at fine stripes and add motion along the axis of the microscope, cancel out.</p>
           </div>
-          <figure class="viz">
-            <figcaption>How the particles arrange: the structure factor</figcaption>
+          <figure class="viz" id="try-dyed">
+            <figcaption id="sq-title">How the particles arrange: the structure factor</figcaption>
             <div class="chart"><canvas id="chart-sq" aria-label="Structure factor against q"></canvas></div>
             <ul class="reasons" id="sq-notes"></ul>
           </figure>
+          <div class="predict" data-predict="dyed" data-right="gone">
+            <div class="q">What changes when only a few particles are dyed? Predict first: same crowd, but only one particle in twenty is dyed. What happens to the peak measured from the dyed particles?</div>
+            <div class="btns"><button type="button" data-guess="stays">It stays</button><button type="button" data-guess="gone">It disappears</button><button type="button" data-guess="moves">It moves</button></div>
+            <div class="a" hidden><span class="verdict"></span> It disappears. The crowd is as ordered as before, and the undyed particles still crowd the dyed ones, but pairs of dyed neighbours are rare, so the order hardly shows: the S(q) measured becomes nearly flat<span class="lvl-2"> (1 + x (S - 1), with x = 0.05)</span>. The patterns now follow single particles, which diffuse more slowly than alone, held back by their cages. The bench now runs with one particle in twenty dyed so you can check: both charts keep the earlier run as a dotted line.</div>
+          </div>
           <figure class="viz">
-            <figcaption>How fast each pattern starts to fade: collective diffusion</figcaption>
+            <figcaption id="dq-title">How fast each pattern starts to fade: collective diffusion</figcaption>
             <div class="chart"><canvas id="chart-dq" aria-label="Collective diffusion coefficient against q"></canvas></div>
             <ul class="reasons" id="dq-notes"></ul>
           </figure>
           <div class="step-body">
             <div class="result" id="result" aria-live="polite"></div>
-            <div class="predict" data-predict="dyed" data-right="gone">
-              <div class="q">Predict first: same crowd, but only one particle in twenty is dyed. What happens to the peak of S(q)?</div>
-              <div class="btns"><button type="button" data-guess="stays">It stays</button><button type="button" data-guess="gone">It disappears</button><button type="button" data-guess="moves">It moves</button></div>
-              <div class="a" hidden><span class="verdict"></span> It disappears. The undyed particles still crowd the dyed ones, but pairs of dyed neighbours are rare, so the order hardly shows: S(q) becomes nearly flat<span class="lvl-2"> (1 + x (S - 1), with x = 0.05)</span>. The patterns now follow single particles, which diffuse more slowly than alone, held back by their cages. The bench now runs with one particle in twenty dyed.</div>
-            </div>
           </div>
         </div>
         <details class="math" data-open-at="researcher">
@@ -4951,7 +4957,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
   let lastKey = null;
   let prevMode = BASE.mode;
   function onChange(key) {
-    lastKey = key;
+    lastKey = key; compare = null;
     // switching to phase contrast with an objective that has no phase ring: take the phase objective of the same
     // magnification with the closest NA (Plan Fluor 20X -> Plan Fluor DLL 20X Ph1), so phase contrast is really on
     if (key === "mode" && state.mode === "phase" && !objRing()) {
@@ -5532,15 +5538,34 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     pick.forEach(function (k) { const q = res.rows[k].q_per_um, s = document.createElement("span"); s.innerHTML = '<i style="background:' + (k === pkk ? C.ink : qColor(qPos(q))) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / q, 2) + " " + MU + "m" : "q = " + q.toFixed(2) + " " + MU + "m\u207b\u00b9") + (k === res.peak.k && hasPeak(res) ? (level === "curious" ? " (neighbours)" : " (peak of S)") : ""); leg.appendChild(s); });
   }
   // the structure factor: measured (dots), the simulation (line) and, for hard spheres, the Percus-Yevick theory (dashed)
+  // before and after a prediction: S(q) and D(q) of the earlier run stay, as a dotted line
+  let compare = null;
+  function runLabel(phi, x) { return Math.round(100 * phi) + " %, " + (x >= 0.99 ? "all dyed" : x <= 0.1 ? "one in " + Math.round(1 / x) + " dyed" : Math.round(100 * x) + " % dyed"); }
+  function takeSnapshot() {
+    compare = null; const res = cache.res; if (!res) return; const tr = cache.movie.truth.interact;
+    compare = { label: runLabel(tr.phi, tr.label_fraction), res0: res, D0: res.D0_um2_s, rows: res.rows.map(function (r) { return { q: r.q_per_um, S: r.S, D: r.D_um2_s }; }) };
+  }
+  function oldLine(a, val) {
+    const ctx = a.ctx; ctx.strokeStyle = C.ink; ctx.globalAlpha = 0.65; ctx.lineWidth = 2; ctx.setLineDash([2, 4]); ctx.beginPath(); let on = false;
+    compare.rows.forEach(function (r) { const v = val(r); if (!(v > 0) || !isFinite(v)) { on = false; return; } const X = a.fx(r.q), Y = a.fy(v); if (!on) { ctx.moveTo(X, Y); on = true; } else ctx.lineTo(X, Y); });
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+  }
+  function cmpNote() {
+    if (!compare) return null; const tr = cache.movie.truth.interact;
+    return cache.res === compare.res0 ? "Computing the new run..." : "Dotted black: the earlier run (" + compare.label + "). Dots: now (" + runLabel(tr.phi, tr.label_fraction) + ").";
+  }
   function drawSq() {
     const res = cache.res, rows = res.rows, tr = cache.movie.truth.interact, x1 = res.window.q_max_used * 1.08;
     let top = 1.3; rows.forEach(function (r) { top = Math.max(top, r.S + (r.S_err || 0)); });
     for (let i = 1; i <= 100; i++) { const v = trueS(x1 * i / 100); if (v) top = Math.max(top, v); }
+    const cmpOn = compare && res !== compare.res0;
+    if (cmpOn) compare.rows.forEach(function (r) { if (r.q <= x1 && isFinite(r.S)) top = Math.max(top, r.S); });
     const a = axes($("chart-sq"), { xlog: false, ylog: false, x0: 0, x1: x1, y0: 0, y1: top * 1.12, xlabel: level === "curious" ? "Stripes: wide on the left, fine on the right (q, " + MU + "m\u207b\u00b9)" : "q (" + MU + "m\u207b\u00b9)", ylabel: level === "curious" ? "How strong (dilute = 1)" : "S(q)" }), ctx = a.ctx;
     ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(a.m.l, a.fy(1)); ctx.lineTo(a.m.l + a.pw, a.fy(1)); ctx.stroke(); ctx.setLineDash([]);
     const curve = function (f, col, dash, wd) { ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.setLineDash(dash); ctx.beginPath(); let on = false; for (let i = 1; i <= 240; i++) { const q = x1 * i / 240, v = f(q); if (v === null || !isFinite(v)) { on = false; continue; } const X = a.fx(q), Y = a.fy(v); if (!on) { ctx.moveTo(X, Y); on = true; } else ctx.lineTo(X, Y); } ctx.stroke(); ctx.setLineDash([]); };
     if (tr.kind === "hard" && level !== "curious") curve(pyS, C.muted, [7, 4], 1.3);
     curve(trueS, C["accent-2"], [], 1.8);
+    if (cmpOn) oldLine(a, function (r) { return r.S; });
     rows.forEach(function (r) {
       const X = a.fx(r.q_per_um), col = qColor(qPos(r.q_per_um));
       if (r.S_err > 0 && level !== "curious") { ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X, a.fy(r.S - r.S_err)); ctx.lineTo(X, a.fy(r.S + r.S_err)); ctx.stroke(); }
@@ -5549,6 +5574,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     a.done();
     const ul = $("sq-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
+    if (compare) add(cmpNote());
     add(level === "curious" ? "Dots: how strong each pattern is in this movie, against the same particles far apart (a second, dilute movie), in the colours of step 5. Red line: how the simulated particles are really arranged. Above 1, patterns at the spacing of neighbours; below 1 at the wide patterns, which the crowd smooths out." : "Dots: S(q) = (A / N) / (A_ref / N_ref), the amplitude per dyed particle against a dilute movie of the same particles, filmed the same way (bars: scatter of neighbouring q about a smooth curve). Red line: the S(q) of the simulated particles" + (tr.label_fraction < 1 ? ", as the dyed ones show it, 1 + x (S - 1) with x = " + tr.label_fraction : "") + ".");
     if (tr.kind === "hard" && level !== "curious") add("Dashed: Percus-Yevick theory for hard spheres at volume fraction " + fmtSig(tr.phi, 2) + ".");
     if (TRANS() && level !== "curious") add("In transmitted light the finest patterns read S(q) too high in this simulation; in fluorescence and confocal, where each particle shines on its own, S(q) comes out cleanly.");
@@ -5559,12 +5585,15 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     const res = cache.res, rows = res.rows, D0 = res.D0_um2_s, x1 = res.window.q_max_used * 1.08;
     let top = 1.4; rows.forEach(function (r) { if (r.D_um2_s > 0) top = Math.max(top, (r.D_um2_s + (r.D_err_um2_s || 0)) / D0); });
     for (let i = 1; i <= 100; i++) { const v = trueS(x1 * i / 100); if (v) top = Math.max(top, 1 / v); }
+    const cmpOn = compare && res !== compare.res0;
+    if (cmpOn) compare.rows.forEach(function (r) { if (r.q <= x1 && r.D > 0) top = Math.max(top, r.D / compare.D0); });
     top = Math.min(top, 12);
     const a = axes($("chart-dq"), { xlog: false, ylog: false, x0: 0, x1: x1, y0: 0, y1: top * 1.1, xlabel: level === "curious" ? "Stripes: wide on the left, fine on the right (q, " + MU + "m\u207b\u00b9)" : "q (" + MU + "m\u207b\u00b9)", ylabel: level === "curious" ? "How fast (alone = 1)" : "D(q) / D0" }), ctx = a.ctx;
     ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(a.m.l, a.fy(1)); ctx.lineTo(a.m.l + a.pw, a.fy(1)); ctx.stroke(); ctx.setLineDash([]);
     ctx.strokeStyle = C["accent-2"]; ctx.lineWidth = 1.8; ctx.beginPath(); let on = false;
     for (let i = 1; i <= 240; i++) { const q = x1 * i / 240, v = trueS(q); if (!v) { on = false; continue; } const X = a.fx(q), Y = a.fy(Math.min(top * 1.1, 1 / v)); if (!on) { ctx.moveTo(X, Y); on = true; } else ctx.lineTo(X, Y); }
     ctx.stroke();
+    if (cmpOn) oldLine(a, function (r) { return r.D / compare.D0; });
     rows.forEach(function (r) {
       if (!(r.D_um2_s > 0)) return; const X = a.fx(r.q_per_um), col = qColor(qPos(r.q_per_um)), v = r.D_um2_s / D0;
       if (r.D_err_um2_s > 0 && level !== "curious") { ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X, a.fy(v - r.D_err_um2_s / D0)); ctx.lineTo(X, a.fy(v + r.D_err_um2_s / D0)); ctx.stroke(); }
@@ -5573,8 +5602,16 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     a.done();
     const ul = $("dq-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
-    add(level === "curious" ? "Dots: how fast each pattern fades at first, against the same particles far apart. Red line: what to expect right after the start, before the particles have moved far: fastest where the crowd is smoothest, slowest at the spacing of neighbours. At wide patterns the dots fall below the line: the fit must look over a stretch of time in which the crowd has already begun to rearrange." : (cache.res.ref_rate ? "Dots: D(q) / D0 = \u0393(q) / \u0393ref(q), the rate of each pattern at the first delays against that of the same pattern in the dilute reference (bars: jackknife over ten parts of the movie); D0 = " : "Dots: D(q) = \u0393(q) / q\u00b2 from the first delays (bars: jackknife over ten parts of the movie), against D0 = ") + fmtSig(D0, 3) + " " + MU + "m\u00b2/s. Red: D0 / S(q), what the shortest delays should show without hydrodynamic interactions (this simulation has none).");
-    if (level !== "curious") add("At the widest patterns the dots fall below the red line: each pattern of the image also takes in waves tilted along the axis of the microscope, where collective diffusion, D0 / S, is slower, and the fit reaches delays where the crowd has begun to rearrange.");
+    const x = cache.movie.truth.interact.label_fraction, few = x <= 0.1;
+    if (compare) add(cmpNote());
+    if (level === "curious") {
+      add("Dots: how fast each pattern fades at first, against the same particles far apart. " + (few ? "Red line: one particle on its own, right after the start. The dots sit below it: within the delays used, each dyed particle already bumps into its invisible neighbours, which hold it back." : "Red line: what to expect right after the start, before the particles have moved far: fastest where the crowd is smoothest, slowest at the spacing of neighbours."));
+      if (!few) add("Why the strengths in the chart above can match their red line while these dots sit below this one: a strength needs no timing, but a rate needs the very first moment of fading, and even the shortest delays here give the crowd time to begin rearranging. Real particles would also push each other through the liquid around them (hydrodynamic interactions), which this simulation leaves out.");
+      return;
+    }
+    add((cache.res.ref_rate ? "Dots: D(q) / D0 = \u0393(q) / \u0393ref(q), the rate of each pattern at the first delays against that of the same pattern in the dilute reference (bars: jackknife over ten parts of the movie); D0 = " : "Dots: D(q) = \u0393(q) / q\u00b2 from the first delays (bars: jackknife over ten parts of the movie), against D0 = ") + fmtSig(D0, 3) + " " + MU + "m\u00b2/s. Red: " + (x < 1 ? "D0 / [1 + x (S - 1)], with x = " + x + (few ? ", close to D0" : "") : "D0 / S(q)") + ", what the shortest delays should show without hydrodynamic interactions (this simulation has none).");
+    if (few) add("With few particles dyed the dots follow self diffusion. They sit below D0 because the fit, down to f = 0.6, reaches delays where each particle already feels its cage.");
+    else add("Why S(q) can match while D(q) sits below the red line: S(q) comes from the amplitudes, which do not depend on timing, but D(q) needs the initial slope of ln f, and the fit, down to f = 0.6, reaches delays where the cages are already felt. At the widest patterns each pattern of the image also takes in waves tilted along the axis of the microscope, where D0 / S is lower. Real colloids would also have hydrodynamic interactions, H(q) different from 1, which this simulation leaves out.");
   }
 
   // ---- result -------------------------------------------------------------------------------
@@ -5642,6 +5679,11 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     $("movie-text").textContent = "The movie shows " + fmtSize(cfg.diameter_um) + " " + ({ ps: "polystyrene", pmma: "PMMA", silica: "silica" }[state.particle] || "") + " spheres filling " + Math.round(100 * tr.phi) + " % of the volume, " + (tr.kind === "hard" ? "which only touch" : "which repel each other before they touch") + ", filmed through " + modeTxt + (tr.label_fraction < 1 ? "; only " + tr.n_labelled + " of the " + m.info.n_particles + " are dyed and show" : "") + ". " + (tr.phi < 0.1 ? "Each particle wanders almost freely and meets a neighbour now and then. " : tr.phi < 0.3 ? "Each particle often bumps into its neighbours. " : "Each particle jiggles in a cage of neighbours and slowly escapes from it. ") + (state.mode === "spinning" || state.mode === "scanning" ? "The confocal pinholes keep only a thin layer in focus, so the crowd does not blur into a grey haze." : "Particles above and below the focus add a blurred haze.");
     $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + (m.times_s ? m.T + " frames at log-spaced times over " + fmtDur(m.times_s[m.T - 1] + 1 / m.frame_rate_hz) + ", the closest " + fmtTime(1 / m.frame_rate_hz) + " apart" : m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s = " + fmtSig(m.T / m.frame_rate_hz, 3) + " s") + ". Box " + cfg.cell_um + " " + MU + "m deep, repeating in all directions, focus " + fmtSig(cfg.focus_um, 2) + " " + MU + "m from its bottom, " + m.info.n_particles + " particles.";
     $("diff-note").textContent = "A particle that moved leaves a pair of spots, one darker and one brighter. In a crowd the spots are packed so closely that the difference looks like fine speckle: DDM reads how the whole crowd rearranges, not single particles.";
+    // step 6 follows the labelling: with few dyed, the charts show single particles among invisible neighbours
+    const x = tr.label_fraction, few = x <= 0.1;
+    $("sq-all-1").hidden = few; $("sq-all-2").hidden = few; $("sq-few-1").hidden = !few; $("sq-few-2").hidden = !few; $("curves-few").hidden = !few;
+    $("sq-title").textContent = few ? "What the dyed particles show of the order: pairs are too rare" : x < 1 ? "How the particles arrange, as the dyed ones show it: the structure factor" : "How the particles arrange: the structure factor";
+    $("dq-title").textContent = few ? "Motion of the dyed particles: their invisible neighbours still hold them back" : x < 1 ? "How fast each pattern starts to fade: collective and single-particle motion mixed" : "How fast each pattern starts to fade: collective diffusion";
     const sb = $("movie-scale"), target = m.L_um / 4, nice = niceStep(target) > target ? niceStep(target) / 2 : niceStep(target);
     sb.querySelector("i").style.width = (100 * nice / m.L_um).toFixed(1) + "%"; sb.querySelector("span").textContent = fmtSig(nice, 2) + " " + MU + "m"; sb.style.width = "100%";
   }
@@ -5692,7 +5734,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
   }
   function applyPreset(set) {
     const keep = state.seed, sp = state.sim_px;
-    state = Object.assign({}, BASE, set); state.seed = LEVEL_RANK[level] >= 3 ? keep : BASE.seed; state.sim_px = set.sim_px || sp;
+    compare = null; state = Object.assign({}, BASE, set); state.seed = LEVEL_RANK[level] >= 3 ? keep : BASE.seed; state.sim_px = set.sim_px || sp;
     prevMode = state.mode;
     resetPredictions();
     if (state.mode === "scanning" && !set.zoom) autoZoom();
@@ -5714,9 +5756,12 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
           box.querySelector(".verdict").textContent = btn.getAttribute("data-guess") === box.getAttribute("data-right") ? "Well guessed." : "Not quite.";
           box.querySelector(".a").hidden = false;
           const kind = box.getAttribute("data-predict");
-          if (kind === "dyed") { state.label = 0.05; state.phi_c = 0.3; }
-          if (kind === "crowd") state.phi_c = 0.45;
-          predicting = true; constrain(); syncControls(); predicting = false; schedule();
+          compare = null;
+          if (kind === "dyed" && (state.label > 0.1 || TRANS())) { takeSnapshot(); state.label = 0.05; state.phi_c = 0.3; if (TRANS()) state.mode = BASE.mode; }
+          if (kind === "crowd" && state.phi_c < 0.45) { takeSnapshot(); state.phi_c = 0.45; }
+          predicting = true; constrain(); syncControls(); predicting = false;
+          if (compare && cache.res) { drawSq(); drawDq(); }   // say what is being computed
+          schedule();
         });
       });
     });
@@ -5726,7 +5771,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
   buildControls(); buildCards(); buildPredictions();
   document.querySelectorAll('input[name="level"]').forEach(function (r) { r.addEventListener("change", function () { if (r.checked) setLevel(r.value, true); }); });
   document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }); });
-  $("btn-reset").addEventListener("click", function () { const keep = LEVEL_RANK[level] >= 3 ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
+  $("btn-reset").addEventListener("click", function () { compare = null; const keep = LEVEL_RANK[level] >= 3 ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
   $("btn-seed").addEventListener("click", function () { state.seed = (state.seed * 1103515245 + 12345) % 2147483647; schedule(); });
   $("btn-play").addEventListener("click", function () { playing = !playing; $("btn-play").textContent = playing ? "Pause" : "Play"; });
   $("btn-play").textContent = playing ? "Pause" : "Play";
