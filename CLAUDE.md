@@ -226,8 +226,27 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
   Rusconi and Piazza 2006, Braibanti, Vigolo and Piazza 2008, and Helden, Eichhorn and Bechinger 2015 (`THERMO` in
   `app-drift.js`).
 
+- "Liquid or solid" /ddm/rheology/ (`static/ddm/rheology/index.html`): microrheology with tracer beads. `rheo.src.html`, `app-rheo.js`,
+  `rheo-engine.js` (f to the mean squared displacement at each q with the depth of field, A from the mean power (smoothed over q
+  when the sample is frozen), B from the camera, q combined by their noise, jackknife over ten parts of the movie; moduli from a
+  fitted retardation spectrum, Mason's formulas for comparison; the "plain method" row: A = 2 var - B, B from the first delays,
+  Mason) and `worker-rheo.js`. The material is simulated exactly in `visco.js` (solvent + Maxwell modes + plateau, the bead an
+  Ornstein-Uhlenbeck process obeying the generalised Stokes-Einstein relation; `movie.js` option `visco`). Materials in `VE` in
+  `app-rheo.js`; the concentrated micelles from Lennon et al., J. Rheol. 64, 1263 (2020). Method: Edera et al., Phys. Rev.
+  Materials 1, 073804 (2017). Check: `node test-rheo.js`.
+
+- "Crowded particles" /ddm/crowded/ (`static/ddm/crowded/index.html`): concentrated suspensions, structure factor S(q) and
+  collective diffusion D(q). `crowd.src.html`, `app-crowd.js`, `crowd-engine.js` (S(q) = (A/N) / (A_ref/N_ref) against a dilute
+  reference movie of the same particles, `referenceConfig`: 4 %, no interactions, long enough to wander through the box depth
+  twice; short-time rate from a line through ln f down to f = 0.6; D(q) = D0 Gamma / Gamma_ref; reference smoothed over q;
+  published row: B from the first delays, line through f = 1, D = Gamma / q^2, reference bin by bin) and `worker-crowd.js`
+  (simulates the movie and the reference). The particles push each other in `movie.js` option `interact`: Brownian dynamics
+  of hard spheres (Heyes-Melrose overlap removal) or hard spheres plus Yukawa repulsion, periodic box, no hydrodynamic
+  interactions (said on the page; tried and dropped: a theory density field, and a grid flow solver, branch ddm-flow-wip); `truth.interact` holds the simulation's own S(q). Method: Lu et al.,
+  Phys. Rev. Lett. 108, 218103 (2012). Check: `node test-crowd.js` (about a minute).
+
 All application pages have a fourth reader level, "Addict" (`#addict`): one switch for each step the
-analysis adds to the published method (`x_*` settings in `app.js`, `app-swim.js` and `app-drift.js`, mapped to engine options;
+analysis adds to the published method (`x_*` settings in `app.js`, `app-swim.js`, `app-drift.js`, `app-rheo.js` and `app-crowd.js`, mapped to engine options;
 `opts.published_only` switches them all off), and a "published method only" row computed on the same movie.
 Each such step is described in the methods text and listed under "What this page adds to the published
 methods" (no tags in the text). A new step that is not in the cited papers gets both a list entry and a switch.
@@ -238,9 +257,9 @@ shareable. "Download the movie" writes the analysed frames as a 32-bit TIFF (`ti
 
 After any change to the sources: run `python3 ddm/build.py`, then `python3 build.py --check`, and commit
 both. Checks: `cd ddm && node test-optics.js data/mie_ref.json && node test-engine.js && node test-movie.js`
-(the last takes several minutes), for the swimmers `node test-swim.js && node test-active.js`, and for the drift page `node test-drift.js`.
+(the last takes several minutes), for the swimmers `node test-swim.js && node test-active.js`, for the drift page `node test-drift.js`, for the rheology page `node test-rheo.js`, and for the crowded page `node test-crowd.js`.
 `python3 ddm/build.py --preview` writes stand-alone copies (`ddm-landing.html`, `ddm-hands-on.html`,
-`ddm-swimmers.html`, `ddm-drift.html`, linked to each other, Google Fonts) for previews outside the site; do not commit them.
+`ddm-swimmers.html`, `ddm-drift.html`, `ddm-rheology.html`, `ddm-crowded.html`, linked to each other, Google Fonts) for previews outside the site; do not commit them.
 The page text follows the writing style above; it must stay ASCII (the build refuses other characters).
 
 ## Analytics

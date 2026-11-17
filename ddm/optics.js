@@ -966,24 +966,43 @@
     // in-place FFT of every row of an n x n array (no copies)
     rows: function (re, im, n, tb, sign, only) {
       const rev = tb.rev, C = tb.c, Sn = tb.s;
+      let bits = 0; while ((1 << bits) < n) bits++;
       for (let o = 0; o < n * n; o += n) {
         if (only && !only[o / n]) continue;
         for (let i = 0; i < n; i++) { const j = rev[i]; if (j > i) { const a = o + i, b = o + j; let t = re[a]; re[a] = re[b]; re[b] = t; t = im[a]; im[a] = im[b]; im[b] = t; } }
-        for (let size = 2; size <= n; size <<= 1) {
-          const half = size >> 1, step = n / size;
-          for (let k = 0; k < half; k++) {
-            const c = C[k * step], s = sign * Sn[k * step];
-            for (let st = o + k; st < o + n; st += size) {
-              const b = st + half, tr = re[b] * c - im[b] * s, ti = re[b] * s + im[b] * c;
-              re[b] = re[st] - tr; im[b] = im[st] - ti; re[st] += tr; im[st] += ti;
+        let m = 1;
+        if (bits & 1) {       // an odd number of stages: the first one alone (size 2, twiddle 1)
+          for (let st = o; st < o + n; st += 2) { const b = st + 1, tr = re[b] * C[0] - im[b] * (sign * Sn[0]), ti = re[b] * (sign * Sn[0]) + im[b] * C[0]; re[b] = re[st] - tr; im[b] = im[st] - ti; re[st] += tr; im[st] += ti; }
+          m = 2;
+        }
+        // two radix-2 stages per pass (sizes 2m and 4m): the same operations in the same order for each element, fewer
+        // loads and stores
+        for (; m < n; m *= 4) {
+          const s2 = n / (2 * m), s4 = n / (4 * m), m2 = 2 * m, m3 = 3 * m, m4 = 4 * m;
+          for (let k = 0; k < m; k++) {
+            const c1 = C[k * s2], z1 = sign * Sn[k * s2], c2 = C[k * s4], z2 = sign * Sn[k * s4], c3 = C[(k + m) * s4], z3 = sign * Sn[(k + m) * s4];
+            for (let a = o + k; a < o + n; a += m4) {
+              const b = a + m, c = a + m2, d = a + m3;
+              let tr = re[b] * c1 - im[b] * z1, ti = re[b] * z1 + im[b] * c1;
+              const p1r = re[a] - tr, p1i = im[a] - ti, p0r = re[a] + tr, p0i = im[a] + ti;
+              tr = re[d] * c1 - im[d] * z1; ti = re[d] * z1 + im[d] * c1;
+              const q1r = re[c] - tr, q1i = im[c] - ti, q0r = re[c] + tr, q0i = im[c] + ti;
+              tr = q0r * c2 - q0i * z2; ti = q0r * z2 + q0i * c2;
+              re[c] = p0r - tr; im[c] = p0i - ti; re[a] = p0r + tr; im[a] = p0i + ti;
+              tr = q1r * c3 - q1i * z3; ti = q1r * z3 + q1i * c3;
+              re[d] = p1r - tr; im[d] = p1i - ti; re[b] = p1r + tr; im[b] = p1i + ti;
             }
           }
         }
       }
     },
+    // in blocks of 16 x 16 (the plain double loop jumps a whole row in memory at every step)
     transpose: function (re, im, n) {
-      for (let y = 0; y < n; y++) for (let x = y + 1; x < n; x++) {
-        const a = y * n + x, b = x * n + y; let t = re[a]; re[a] = re[b]; re[b] = t; t = im[a]; im[a] = im[b]; im[b] = t;
+      const B = n < 16 ? n : 16;
+      for (let by = 0; by < n; by += B) for (let bx = by; bx < n; bx += B) {
+        for (let y = by; y < by + B; y++) for (let x = (bx === by ? y + 1 : bx); x < bx + B; x++) {
+          const a = y * n + x, b = x * n + y; let t = re[a]; re[a] = re[b]; re[b] = t; t = im[a]; im[a] = im[b]; im[b] = t;
+        }
       }
     },
     // 2D FFT, result in transposed layout [kx][ky] (one transpose saved)

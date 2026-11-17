@@ -1,0 +1,579 @@
+<title>DDM microrheology</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  [hidden] { display: none !important; }
+/* Layout: the site's own page frame (header, measure, fluorescence palette); a two-column
+   "bench" where the controls stay in view and the analysis runs down as numbered steps. */
+:root {
+  --paper: #fafbfc;
+  --ink: #18202b;
+  --muted: #5a6472;
+  --rule: #dde2e8;
+  --accent: #2f45c5;      /* nuclei (DAPI) blue */
+  --accent-2: #b8233f;    /* actin red */
+  --tint: #eef1fb;
+  --panel: #ffffff;
+  --good: #1f7a4d; --good-bg: #dff3e8;
+  --warn: #8a5a00; --warn-bg: #fcefd6;
+  --bad: #a8322d;  --bad-bg: #f9e3e1;
+  --serif: "Spectral", Georgia, "Times New Roman", serif;
+  --sans: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --measure: 40rem;
+  --wide: 76rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0d1119; --ink: #e4e8ee; --muted: #98a2b3; --rule: #283040;
+    --accent: #93a1ff; --accent-2: #ff7a90; --tint: #161c2a; --panel: #121826;
+    --good: #6fd39a; --good-bg: #12301f; --warn: #f2b75c; --warn-bg: #3a2a10; --bad: #ff8f86; --bad-bg: #3a1714;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0d1119; --ink: #e4e8ee; --muted: #98a2b3; --rule: #283040;
+  --accent: #93a1ff; --accent-2: #ff7a90; --tint: #161c2a; --panel: #121826;
+  --good: #6fd39a; --good-bg: #12301f; --warn: #f2b75c; --warn-bg: #3a2a10; --bad: #ff8f86; --bad-bg: #3a1714;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--serif); font-size: 1.125rem; line-height: 1.65;
+}
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+.wrap { max-width: var(--wide); margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+@media (min-width: 40rem) { .wrap { padding-left: max(2rem, env(safe-area-inset-left, 0px)); padding-right: max(2rem, env(safe-area-inset-right, 0px)); } }
+
+/* site header (as on rcerbino.github.io) */
+.site-header { border-bottom: 1px solid var(--rule); }
+.header-inner { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 2rem; padding-block: 1.1rem 1rem; }
+.site-name { font-size: 1.35rem; font-weight: 500; color: var(--ink); text-decoration: none; }
+.site-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.2rem 1.25rem; }
+.site-nav a { font-family: var(--sans); font-size: 0.95rem; color: var(--muted); text-decoration: none; padding: 0.2rem 0; border-bottom: 2px solid transparent; }
+.site-nav a:hover { color: var(--ink); }
+.site-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+.ddm-switch { font-family: var(--sans); font-size: 0.9rem; margin: 0 0 0.6rem; color: var(--muted); }
+.ddm-switch a, .ddm-switch span { margin-right: 0.9rem; }
+.ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
+.proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
+.pn-more { display: none; font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+/* one line, the rest on request */
+.proto-note:not(.open) .pn-rest { display: none; }
+.proto-note:not(.open) .pn-more { display: inline; }
+
+h1, h2, h3 { font-weight: 500; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem); margin: 0 0 1rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; margin: 0 0 0.75rem; }
+h3 { font-size: 1.2rem; margin: 0 0 0.5rem; }
+p { margin: 0 0 1rem; }
+.lede { font-size: 1.25rem; line-height: 1.6; max-width: var(--measure); }
+.prose { max-width: var(--measure); }
+.small { font-family: var(--sans); font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
+.eyebrow { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 0.35rem; }
+
+/* reader levels: what each reader sees */
+html[data-level="curious"] .lvl-2, html[data-level="curious"] .lvl-3, html[data-level="student"] .lvl-3 { display: none !important; }
+html[data-level="student"] .only-1, html[data-level="researcher"] .only-1, html[data-level="addict"] .only-1 { display: none !important; }
+html[data-level="curious"] details.math { display: none; }
+html:not([data-level="addict"]) .lvl-4 { display: none !important; }
+/* what this page adds to the published methods */
+.adds { max-width: var(--measure); padding-left: 1.1rem; }
+.adds li { margin-bottom: 0.6rem; }
+.adds .where { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); }
+table.sizing tr.pub th, table.sizing tr.pub td { font-style: italic; }
+
+/* opening */
+.intro { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; padding-block: 2.5rem 1.5rem; align-items: center; }
+.intro > * { min-width: 0; }
+@media (min-width: 56rem) { .intro { grid-template-columns: minmax(0, 1fr) 19rem; gap: 3.5rem; } }
+.porthole { margin: 0; justify-self: center; display: grid; gap: 0.75rem; justify-items: center; }
+.porthole .lens { width: min(19rem, 78vw); aspect-ratio: 1; border-radius: 50%; overflow: hidden; border: 1px solid var(--rule); box-shadow: 0 0 0 10px var(--tint); background: #000; max-width: 100%; }
+.porthole canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+.porthole figcaption { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); text-align: center; max-width: 18rem; }
+
+.levels { margin: 1.5rem 0 0; border: 0; padding: 0; min-width: 0; }
+.levels legend { font-family: var(--sans); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; padding: 0; }
+.level-opts { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); max-width: 44rem; }
+.level-opts label { display: grid; gap: 0.1rem; padding: 0.6rem 0.8rem; border: 1px solid var(--rule); border-radius: 6px; cursor: pointer; font-family: var(--sans); background: var(--panel); }
+.level-opts input { position: absolute; opacity: 0; pointer-events: none; }
+.level-opts .t { font-weight: 600; font-size: 0.98rem; }
+.level-opts .d { font-size: 0.82rem; color: var(--muted); line-height: 1.35; }
+.level-opts label:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--tint); }
+.level-opts label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* result card */
+.result { font-family: var(--sans); border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); padding: 1rem 1.1rem; display: grid; gap: 0.5rem; }
+.result .big { font-family: var(--serif); font-size: 2.1rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.result .big small { font-size: 1rem; color: var(--muted); }
+.result dl { display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 1rem; margin: 0; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.result dt { color: var(--muted); }
+.result dd { margin: 0; }
+.chip { display: inline-block; font-family: var(--sans); font-size: 0.8rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 999px; justify-self: start; }
+.chip.good { color: var(--good); background: var(--good-bg); }
+.chip.warn { color: var(--warn); background: var(--warn-bg); }
+.chip.bad { color: var(--bad); background: var(--bad-bg); }
+.chip.info { color: var(--muted); background: var(--tint); }
+.tscroll { overflow-x: auto; min-width: 0; }
+.result, .result > *, .predict, .step-body > *, .steps > * { min-width: 0; }
+table.sizing { width: 100%; border-collapse: collapse; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+table.sizing td { white-space: nowrap; }
+table.sizing th, table.sizing td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--rule); text-align: right; vertical-align: top; }
+table.sizing th[scope="row"], table.sizing thead th:first-child { text-align: left; font-weight: 500; }
+table.sizing thead th { color: var(--muted); font-weight: 500; font-size: 0.8rem; }
+table.sizing tr.main th, table.sizing tr.main td { font-weight: 700; }
+table.sizing tr.truth th, table.sizing tr.truth td { color: var(--accent-2); }
+table.sizing .note { white-space: normal; display: block; font-size: 0.76rem; font-weight: 400; color: var(--muted); }
+.checks ul { list-style: none; margin: 0.3rem 0 0; padding: 0; display: grid; gap: 0.45rem; }
+.checks li { display: grid; grid-template-columns: 4.2rem 1fr; gap: 0.6rem; align-items: start; font-size: 0.86rem; line-height: 1.45; }
+.checks li .chip { justify-self: stretch; text-align: center; }
+details.more summary { cursor: pointer; font-size: 0.85rem; color: var(--muted); }
+details.more dl { margin-top: 0.4rem; }
+.hero-result { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1rem; font-family: var(--sans); margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--rule); max-width: 44rem; }
+.hero-result .n { font-family: var(--serif); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+
+/* bench */
+.bench-head { padding-block: 2rem 1rem; border-top: 1px solid var(--rule); }
+.bench { display: grid; gap: 2rem; padding-bottom: 3rem; }
+@media (min-width: 64rem) { .bench { grid-template-columns: 17.5rem minmax(0, 1fr); gap: 2.5rem; align-items: start; } .controls { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); max-height: calc(100vh - 5rem); overflow: auto; } }
+.controls { font-family: var(--sans); font-size: 0.9rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 1rem; display: grid; gap: 1rem; }
+.controls h3 { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.cgroup { display: grid; gap: 0.7rem; }
+/* blocks of settings: sample, microscope, camera, analysis; each folds to a one-line summary */
+/* each block has its own colour: green, cyan, yellow, purple (Paul Tol and Okabe-Ito palettes), chosen to stay
+   apart in normal vision and with the three common kinds of colour blindness; the titles still say what each block is */
+:root { --blk-sample: #228833; --blk-microscope: #33bbee; --blk-camera: #e0c200; --blk-analysis: #aa3377; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --blk-sample: #4cae5c; --blk-microscope: #66ccee; --blk-camera: #f0e442; --blk-analysis: #cc5599; } }
+:root[data-theme="dark"] { --blk-sample: #4cae5c; --blk-microscope: #66ccee; --blk-camera: #f0e442; --blk-analysis: #cc5599; }
+.cblock { --c: var(--rule); border-left: 4px solid var(--c); border-radius: 6px; padding: 0.6rem 0.65rem 0.7rem; background: var(--panel); background: color-mix(in srgb, var(--c) 8%, var(--panel)); }
+.cblock[data-block="sample"] { --c: var(--blk-sample); }
+.cblock[data-block="microscope"] { --c: var(--blk-microscope); }
+.cblock[data-block="camera"] { --c: var(--blk-camera); }
+.cblock[data-block="analysis"] { --c: var(--blk-analysis); }
+.cblock > summary { cursor: pointer; list-style: none; display: grid; gap: 0.15rem; }
+.cblock > summary::-webkit-details-marker { display: none; }
+.cblock > summary h3 { color: var(--ink); color: color-mix(in srgb, var(--c) 55%, var(--ink)); }
+.cblock > summary h3::before { content: ""; display: inline-block; width: 0.42em; height: 0.42em; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); margin: 0 0.55em 0.18em 0.1em; transition: transform 0.15s; }
+.cblock:not([open]) > summary h3::before { transform: rotate(-45deg); margin-bottom: 0.05em; }
+.cblock .bsum { font-size: 0.8rem; color: var(--muted); line-height: 1.35; padding-left: 1.15em; }
+.cbody { display: grid; gap: 0.9rem; margin-top: 0.7rem; }
+.csub { display: grid; gap: 0.7rem; }
+.csub h4 { font-family: var(--sans); font-size: 0.8rem; font-weight: 600; color: var(--ink); color: color-mix(in srgb, var(--c) 55%, var(--ink)); margin: 0.2rem 0 -0.15rem; padding-bottom: 0.2rem; border-bottom: 1px solid var(--rule); border-bottom-color: color-mix(in srgb, var(--c) 30%, transparent); }
+@media (prefers-reduced-motion: reduce) { .cblock > summary h3::before { transition: none; } }
+.ctl { display: grid; gap: 0.2rem; }
+.ctl .row { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
+.ctl label { font-weight: 500; }
+.ctl output { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; white-space: nowrap; }
+.ctl input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
+.ctl select, .ctl input[type="number"] { font: inherit; padding: 0.3rem 0.4rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink); width: 100%; }
+.ctl .hint { font-size: 0.78rem; color: var(--muted); line-height: 1.35; }
+.qrange { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+.btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+button { font: 500 0.88rem var(--sans); padding: 0.45rem 0.8rem; border-radius: 5px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.status { font-size: 0.82rem; color: var(--muted); min-height: 1.3em; }
+.runbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--panel); border-top: 1px solid var(--rule); box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06); font-family: var(--sans); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.runbar-inner { display: flex; align-items: center; gap: 0.9rem; padding-block: 0.5rem; }
+.runbar .bar { flex: 0 0 min(16rem, 38%); height: 6px; border-radius: 3px; }
+.runbar .status { flex: 1 1 auto; min-width: 0; min-height: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.runbar.busy .status { color: var(--ink); font-weight: 500; }
+.runbar.busy .bar span { background: var(--accent); }
+.runbar:not(.busy) .bar span { background: var(--good); }
+body { padding-bottom: 3.2rem; }
+.bar { height: 4px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.1s linear; }
+.error { color: var(--bad); background: var(--bad-bg); border-radius: 6px; padding: 0.6rem 0.8rem; font-family: var(--sans); font-size: 0.9rem; }
+
+.steps { display: grid; gap: 3rem; min-width: 0; }
+.steps.stale { opacity: 0.35; }
+.step { display: grid; gap: 1rem; min-width: 0; scroll-margin-top: 1rem; }
+.step-title { display: flex; gap: 0.75rem; align-items: baseline; }
+.step-title .num { font-family: var(--sans); font-size: 0.85rem; font-weight: 600; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; min-width: 1.7rem; height: 1.7rem; display: inline-grid; place-items: center; flex: none; }
+.step-title h2 { margin: 0; }
+.step-body { display: grid; gap: 1.25rem; min-width: 0; }
+@media (min-width: 48rem) { .step-body.split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+.text { min-width: 0; max-width: var(--measure); }
+.text p:last-child { margin-bottom: 0; }
+
+figure.viz { margin: 0; display: grid; gap: 0.5rem; min-width: 0; }
+.imgbox { position: relative; background: #000; border-radius: 4px; overflow: hidden; aspect-ratio: 1; max-width: 100%; }
+.imgbox canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.imgbox canvas.overlay { image-rendering: auto; }
+.imgbox .scale { position: absolute; left: 8px; bottom: 8px; font: 600 0.75rem var(--sans); color: #fff; text-shadow: 0 0 3px #000; }
+.imgbox .scale i { display: block; height: 3px; background: #fff; margin-bottom: 3px; box-shadow: 0 0 2px #000; }
+.pair { display: grid; gap: 0.75rem; grid-template-columns: 1fr 1fr; }
+.pair .cap { font-family: var(--sans); font-size: 0.8rem; color: var(--muted); }
+figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); line-height: 1.45; font-variant-numeric: tabular-nums; }
+.readout b { color: var(--ink); font-weight: 600; }
+.chart { position: relative; width: 100%; height: 300px; }
+.chart canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.chart.short { height: 220px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-family: var(--sans); font-size: 0.88rem; }
+.toolbar input[type="range"] { flex: 1 1 10rem; accent-color: var(--accent); }
+.toolbar.pickbar { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 0.8rem; margin-top: 0.5rem; }
+.toolbar.pickbar input[type="range"] { width: 100%; min-width: 0; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 0.3rem 0.7rem; background: var(--panel); }
+.seg button[aria-pressed="true"] { background: var(--tint); color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-family: var(--sans); font-size: 0.8rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.reasons { font-family: var(--sans); font-size: 0.82rem; color: var(--muted); margin: 0; padding-left: 1.1rem; }
+
+details.math { min-width: 0; font-family: var(--sans); font-size: 0.92rem; border-left: 2px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; padding: 0.55rem 0.9rem; max-width: var(--measure); }
+details.math summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+details.math .eq { font-family: var(--serif); font-size: 1.05rem; margin: 0.6rem 0; overflow-x: auto; white-space: nowrap; }
+details.math p { margin: 0.5rem 0; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--paper); border: 1px solid var(--rule); border-radius: 3px; padding: 0.05em 0.3em; }
+pre.code { font-family: var(--mono); font-size: 0.8rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 0.6rem; overflow-x: auto; margin: 0.5rem 0; line-height: 1.45; }
+
+.predict { font-family: var(--sans); font-size: 0.92rem; border: 1px dashed var(--accent); border-radius: 6px; padding: 0.7rem 0.9rem; display: grid; gap: 0.5rem; max-width: var(--measure); }
+.predict .q { font-weight: 600; }
+.predict .a { color: var(--ink); }
+.predict .verdict { font-weight: 600; }
+.predict button:disabled { cursor: default; opacity: 0.55; }
+.predict button[aria-pressed="true"] { opacity: 1; border-color: var(--accent); font-weight: 600; }
+
+/* what matters */
+.matters { border-top: 1px solid var(--rule); padding-block: 2.5rem 1rem; }
+.cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); margin-top: 1.25rem; }
+.card { border: 1px solid var(--rule); border-radius: 8px; padding: 1rem; display: grid; gap: 0.5rem; align-content: start; background: var(--panel); }
+.card h3 { margin: 0; font-size: 1.1rem; }
+.card p { font-size: 0.98rem; margin: 0; }
+.card .btns { margin-top: 0.25rem; }
+.further { border-top: 1px solid var(--rule); padding-block: 2.5rem 3rem; }
+.further ul { padding-left: 1.2rem; max-width: var(--measure); }
+.further li { margin-bottom: 0.5rem; }
+footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-size: 0.85rem; color: var(--muted); padding-block: 1.2rem 2rem; }
+
+.fovbox { height: 300px; }
+.pstrip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.5rem; max-width: 34rem; }
+.pstrip figure { margin: 0; display: grid; gap: 0.25rem; }
+.pstrip canvas { width: 100%; aspect-ratio: 1; image-rendering: pixelated; border-radius: 3px; background: #000; max-width: 100%; }
+.pstrip figcaption { font-family: var(--sans); font-size: 0.75rem; color: var(--muted); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.scalebar { height: 10px; border-radius: 3px; margin-top: 0.3rem; }
+.scalebar.div { background: linear-gradient(90deg, var(--accent), var(--panel), var(--accent-2)); border: 1px solid var(--rule); }
+.scalebar.wheel { background: linear-gradient(90deg, hsl(0 85% 50%), hsl(60 85% 50%), hsl(120 85% 50%), hsl(180 85% 50%), hsl(240 85% 50%), hsl(300 85% 50%), hsl(360 85% 50%)); }
+@media (max-width: 40rem) { .pair.stack { grid-template-columns: 1fr; } }
+.scalelab { display: flex; justify-content: space-between; font-family: var(--sans); font-size: 0.72rem; color: var(--muted); }
+</style>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="site-name" href="https://rcerbino.github.io/">Roberto Cerbino</a>
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="https://rcerbino.github.io/">Home</a></li>
+        <li><a href="https://rcerbino.github.io/about/">About</a></li>
+        <li><a href="https://rcerbino.github.io/research/">Research</a></li>
+        <li><a href="#" aria-current="page">DDM</a></li>
+        <li><a href="https://rcerbino.github.io/publications/">Publications</a></li>
+        <li><a href="https://rcerbino.github.io/talks/">Talks</a></li>
+        <li><a href="https://rcerbino.github.io/teaching/">Teaching</a></li>
+        <li><a href="https://rcerbino.github.io/contact/">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<div class="proto-note"><div class="wrap"><span>This web page is a divertissement.</span><span class="pn-rest" id="pn-rest"> For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the particles do not interact) and rely on many approximations. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>. If you like it, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice.</span> <button type="button" class="pn-more" aria-expanded="false" aria-controls="pn-rest">More</button></div></div>
+
+
+<main>
+  <section class="wrap intro">
+    <div>
+      <p class="eyebrow">Differential dynamic microscopy</p>
+      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><span aria-current="page">Liquid or solid</span><a href="../crowded/">Crowded particles</a></nav>
+      <h1>Is it a liquid or a solid? Microrheology with tracer beads</h1>
+      <p class="lede">Many soft materials are a bit of both: a polymer solution springs back if you poke it quickly but flows if you wait, and a gel that is just forming is barely solid. Microrheology measures it without shearing the sample: it mixes in a few tiny beads and watches how far the thermal kicks of the molecules push them in a given time. In a liquid the beads wander off; in a solid they rattle in place. From that motion follow the storage modulus G' (how elastic) and the loss modulus G'' (how viscous), over many decades of frequency, from a drop of sample. Differential dynamic microscopy (DDM) reads the motion of the beads from an ordinary microscope movie, without following any of them (Edera et al. 2017). Here a simulated microscope lets you do it on materials whose moduli are known exactly.</p>
+      <fieldset class="levels">
+        <legend>How deep do you want to go?</legend>
+        <div class="level-opts" role="radiogroup">
+          <label><input type="radio" name="level" id="lv-curious" value="curious"><span class="t">Curious</span><span class="d">The idea in words and pictures, no equations.</span></label>
+          <label><input type="radio" name="level" id="lv-student" value="student"><span class="t">Student</span><span class="d">The method step by step, equations folded away.</span></label>
+          <label><input type="radio" name="level" id="lv-researcher" value="researcher"><span class="t">Researcher</span><span class="d">All controls, equations open, and the matching fastDDM calls.</span></label>
+          <label><input type="radio" name="level" id="lv-addict" value="addict"><span class="t">Addict</span><span class="d">As Researcher, and you can switch off our tricks to see what each one does.</span></label>
+        </div>
+      </fieldset>
+      <div class="hero-result" id="hero-result" aria-live="polite">
+        <span>Simulating the movie...</span>
+      </div>
+    </div>
+    <figure class="porthole">
+      <div class="lens"><canvas id="hero-canvas" width="128" height="128" aria-label="Simulated microscope movie"></canvas></div>
+      <figcaption id="hero-cap">Live simulated bright-field movie</figcaption>
+    </figure>
+  </section>
+
+  <section class="wrap bench-head" aria-labelledby="bench-title">
+    <p class="eyebrow">Hands on</p>
+    <h2 id="bench-title">The bench</h2>
+    <p class="prose">Choose the material and the beads, then the microscope and the camera (controls on the left, or just below on a phone). The movie is recorded again and every step below updates. "Copy a link to this setup" gives an address that opens the bench with the same settings.</p>
+  </section>
+
+  <div class="wrap bench">
+    <aside class="controls" id="controls" aria-label="Experiment settings">
+      <div id="ctl-groups" class="cgroup" style="gap:1.1rem"></div>
+      <div class="btns">
+        <button type="button" id="btn-reset">Back to the standard sample</button>
+        <button type="button" id="btn-seed" class="lvl-3">New random sample</button>
+        <button type="button" id="btn-share">Copy a link to this setup</button>
+        <span class="small" id="share-msg" aria-live="polite"></span>
+      </div>
+      <div class="error" id="error" hidden></div>
+    </aside>
+
+    <div class="steps">
+      <!-- 1 -->
+      <section class="step" id="step-setup" aria-labelledby="h-setup">
+        <div class="step-title"><span class="num">1</span><h2 id="h-setup">Set up the microscope</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="chart fovbox"><canvas id="fov" aria-label="Field of view of the microscope, camera sensor and region of interest"></canvas></div>
+            <div class="legend" id="fov-legend"></div>
+          </figure>
+          <div class="text">
+            <p>The microscope sees a round field 25 mm across in its image plane. A camera chip covers a rectangle in it, and you choose which part of the chip to read out. For microrheology a fast camera matters: the beads move only a little, and the fastest relaxations of the material are over in milliseconds. A small region of interest reads out faster.</p>
+            <p class="readout" id="fov-specs"></p>
+          </div>
+        </div>
+        <div class="text lvl-2"><h3>How one bead looks</h3></div>
+        <figure class="viz lvl-2">
+          <div class="pstrip" id="particle-strip"></div>
+          <figcaption id="particle-text"></figcaption>
+        </figure>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: how each image is computed, and how the beads move</summary>
+          <p>As on the <a href="../sizing/">sizing page</a>: the light scattered by each bead (Mie theory) interferes with the transmitted light through the condenser and objective apertures, or the dyed bead is convolved with the point spread function (fluorescence and confocal). Each frame is the sum of the images of all beads at their positions, with the detector's pixel size, quantum efficiency, shot noise, read noise and full well. The material itself does not show.</p>
+          <p><b>Motion.</b> The material is a solvent of viscosity <i>&eta;</i><sub>s</sub>, Maxwell modes (modulus <i>G<sub>k</sub></i>, relaxation time <i>&tau;<sub>k</sub></i>) and, for a solid, an equilibrium modulus <i>G</i><sub>&infin;</sub>:</p>
+          <div class="eq"><i>G</i>'(&omega;) = <i>G</i><sub>&infin;</sub> + &Sigma; <i>G<sub>k</sub></i> (&omega;&tau;<sub><i>k</i></sub>)<sup>2</sup> / [1 + (&omega;&tau;<sub><i>k</i></sub>)<sup>2</sup>], &nbsp;&nbsp; <i>G</i>''(&omega;) = <i>&eta;</i><sub>s</sub>&omega; + &Sigma; <i>G<sub>k</sub></i> &omega;&tau;<sub><i>k</i></sub> / [1 + (&omega;&tau;<sub><i>k</i></sub>)<sup>2</sup>]</div>
+          <p>A bead of radius <i>a</i> feels each mode as a spring 6&pi;<i>aG<sub>k</sub></i> in series with a dashpot 6&pi;<i>aG<sub>k</sub>&tau;<sub>k</sub></i>, the plateau as a spring to its resting place and the solvent as a dashpot, each dashpot with its thermal noise. This is a linear (Ornstein-Uhlenbeck) process, simulated exactly at every frame, along x, y and z alike; its mean squared displacement obeys the generalised Stokes-Einstein relation exactly. The beads do not interact, and the material is the same everywhere: no mesh that small beads slip through, no beads that stick.</p>
+        </details>
+      </section>
+
+      <!-- 2 -->
+      <section class="step" id="step-movie" aria-labelledby="h-movie">
+        <div class="step-title"><span class="num">2</span><h2 id="h-movie">Record a movie</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="imgbox"><canvas id="movie" width="128" height="128" aria-label="Microscope movie"></canvas><div class="scale" id="movie-scale"><i></i><span></span></div></div>
+            <div class="toolbar"><button type="button" id="btn-play">Pause</button><span class="readout" id="movie-time"></span></div>
+            <div class="toolbar lvl-2"><button type="button" id="btn-tiff">Download the movie (TIFF)</button><button type="button" id="btn-times" hidden>Frame times (CSV)</button><span class="readout">32-bit, photoelectrons per pixel; opens in ImageJ, Fiji and fastDDM.</span></div>
+          </figure>
+          <div class="text">
+            <p id="movie-text"></p>
+            <p>The frames are log-spaced: in each cycle the first ones follow at the frame rate, then the gaps grow, and the cycle repeats. The same 512 frames then hold delays from milliseconds to about a minute, many decades of frequency in one movie.</p>
+            <p class="readout lvl-2" id="movie-specs"></p>
+          </div>
+        </div>
+        <details class="math" data-open-at="researcher">
+          <summary>In fastDDM</summary>
+          <p>The structure function below is the same as fastDDM's. With your own movie you would start from the image files:</p>
+          <pre class="code">import fastddm as fd
+img_seq = fd.read_images(file_names)</pre>
+        </details>
+      </section>
+
+      <!-- 3 -->
+      <section class="step" id="step-diff" aria-labelledby="h-diff">
+        <div class="step-title"><span class="num">3</span><h2 id="h-diff">Subtract two frames</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="imgbox"><canvas id="diff" width="128" height="128" aria-label="Difference between two frames"></canvas></div>
+            <div class="toolbar"><label for="lag">Delay</label><input type="range" id="lag" min="0" max="10" value="5"><output id="lag-out" class="readout"></output></div>
+          </figure>
+          <div class="text">
+            <p>Subtract a frame from one taken a little later. Everything that stays still cancels out; what is left is what moved, plus the camera noise.</p>
+            <p id="diff-note"></p>
+          </div>
+        </div>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: the difference image</summary>
+          <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
+        </details>
+      </section>
+
+      <!-- 4 -->
+      <section class="step" id="step-map" aria-labelledby="h-map">
+        <div class="step-title"><span class="num">4</span><h2 id="h-map">Split it into stripe patterns</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="pair">
+              <div><div class="imgbox"><canvas id="map" width="128" height="128" aria-label="Power spectrum of the differences; click to choose a pattern, or use the two sliders below the maps"></canvas><canvas id="map-ov" class="overlay" width="512" height="512" style="cursor:crosshair"></canvas></div><div class="cap">Strength of each pattern in the difference (click it, or use the sliders)</div></div>
+              <div><div class="imgbox"><canvas id="stripes" width="128" height="128" aria-label="The stripe pattern you selected"></canvas></div><div class="cap">The pattern you picked</div></div>
+            </div>
+            <div class="toolbar pickbar"><label for="pick-k">Stripes, wide to fine</label><input type="range" id="pick-k" min="1" max="63" step="1" value="10"><label for="pick-a">Direction</label><input type="range" id="pick-a" min="0" max="179" step="1" value="30"></div>
+            <div class="readout" id="pick-out"></div>
+            <div class="pair" style="margin-top:0.75rem">
+              <div><div class="imgbox"><canvas id="fmap" width="128" height="128" aria-label="How much of each pattern is left after the delay"></canvas></div><div class="cap">How much of each pattern is left</div><div class="scalebar div"></div><div class="scalelab"><span>-1</span><span>0, gone</span><span>1, all there</span></div></div>
+            </div>
+            <div class="readout" id="zoom-note"></div>
+          </figure>
+          <div class="text">
+            <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie. The centre of the map holds wide stripes, the edge fine ones. The beads move the same way in every direction, so the map is round.</p>
+            <p>A bead that moves by a fraction of a stripe spacing already changes that pattern; to renew a wide pattern it must go much further. So fine stripes are a magnifying glass for small motions, wide stripes for large ones, and together they cover displacements from nanometres to micrometres.</p>
+            <p>The second map shows how much of each pattern is left after the delay: red where it is still all there, the colour of the page where it has faded. In a gel the wide patterns stay red at every delay.</p>
+            <p class="lvl-2" id="kopt-note">The dashed circle on the strength map marks the finest pattern the objective can resolve.</p>
+          </div>
+        </div>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: structure function of tracer beads</summary>
+          <p>For beads that do not interact, with Gaussian displacements,</p>
+          <div class="eq"><i>d</i>(<i>q</i>, &Delta;<i>t</i>) = &lang; |<i>F</i>[&Delta;<i>I</i>](<b>q</b>; <i>t</i>, &Delta;<i>t</i>)|<sup>2</sup> &rang; = <i>A</i>(<i>q</i>) [1 &minus; <i>f</i>(<i>q</i>, &Delta;<i>t</i>)] + <i>B</i>, &nbsp;&nbsp; <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = exp[&minus;<i>q</i><sup>2</sup> &lang;&Delta;<i>r</i><sup>2</sup>(&Delta;<i>t</i>)&rang; / 4]</div>
+          <p>with &lang;&Delta;<i>r</i><sup>2</sup>&rang; the mean squared displacement in the image plane. For free diffusion &lang;&Delta;<i>r</i><sup>2</sup>&rang; = 4<i>D</i>&Delta;<i>t</i> and <i>f</i> = e<sup>&minus;<i>Dq</i><sup>2</sup>&Delta;<i>t</i></sup>, as on the sizing page. Map axes: <i>q<sub>x</sub></i> to the right, <i>q<sub>y</sub></i> up.</p>
+          <div class="lvl-3"><pre class="code">dqt = fd.ddm(img_seq, lags)      # lags: the log-spaced delays
+dqt.pixel_size = pixel_size      # um
+aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
+        </details>
+      </section>
+
+      <!-- 5 -->
+      <section class="step" id="step-curves" aria-labelledby="h-curves">
+        <div class="step-title"><span class="num">5</span><h2 id="h-curves">Watch each pattern change</h2></div>
+        <div class="step-body">
+          <div class="text">
+            <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. Fine stripes (red) change first, because a bead only has to move a little to shift them; wide ones (blue) change later. In a liquid every curve falls to zero in the end. In a gel the beads cannot leave their cages, so the curves level off well above zero: they never forget their pattern, and the wider the stripes the higher the level.</p>
+            <p class="lvl-2">The points are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i>. The lines are exp[&minus;<i>q</i><sup>2</sup> &lang;&Delta;<i>r</i><sup>2</sup>&rang; / 4] with the mean squared displacement of step 6 (leaving out the small effect of the depth of field), the same for every <i>q</i>: if the beads' displacements are Gaussian, one displacement explains all the curves.</p>
+          </div>
+          <figure class="viz">
+            <div class="chart"><canvas id="chart-curves" aria-label="How much of each pattern is left against the delay"></canvas></div>
+            <div class="legend" id="curves-legend"></div>
+          </figure>
+          <div class="predict" data-predict="gel" data-right="no">
+            <div class="q">Predict first: in a gel the beads cannot leave their cages. Do the curves still fall to zero at long delays?</div>
+            <div class="btns"><button type="button" data-guess="yes">Yes</button><button type="button" data-guess="no">No</button></div>
+            <div class="a" hidden><span class="verdict"></span> No. Each bead only rattles in its cage, so part of every pattern never changes: the curves level off above zero, higher for wider stripes, which a small rattle hardly moves. The height of the plateau gives how far the beads rattle, and from it the elastic modulus of the gel. The bench now runs with a soft gel.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6 -->
+      <section class="step" id="step-rates" aria-labelledby="h-rates">
+        <div class="step-title"><span class="num">6</span><h2 id="h-rates">From the curves to the moduli</h2></div>
+        <div class="step-body">
+          <div class="text">
+            <p>Each curve of step 5 gives, at each delay, how far the beads have moved on average: the mean squared displacement. Fine stripes give the small displacements of short delays, wide stripes the large ones of long delays, and where they overlap they agree. Free diffusion makes the displacement grow in proportion to the delay (a slope of 1 on these axes); beads held in cages make it level off (a slope of 0).</p>
+            <p class="only-1">A rule that goes back to Einstein turns the displacement into the moduli: the stiffer the material, the less the beads move, and the faster it relaxes, the sooner they escape. A delay &Delta;<i>t</i> stands for a frequency of about 1/&Delta;<i>t</i>.</p>
+            <p class="lvl-2">The generalised Stokes-Einstein relation turns the displacement into the moduli: the stiffer the material, the less the beads move, and the faster it relaxes, the sooner they escape. A delay &Delta;<i>t</i> stands for a frequency of about 1/&Delta;<i>t</i>.</p>
+          </div>
+          <figure class="viz">
+            <figcaption>How far the beads get</figcaption>
+            <div class="chart"><canvas id="chart-msd" aria-label="Mean squared displacement against delay"></canvas></div>
+            <ul class="reasons" id="msd-notes"></ul>
+          </figure>
+          <figure class="viz">
+            <figcaption>The moduli: elastic (G') and viscous (G'')</figcaption>
+            <div class="chart"><canvas id="chart-moduli" aria-label="Storage and loss moduli against frequency"></canvas></div>
+            <ul class="reasons" id="mod-notes"></ul>
+          </figure>
+          <div class="step-body">
+            <div class="result" id="result" aria-live="polite"></div>
+            <div class="predict" data-predict="bigger" data-right="no">
+              <div class="q">Predict first: the beads are twice as large. Do the moduli change?</div>
+              <div class="btns"><button type="button" data-guess="yes">Yes</button><button type="button" data-guess="no">No</button></div>
+              <div class="a" hidden><span class="verdict"></span> No. Larger beads move less: their mean squared displacement halves. But the rule that turns displacement into moduli multiplies it by the size again, so the moduli, which belong to the material, stay the same. The bench now runs with beads twice as large (at most 3 &micro;m).</div>
+            </div>
+          </div>
+        </div>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: from f to the moduli</summary>
+          <div class="eq">&lang;&Delta;<i>r</i><sup>2</sup>(&Delta;<i>t</i>)&rang; = &minus;(4 / <i>q</i><sup>2</sup>) ln <i>f</i>(<i>q</i>, &Delta;<i>t</i>), &nbsp;&nbsp; <i>J</i>(<i>t</i>) = &pi;<i>a</i> &lang;&Delta;<i>r</i><sup>2</sup>(<i>t</i>)&rang;<sub>3D</sub> / <i>k</i><sub>B</sub><i>T</i>, &nbsp;&nbsp; &lang;&Delta;<i>r</i><sup>2</sup>&rang;<sub>3D</sub> = 1.5 &lang;&Delta;<i>r</i><sup>2</sup>&rang;</div>
+          <p><b>Amplitude and noise.</b> <i>A</i>(<i>q</i>) = 2&lang;|<i>F</i>(<i>q</i>)|<sup>2</sup>&rang; &minus; <i>B</i>, from the mean power of each pattern, which holds the whole amplitude even when part of the pattern never changes during the movie; <i>B</i> = 2 (excess-noise factor &times; mean count + read noise<sup>2</sup>), the camera noise, the same at every <i>q</i>. <b>Displacement.</b> At each <i>q</i> and delay, &lang;&Delta;<i>r</i><sup>2</sup>&rang; is the value that gives the measured <i>f</i>, with the depth of field: beads moving up or down change their image too, which adds a factor <i>C<sub>q</sub></i>(&lang;&Delta;<i>z</i><sup>2</sup>&rang;) through the optics of step 1, with &lang;&Delta;<i>z</i><sup>2</sup>&rang; = &lang;&Delta;<i>r</i><sup>2</sup>&rang;/2. Only points where <i>f</i> is clearly below 1 (by three times its noise, and by at least 1 %) and above 0.15 are used, from the fourth <i>q</i> bin up; the <i>q</i> are combined with weights from the noise of ln &lang;&Delta;<i>r</i><sup>2</sup>&rang;, at least three per delay. The noise of <i>f</i> and the uncertainty of the result come from a jackknife over ten parts of the movie.</p>
+          <p><b>Moduli.</b> <i>G</i>*(&omega;) = 1 / [<i>i</i>&omega; <i>J</i>&#770;(&omega;)]. The measured <i>J</i>(<i>t</i>) is fitted with springs and dashpots side by side (Kelvin-Voigt elements, retardation times four per decade) and a free flow <i>t</i>/<i>&eta;</i>, all with positive weights; the moduli of that sum follow exactly. A direct transform of the measured points (Evans et al. 2009) rang with their noise. For comparison (Researcher level) Mason's local power-law formulas, |<i>G</i>*(&omega;)| = <i>k</i><sub>B</sub><i>T</i> / [&pi;<i>a</i>&lang;&Delta;<i>r</i><sup>2</sup>(1/&omega;)&rang;<sub>3D</sub> &Gamma;(1 + &alpha;)], <i>G</i>' = |<i>G</i>*| cos(&pi;&alpha;/2), <i>G</i>'' = |<i>G</i>*| sin(&pi;&alpha;/2), with &alpha; the local slope of &lang;&Delta;<i>r</i><sup>2</sup>&rang; on logarithmic axes.</p>
+        </details>
+        <details class="lvl-3 math" open>
+          <summary>Settings used for this run</summary>
+          <pre class="code" id="settings-json"></pre>
+          <div class="btns"><button type="button" id="btn-copy">Copy settings</button></div>
+        </details>
+      </section>
+    </div>
+  </div>
+
+  <section class="wrap matters" aria-labelledby="h-matters">
+    <p class="eyebrow">In a real experiment</p>
+    <h2 id="h-matters">What matters</h2>
+    <p class="prose">Each card sets the bench to a typical case and shows where to look. Use "Back to the standard sample" to start again.</p>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="wrap further lvl-2" aria-labelledby="h-adds">
+    <h2 id="h-adds">What this page adds to the published methods</h2>
+    <p class="prose">DDM microrheology was introduced by Edera et al. (2017), and Bayles, Squires and Helgeson (2017) did the same independently: f(q, &Delta;t) turned into a mean squared displacement at each q, then into the moduli through the generalised Stokes-Einstein relation. Edera et al. chose A and B by making the displacements from all q agree; in a simulation the camera is known, so this page gets B from the photon count and A from the mean power instead. The steps below are not in the papers we cite: we added them while testing the page against its own simulations, and some may exist elsewhere. At the "Addict" level each can be switched off, and the result table shows a plain method on the same movie (A from the variance, B from the first delays, no depth of field, q where the displacement is below 1/q&sup2;, Mason's formulas).</p>
+    <ul class="adds">
+      <li><b>Amplitude from the mean power.</b> A = 2&lang;|F(q)|&sup2;&rang; &minus; B instead of 2 var &minus; B. <span class="where">Step 6. When the widest patterns are not renewed within the movie the variance misses part of A: on the standard micelles this alone reads the viscosity three times too low (85 instead of 250 mPa s).</span></li>
+      <li><b>Camera noise known from the detector.</b> B = 2 (excess-noise factor &times; mean count + read noise&sup2;), the same at every q. <span class="where">Step 6.</span></li>
+      <li><b>Depth of field.</b> Beads moving up and down change each pattern too; the inversion includes it through the optics of step 1, as on the sizing page. <span class="where">Step 6.</span></li>
+      <li><b>Points chosen by their noise.</b> Each q is used where f is clearly below 1 and above 0.15, weighted by the noise of ln &lang;&Delta;r&sup2;&rang; from a jackknife over ten parts of the movie; the widest patterns are left out. <span class="where">Step 6. The widest patterns read the displacement up to twice too large in our tests.</span></li>
+      <li><b>Moduli from a fitted retardation spectrum</b>, positive by construction. <span class="where">Step 6. On the soft micelles Mason's formulas read G' near the crossover about 20 % off; the spectrum stays within a few percent.</span></li>
+    </ul>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-about">
+    <h2 id="h-about">About this tool</h2>
+    <p class="prose">This page is a simple tool, generated with Claude Opus 5.5, that simulates a realistic microscopy experiment in which DDM is used to measure the moduli of a soft material from the motion of tracer beads. The microscope, light sources, cameras, spinning disk and point scanner are modelled mostly on the instruments of our SoMeX lab. The beads are spheres that do not interact with each other, in a material that is the same everywhere and whose moduli are set exactly; the concentrated micelles come from the measurements cited on the page, the other materials have values chosen for the page. The aim is not to produce research-quality data, but to give anyone thinking of using DDM an idea of what microrheology can measure, and of what limits it.</p>
+    <p class="prose">If you find something that looks wrong or does not work, please let us know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
+    <p class="prose">To cite this page: R. Cerbino, <i>DDM, hands on: liquid or solid</i>, <a href="https://rcerbino.github.io/ddm/rheology/">rcerbino.github.io/ddm/rheology/</a> (2026), with the date you used it.</p>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-further">
+    <h2 id="h-further">Go further</h2>
+    <ul class="only-1">
+      <li><a href="../sizing/">Sizing particles</a>: beads in a simple liquid, and how their size follows from the motion.</li>
+      <li><a href="https://rcerbino.github.io/research/">Research</a>: what the SoMeX group measures with DDM.</li>
+      <li>Switch to <a href="#student" data-level-link="student">Student</a> above for the equations behind each step.</li>
+    </ul>
+    <ul class="lvl-2">
+      <li>P. Edera, D. Bergamini, V. Trappe, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1103/PhysRevMaterials.1.073804">Differential dynamic microscopy microrheology of soft materials: a tracking-free determination of the frequency-dependent loss and storage moduli</a>, Phys. Rev. Materials 1, 073804 (2017). The method used here, tested on water-glycerol mixtures and on a polymer solution against a rheometer and diffusing-wave spectroscopy.</li>
+      <li>A. V. Bayles, T. M. Squires and M. E. Helgeson, <a href="https://doi.org/10.1007/s00397-017-1047-7">Probe microrheology without particle tracking by differential dynamic microscopy</a>, Rheol. Acta 56, 863 (2017). The same idea, on sucrose solutions, wormlike micelles and polyacrylamide gels.</li>
+      <li>T. G. Mason, <a href="https://doi.org/10.1007/s003970000094">Estimating the viscoelastic moduli of complex fluids using the generalized Stokes-Einstein equation</a>, Rheol. Acta 39, 371 (2000). The local power-law formulas.</li>
+      <li>H. H. Winter and F. Chambon, <a href="https://doi.org/10.1122/1.549853">Analysis of linear viscoelasticity of a crosslinking polymer at the gel point</a>, J. Rheol. 30, 367 (1986). The critical gel: G' and G'' parallel power laws.</li>
+      <li>K. R. Lennon, M. Geri, G. H. McKinley and J. W. Swan, <a href="https://doi.org/10.1122/8.0000104">Medium amplitude parallel superposition (MAPS) rheology. Part 2: Experimental protocols and data analysis</a>, J. Rheol. 64, 1263 (2020). The concentrated wormlike micelles of the card "Too stiff for these beads".</li>
+      <li>R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope</a>, Phys. Rev. Lett. 100, 188102 (2008); E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a>, J. Chem. Phys. 163, 161501 (2025).</li>
+    </ul>
+    <ul class="lvl-3">
+      <li><a href="https://github.com/somexlab/fastddm">fastDDM</a> (Python, CPU and GPU, GPL 3.0): <code>pip install fastddm</code>. <a href="https://fastddm.readthedocs.io/">Documentation</a>.</li>
+      <li>For collaborations or questions about applying DDM to your samples, see <a href="https://rcerbino.github.io/contact/">Contact</a>.</li>
+    </ul>
+  </section>
+</main>
+<!-- progress of the simulation, pinned to the bottom of the window so it is always in view -->
+<div class="runbar" id="runbar">
+  <div class="wrap runbar-inner">
+    <div class="bar" aria-hidden="true"><span id="bar"></span></div>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+  </div>
+</div>
+<footer class="site"><div class="wrap">Roberto Cerbino, University of Vienna. The simulation and the analysis run entirely in your browser; nothing is uploaded.</div></footer>
+
+<script type="application/json" id="objectives-data">/*OBJECTIVES*/</script>
+<script id="optics-src">
+/*OPTICS*/
+</script>
+<script id="visco-src">
+/*VISCO*/
+</script>
+<script id="movie-src">
+/*MOVIE*/
+</script>
+<script id="engine-src">
+/*ENGINE*/
+</script>
+<script id="rheo-src">
+/*RHEO*/
+</script>
+<script type="text/plain" id="worker-src">
+/*WORKER*/
+</script>
+<script>
+/*TIFF*/
+</script>
+<script>
+/*APP*/
+</script>

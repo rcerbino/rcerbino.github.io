@@ -18,6 +18,8 @@
 (function (root) {
   "use strict";
   const O = (typeof module !== "undefined" && module.exports) ? require("./optics.js") : root.OPTICS;
+  // tracer beads in a viscoelastic material (visco.js; loaded only by the page that uses it)
+  const VIS = (typeof module !== "undefined" && module.exports) ? require("./visco.js") : root.VISCO;
   const TWO_PI = 2 * Math.PI;
   const KB = 1.380649e-23;
   function fail(msg) { throw new Error("Movie: " + msg); }
@@ -138,6 +140,17 @@
    *    Swimmers move along their axis (spheres carry a direction that does not change their image), keep their
    *    Brownian motion, are not slowed near the walls and bounce off them by mirroring the vertical part of their
    *    direction. Plane swimmers keep their height and turn only within the plane.
+   *  interact (optional): particles that push each other (concentrated suspensions) { kind: "hard" (hard spheres) or
+   *    "yukawa" (hard core plus a screened repulsion U/kT = U0 sigma exp(-kappa (r - sigma)) / r), U0 (contact value, kT),
+   *    kappa_sigma (kappa times the diameter), label_fraction (0..1: only these show, as with a share of dyed particles) }.
+   *    Brownian dynamics of all particles in a box periodic in x, y and z (no walls, no hydrodynamic interactions):
+   *    free steps of rms 0.03 diameters, the repulsion as a force, and overlaps removed after each step (Heyes and Melrose,
+   *    J. Non-Newtonian Fluid Mech. 46, 1, 1993). Started from random places, pushed apart, then run for one Brownian time
+   *    sigma^2 / D0 before the first frame. All particles of a frame are taken at the frame time (no rolling-shutter
+   *    delay). Spheres of one size only; volume fraction up to 0.45.
+   *  visco (optional): the particles are tracer spheres in a linear viscoelastic material { modes: [[G_Pa, tau_s], ...],
+   *    G_inf_Pa (optional) }, the liquid being its solvent (see visco.js): each bead moves as an exact Ornstein-Uhlenbeck
+   *    process about its resting place, in x, y and z alike. Not with swimmers, gravity, walls, drift or non-spheres.
    */
   const SHAPES = ["sphere", "bisphere", "prolate", "oblate", "rod"];
   const TINY_UM = 0.03, TINY_M = 1.1;          // reference dipole for non-spherical bodies
@@ -168,7 +181,8 @@
     const readout = timing === "rolling_center" ? det.rows_total / 2 * det.t_row_s : timing === "global" ? 0 : det.rows_total * det.t_row_s;
     need(readout <= 1.001 / fr, "the " + (timing === "scan" ? "scan" : "read-out") + " of one frame takes longer than the frame interval");
     const d0 = num(cfg, "diameter_um", 0.01, 100), spread = num(cfg, "size_spread", 0, 0.5);
-    const phi = num(cfg, "volume_fraction", 1e-9, 0.05);
+    const INTC = cfg.interact || null;
+    const phi = num(cfg, "volume_fraction", 1e-9, INTC ? 0.45 : 0.05);
     const T_C = num(cfg, "T_C", 0, 90), Lz = num(cfg, "cell_um", 1, 2000), hf = num(cfg, "focus_um", -50, 2050);
     const drift = num(cfg, "drift_um_s", 0, 1000), driftDeg = cfg.drift_deg === undefined ? 0 : num(cfg, "drift_deg", -360, 360);
     const driftProfile = cfg.drift_profile === undefined ? "plug" : cfg.drift_profile;
@@ -207,6 +221,15 @@
     const body = shape === "prolate" || shape === "oblate" || shape === "rod";   // filled with dipoles
     const oriented = shape !== "sphere";                                          // carries an axis that rotates
     const pAsp = body ? num(cfg, "aspect", 1, 30) : 1;
+    const visco = cfg.visco || null;
+    if (INTC) {
+      need(INTC.kind === "hard" || INTC.kind === "yukawa", "interact.kind must be hard or yukawa");
+      need(shape === "sphere" && !visco && !cfg.swim && cfg.gravity !== true && cfg.walls !== true && !(cfg.drift_um_s > 0) && !(spread > 0), "particles that interact: spheres of one size, without swimming, gravity, walls, drift or a material");
+    }
+    if (visco) {
+      need(VIS, "the viscoelastic model (visco.js) is not loaded");
+      need(shape === "sphere" && !cfg.swim && cfg.gravity !== true && cfg.walls !== true && !(cfg.drift_um_s > 0) && !cfg.drift_z_um_s, "tracers in a viscoelastic material: spheres only, without swimming, gravity, walls or drift");
+    }
     const dn = shape === "sphere" || cfg.birefringence === undefined ? 0 : num(cfg, "birefringence", -0.5, 0.5);
     const pol = cfg.polarization || null;
     const hasP = !!pol && pol.polarizer_deg !== null && pol.polarizer_deg !== undefined, hasA = !!pol && pol.analyzer_deg !== null && pol.analyzer_deg !== undefined;
@@ -423,6 +446,135 @@
       if (oriented) randomAxis(i);
       fParMean += fWall(classes[c], H[i])[0] / nTot;
     }
+    // tracers in a viscoelastic material: resting place (X0, Y0, H0) and the state of each independent mode of the bead's
+    // motion, drawn from equilibrium (free diffusion modes start at 0); the bead sits at its resting place plus sum c_j w_j
+    let VE = null, X0 = null, Y0 = null, H0 = null, WS = null, NM = 0;
+    if (visco) {
+      VE = classes.map(function (c) { return VIS.embed(visco, c.ah, T_C, eta); });
+      NM = VE[0].lam.length; X0 = Float64Array.from(X); Y0 = Float64Array.from(Y); H0 = Float64Array.from(H); WS = new Float64Array(nTot * 3 * NM);
+      for (let i = 0; i < nTot; i++) {
+        const e = VE[cls[i]], o = 3 * NM * i;
+        for (let d = 0; d < 3; d++) {
+          let u = 0;
+          for (let j = 0; j < NM; j++) { const w = e.lam[j] > 0 ? rng.g() / Math.sqrt(e.lam[j]) : 0; WS[o + d * NM + j] = w; u += e.c[j] * w; }
+          if (d === 0) X[i] = X0[i] + u; else if (d === 1) Y[i] = Y0[i] + u; else H[i] = H0[i] - u;
+        }
+        reflectVisco(i);
+      }
+    }
+    // particles that push each other: Brownian dynamics of the whole box (see the header)
+    let INT = null;
+    if (INTC) { yield { stage: "Placing the particles", frac: 0.14 }; INT = setupInteract(); }
+    function setupInteract() {
+      const sg = classes[0].d, D0 = classes[0].hyd.D_t, tauB = sg * sg / D0, kind = INTC.kind;
+      const U0 = kind === "yukawa" ? num(INTC, "U0", 0, 1000) : 0, ks = kind === "yukawa" ? num(INTC, "kappa_sigma", 0.5, 100) : 1, kap = ks / sg;
+      const rc = kind === "yukawa" ? Math.max(sg, Math.min(sg + 6 / kap, Math.min(L, Lz) / 2)) : sg;      // never below the hard core
+      const lf = INTC.label_fraction === undefined ? 1 : num(INTC, "label_fraction", 0, 1);
+      // time step: free steps of 0.03 diameters rms, and the repulsion moving a particle by at most that much where it is
+      // 10 kT (closer approaches are rare: the push there is capped at 0.1 diameters per step, and overlaps are removed)
+      let h = Math.pow(0.03 * sg, 2) / (2 * D0);
+      if (U0 > 0) {
+        const Ur = function (r) { return U0 * sg * Math.exp(-kap * (r - sg)) / r; };
+        let rs = sg; if (U0 > 10) { let lo = sg, hi = sg + 20 / kap; for (let it = 0; it < 60; it++) { const m = 0.5 * (lo + hi); if (Ur(m) > 10) lo = m; else hi = m; } rs = 0.5 * (lo + hi); }
+        h = Math.min(h, 0.03 * sg / (D0 * Ur(rs) * (kap + 1 / rs)));
+      }
+      const dMax = 0.1 * sg;
+      const LB = new Uint8Array(nTot); for (let i = 0; i < nTot; i++) LB[i] = rng.u() < lf ? 1 : 0;
+      // unwrapped displacements (for the long-time self-diffusion of the truth)
+      const UXd = new Float64Array(nTot), UYd = new Float64Array(nTot);
+      // cell list over the periodic box
+      const nc = [Math.max(3, Math.floor(L / rc)), Math.max(3, Math.floor(L / rc)), Math.max(3, Math.floor(Lz / rc))];
+      const head = new Int32Array(nc[0] * nc[1] * nc[2]), next = new Int32Array(nTot);
+      const build = function () {
+        head.fill(-1);
+        for (let i = 0; i < nTot; i++) {
+          const cx = Math.min(nc[0] - 1, Math.floor(X[i] / L * nc[0])), cy = Math.min(nc[1] - 1, Math.floor(Y[i] / L * nc[1])), cz = Math.min(nc[2] - 1, Math.floor(H[i] / Lz * nc[2]));
+          const c = (cz * nc[1] + cy) * nc[0] + cx; next[i] = head[c]; head[c] = i;
+        }
+      };
+      const wrapAll = function (i) { X[i] -= L * Math.floor(X[i] / L); Y[i] -= L * Math.floor(Y[i] / L); H[i] -= Lz * Math.floor(H[i] / Lz); };
+      // the 27 neighbours of each cell (itself included), in the order (dz, dy, dx) = (-1..1)^3, periodic
+      const nCell = nc[0] * nc[1] * nc[2], NB = new Int32Array(27 * nCell);
+      for (let cz = 0; cz < nc[2]; cz++) for (let cy = 0; cy < nc[1]; cy++) for (let cx = 0; cx < nc[0]; cx++) {
+        let o = 27 * ((cz * nc[1] + cy) * nc[0] + cx);
+        for (let dz = -1; dz <= 1; dz++) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++)
+          NB[o++] = ((((cz + dz) % nc[2] + nc[2]) % nc[2]) * nc[1] + (((cy + dy) % nc[1] + nc[1]) % nc[1])) * nc[0] + (((cx + dx) % nc[0] + nc[0]) % nc[0]);
+      }
+      const hL = L / 2, hLz = Lz / 2, rc2 = rc * rc, sg2 = sg * sg;
+      // pair loops written out (no function call per pair), same order as before: every pair closer than rc once,
+      // (ex, ey, ez) from i to j, minimum image
+      // overlaps pushed apart along the line of centres (each particle half the overlap); returns how many there were
+      // deeper than tol (a fraction of the diameter; 0: all)
+      const unlap = function (tol) {
+        build();
+        const lim = tol ? Math.pow(sg * (1 - tol), 2) : sg2;
+        let n = 0;
+        for (let c0 = 0; c0 < nCell; c0++) {
+          for (let i = head[c0]; i >= 0; i = next[i]) {
+            for (let q = 27 * c0 + 13, qe = 27 * c0 + 27; q < qe; q++) {
+              for (let j = q === 27 * c0 + 13 ? next[i] : head[NB[q]]; j >= 0; j = next[j]) {
+                let ex = X[j] - X[i], ey = Y[j] - Y[i], ez = H[j] - H[i];
+                if (ex > hL) ex -= L; else if (ex < -hL) ex += L;
+                if (ey > hL) ey -= L; else if (ey < -hL) ey += L;
+                if (ez > hLz) ez -= Lz; else if (ez < -hLz) ez += Lz;
+                const r2 = ex * ex + ey * ey + ez * ez; if (r2 >= sg2) continue;
+                const r = Math.sqrt(r2) || 1e-9, m = 0.5 * (sg - r) / r * 1.0001; if (r2 < lim) n++;
+                X[i] -= m * ex; Y[i] -= m * ey; H[i] -= m * ez; X[j] += m * ex; Y[j] += m * ey; H[j] += m * ez;
+                UXd[i] -= m * ex; UYd[i] -= m * ey; UXd[j] += m * ex; UYd[j] += m * ey;
+              }
+            }
+          }
+        }
+        for (let i = 0; i < nTot; i++) wrapAll(i);
+        return n;
+      };
+      const forces = function () {
+        build();
+        for (let c0 = 0; c0 < nCell; c0++) {
+          for (let i = head[c0]; i >= 0; i = next[i]) {
+            for (let q = 27 * c0 + 13, qe = 27 * c0 + 27; q < qe; q++) {
+              for (let j = q === 27 * c0 + 13 ? next[i] : head[NB[q]]; j >= 0; j = next[j]) {
+                let ex = X[j] - X[i], ey = Y[j] - Y[i], ez = H[j] - H[i];
+                if (ex > hL) ex -= L; else if (ex < -hL) ex += L;
+                if (ey > hL) ey -= L; else if (ey < -hL) ey += L;
+                if (ez > hLz) ez -= Lz; else if (ez < -hLz) ez += Lz;
+                const r2 = ex * ex + ey * ey + ez * ez; if (r2 >= rc2) continue;
+                const r = Math.sqrt(r2); if (r < sg * 0.999) continue;
+                const f = U0 * sg * Math.exp(-kap * (r - sg)) * (kap * r + 1) / (r2 * r);     // |F| / r, kT / um^2
+                FX[i] -= f * ex; FY[i] -= f * ey; FZ[i] -= f * ez; FX[j] += f * ex; FY[j] += f * ey; FZ[j] += f * ez;
+              }
+            }
+          }
+        }
+      };
+      const FX = new Float64Array(nTot), FY = new Float64Array(nTot), FZ = new Float64Array(nTot);
+      const st = Math.sqrt(2 * D0 * h);
+      const step = function () {
+        if (U0 > 0) {
+          FX.fill(0); FY.fill(0); FZ.fill(0);
+          forces();
+        }
+        for (let i = 0; i < nTot; i++) {
+          let px = D0 * FX[i] * h, py = D0 * FY[i] * h, pz = D0 * FZ[i] * h; const pm = Math.sqrt(px * px + py * py + pz * pz);
+          if (pm > dMax) { px *= dMax / pm; py *= dMax / pm; pz *= dMax / pm; }
+          const dx = st * rng.g() + px, dy = st * rng.g() + py, dz = st * rng.g() + pz;
+          X[i] += dx; Y[i] += dy; H[i] += dz; UXd[i] += dx; UYd[i] += dy; wrapAll(i);
+        }
+        unlap();
+      };
+      // start: random places (H uniform in the box), overlaps removed, then one Brownian time
+      for (let i = 0; i < nTot; i++) H[i] = rng.u() * Lz;
+      // (until no overlap is deeper than 0.1 % of a diameter: in a crowd the pushes keep making new overlaps of about 1e-5
+      // diameters, so asking for none at all always ran the full 2000 passes)
+      for (let it = 0; it < 2000 && unlap(1e-3) > 0; it++) { /* push apart */ }
+      // settle long enough for the widest density waves of the box to relax from the random start: they relax at the
+      // collective rate D0 k^2 / S(k), with S(0) of hard spheres (Percus-Yevick) as a guide; twice that time, at
+      // least one Brownian time (INTC.settle_tauB overrides)
+      const eta0 = phi, S0 = Math.pow(1 - eta0, 4) / Math.pow(1 + 2 * eta0, 2), kmin = TWO_PI / Math.max(L, Lz);
+      const settle = INTC.settle_tauB !== undefined ? num(INTC, "settle_tauB", 0, 1000) : Math.max(1, 2 * S0 / (kmin * kmin * sg * sg));
+      const nEq = Math.ceil(settle * tauB / h);
+      return { sg: sg, D0: D0, tauB: tauB, h: h, LB: LB, step: step, nEq: nEq, t: 0, UXd: UXd, UYd: UYd, U0: U0, ks: ks, lf: lf, kind: kind };
+    }
     // swimmers: speeds from a Schulz (gamma) distribution with mean swV and relative SD swSpread
     const SP = new Float64Array(nTot), PL = new Uint8Array(nTot);
     const gammaDraw = function (k) {      // Marsaglia and Tsang, mean k, for shape k >= 1 (k < 1 by the boost u^(1/k))
@@ -458,6 +610,35 @@
     // exposure blur: sub-steps when particles move or turn noticeably during the exposure
     // (D q^2 t_exp at the finest pattern imaged, 6 D_r t_exp); otherwise the exposure is treated as instantaneous
     let Dmax = 0, Drmax = 0; classes.forEach(function (c) { Dmax = Math.max(Dmax, c.hyd.D_par, c.hyd.D_perp); Drmax = Math.max(Drmax, c.hyd.D_r); });
+    /* The truth for particles that interact: S(q) of all particles in the image plane (q_z = 0), from 8 snapshots,
+     * |sum_j exp(-i q.x_j)|^2 / N over the Fourier lattice of the field, averaged in rings of width 2 pi / L; and the
+     * self-diffusion coefficient over the whole movie, <dx^2 + dy^2> / (4 t). */
+    function interactTruth() {
+      const dk = TWO_PI / L, kmax = Math.min(N / 2, Math.ceil(25 / INT.sg / dk)), S = new Float64Array(kmax + 1), cnt = new Float64Array(kmax + 1);
+      const ex = new Float64Array(2 * (kmax + 1)), ey = new Float64Array(2 * (2 * kmax + 1));
+      snaps.forEach(function (sn) {
+        const Xs = sn[0], Ys = sn[1], Sr = new Float64Array((kmax + 1) * (2 * kmax + 1)), Si = new Float64Array(Sr.length);
+        for (let j = 0; j < nTot; j++) {
+          const cx = Math.cos(dk * Xs[j]), sx = -Math.sin(dk * Xs[j]), cy = Math.cos(dk * Ys[j]), sy = -Math.sin(dk * Ys[j]);
+          ex[0] = 1; ex[1] = 0; for (let k = 1; k <= kmax; k++) { ex[2 * k] = ex[2 * k - 2] * cx - ex[2 * k - 1] * sx; ex[2 * k + 1] = ex[2 * k - 2] * sx + ex[2 * k - 1] * cx; }
+          // ky from -kmax to kmax
+          const o = kmax; ey[2 * o] = 1; ey[2 * o + 1] = 0;
+          for (let k = 1; k <= kmax; k++) { const pr = ey[2 * (o + k - 1)], pi = ey[2 * (o + k - 1) + 1]; ey[2 * (o + k)] = pr * cy - pi * sy; ey[2 * (o + k) + 1] = pr * sy + pi * cy; const mr = ey[2 * (o - k + 1)], mi = ey[2 * (o - k + 1) + 1]; ey[2 * (o - k)] = mr * cy + mi * sy; ey[2 * (o - k) + 1] = -mr * sy + mi * cy; }
+          for (let kx = 0; kx <= kmax; kx++) { const ar = ex[2 * kx], ai = ex[2 * kx + 1]; for (let ky = -kmax; ky <= kmax; ky++) { const br = ey[2 * (o + ky)], bi = ey[2 * (o + ky) + 1], m = kx * (2 * kmax + 1) + ky + o; Sr[m] += ar * br - ai * bi; Si[m] += ar * bi + ai * br; } }
+        }
+        for (let kx = 0; kx <= kmax; kx++) for (let ky = -kmax; ky <= kmax; ky++) {
+          if (kx === 0 && ky <= 0) continue;
+          const b = Math.round(Math.hypot(kx, ky)); if (b < 1 || b > kmax) continue;
+          const m = kx * (2 * kmax + 1) + ky + kmax; S[b] += (Sr[m] * Sr[m] + Si[m] * Si[m]) / nTot; cnt[b]++;
+        }
+      });
+      const q = [], Sq = [];
+      for (let b = 1; b <= kmax; b++) if (cnt[b] > 0) { q.push(b * dk); Sq.push(S[b] / cnt[b]); }
+      let m2 = 0; for (let j = 0; j < nTot; j++) { const dx = INT.UXd[j] - disp0[0][j], dy = INT.UYd[j] - disp0[1][j]; m2 += dx * dx + dy * dy; }
+      const span = (times ? times[T - 1] : (T - 1) * dtFrame);
+      let nl = 0; for (let j = 0; j < nTot; j++) nl += INT.LB[j];
+      return { kind: INT.kind, sigma_um: INT.sg, phi: phi, D0_um2_s: INT.D0, tau_B_s: INT.tauB, D_self_movie_um2_s: span > 0 ? m2 / nTot / (4 * span) : null, movie_s: span, q_per_um: q, S: Sq, n_labelled: nl, label_fraction: INT.lf, U0: INT.U0, kappa_sigma: INT.ks, step_s: INT.h };
+    }
     const blur = Math.max(Dmax * qcut * qcut * expo, oriented ? 6 * Drmax * expo : 0, Math.pow(vMax * qcut * expo, 2));
     const nsub = blur < 0.05 ? 1 : Math.min(8, Math.ceil(4 * Math.sqrt(blur)));
     const dtFrame = 1 / fr;
@@ -543,8 +724,8 @@
       foldIdx[j] = (k1 % N) * N + (k2 % N);
     }
     const tbG = O.FFT.tables(G), tbN = O.FFT.tables(N), wN = O.FFT.work(N);
-    const grid = new Float64Array(G * G * M);           // interleaved: grid[p * M + m]
-    const zr = new Float64Array(G * G), zi = new Float64Array(G * G);
+    const GG = G * G, grid = new Float64Array(GG * (M + (M & 1)));   // one plane per basis function: grid[m * G * G + p] (an even number of planes)
+    const planes = []; for (let m = 0; m < M + (M & 1); m++) planes.push(grid.subarray(m * GG, (m + 1) * GG));
     const S_r = new Float64Array(G * G), S_i = new Float64Array(G * G);
     const Fr = new Float64Array(N * N), Fi = new Float64Array(N * N);
     const re = new Float64Array(N * N), im = new Float64Array(N * N);
@@ -562,6 +743,26 @@
       return r * det.t_row_s;
     };
     const freezeZ = cfg.test_freeze_z === true;
+    // tracers: each mode decays at its own rate and gets its thermal kick (exact for any time step)
+    const vEx = new Float64Array(64), vSd = new Float64Array(64);
+    const viscoAdvance = function (i, dt) {
+      const e = VE[cls[i]], o = 3 * NM * i;
+      for (let j = 0; j < NM; j++) { const l = e.lam[j]; if (l > 0) { const x = Math.exp(-l * dt); vEx[j] = x; vSd[j] = Math.sqrt(-Math.expm1(-2 * l * dt) / l); } else { vEx[j] = 1; vSd[j] = Math.sqrt(2 * dt); } }
+      for (let d = 0; d < 3; d++) {
+        let u = 0;
+        for (let j = 0; j < NM; j++) { const k = o + d * NM + j, w = vEx[j] * WS[k] + vSd[j] * rng.g(); WS[k] = w; u += e.c[j] * w; }
+        if (d === 0) X[i] = X0[i] + u; else if (d === 1) Y[i] = Y0[i] + u; else H[i] = H0[i] - u;
+      }
+      reflectVisco(i);
+    };
+    // the glass mirrors the bead: its resting place moves with it, so its motion goes on as before; x and y wrap around
+    function reflectVisco(i) {
+      const ae = classes[cls[i]].aex, lo = ae, hi = Lz - ae;
+      let hz = H[i];
+      while (hz < lo || hz > hi) { if (hz < lo) hz = 2 * lo - hz; if (hz > hi) hz = 2 * hi - hz; }
+      H0[i] += hz - H[i]; H[i] = hz;
+      X[i] -= L * Math.floor(X[i] / L); Y[i] -= L * Math.floor(Y[i] / L);
+    }
     const reflect = function (i) {
       const ae = classes[cls[i]].aex, lo = ae, hi = Lz - ae;
       let hz = H[i];
@@ -605,7 +806,8 @@
     const flowAt = function (h) { return driftProfile === "poiseuille" ? 6 * h * (Lz - h) / (Lz * Lz) : 1; };
     const addFlow = function (i, dt) { if (drift === 0) return; const f = flowAt(H[i]); X[i] += vX * f * dt; Y[i] += vY * f * dt; };
     const advance = function (i, dt) {
-      if (dt <= 0) return;
+      if (dt <= 0 || INT) return;   // particles that interact move together, frame by frame (stepInteract)
+      if (VE) { viscoAdvance(i, dt); return; }
       const c = classes[cls[i]], hy = c.hyd;
       if (!oriented) {
         const nst = wallSteps(c, H[i], dt), hh = dt / nst, st = Math.sqrt(2 * hy.D_t * hh);
@@ -698,18 +900,18 @@
       for (let m = 0; m < M; m++) wm[m] += wgt * (Vm[m][col] + f * (Vm[m][col + 1] - Vm[m][col]));
     };
     // (column offsets computed once per point; the rank-M weights added in one pass per grid cell)
-    const colOff = new Int32Array(tabN), rowM = G * M;
+    const colOff = new Int32Array(tabN);
     const splat = function (xp, yp) {
       const px = xp / h, py = yp / h, cx = Math.round(px), cy = Math.round(py);
       for (let j = -R; j <= R; j++) { const dx = cx + j - px, dy = cy + j - py; gx[j + R] = Math.exp(-dx * dx * inv2s2); gy[j + R] = Math.exp(-dy * dy * inv2s2); }
-      for (let jx = 0; jx < tabN; jx++) { let c = (cx - R + jx) % G; if (c < 0) c += G; colOff[jx] = c * M; }
+      for (let jx = 0; jx < tabN; jx++) { let c = (cx - R + jx) % G; if (c < 0) c += G; colOff[jx] = c; }
       const g = grid, w0 = wm;
       for (let jy = 0; jy < tabN; jy++) {
         let row = (cy - R + jy) % G; if (row < 0) row += G;
-        const rb = row * rowM, wy = gy[jy];
+        const rb = row * G, wy = gy[jy];
         for (let jx = 0; jx < tabN; jx++) {
           const w = wy * gx[jx], base = rb + colOff[jx];
-          for (let m = 0; m < M; m++) g[base + m] += w * w0[m];
+          for (let m = 0, o = base; m < M; m++, o += GG) g[o] += w * w0[m];
         }
       }
     };
@@ -727,10 +929,20 @@
     const seenAcc = (!split && !body && classes.length > 1) ? classes.map(function () { return new Float64Array(nq); }) : null;
     const seenEvery = Math.max(1, Math.floor(T / 32));
     const swSeen = { ws: new Float64Array(nq), wn: new Float64Array(nq), wv: new Float64Array(nq), wv2: new Float64Array(nq) };
+    // particles that interact: equilibrate, then move the whole box to each frame time; snapshots for the true S(q)
+    const snapAt = INT ? new Set(Array.from({ length: 8 }, function (_, k) { return Math.round(k * (T - 1) / 7); })) : null, snaps = [];
+    let disp0 = null;
+    if (INT) for (let k = 0; k < INT.nEq; k++) { INT.step(); if (k % 200 === 199) yield { stage: "Letting the particles settle", frac: 0.14 + 0.16 * k / INT.nEq }; }
     for (let t = 0; t < T; t++) {
       grid.fill(0);
       const t0 = times ? times[t] : t * dtFrame;
+      if (INT) {
+        while (INT.t + INT.h <= t0) { INT.step(); INT.t += INT.h; }
+        if (t === 0) disp0 = [Float64Array.from(INT.UXd), Float64Array.from(INT.UYd)];
+        if (snapAt.has(t)) snaps.push([Float64Array.from(X), Float64Array.from(Y)]);
+      }
       for (let i = 0; i < nTot; i++) {
+        if (INT && !INT.LB[i]) continue;      // only the dyed particles show
         const del = delay(Y[i]), ci = cls[i], c = classes[ci], ch = chans[ci];
         for (let sub = 0; sub < nsub; sub++) {
           const when = t0 + del + (nsub > 1 ? (sub + 0.5) * subDt : 0);
@@ -793,7 +1005,7 @@
       S_r.fill(0); S_i.fill(0);
       for (let m = 0; m < M; m += 2) {
         const two = m + 1 < M;
-        for (let p = 0, o = m; p < G * G; p++, o += M) { zr[p] = grid[o]; zi[p] = two ? grid[o + 1] : 0; }
+        const zr = planes[m], zi = planes[m + 1];           // transformed in place (the grid is cleared for the next frame)
         O.FFT.fft2T(zr, zi, G, tbG, -1, needRow);
         const W1 = UW[m], W2 = two ? UW[m + 1] : null, X1 = UWI[m], X2 = two ? UWI[m + 1] : null;
         for (let j = 0; j < act.length; j++) {
@@ -828,7 +1040,7 @@
       O.FFT.fft2(re, im, N, tbN, wN, -1);
       const fo2 = 2 * fo;
       for (let p = 0; p < N * N; p++) { fft[fo2 + 2 * p] = re[p]; fft[fo2 + 2 * p + 1] = im[p]; }
-      if ((t & 3) === 3) yield { stage: "Recording the movie", frac: 0.15 + 0.85 * (t + 1) / T };
+      if ((t & 3) === 3) yield { stage: "Recording the movie", frac: INT ? 0.3 + 0.7 * (t + 1) / T : 0.15 + 0.85 * (t + 1) / T };
     }
 
     // values the analysis has to recover, kept apart from the movie
@@ -872,6 +1084,8 @@
               particle: { shape: shape, oriented: oriented, body: body, aspect: pAsp, birefringence: dn, geometry: cm.geo, points: body ? { xyz: cm.pts.xyz, n: cm.pts.n, spacing: cm.pts.spacing } : null,
                           alpha_perp: cm.aPerp, dalpha: cm.dA, alpha_ref: cm.aRef, Wtab: cm.Wtab || null, polarization: pol, background_share: bgf } },
       truth: { diameter_um: d0, mean_diameter_um: dnum, D_um2_s: hd0.D_t, D_seen_um2_s: Dseen, seen_table: seenTable, diameter_seen_um: kT / (3 * Math.PI * eta * Dseen * 1e-12) * 1e6, drift_um_s: drift, drift_deg: driftDeg, drift_profile: driftProfile, drift_z_um_s: driftZ,
+               interact: INT ? interactTruth() : null,
+               visco: VE ? { lam: Array.from(VE[Math.floor(VE.length / 2)].lam), c: Array.from(VE[Math.floor(VE.length / 2)].c), a_um: VE[Math.floor(VE.length / 2)].a_um, eta_s_Pa_s: eta } : null,
                D_plane_um2_s: hd0.D_t * fParFocus, D_plane_all_um2_s: hd0.D_t * fParMean, walls: walls, gravity: gravity, gravitational_length_um: isFinite(classes[0].lg) ? classes[0].lg : null,
                swim: sw ? (function () {
                  const n = swList.length, m = n ? swList.reduce(function (p, v) { return p + v; }, 0) / n : 0;
