@@ -68,10 +68,9 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
 .proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
 .pn-more { display: none; font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
-@media (max-width: 40rem) {   /* phones: one line, the rest on request */
-  .proto-note:not(.open) .pn-rest { display: none; }
-  .proto-note:not(.open) .pn-more { display: inline; }
-}
+/* one line, the rest on request */
+.proto-note:not(.open) .pn-rest { display: none; }
+.proto-note:not(.open) .pn-more { display: inline; }
 
 h1, h2, h3 { font-weight: 500; line-height: 1.2; text-wrap: balance; }
 h1 { font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem); margin: 0 0 1rem; letter-spacing: -0.01em; }
@@ -482,7 +481,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
             <div class="predict" data-predict="slow" data-right="limit">
               <div class="q">Predict first: 200 nm polystyrene beads settle at about 1 nm/s, with the microscope on its side. What will the page report?</div>
               <div class="btns"><button type="button" data-guess="zero">The beads do not drift</button><button type="button" data-guess="limit">A drift too slow for this movie</button></div>
-              <div class="a" hidden><span class="verdict"></span> Too slow for this movie. In this movie a drift of 1 nm/s and no drift at all look the same, so the page does not claim the beads stand still: it gives the slowest drift this movie could show, and a slower one is not ruled out, only not seen. The bench now runs with these beads; the result above says where the limit is.</div>
+              <div class="a" hidden><span class="verdict"></span> Too slow for this movie. In this movie a drift of 1 nm/s and no drift at all look the same, so the page does not claim the beads stand still: it gives the slowest drift this movie could show, and a slower one is not ruled out, only not seen. The bench now runs with these beads; the result above says where the limit is. <span id="slow-live"></span></div>
             </div>
             <figure class="viz lvl-3">
               <figcaption>The drift seen by patterns of each direction: the same fit as the velocity, with only the patterns within 7.5&deg; of each direction, gives the speed along <b>q</b>, which should be <i>v</i> cos(&theta; &minus; &theta;<sub>v</sub>): largest along the drift, zero across it and negative beyond. Error bars: jackknife over groups of <i>q</i>. The line is the result.</figcaption>
@@ -535,6 +534,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     <h2 id="h-about">About this tool</h2>
     <p class="prose">This page is a simple tool, generated with Claude Opus 5.5, that simulates a realistic microscopy experiment in which DDM is used to study colloidal particles that diffuse and drift. The microscope, light sources, cameras, spinning disk and point scanner are modelled mostly on the instruments of our SoMeX lab. The particles are spheres that do not interact with each other, so every sample is a dilute suspension; the thermophoretic values come from the measurements cited on the page. The aim is not to produce research-quality data, but to give anyone thinking of using DDM an idea of what a drift does to a DDM experiment, and of when it can be measured.</p>
     <p class="prose">If you find something that looks wrong or does not work, please let us know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
+    <p class="prose">To cite this page: R. Cerbino, <i>DDM, hands on: drifting particles</i>, <a href="https://rcerbino.github.io/ddm/drift/">rcerbino.github.io/ddm/drift/</a> (2026), with the date you used it.</p>
   </section>
 
   <section class="wrap further" aria-labelledby="h-further">
@@ -5757,6 +5757,15 @@ dqt.set_frame_rate(frame_rate)     # frames per second
       : '<div class="big">No drift seen</div>';
     h += '<span class="chip ' + v.cls + '">' + v.text + '</span>';
     h += '<p class="small" style="margin:0">Set: ' + causeText() + '. Diffusion ' + fmtSig(res.D_um2_s, 3) + ' ' + MU + 'm\u00b2/s, so a size of ' + fmtSize(res.diameter_um) + ' (true ' + fmtSize(tr.diameter_um) + (Math.abs(trD / tr.D_um2_s - 1) > 0.05 ? '; near the glass they diffuse at ' + fmtSig(trD, 3) + ' ' + MU + 'm\u00b2/s, as ' + fmtSize(tr.diameter_um * tr.D_um2_s / trD) + ' particles would far from it' : '') + ').' + (state.cause === "flow" && state.flow_profile === "poiseuille" ? ' The fit of D assumes one speed: the spread of speeds through the depth of field reads as extra diffusion, so D comes out too large and the size too small.' : '') + '</p>';
+    // the answer to the slow-drift question quotes this run: the drift set and the slowest one the movie shows, same unit
+    const sl = $("slow-live");
+    if (sl) {
+      const vm = res.visibility.v_min_um_s;
+      if (ev.plane && ev.speed > 0 && vm > 0) {
+        const nm = Math.min(ev.speed, vm) < 0.1, f = function (v) { return nm ? fmtSig(v * 1000, 2) + " nm/s" : fmtSig(v, 2) + " " + MU + "m/s"; };
+        sl.textContent = "In this run: drift set " + f(ev.speed) + ", slowest drift this movie can show about " + f(vm) + (ev.speed < vm ? ": the limit is about " + fmtSig(vm / ev.speed, 2) + " times the drift." : ".");
+      } else sl.textContent = "";
+    }
     // can the drift be seen at all, in words
     const vis = res.visibility;
     if (!res.detected) {

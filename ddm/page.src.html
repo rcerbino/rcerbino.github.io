@@ -63,10 +63,9 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
 .proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
 .pn-more { display: none; font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
-@media (max-width: 40rem) {   /* phones: one line, the rest on request */
-  .proto-note:not(.open) .pn-rest { display: none; }
-  .proto-note:not(.open) .pn-more { display: inline; }
-}
+/* one line, the rest on request */
+.proto-note:not(.open) .pn-rest { display: none; }
+.proto-note:not(.open) .pn-more { display: inline; }
 
 h1, h2, h3 { font-weight: 500; line-height: 1.2; text-wrap: balance; }
 h1 { font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem); margin: 0 0 1rem; letter-spacing: -0.01em; }
@@ -136,6 +135,8 @@ table.sizing .note { white-space: normal; display: block; font-size: 0.76rem; fo
 details.more summary { cursor: pointer; font-size: 0.85rem; color: var(--muted); }
 details.more dl { margin-top: 0.4rem; }
 .hero-result { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1rem; font-family: var(--sans); margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--rule); max-width: 44rem; }
+.start-here { font-family: var(--sans); font-size: 0.92rem; margin: 0.6rem 0 0; max-width: 44rem; }
+#try-double { scroll-margin-top: 1.5rem; }
 .hero-result .n { font-family: var(--serif); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
 
 /* bench */
@@ -299,6 +300,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
       <div class="hero-result" id="hero-result" aria-live="polite">
         <span>Simulating the movie...</span>
       </div>
+      <p class="start-here"><a href="#try-double">Try this first</a>: predict what happens to the curves when the beads are twice as large, then watch the page check it.</p>
     </div>
     <figure class="porthole">
       <div class="lens"><canvas id="hero-canvas" width="128" height="128" aria-label="Simulated microscope movie"></canvas></div>
@@ -443,7 +445,7 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
             <div class="chart"><canvas id="chart-curves" aria-label="Curves for several wave vectors"></canvas></div>
             <div class="legend" id="curves-legend"></div>
           </figure>
-          <div class="predict" data-predict="size" data-right="right">
+          <div class="predict" id="try-double" data-predict="size" data-right="right">
             <div class="q">Predict first: the particles become twice as large. Do the curves move to the left or to the right?</div>
             <div class="btns"><button type="button" data-guess="left">Left, faster</button><button type="button" data-guess="right">Right, slower</button></div>
             <div class="a" hidden><span class="verdict"></span> To the right. A particle twice as large has half the diffusion coefficient, so every pattern takes twice as long to change. The bench now runs with the larger particles so you can check: the chart keeps one curve of the earlier run, dashed, next to the new one at the same stripe spacing, and marks where each has gone halfway.</div>
@@ -584,6 +586,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     <h2 id="h-about">About this tool</h2>
     <p class="prose">This page is a simple tool, generated with Claude Opus 5.5, that simulates a realistic microscopy experiment in which DDM is used to study the roto-translational Brownian motion of colloidal particles. The microscope, light sources, cameras, spinning disk and point scanner are modelled mostly on the instruments of our SoMeX lab. The particles do not interact with each other: each one diffuses and turns on its own (if you choose, it also settles under gravity and slows down near the glass), so every sample is a dilute suspension. The aim is not to produce accurate, research-quality data, but to give anyone thinking of using DDM an idea of the many options and of how each one affects a DDM experiment.</p>
     <p class="prose">If you find something that looks wrong or does not work, please let us know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
+    <p class="prose">To cite this page: R. Cerbino, <i>DDM, hands on: sizing particles</i>, <a href="https://rcerbino.github.io/ddm/sizing/">rcerbino.github.io/ddm/sizing/</a> (2026), with the date you used it.</p>
   </section>
 
   <section class="wrap further" aria-labelledby="h-further">

@@ -1323,6 +1323,15 @@
       : '<div class="big">No drift seen</div>';
     h += '<span class="chip ' + v.cls + '">' + v.text + '</span>';
     h += '<p class="small" style="margin:0">Set: ' + causeText() + '. Diffusion ' + fmtSig(res.D_um2_s, 3) + ' ' + MU + 'm\u00b2/s, so a size of ' + fmtSize(res.diameter_um) + ' (true ' + fmtSize(tr.diameter_um) + (Math.abs(trD / tr.D_um2_s - 1) > 0.05 ? '; near the glass they diffuse at ' + fmtSig(trD, 3) + ' ' + MU + 'm\u00b2/s, as ' + fmtSize(tr.diameter_um * tr.D_um2_s / trD) + ' particles would far from it' : '') + ').' + (state.cause === "flow" && state.flow_profile === "poiseuille" ? ' The fit of D assumes one speed: the spread of speeds through the depth of field reads as extra diffusion, so D comes out too large and the size too small.' : '') + '</p>';
+    // the answer to the slow-drift question quotes this run: the drift set and the slowest one the movie shows, same unit
+    const sl = $("slow-live");
+    if (sl) {
+      const vm = res.visibility.v_min_um_s;
+      if (ev.plane && ev.speed > 0 && vm > 0) {
+        const nm = Math.min(ev.speed, vm) < 0.1, f = function (v) { return nm ? fmtSig(v * 1000, 2) + " nm/s" : fmtSig(v, 2) + " " + MU + "m/s"; };
+        sl.textContent = "In this run: drift set " + f(ev.speed) + ", slowest drift this movie can show about " + f(vm) + (ev.speed < vm ? ": the limit is about " + fmtSig(vm / ev.speed, 2) + " times the drift." : ".");
+      } else sl.textContent = "";
+    }
     // can the drift be seen at all, in words
     const vis = res.visibility;
     if (!res.detected) {
