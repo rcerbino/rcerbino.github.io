@@ -469,6 +469,109 @@
         reflectVisco(i);
       }
     }
+    /* Hydrodynamic interactions on a grid (fluctuating immersed boundary, after Delong, Usabiaga and Donev, J. Chem. Phys.
+     * 140, 134110, 2014). The liquid in the periodic box is solved on a grid in Fourier space (Stokes flow, k = 0 left out):
+     * forces on the particles are spread onto the grid with a Gaussian of width g, the velocity of the liquid is
+     * v(k) = (kT / eta) P(k) f(k) / k^2 plus a random velocity with the covariance the fluctuation-dissipation theorem asks
+     * for, and each particle moves with the liquid averaged over the same Gaussian. That gives a mobility like Rotne-Prager's
+     * for spheres of radius g sqrt(pi), larger than the particles (the grid must stay coarse for the browser): the pairs
+     * at contact are coupled less than real spheres, the long-range part is right. Each particle's own mobility is
+     * completed to D0 by an independent local part, Dloc = D0 - Dgrid. No lubrication; contacts still by overlap removal. */
+    function makeFlow(sg, D0, hStep) {
+      const p2 = function (x, lo, hi) { let n = lo; while (n < hi && n < x) n *= 2; return n; };
+      const nx = p2(L / (0.45 * sg), 8, 64), nz = p2(Lz / (0.45 * sg), 4, 64), nc = nx * nx * nz;
+      const hx = L / nx, hz = Lz / nz, dV = hx * hx * hz, Vol = L * L * Lz;
+      const c = kT / eta * 1e18;            // um^3 / s
+      let g = 1.05 * Math.max(hx, hz);
+      const tbx = O.FFT.tables(nx), tbz = O.FFT.tables(nz);
+      const k2 = new Float64Array(nc), kxv = new Float64Array(nc), kyv = new Float64Array(nc), kzv = new Float64Array(nc);
+      for (let iz = 0; iz < nz; iz++) for (let iy = 0; iy < nx; iy++) for (let ix = 0; ix < nx; ix++) {
+        const n = (iz * nx + iy) * nx + ix, kx = (ix < nx / 2 ? ix : ix - nx) * TWO_PI / L, ky = (iy < nx / 2 ? iy : iy - nx) * TWO_PI / L, kz = (iz < nz / 2 ? iz : iz - nz) * TWO_PI / Lz;
+        kxv[n] = kx; kyv[n] = ky; kzv[n] = kz; k2[n] = kx * kx + ky * ky + kz * kz;
+      }
+      const R = [], I = []; for (let a = 0; a < 3; a++) { R.push(new Float64Array(nc)); I.push(new Float64Array(nc)); }
+      const lr = new Float64Array(64), li = new Float64Array(64);
+      // 3D FFT in place (unnormalised), axis by axis through a line buffer
+      const fft3 = function (re, im, sign) {
+        for (let iz = 0; iz < nz; iz++) for (let iy = 0; iy < nx; iy++) { const o = (iz * nx + iy) * nx; for (let i = 0; i < nx; i++) { lr[i] = re[o + i]; li[i] = im[o + i]; } O.FFT.fft1(lr, li, tbx, sign); for (let i = 0; i < nx; i++) { re[o + i] = lr[i]; im[o + i] = li[i]; } }
+        for (let iz = 0; iz < nz; iz++) for (let ix = 0; ix < nx; ix++) { const o = iz * nx * nx + ix; for (let i = 0; i < nx; i++) { lr[i] = re[o + i * nx]; li[i] = im[o + i * nx]; } O.FFT.fft1(lr, li, tbx, sign); for (let i = 0; i < nx; i++) { re[o + i * nx] = lr[i]; im[o + i * nx] = li[i]; } }
+        for (let iy = 0; iy < nx; iy++) for (let ix = 0; ix < nx; ix++) { const o = iy * nx + ix; for (let i = 0; i < nz; i++) { lr[i] = re[o + i * nx * nx]; li[i] = im[o + i * nx * nx]; } O.FFT.fft1(lr, li, tbz, sign); for (let i = 0; i < nz; i++) { re[o + i * nx * nx] = lr[i]; im[o + i * nx * nx] = li[i]; } }
+      };
+      // Gaussian weights of a particle on the grid (each axis normalised to sum 1 / spacing)
+      let rx, rz, wxs, wys, wzs;
+      const setG = function (gg) { g = gg; rx = Math.ceil(3 * g / hx); rz = Math.ceil(3 * g / hz); wxs = new Float64Array(2 * rx + 1); wys = new Float64Array(2 * rx + 1); wzs = new Float64Array(2 * rz + 1); };
+      setG(g);
+      const ix0 = { x: 0, y: 0, z: 0 };
+      const weights = function (x, y, z) {
+        const fx = x / hx, fy = y / hx, fz = z / hz, cx = Math.round(fx), cy = Math.round(fy), cz = Math.round(fz);
+        let sx = 0, sy = 0, sz = 0; const i2x = hx * hx / (2 * g * g), i2z = hz * hz / (2 * g * g);
+        for (let j = -rx; j <= rx; j++) { const dx = cx + j - fx, dy = cy + j - fy; wxs[j + rx] = Math.exp(-dx * dx * i2x); wys[j + rx] = Math.exp(-dy * dy * i2x); sx += wxs[j + rx]; sy += wys[j + rx]; }
+        for (let j = -rz; j <= rz; j++) { const dz = cz + j - fz; wzs[j + rz] = Math.exp(-dz * dz * i2z); sz += wzs[j + rz]; }
+        for (let j = 0; j <= 2 * rx; j++) { wxs[j] /= sx * hx; wys[j] /= sy * hx; } for (let j = 0; j <= 2 * rz; j++) wzs[j] /= sz * hz;
+        ix0.x = cx - rx; ix0.y = cy - rx; ix0.z = cz - rz;
+      };
+      const wrapI = function (i, n) { i %= n; return i < 0 ? i + n : i; };
+      // spread vector forces (per particle, kT / um) onto the grid: force density per volume
+      const spread = function (F, comps) {
+        for (const a of comps) { R[a].fill(0); I[a].fill(0); }
+        for (let p = 0; p < nTot; p++) {
+          weights(X[p], Y[p], H[p]);
+          for (let kz = 0; kz <= 2 * rz; kz++) { const iz = wrapI(ix0.z + kz, nz), wz = wzs[kz];
+            for (let ky = 0; ky <= 2 * rx; ky++) { const iy = wrapI(ix0.y + ky, nx), wyz = wz * wys[ky], o = (iz * nx + iy) * nx;
+              for (let kx = 0; kx <= 2 * rx; kx++) { const w = wyz * wxs[kx], n = o + wrapI(ix0.x + kx, nx); for (const a of comps) R[a][n] += w * F[a][p]; } } }
+        }
+      };
+      // average of the grid velocity over each particle's Gaussian
+      const out = [new Float64Array(nTot), new Float64Array(nTot), new Float64Array(nTot)];
+      const interp = function (comps) {
+        for (const a of comps) out[a].fill(0);
+        for (let p = 0; p < nTot; p++) {
+          weights(X[p], Y[p], H[p]);
+          for (let kz = 0; kz <= 2 * rz; kz++) { const iz = wrapI(ix0.z + kz, nz), wz = wzs[kz] * dV;
+            for (let ky = 0; ky <= 2 * rx; ky++) { const iy = wrapI(ix0.y + ky, nx), wyz = wz * wys[ky], o = (iz * nx + iy) * nx;
+              for (let kx = 0; kx <= 2 * rx; kx++) { const w = wyz * wxs[kx], n = o + wrapI(ix0.x + kx, nx); for (const a of comps) out[a][p] += w * R[a][n]; } } }
+        }
+        return out;
+      };
+      const ALL = [0, 1, 2];
+      // velocities of the particles from forces F (kT / um, or null) and, with noise, the random flow over a step hStep
+      const velocities = function (F, noise) {
+        if (F) { spread(F, ALL); for (const a of ALL) fft3(R[a], I[a], -1); }
+        else for (const a of ALL) { R[a].fill(0); I[a].fill(0); }
+        const an = noise ? Math.sqrt(Vol * 2 * c / hStep) : 0;
+        for (let n = 1; n < nc; n++) {
+          const kk = k2[n], kx = kxv[n], ky = kyv[n], kz = kzv[n];
+          // deterministic: c P f(k) / k^2, f(k) = dV x FFT; then the random part, P (g1 + i g2) sqrt(2 V c / (h k^2)) (real part kept)
+          let ar = 0, ai = 0, br = 0, bi = 0, cr = 0, ci = 0;
+          if (F) { const s = c * dV / kk; ar = R[0][n] * s; ai = I[0][n] * s; br = R[1][n] * s; bi = I[1][n] * s; cr = R[2][n] * s; ci = I[2][n] * s; }
+          if (noise) { const s = an / Math.sqrt(kk); ar += s * rng.g(); ai += s * rng.g(); br += s * rng.g(); bi += s * rng.g(); cr += s * rng.g(); ci += s * rng.g(); }
+          const pr = (kx * ar + ky * br + kz * cr) / kk, pi = (kx * ai + ky * bi + kz * ci) / kk;
+          R[0][n] = ar - kx * pr; I[0][n] = ai - kx * pi; R[1][n] = br - ky * pr; I[1][n] = bi - ky * pi; R[2][n] = cr - kz * pr; I[2][n] = ci - kz * pi;
+        }
+        for (const a of ALL) { R[a][0] = 0; I[a][0] = 0; fft3(R[a], I[a], +1); const inv = 1 / Vol; for (let n = 0; n < nc; n++) R[a][n] *= inv; }
+        return interp(ALL);
+      };
+      // one component (x) of the deterministic velocities, for the true hydrodynamic function
+      const velX = function (Fx) {
+        spread([Fx], [0]); fft3(R[0], I[0], -1);
+        for (let n = 1; n < nc; n++) { const s = c * dV / k2[n] * (1 - kxv[n] * kxv[n] / k2[n]); R[0][n] *= s; I[0][n] *= s; }
+        R[0][0] = 0; I[0][0] = 0; fft3(R[0], I[0], +1); for (let n = 0; n < nc; n++) R[0][n] /= Vol;
+        return interp([0])[0];
+      };
+      // the grid's own mobility of one particle (periodic box): unit force on particle 0 alone, at a few places
+      const Dgrid = function () {
+        const one = new Float64Array(nTot); one[0] = 1; let s = 0;
+        const sX = Float64Array.from(X), sY = Float64Array.from(Y), sH = Float64Array.from(H);
+        for (let k = 0; k < 4; k++) {
+          X.fill(-1e9); Y.fill(-1e9); H.fill(-1e9);       // the other particles far off the grid's support: they carry no force anyway
+          X[0] = (0.13 + 0.21 * k) * L; Y[0] = (0.37 + 0.17 * k) * L; H[0] = (0.29 + 0.11 * k) * Lz;
+          s += velX(one)[0];
+        }
+        X.set(sX); Y.set(sY); H.set(sH);
+        return s / 4;
+      };
+      return { nx: nx, nz: nz, g: function () { return g; }, setG: setG, velocities: velocities, velX: velX, Dgrid: Dgrid, on: false, Dloc: 0 };
+    }
     // particles that push each other: Brownian dynamics of the whole box (see the header)
     let INT = null;
     if (INTC && !HYD) INT = setupInteract();
@@ -532,7 +635,16 @@
       };
       const FX = new Float64Array(nTot), FY = new Float64Array(nTot), FZ = new Float64Array(nTot);
       const st = Math.sqrt(2 * D0 * h);
+      // hydrodynamic interactions through a grid (INTC.flow === "grid"), switched on for the movie (FL.on)
+      const FL = INTC.flow === "grid" ? makeFlow(sg, D0, h) : null;
+      if (FL) {
+        // the grid must not carry more than about 80 % of each particle's own mobility: widen the Gaussian if it does
+        for (let it = 0; it < 8; it++) { FL.Dg = FL.Dgrid(); if (FL.Dg < 0.8 * D0) break; FL.setG(FL.g() * 1.15); }
+        FL.Dloc = D0 - FL.Dg;
+      }
+      const stLoc = FL ? Math.sqrt(2 * FL.Dloc * h) : st;
       const step = function () {
+        if (FL && FL.on) { stepFlow(); return; }
         if (U0 > 0) {
           FX.fill(0); FY.fill(0); FZ.fill(0);
           pairs(function (i, j, ex, ey, ez, r2) {
@@ -549,11 +661,34 @@
         }
         unlap();
       };
+      // with the flow: each particle's own share of the mobility (Dloc) plus the velocity of the liquid at its place, which
+      // carries the random kicks of the liquid and the pushes of the other particles (forces spread onto the grid)
+      const stepFlow = function () {
+        const hasF = U0 > 0;
+        if (hasF) {
+          FX.fill(0); FY.fill(0); FZ.fill(0);
+          pairs(function (i, j, ex, ey, ez, r2) {
+            const r = Math.sqrt(r2); if (r < sg * 0.999) return;
+            const f = U0 * sg * Math.exp(-kap * (r - sg)) * (kap * r + 1) / (r2 * r);
+            FX[i] -= f * ex; FY[i] -= f * ey; FZ[i] -= f * ez; FX[j] += f * ex; FY[j] += f * ey; FZ[j] += f * ez;
+          });
+        }
+        const U = FL.velocities(hasF ? [FX, FY, FZ] : null, true);
+        for (let i = 0; i < nTot; i++) {
+          let px = h * U[0][i], py = h * U[1][i], pz = h * U[2][i];
+          if (hasF) { px += FL.Dloc * FX[i] * h; py += FL.Dloc * FY[i] * h; pz += FL.Dloc * FZ[i] * h; }
+          const pm = Math.sqrt(px * px + py * py + pz * pz);
+          if (pm > 3 * dMax) { px *= 3 * dMax / pm; py *= 3 * dMax / pm; pz *= 3 * dMax / pm; }
+          const dx = stLoc * rng.g() + px, dy = stLoc * rng.g() + py, dz = stLoc * rng.g() + pz;
+          X[i] += dx; Y[i] += dy; H[i] += dz; UXd[i] += dx; UYd[i] += dy; wrapAll(i);
+        }
+        unlap();
+      };
       // start: random places (H uniform in the box), overlaps removed, then one Brownian time
       for (let i = 0; i < nTot; i++) H[i] = rng.u() * Lz;
       for (let it = 0; it < 2000 && unlap() > 0; it++) { /* push apart */ }
       const nEq = Math.ceil(tauB / h);
-      return { sg: sg, D0: D0, tauB: tauB, h: h, LB: LB, step: step, nEq: nEq, t: 0, UXd: UXd, UYd: UYd, U0: U0, ks: ks, lf: lf, kind: kind };
+      return { sg: sg, D0: D0, tauB: tauB, h: h, LB: LB, step: step, nEq: nEq, t: 0, UXd: UXd, UYd: UYd, U0: U0, ks: ks, lf: lf, kind: kind, FL: FL };
     }
     // swimmers: speeds from a Schulz (gamma) distribution with mean swV and relative SD swSpread
     const SP = new Float64Array(nTot), PL = new Uint8Array(nTot);
@@ -617,7 +752,27 @@
       let m2 = 0; for (let j = 0; j < nTot; j++) { const dx = INT.UXd[j] - disp0[0][j], dy = INT.UYd[j] - disp0[1][j]; m2 += dx * dx + dy * dy; }
       const span = (times ? times[T - 1] : (T - 1) * dtFrame);
       let nl = 0; for (let j = 0; j < nTot; j++) nl += INT.LB[j];
-      return { kind: INT.kind, sigma_um: INT.sg, phi: phi, D0_um2_s: INT.D0, tau_B_s: INT.tauB, D_self_movie_um2_s: span > 0 ? m2 / nTot / (4 * span) : null, movie_s: span, q_per_um: q, S: Sq, n_labelled: nl, label_fraction: INT.lf, U0: INT.U0, kappa_sigma: INT.ks, step_s: INT.h };
+      // with the flow on the grid: the hydrodynamic function of this simulation, H(q) = sum_ij <q.M_ij.q exp(iq(r_i - r_j))> /
+      // (N D0), from the mobility of the grid at three of the snapshots, q along x
+      let Hq = null;
+      if (INT.FL) {
+        const FLo = INT.FL, sX = Float64Array.from(X), sY = Float64Array.from(Y), sH = Float64Array.from(H);
+        const use = [snaps[0], snaps[Math.floor(snaps.length / 2)], snaps[snaps.length - 1]], mmax = Math.min(N / 2, Math.ceil(14 / INT.sg / (TWO_PI / L)));
+        const acc = new Float64Array(mmax + 1), Fc = new Float64Array(nTot), Fs = new Float64Array(nTot);
+        use.forEach(function (sn) {
+          X.set(sn[0]); Y.set(sn[1]); H.set(sn[2]);
+          for (let m = 1; m <= mmax; m++) {
+            const q = m * TWO_PI / L;
+            for (let i = 0; i < nTot; i++) { Fc[i] = Math.cos(q * X[i]); Fs[i] = Math.sin(q * X[i]); }
+            const uc = Float64Array.from(FLo.velX(Fc)), us = FLo.velX(Fs);
+            let sum = 0; for (let i = 0; i < nTot; i++) sum += Fc[i] * (uc[i] + FLo.Dloc * Fc[i]) + Fs[i] * (us[i] + FLo.Dloc * Fs[i]);
+            acc[m] += sum / (nTot * INT.D0) / use.length;
+          }
+        });
+        X.set(sX); Y.set(sY); H.set(sH);
+        Hq = { q_per_um: [], H: [] }; for (let m = 1; m <= mmax; m++) { Hq.q_per_um.push(m * TWO_PI / L); Hq.H.push(acc[m]); }
+      }
+      return { kind: INT.kind, sigma_um: INT.sg, phi: phi, flow: INT.FL ? { grid: [INT.FL.nx, INT.FL.nx, INT.FL.nz], gauss_um: INT.FL.g(), a_grid_um: INT.FL.g() * Math.sqrt(Math.PI), D_grid_over_D0: INT.FL.Dg / INT.D0, H: Hq } : null, D0_um2_s: INT.D0, tau_B_s: INT.tauB, D_self_movie_um2_s: span > 0 ? m2 / nTot / (4 * span) : null, movie_s: span, q_per_um: q, S: Sq, n_labelled: nl, label_fraction: INT.lf, U0: INT.U0, kappa_sigma: INT.ks, step_s: INT.h };
     }
     const blur = Math.max(Dmax * qcut * qcut * expo, oriented ? 6 * Drmax * expo : 0, Math.pow(vMax * qcut * expo, 2));
     const nsub = blur < 0.05 ? 1 : Math.min(8, Math.ceil(4 * Math.sqrt(blur)));
@@ -993,6 +1148,7 @@
     const snapAt = INT ? new Set(Array.from({ length: 8 }, function (_, k) { return Math.round(k * (T - 1) / 7); })) : null, snaps = [];
     let disp0 = null;
     if (INT) for (let k = 0; k < INT.nEq; k++) { INT.step(); if (k % 2000 === 1999) yield { stage: "Letting the particles settle", frac: 0.2 * k / INT.nEq }; }
+    if (INT && INT.FL) INT.FL.on = true;     // the flow of the liquid only while filming (it does not change the arrangement)
     for (let t = 0; t < T; t++) {
       const t0 = times ? times[t] : t * dtFrame;
       if (FIELD) FIELD.frame(t0); else {
@@ -1000,7 +1156,7 @@
       if (INT) {
         while (INT.t + INT.h <= t0) { INT.step(); INT.t += INT.h; }
         if (t === 0) disp0 = [Float64Array.from(INT.UXd), Float64Array.from(INT.UYd)];
-        if (snapAt.has(t)) snaps.push([Float64Array.from(X), Float64Array.from(Y)]);
+        if (snapAt.has(t)) snaps.push([Float64Array.from(X), Float64Array.from(Y), Float64Array.from(H)]);
       }
       for (let i = 0; i < nTot; i++) {
         if (INT && !INT.LB[i]) continue;      // only the dyed particles show
