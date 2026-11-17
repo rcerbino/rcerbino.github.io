@@ -635,6 +635,7 @@
     });
   }
   function syncControls() {
+    syncPredictionBases();
     CONTROLS.forEach(function (c) {
       const e = ctlEls[c.kind === "qrange" ? "qrange" : c.key];
       if (typeof c.options === "function") {
@@ -913,7 +914,7 @@
         (k.timing === "global" ? "Global shutter: all rows are exposed together. " : "Rolling shutter: " + (k.timing === "rolling_center" ? "rows are read from the centre outwards" : "rows are read from the top down") + ", the last " + fmtSig(1000 * (k.timing === "rolling_center" ? state.roi / 2 : state.roi) * k.rowTime(state.cam_mode), 3) + " ms after the first. ") +
         (diag > FIELD_NUMBER_MM ? "The sensor diagonal (" + fmtSig(diag, 3) + " mm) is larger than the 25 mm field, so its corners stay dark. " : "");
     }
-    if (simPx() < outPx()) txt += " Your browser simulates the central " + simPx() + " x " + simPx() + " pixels; the full image would reach down to q = " + fmtSig(qloROI, 2) + " " + MU + "m<sup>-1</sup> instead of " + fmtSig(qloSim, 2) + ".";
+    if (simPx() < outPx()) txt += " Your browser simulates the central " + simPx() + " x " + simPx() + " pixels; the full image would also show " + (level === "curious" ? "stripes up to " + fmtSig(2 * Math.PI / qloROI, 2) + " " + MU + "m wide instead of " + fmtSig(2 * Math.PI / qloSim, 2) + "." : "wider stripes, down to q = 2&pi; / spacing = " + fmtSig(qloROI, 2) + " " + MU + "m<sup>-1</sup> instead of " + fmtSig(qloSim, 2) + ".");
     $("fov-specs").innerHTML = txt;
   }
 
@@ -1569,6 +1570,8 @@
     return "Each cell is smaller than the smallest detail the microscope resolves (about " + fmtSig(w, 2) + " " + MU + "m here), so it shows as a blurred spot of about that width.";
   }
   function renderText() {
+    // step 5 describes the curves of the sample on the bench
+    $("curves-steps").textContent = state.swim_frac < 0.05 ? "Here no cell swims, so each curve rises in one step, as the cells, which only jiggle, wander off." : state.swim_frac > 0.95 ? "Here almost every cell swims, so each curve rises mostly in one quick step, as the swimmers carry the pattern away." : "Each curve rises in two steps: first quickly, because the swimmers carry the pattern away, then slowly, as the cells that only jiggle wander off.";
     const m = cache.movie, cfg = cache.cfg, sw = m.truth.swim;
     const modeTxt = { brightfield: "a bright-field microscope", phase: "a phase-contrast microscope", darkfield: "a dark-field microscope", dic: "a DIC microscope", fluorescence: "a widefield fluorescence microscope", spinning: "a spinning-disk confocal microscope", scanning: "a point-scanning confocal microscope" }[state.mode];
     $("movie-text").textContent = "The movie shows " + (state.shape === "rod" ? fmtSize(cfg.diameter_um) + " long rod-shaped cells" : fmtSize(cfg.diameter_um) + " round cells") + ", filmed through " + modeTxt + " " + (m.times_s ? "at log-spaced times, in cycles that start at " + fmtNum(cfg.frame_rate_hz) + " frames a second and slow down (" + fmtDur(m.times_s[m.T - 1] + 1 / m.frame_rate_hz) + " in all). " : fmtNum(cfg.frame_rate_hz) + " times a second. ") +
@@ -1686,6 +1689,29 @@
       if (objRing()) state.annulus = objRing();
     }
   }
+  const PREDICT_BASE = {
+    faster: function () { return state.swim_frac < 0.05 ? { text: "No cell swims in this sample, so there is nothing to speed up.", set: {} } : state.swim_v > 50 ? { text: "This question needs swimmers that can still double their speed (at most 100 " + MU + "m/s).", set: {} } : null; },
+    fewer: function () { return state.swim_frac < 0.1 ? { text: "Too few cells swim in this sample to stop half of them.", set: {} } : null; }
+  };
+  const PREDICT_VALUES = {};
+  // an exercise that does not fit the sample on the bench says so and offers to go back to its starting sample,
+  // instead of describing a different experiment; numbers in an open question follow the bench
+  function syncPredictionBases() {
+    document.querySelectorAll(".predict").forEach(function (box) {
+      const kind = box.getAttribute("data-predict"), f = PREDICT_BASE[kind], b = f ? f() : null, open = !box.classList.contains("answered");
+      let el = box.querySelector(".base");
+      if (!el && f) {
+        el = document.createElement("div"); el.className = "base"; el.innerHTML = '<span></span> <button type="button">Go back to the standard sample</button>';
+        box.insertBefore(el, box.querySelector(".btns"));
+        el.querySelector("button").addEventListener("click", function () { const s = PREDICT_BASE[kind](); if (s) applyPreset(s.set); });
+      }
+      if (el) { el.hidden = !(b && open); if (b) el.querySelector("span").textContent = b.text; }
+      if (open) {
+        box.querySelectorAll("button[data-guess]").forEach(function (x) { x.disabled = !!b; });
+        if (!b) box.querySelectorAll("[data-pv]").forEach(function (s) { const g = PREDICT_VALUES[s.getAttribute("data-pv")]; if (g) s.textContent = g(); });
+      }
+    });
+  }
   function buildPredictions() {
     document.querySelectorAll(".predict").forEach(function (box) {
       box.querySelectorAll("button[data-guess]").forEach(function (btn) {
@@ -1707,7 +1733,7 @@
   // ---- wiring -------------------------------------------------------------------------------
   buildControls(); buildCards(); buildPredictions();
   document.querySelectorAll('input[name="level"]').forEach(function (r) { r.addEventListener("change", function () { if (r.checked) setLevel(r.value, true); }); });
-  document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }); });
+  document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); const first = document.querySelector(".step"); if (first) first.scrollIntoView({ block: "start" }); else window.scrollTo(0, 0); }); });
   $("btn-reset").addEventListener("click", function () { const keep = LEVEL_RANK[level] >= 3 ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
   $("btn-seed").addEventListener("click", function () { state.seed = (state.seed * 1103515245 + 12345) % 2147483647; schedule(); });
   $("btn-play").addEventListener("click", function () { playing = !playing; $("btn-play").textContent = playing ? "Pause" : "Play"; });

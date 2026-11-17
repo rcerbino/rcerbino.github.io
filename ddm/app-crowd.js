@@ -801,7 +801,7 @@
         (k.timing === "global" ? "Global shutter: all rows are exposed together. " : "Rolling shutter: " + (k.timing === "rolling_center" ? "rows are read from the centre outwards" : "rows are read from the top down") + ", the last " + fmtSig(1000 * (k.timing === "rolling_center" ? state.roi / 2 : state.roi) * k.rowTime(state.cam_mode), 3) + " ms after the first. ") +
         (diag > FIELD_NUMBER_MM ? "The sensor diagonal (" + fmtSig(diag, 3) + " mm) is larger than the 25 mm field, so its corners stay dark. " : "");
     }
-    if (simPx() < outPx()) txt += " Your browser simulates the central " + simPx() + " x " + simPx() + " pixels; the full image would reach down to q = " + fmtSig(qloROI, 2) + " " + MU + "m<sup>-1</sup> instead of " + fmtSig(qloSim, 2) + ".";
+    if (simPx() < outPx()) txt += " Your browser simulates the central " + simPx() + " x " + simPx() + " pixels; the full image would also show " + (level === "curious" ? "stripes up to " + fmtSig(2 * Math.PI / qloROI, 2) + " " + MU + "m wide instead of " + fmtSig(2 * Math.PI / qloSim, 2) + "." : "wider stripes, down to q = 2&pi; / spacing = " + fmtSig(qloROI, 2) + " " + MU + "m<sup>-1</sup> instead of " + fmtSig(qloSim, 2) + ".");
     $("fov-specs").innerHTML = txt;
   }
 
@@ -1014,7 +1014,7 @@
     ctx.putImageData(img, 0, 0);
     drawMapOverlay(); drawFmap();
     const qz = cache.zoomK * 2 * Math.PI / cache.movie.L_um;
-    $("zoom-note").textContent = "The centre of the map above, lightly smoothed (grey: the cross along the axes, left out because the edges of the image add artefacts there), q up to " + fmtSig(qz, 2) + " " + MU + "m\u207b\u00b9 (stripes wider than " + fmtSig(2 * Math.PI / qz, 2) + " " + MU + "m), at the same delay.";
+    $("zoom-note").textContent = "The centre of the map above, lightly smoothed (grey: the cross along the axes, left out because the edges of the image add artefacts there), " + (level === "curious" ? "stripes wider than " + fmtSig(2 * Math.PI / qz, 2) + " " + MU + "m" : "q up to " + fmtSig(qz, 2) + " " + MU + "m\u207b\u00b9 (stripes wider than " + fmtSig(2 * Math.PI / qz, 2) + " " + MU + "m)") + ", at the same delay.";
   }
   function drawMapOverlay() {
     const ov = $("map-ov"), n = cache.movie.n, S = ov.width, s = S / n;
@@ -1332,6 +1332,9 @@
     $("sq-all-1").hidden = few; $("sq-all-2").hidden = few; $("sq-few-1").hidden = !few; $("sq-few-2").hidden = !few; $("curves-few").hidden = !few;
     $("sq-title").textContent = few ? "What the dyed particles show of the order: pairs are too rare" : x < 1 ? "How the particles arrange, as the dyed ones show it: the structure factor" : "How the particles arrange: the structure factor";
     $("dq-title").textContent = few ? "Motion of the dyed particles: their invisible neighbours still hold them back" : x < 1 ? "How fast each pattern starts to fade: collective and single-particle motion mixed" : "How fast each pattern starts to fade: collective diffusion";
+    // the second movie the result depends on: the dilute reference
+    const rc = CROWD.referenceConfig(cfg, tr.tau_B_s), rdt = 1 / rc.frame_rate_hz, rspan = rc.log_timing ? MOVIE.logTimes(rc.n_frames, rdt, rc.log_timing.factor)[rc.n_frames - 1] + rdt : rc.n_frames * rdt;
+    $("movie-specs").innerHTML += " <b>Reference movie</b> (step 6 divides by it): the same particles, optics and camera, at 4 % and without interactions, " + rc.n_frames + " frames over about " + fmtDur(rspan) + ", long enough for its particles to wander through the depth of the box twice.";
     const sb = $("movie-scale"), target = m.L_um / 4, nice = niceStep(target) > target ? niceStep(target) / 2 : niceStep(target);
     sb.querySelector("i").style.width = (100 * nice / m.L_um).toFixed(1) + "%"; sb.querySelector("span").textContent = fmtSig(nice, 2) + " " + MU + "m"; sb.style.width = "100%";
   }
@@ -1390,7 +1393,30 @@
     constrain(); syncControls(); drawFov(); schedule();
   }
   let predicting = false;
-  function syncPredictions() { /* both questions apply to any sample */ }
+  const PREDICT_BASE = {
+    crowd: function () { return state.label <= 0.1 ? { text: "This question needs all particles dyed, so that the order of the crowd shows.", set: {} } : state.phi_c >= 0.4 ? { text: "This question starts from a crowd below 40 %; the bench now has " + Math.round(100 * state.phi_c) + " %.", set: {} } : null; },
+    dyed: function () { return TRANS() ? { text: "Only fluorescence and confocal microscopes show the dyed particles alone; the bench now uses transmitted light.", set: {} } : state.label <= 0.1 ? { text: "Few particles are dyed already: this question starts from a crowd with all of them dyed.", set: {} } : state.phi_c < 0.2 ? { text: "This question needs a crowd with a clear peak, at 20 % or more; the bench now has " + Math.round(100 * state.phi_c) + " %.", set: {} } : null; }
+  };
+  const PREDICT_VALUES = { phi: function () { return Math.round(100 * state.phi_c); } };
+  // an exercise that does not fit the sample on the bench says so and offers to go back to its starting sample,
+  // instead of describing a different experiment; numbers in an open question follow the bench
+  function syncPredictionBases() {
+    document.querySelectorAll(".predict").forEach(function (box) {
+      const kind = box.getAttribute("data-predict"), f = PREDICT_BASE[kind], b = f ? f() : null, open = !box.classList.contains("answered");
+      let el = box.querySelector(".base");
+      if (!el && f) {
+        el = document.createElement("div"); el.className = "base"; el.innerHTML = '<span></span> <button type="button">Go back to the standard sample</button>';
+        box.insertBefore(el, box.querySelector(".btns"));
+        el.querySelector("button").addEventListener("click", function () { const s = PREDICT_BASE[kind](); if (s) applyPreset(s.set); });
+      }
+      if (el) { el.hidden = !(b && open); if (b) el.querySelector("span").textContent = b.text; }
+      if (open) {
+        box.querySelectorAll("button[data-guess]").forEach(function (x) { x.disabled = !!b; });
+        if (!b) box.querySelectorAll("[data-pv]").forEach(function (s) { const g = PREDICT_VALUES[s.getAttribute("data-pv")]; if (g) s.textContent = g(); });
+      }
+    });
+  }
+  function syncPredictions() { syncPredictionBases(); }
   function resetPredictions() {
     document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelector(".a").hidden = true; bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); });
   }
@@ -1405,8 +1431,8 @@
           box.querySelector(".a").hidden = false;
           const kind = box.getAttribute("data-predict");
           compare = null;
-          if (kind === "dyed" && (state.label > 0.1 || TRANS())) { takeSnapshot(); state.label = 0.05; state.phi_c = 0.3; if (TRANS()) state.mode = BASE.mode; }
-          if (kind === "crowd" && state.phi_c < 0.45) { takeSnapshot(); state.phi_c = 0.45; }
+          if (kind === "dyed") { takeSnapshot(); state.label = 0.05; }
+          if (kind === "crowd") { takeSnapshot(); state.phi_c = 0.45; }
           predicting = true; constrain(); syncControls(); predicting = false;
           if (compare && cache.res) { drawSq(); drawDq(); }   // say what is being computed
           schedule();
@@ -1418,7 +1444,7 @@
   // ---- wiring -------------------------------------------------------------------------------
   buildControls(); buildCards(); buildPredictions();
   document.querySelectorAll('input[name="level"]').forEach(function (r) { r.addEventListener("change", function () { if (r.checked) setLevel(r.value, true); }); });
-  document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }); });
+  document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); const first = document.querySelector(".step"); if (first) first.scrollIntoView({ block: "start" }); else window.scrollTo(0, 0); }); });
   $("btn-reset").addEventListener("click", function () { compare = null; const keep = LEVEL_RANK[level] >= 3 ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
   $("btn-seed").addEventListener("click", function () { state.seed = (state.seed * 1103515245 + 12345) % 2147483647; schedule(); });
   $("btn-play").addEventListener("click", function () { playing = !playing; $("btn-play").textContent = playing ? "Pause" : "Play"; });
