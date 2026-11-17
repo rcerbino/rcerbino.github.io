@@ -5552,7 +5552,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
   }
   function cmpNote() {
     if (!compare) return null; const tr = cache.movie.truth.interact;
-    return cache.res === compare.res0 ? "Computing the new run..." : "Dotted black: the earlier run (" + compare.label + "). Dots: now (" + runLabel(tr.phi, tr.label_fraction) + ").";
+    return cache.res === compare.res0 ? "Computing the new run..." : "Dotted line: the earlier run (" + compare.label + "). Dots: now (" + runLabel(tr.phi, tr.label_fraction) + ").";
   }
   function drawSq() {
     const res = cache.res, rows = res.rows, tr = cache.movie.truth.interact, x1 = res.window.q_max_used * 1.08;
@@ -5586,8 +5586,10 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     let top = 1.4; rows.forEach(function (r) { if (r.D_um2_s > 0) top = Math.max(top, (r.D_um2_s + (r.D_err_um2_s || 0)) / D0); });
     for (let i = 1; i <= 100; i++) { const v = trueS(x1 * i / 100); if (v) top = Math.max(top, 1 / v); }
     const cmpOn = compare && res !== compare.res0;
-    if (cmpOn) compare.rows.forEach(function (r) { if (r.q <= x1 && r.D > 0) top = Math.max(top, r.D / compare.D0); });
-    top = Math.min(top, 12);
+    // the earlier run may stretch the axis at most twofold, so the new dots stay readable; beyond that it runs off the top
+    let oldMax = 0; if (cmpOn) compare.rows.forEach(function (r) { if (r.q <= x1 && r.D > 0) oldMax = Math.max(oldMax, r.D / compare.D0); });
+    top = Math.min(Math.max(top, Math.min(oldMax, 2 * top)), 12);
+    const offTop = oldMax > top * 1.1;
     const a = axes($("chart-dq"), { xlog: false, ylog: false, x0: 0, x1: x1, y0: 0, y1: top * 1.1, xlabel: level === "curious" ? "Stripes: wide on the left, fine on the right (q, " + MU + "m\u207b\u00b9)" : "q (" + MU + "m\u207b\u00b9)", ylabel: level === "curious" ? "How fast (alone = 1)" : "D(q) / D0" }), ctx = a.ctx;
     ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(a.m.l, a.fy(1)); ctx.lineTo(a.m.l + a.pw, a.fy(1)); ctx.stroke(); ctx.setLineDash([]);
     ctx.strokeStyle = C["accent-2"]; ctx.lineWidth = 1.8; ctx.beginPath(); let on = false;
@@ -5603,7 +5605,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     const ul = $("dq-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
     const x = cache.movie.truth.interact.label_fraction, few = x <= 0.1;
-    if (compare) add(cmpNote());
+    if (compare) add(cmpNote() + (cmpOn && offTop ? " At the widest patterns it runs off the top of the chart, up to " + fmtSig(oldMax, 2) + " times D0." : ""));
     if (level === "curious") {
       add("Dots: how fast each pattern fades at first, against the same particles far apart. " + (few ? "Red line: one particle on its own, right after the start. The dots sit below it: within the delays used, each dyed particle already bumps into its invisible neighbours, which hold it back." : "Red line: what to expect right after the start, before the particles have moved far: fastest where the crowd is smoothest, slowest at the spacing of neighbours."));
       if (!few) add("Why the strengths in the chart above can match their red line while these dots sit below this one: a strength needs no timing, but a rate needs the very first moment of fading, and even the shortest delays here give the crowd time to begin rearranging. Real particles would also push each other through the liquid around them (hydrodynamic interactions), which this simulation leaves out.");
