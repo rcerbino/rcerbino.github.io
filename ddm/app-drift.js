@@ -789,7 +789,7 @@
     pickDefaultSelection();
     $("bar").style.width = "100%";
     $("status").textContent = "Done. " + movie.T + " frames of " + movie.n + " x " + movie.n + " pixels, " + movie.info.n_particles + " particles."; idle();
-    frameIdx = 0;
+    frameIdx = 0; playT = 0;
     renderAll();
   }
 
@@ -967,7 +967,9 @@
   }
 
   // ---- movie and images ----------------------------------------------------------------
-  let frameIdx = 0, playing = true, lastTick = 0, accum = 0;
+  let frameIdx = 0, playing = true, lastTick = 0, accum = 0, playT = 0;
+  // log-spaced frames: how much faster than real time the movie plays (at least real time, about 20 s on screen)
+  function playSpeed() { const tt = cache.movie.times_s; return tt ? Math.max(1, (tt[cache.movie.T - 1] + 1 / cache.movie.frame_rate_hz) / 20) : 1; }
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduceMotion) playing = false;
   let grey = null;
@@ -1003,9 +1005,21 @@
   }
   function tick(now) {
     if (cache.movie && cache.res && playing) {
-      const fps = Math.max(8, Math.min(60, cache.movie.frame_rate_hz));
-      accum += Math.min(0.1, (now - lastTick) / 1000) * fps;
-      if (accum >= 1) { frameIdx = (frameIdx + Math.floor(accum)) % cache.movie.T; accum -= Math.floor(accum); drawMovieFrames(); }
+      const tt = cache.movie.times_s;
+      if (tt) {
+        // log-spaced frames: played on the clock of the experiment (sped up so that the movie lasts about 20 s), each frame
+        // shown from its own time to the next one's; shown one after the other, every bead would jump together at each gap
+        const span = tt[cache.movie.T - 1] + 1 / cache.movie.frame_rate_hz, sp = playSpeed();
+        playT += Math.min(0.1, (now - lastTick) / 1000) * sp;
+        if (playT >= span) playT = 0;
+        let k = frameIdx; if (tt[k] > playT) k = 0;
+        while (k < cache.movie.T - 1 && tt[k + 1] <= playT) k++;
+        if (k !== frameIdx || playT === 0) { frameIdx = k; drawMovieFrames(); }
+      } else {
+        const fps = Math.max(8, Math.min(60, cache.movie.frame_rate_hz));
+        accum += Math.min(0.1, (now - lastTick) / 1000) * fps;
+        if (accum >= 1) { frameIdx = (frameIdx + Math.floor(accum)) % cache.movie.T; accum -= Math.floor(accum); drawMovieFrames(); }
+      }
     }
     lastTick = now;
     requestAnimationFrame(tick);
@@ -1015,7 +1029,7 @@
     drawFrame($("hero-canvas"), cache.movie, frameIdx);
     drawDiff(frameIdx);
     const dt = 1 / cache.movie.frame_rate_hz, fps = Math.max(8, Math.min(60, cache.movie.frame_rate_hz)), speed = fps / cache.movie.frame_rate_hz, tt = cache.movie.times_s;
-    if (tt) { $("movie-time").textContent = "Frame " + (frameIdx + 1) + " of " + cache.movie.T + ", taken at t = " + fmtSig(tt[frameIdx], 3) + " s of " + fmtDur(tt[cache.movie.T - 1] + dt) + ". Frames taken at log-spaced times, shown one after the other."; return; }
+    if (tt) { const sp = playSpeed(); $("movie-time").textContent = "t = " + fmtSig(tt[frameIdx], 3) + " s of " + fmtDur(tt[cache.movie.T - 1] + dt) + ", frame " + (frameIdx + 1) + " of " + cache.movie.T + (sp > 1.01 ? ", played " + fmtNum(sp) + " times faster than real time" : ", real time") + ". The frames are log-spaced: between two of them the picture holds."; return; }
     $("movie-time").textContent = "t = " + (frameIdx * dt).toFixed(dt < 0.01 ? 3 : dt < 0.1 ? 2 : 1) + " s of " + fmtSig(cache.movie.T * dt, 3) + " s" +
       (Math.abs(speed - 1) > 0.01 ? (speed < 1 ? ", slowed down " + fmtNum(1 / speed) + " times" : ", sped up " + fmtNum(speed) + " times") : ", real time");
   }
