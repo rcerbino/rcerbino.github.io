@@ -144,7 +144,7 @@
     objective: objIndexByName("CFI Plan Apochromat VC 60XC WI"), condenser: "elwd", na_c: 0.3, source: "green",
     dye: "green", rate_ph_ms: 1000, bg_e_ms: 2, light_frac: 0.5,
     camera: "orca", cam_mode: "standard", iface: "cameralink", binning: 1, roi: 256, sim_px: 128, n_frames: 512,
-    annulus: "Ph2", ring_T: 0.25, df_kind: "dry", df_light_e: 1e7, stray_frac: 1e-4, dic_shear_um: 0.24, dic_bias_deg: 90, dic_angle_deg: 45,
+    annulus: "Ph2", ring_T: 0.25, df_kind: "dry", df_light_e: 1e4, stray_frac: 1e-4, dic_shear_um: 0.24, dic_bias_deg: 90, dic_angle_deg: 45,
     scanner: "resonant", scan_px: 512, zoom: 1, line_avg: 2, pinhole_au: 1, scan_rate: 2e7,
     frame_rate_hz: 100, exposure_ms: 2, frame_timing: "log", log_factor: 5,
     shape: "sphere", aspect: 3, dn: 0.1, dn_body: 0, polarizer: "off", analyzer: "off", pol_angle_deg: 90, extinction: 1e-4,
@@ -157,7 +157,7 @@
 
   function fmtSize(um) { return um < 1 ? Math.round(um * 1000) + " nm" : um.toFixed(um < 2 ? 2 : 1) + " " + MU + "m"; }
   function fmtNum(v) { return v >= 100 ? Math.round(v).toString() : v >= 10 ? v.toFixed(0) : v >= 1 ? v.toFixed(1) : v.toFixed(2); }
-  function fmtSig(v, d) { if (!Number.isFinite(v)) return "-"; if (v === 0) return "0"; const p = Math.pow(10, d - 1 - Math.floor(Math.log10(Math.abs(v)))); return (Math.round(v * p) / p).toString(); }
+  function fmtSig(v, d) { if (!Number.isFinite(v)) return "-"; if (v === 0) return "0"; return String(Number(v.toPrecision(d))); }
   function fmtTime(s) { return s < 1 ? fmtSig(s * 1000, 2) + " ms" : fmtSig(s, 2) + " s"; }
   function fmtPhi(v) { const e = Math.floor(Math.log10(v)), m = v / Math.pow(10, e); return (Math.round(m * 10) / 10) + "e" + e; }
 
@@ -176,9 +176,21 @@
   let phiCapped = false, phiRaised = false;
   function particlesFor(n) { return state.phi_c / geometry().volume * Math.pow(n * pixelUm(), 2) * state.cell_um; }
   // time step of the simulation (free steps of 3 % of the diameter) and particle-steps for a field of n pixels
-  function stepS() { return Math.pow(0.03 * state.diameter_um, 2) / (2 * dSE()); }
-  function workFor(n) { const T = Math.min(state.n_frames, maxFrames(n)), dt = 1 / state.frame_rate_hz, span = BURSTS() ? MOVIE.logTimes(T, dt, state.log_factor)[T - 1] + dt : T * dt; return particlesFor(n) * (span + tauB()) / stepS() * (state.inter === "yukawa" ? 1.5 : 1); }
-  function simSeconds() { return workFor(simPx()) / 5e5; }
+  // time step, settling time and neighbours as in movie.js (setupInteract), for the cost of a run
+  function stepS() {
+    const sg = state.diameter_um, D0 = dSE(); let h = Math.pow(0.03 * sg, 2) / (2 * D0);
+    if (state.inter === "yukawa" && state.U0 > 0) {
+      const kap = state.kappa_sigma / sg, Ur = function (r) { return state.U0 * sg * Math.exp(-kap * (r - sg)) / r; };
+      let rs = sg; if (state.U0 > 10) { let lo = sg, hi = sg + 20 / kap; for (let it = 0; it < 60; it++) { const m = 0.5 * (lo + hi); if (Ur(m) > 10) lo = m; else hi = m; } rs = 0.5 * (lo + hi); }
+      h = Math.min(h, 0.03 * sg / (D0 * Ur(rs) * (kap + 1 / rs)));
+    }
+    return h;
+  }
+  function settleTauB(n) { const ph = state.phi_c, S0 = Math.pow(1 - ph, 4) / Math.pow(1 + 2 * ph, 2), kmin = 2 * Math.PI / Math.max(n * pixelUm(), state.cell_um); return Math.max(1, 2 * S0 / Math.pow(kmin * state.diameter_um, 2)); }
+  function neighbourFactor(n) { if (state.inter !== "yukawa") return 1; const sg = state.diameter_um, rc = Math.max(sg, Math.min(sg + 6 * sg / state.kappa_sigma, Math.min(n * pixelUm(), state.cell_um) / 2)); return 1 + 0.2 * (Math.pow(rc / sg, 3) - 1); }
+  function workFor(n) { const T = Math.min(state.n_frames, maxFrames(n)), dt = 1 / state.frame_rate_hz, span = BURSTS() ? MOVIE.logTimes(T, dt, state.log_factor)[T - 1] + dt : T * dt; return particlesFor(n) * (span + settleTauB(n) * tauB()) / stepS() * neighbourFactor(n); }
+  function simSeconds() { return workFor(simPx()) / 5e5 + 5; }
+  const MAX_SECONDS = 180;
   function pointsPerParticle() {
     if (!BODY()) return 1;
     const lam = 0.85 * centralWavelength(), na = Math.min(objective().na, 1.34);   // shortest wavelengths set the spacing
@@ -323,7 +335,7 @@
     { key: "dic_shear_um", group: "Microscope (Nikon Ti2-E)", lvl: 3, label: "DIC shear", kind: "lin", min: 0.05, max: 1, step: 0.01, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m"; }, when: function () { return state.mode === "dic"; }, hint: "0.24 " + MU + "m was measured for a Nikon N2 prism (Ostler et al.)." },
     { key: "dic_angle_deg", group: "Microscope (Nikon Ti2-E)", lvl: 3, label: "DIC shear direction", kind: "select", num: true, options: [[0, "0" + DEG], [45, "45" + DEG], [90, "90" + DEG]], when: function () { return state.mode === "dic"; } },
     { key: "source", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Light source", kind: "select", options: Object.keys(OPTICS.SOURCES).map(function (k) { return [k, OPTICS.SOURCES[k].label]; }), when: TRANS },
-    { key: "df_light_e", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Lamp power (electrons per pixel if all the light reached the camera)", kind: "log", min: 1e4, max: 1e10, fmt: function (v) { return fmtPhi(v); }, when: function () { return state.mode === "darkfield" || (TRANS() && state.mode !== "dic" && state.analyzer === "on"); }, hint: function () { return state.mode === "darkfield" ? "" : "With an analyzer the lamp is turned up to fill the camera, up to this limit."; } },
+    { key: "df_light_e", group: "Microscope (Nikon Ti2-E)", lvl: 1, label: "Lamp power (electrons per pixel if all the light reached the camera)", kind: "log", min: 1e4, max: 1e10, fmt: function (v) { return fmtPhi(v); }, when: function () { return state.mode === "darkfield" || (TRANS() && state.mode !== "dic" && state.analyzer === "on"); }, hint: function () { return state.mode === "darkfield" ? "" : "With an analyzer the lamp is turned up to fill the camera, up to this limit."; } },
     { key: "stray_frac", group: "Microscope (Nikon Ti2-E)", lvl: 3, label: "Stray light (share of the illumination)", kind: "log", min: 1e-6, max: 1e-2, fmt: function (v) { return fmtPhi(v); }, when: function () { return state.mode === "darkfield"; }, hint: "Light scattered by dust, cover-glass defects and the optics; it sets the dark-field background." },
     { key: "dye", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Dye", kind: "select", options: Object.keys(DYES).map(function (k) { return [k, DYES[k].label]; }), when: FL },
     { key: "rate_ph_ms", group: "Microscope (Nikon Ti2-E)", lvl: 2, label: "Brightness: photons per particle per ms reaching the camera", kind: "log", min: 1, max: 20000, fmt: function (v) { return fmtSig(v, 2); }, when: function () { return state.mode === "fluorescence" || state.mode === "spinning"; }, hint: "Photons reaching the camera; the camera's quantum efficiency is applied on top." },
@@ -579,7 +591,8 @@
     const n32 = particlesFor(32), ppp = pointsPerParticle(), over = Math.max(n32 / MAX_PARTICLES, n32 * ppp / MAX_POINTS);
     phiCapped = over > 1;
     if (phiCapped) state.phi_c *= 0.95 / over;
-    if (TRANS() && state.label !== 1) state.label = 1;     // in transmitted light every particle scatters, dyed or not
+    if (TRANS() && state.label !== 1) state.label = 1;
+    if (state.cell_um < 2 * state.diameter_um) state.cell_um = Math.min(30, 2 * state.diameter_um);      // a box at least two particles deep     // in transmitted light every particle scatters, dyed or not
   }
   // zoom that samples the confocal spot at about Nyquist (pixel near lambda / 4 NA)
   function autoZoom() {
@@ -657,6 +670,8 @@
   let runStart = 0;
   function start(kind) {
     runStart = performance.now();
+    // a setup that would keep the browser busy for minutes is not started
+    if (kind === "simulate" && simSeconds() > MAX_SECONDS) { ++runToken; inflight = null; showError("this setup would take about " + Math.round(simSeconds() / 60) + " minutes to simulate in the browser: shorten the movie (frame rate, number of frames, log-spaced stretch), use smaller particles or a lower viscosity, or a lower volume fraction."); return; }
     if (kind === "analyse" && inflight === "simulate") kind = "simulate";   // the worker's movie would not match the page's
     const token = ++runToken;
     inflight = kind;
@@ -689,15 +704,17 @@
     });
   }
   // the reference: a dilute sample of the same particles, filmed the same way, for the amplitude of one particle alone
-  let refHere = null;
+  let refMovieHere = null, refHere = {};
   async function runHere(kind, token, cfg, opts) {
     let movie = cache.movie;
     if (kind === "simulate" || !movie) {
       movie = await drive(MOVIE.simulate(cfg), token, 0, 0.75); if (!movie) return;
-      const rv = await drive(MOVIE.simulate(CROWD.referenceConfig(cfg, movie.truth.interact.tau_B_s)), token, 0.75, 0.82, "Dilute reference movie: "); if (!rv) return;
-      refHere = await drive(CROWD.referenceAmplitude(rv), token, 0.82, 0.85, "Dilute reference movie: "); if (!refHere) return;
+      refMovieHere = await drive(MOVIE.simulate(CROWD.referenceConfig(cfg, movie.truth.interact.tau_B_s)), token, 0.75, 0.82, "Dilute reference movie: "); if (!refMovieHere) return;
+      refHere = {};
     }
-    const o2 = Object.assign({}, opts, { reference: refHere, n_labelled: movie.truth.interact.n_labelled, D0_um2_s: movie.truth.interact.D0_um2_s });
+    const wk = opts.windowing ? "w" : "n";
+    if (!refHere[wk]) { refHere[wk] = await drive(CROWD.referenceAmplitude(refMovieHere, { windowing: !!opts.windowing }), token, 0.82, 0.85, "Dilute reference movie: "); if (!refHere[wk]) return; }
+    const o2 = Object.assign({}, opts, { reference: refHere[wk], n_labelled: movie.truth.interact.n_labelled, D0_um2_s: movie.truth.interact.D0_um2_s });
     const res = await drive(CROWD.analyse(movie, o2), token, 0.85, opts.compare_published ? 0.93 : 1);
     if (!res) return;
     if (opts.compare_published) { let rp = null; try { rp = await drive(CROWD.analyse(movie, Object.assign({}, o2, { published_only: true })), token, 0.93, 1); } catch (e) { rp = null; } res.published = rp ? CROWD.publishedSummary(rp) : { failed: "too little to work with" }; }
@@ -1182,6 +1199,7 @@
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
     add(level === "curious" ? "Dots: how strong each pattern is in this movie, against the same particles far apart (a second, dilute movie), in the colours of step 5. Red line: how the simulated particles are really arranged. Above 1, patterns at the spacing of neighbours; below 1 at the wide patterns, which the crowd smooths out." : "Dots: S(q) = (A / N) / (A_ref / N_ref), the amplitude per dyed particle against a dilute movie of the same particles, filmed the same way (bars: scatter over five neighbouring q). Red line: the S(q) of the simulated particles" + (tr.label_fraction < 1 ? ", as the dyed ones show it, 1 + x (S - 1) with x = " + tr.label_fraction : "") + ".");
     if (tr.kind === "hard" && level !== "curious") add("Dashed: Percus-Yevick theory for hard spheres at volume fraction " + fmtSig(tr.phi, 2) + ".");
+    if (TRANS() && level !== "curious") add("In transmitted light the finest patterns read S(q) too high in this simulation; in fluorescence and confocal, where each particle shines on its own, S(q) comes out cleanly.");
     if (level !== "curious") add("At the widest patterns DDM reads S higher than the simulation: each pattern collects particles over the depth in focus, so it also takes in density waves tilted along the axis of the microscope, which have a shorter wavelength and a higher S.");
   }
   // collective diffusion: D(q) = Gamma / q^2 against D0, with 1 / S(q) (the short-time value without hydrodynamic interactions)
@@ -1211,7 +1229,7 @@
   const MODE_SHORT = { brightfield: "bright-field", phase: "phase-contrast", darkfield: "dark-field", dic: "DIC", fluorescence: "widefield fluorescence", spinning: "spinning-disk confocal (X-Light V3)", scanning: "point-scanning confocal (AX R)" };
   function spotWidth() { return 0.61 * centralWavelength() / Math.min(objective().na, nLiquid(centralWavelength())); }
   // a peak worth the name: above 1.15 and at least 0.25 above the widest patterns measured, inside the q used
-  function hasPeak(r) { return r.peak.S > 1.15 && r.peak.S - r.S_low > 0.25 && r.peak.k > 0 && r.peak.k < r.rows.length - 1; }
+  function hasPeak(r) { const pr = r.rows[r.peak.k]; return r.peak.S > 1.15 && r.peak.S - r.S_low > 0.25 && r.peak.k > 1 && r.peak.k < r.rows.length - 1 && r.peak.S - 1 > 2 * ((pr && pr.S_err) || 0); }
   function kindOf(r) {
     if (cache.movie.truth.interact.label_fraction <= 0.1 || (cache.movie.truth.interact.label_fraction < 0.3 && !hasPeak(r))) return { word: "Single particles", text: "with few particles dyed the patterns follow single particles: S(q) stays near 1, and the decay gives how each one diffuses among its neighbours" };
     if (hasPeak(r)) return { word: "Neighbours " + fmtSig(2 * Math.PI / r.peak.q_per_um, 2) + " " + MU + "m apart", text: "the patterns are strongest at the spacing of neighbouring particles (2\u03c0 / q at the peak of S(q))" };
@@ -1223,7 +1241,12 @@
   function verdict() {
     const r = cache.res, tp = truePeak();
     if (!tp) return { cls: "info", text: "Nothing to compare" };
-    if (!hasPeak(r)) { const off = Math.abs(r.S_low / trueS(r.rows[1].q_per_um) - 1); return off < 0.25 ? { cls: "good", text: "S(q) as in the simulation" } : { cls: "warn", text: "S(q) off by " + Math.round(100 * off) + " %" }; }
+    if (!hasPeak(r)) {
+      // no peak: the typical deviation over all the patterns used
+      const d = r.rows.map(function (x) { const t = trueS(x.q_per_um); return t ? Math.abs(x.S / t - 1) : NaN; }).filter(isFinite).sort(function (a, b) { return a - b; });
+      const off = d.length ? d[Math.floor(d.length / 2)] : 0;
+      return off < 0.15 ? { cls: "good", text: "S(q) as in the simulation" } : { cls: "warn", text: "S(q) off by about " + Math.round(100 * off) + " %" };
+    }
     const dh = Math.abs(r.peak.S / tp.S - 1), dq = Math.abs(r.peak.q_per_um / tp.q_per_um - 1);
     return dh < 0.1 && dq < 0.05 ? { cls: "good", text: "Peak as in the simulation (height within 10 %, place within 5 %)" } : dh < 0.25 && dq < 0.1 ? { cls: "warn", text: "Peak off by " + Math.round(100 * dh) + " % in height, " + Math.round(100 * dq) + " % in place" } : { cls: "bad", text: "Peak far from the simulation" };
   }
@@ -1231,7 +1254,7 @@
     const res = cache.res, mv = cache.movie, tr = mv.truth.interact, v = verdict(), k = kindOf(res), tp = truePeak(), D0 = res.D0_um2_s;
     let h = '<div class="eyebrow">Result</div><div class="big">' + k.word + '</div><p class="small" style="margin:0">' + k.text + '.</p>';
     h += '<span class="chip ' + v.cls + '">' + v.text + '</span>';
-    const nums = [], low = res.rows[0];
+    const nums = [], low = res.rows[res.k_low] || res.rows[0];
     if (hasPeak(res)) nums.push("S(q) peaks at " + fmtSig(res.peak.S, 3) + " at q = " + fmtSig(res.peak.q_per_um, 3) + " " + MU + "m\u207b\u00b9" + (tp ? " (simulation " + fmtSig(tp.S, 3) + " at " + fmtSig(tp.q_per_um, 3) + ")" : ""));
     if (hasPeak(res) && res.peak.D_um2_s) nums.push("there the patterns fade " + fmtSig(D0 / res.peak.D_um2_s, 2) + " times more slowly than for one particle alone (expected about " + fmtSig(tp.S, 2) + " at the shortest delays)");
     nums.push("at the widest patterns (q = " + fmtSig(low.q_per_um, 2) + ") S = " + fmtSig(res.S_low, 2) + (res.D_low_um2_s ? " and D = " + fmtSig(res.D_low_um2_s / D0, 2) + " D0" : ""));

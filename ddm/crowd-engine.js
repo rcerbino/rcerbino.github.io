@@ -33,8 +33,22 @@
   /* the reference movie (dilute, same optics): the amplitude per particle A_ref(q) / N_ref and the short-time rate of each q
      bin for particles that do not interact. The rate holds D0 q^2 and what motion along the axis adds (particles leaving
      the layer in focus), so that the ratio of the rates removes the optics, as the ratio of the amplitudes does for S(q). */
-  function* referenceAmplitude(ref) {
-    const S = yield* DDM.structure(ref, { blocks: 2 });
+  // windowing: each frame first loses its mean brightness, so that the uniform background does not leak into every q
+  function demeaned(movie) {
+    const P0 = movie.n * movie.n, fr = new Float32Array(movie.frames.length);
+    for (let t = 0; t < movie.T; t++) { const o = t * P0; let m = 0; for (let p = 0; p < P0; p++) m += movie.frames[o + p]; m /= P0; for (let p = 0; p < P0; p++) fr[o + p] = movie.frames[o + p] - m; }
+    return Object.assign({}, movie, { frames: fr, fft: null });
+  }
+  // a camera filled to its full well records nothing more: stop with a plain message
+  function checkSaturation(movie) {
+    const fw = movie.info && movie.info.full_well_e; if (!(fw < Infinity)) return;
+    let n = 0; const fr = movie.frames, m = Math.min(fr.length, movie.n * movie.n * 8);
+    for (let i = 0; i < m; i++) if (fr[i] >= fw * 0.999) n++;
+    need(n <= 0.01 * m, "the camera is saturated (" + Math.round(100 * n / m) + " % of the pixels at the full well): turn the lamp power down");
+  }
+  function* referenceAmplitude(ref, opts) {
+    opts = opts || {};
+    const S = yield* DDM.structure(opts.windowing ? demeaned(ref) : ref, { blocks: 2, windowing: !!opts.windowing });
     const B = DDM.detectorNoiseB(ref, S.window), n = ref.info.n_particles, nb = S.nb, L = S.L;
     const out = new Float64Array(nb + 1).fill(NaN), rate = new Float64Array(nb + 1).fill(NaN);
     for (let b = 1; b <= nb; b++) {
@@ -96,7 +110,9 @@
     const pub = !!opts.published_only, free = pub ? false : opts.offset !== false, useRef = !pub && opts.ref_rate !== false && !!opts.reference.rate;
     const smooth = !pub && opts.ref_smooth !== false, R = smooth || !opts.reference.raw ? opts.reference : opts.reference.raw;
     const D0 = opts.D0_um2_s;
-    const S = yield* DDM.structure(movie, Object.assign({}, opts, { blocks: K }));
+    checkSaturation(movie);
+    need(!(opts.q_min_per_um > 0 && opts.q_max_per_um > 0 && opts.q_min_per_um >= opts.q_max_per_um), "the lowest q of the fit range is above the highest");
+    const S = yield* DDM.structure(opts.windowing ? demeaned(movie) : movie, Object.assign({}, opts, { blocks: K }));
     const nb = S.nb, L = S.L, taus = S.taus_s, qv = S.q_per_um;
     const jack = []; for (let j = 0; j < S.blocks; j++) jack.push(S.jackDq(j));
     const camB = pub || opts.noise === "fit" ? null : DDM.detectorNoiseB(movie, S.window);
@@ -140,7 +156,9 @@
       r.S_err = nb5.length > 2 ? Math.sqrt(nb5.reduce(function (a, x) { return a + (x - m) * (x - m); }, 0) / (nb5.length - 1)) : null;
     });
     // the peak of S(q) (largest S among the q used, refined by a parabola through it and its neighbours)
-    let kp = 0; rows.forEach(function (r, k) { if (r.S > rows[kp].S) kp = k; });
+    let kp = -1;
+    for (let k = 2; k < rows.length - 1; k++) { const r = rows[k]; if (r.S >= rows[k - 1].S && r.S >= rows[k + 1].S && r.S - 1 > 2 * (r.S_err || 0) && (kp < 0 || r.S > rows[kp].S)) kp = k; }
+    if (kp < 0) { kp = 0; rows.forEach(function (r, k) { if (r.S > rows[kp].S) kp = k; }); }
     let qPeak = rows[kp].q_per_um, SPeak = rows[kp].S;
     if (kp > 0 && kp < rows.length - 1) {
       const y0 = rows[kp - 1].S, y1 = rows[kp].S, y2 = rows[kp + 1].S, den = y0 - 2 * y1 + y2;
@@ -150,12 +168,13 @@
     const dAt = function (k) { const v = rows.slice(Math.max(0, k - 1), Math.min(rows.length, k + 2)).map(function (r) { return r.D_um2_s; }).filter(function (x) { return x > 0; }); return v.length ? v.reduce(function (a, x) { return a + x; }, 0) / v.length : null; };
     // the widest patterns that the movie renews well (the first three)
     let k0 = 0; while (k0 < rows.length - 3 && !rows[k0].renewed) k0++;
+    const lowRenewed = rows[k0].renewed; if (!lowRenewed) k0 = 0;     // none renewed: the widest patterns all the same, flagged
     const low = rows.slice(k0, k0 + 3), S0 = low.reduce(function (a, r) { return a + r.S; }, 0) / low.length;
     yield { stage: "Structure and rates", frac: 1 };
     return {
       n: S.n, lags: S.lags, taus_s: taus, pairs: S.pairs, q_per_um: Array.from(qv), d2d: S.d2d, binOf: S.binOf, times_s: S.times_s,
       A: Array.from(A), B: Array.from(B), B_camera: camB, offset: free, ref_rate: useRef, ref_smooth: smooth, bins: bins, rows: rows, D0_um2_s: D0, n_labelled: nLab, n_reference: opts.reference.n,
-      peak: { q_per_um: qPeak, S: SPeak, k: kp, D_um2_s: dAt(kp) }, S_low: S0, D_low_um2_s: dAt(k0 + 1), k_low: k0 + 1,
+      peak: { q_per_um: qPeak, S: SPeak, k: kp, D_um2_s: dAt(kp) }, S_low: S0, D_low_um2_s: dAt(k0 + 1), k_low: k0 + 1, low_renewed: lowRenewed,
       window: { q_lo_per_um: S.q_lo_per_um, q_hi_per_um: S.q_hi_per_um, q_opt_per_um: S.q_opt_per_um, q_min_used: qv[bins[0]], q_max_used: qv[bins[bins.length - 1]] }
     };
   }
@@ -170,7 +189,7 @@
     const D0 = cfg.diameter_um * cfg.diameter_um / tauB_s, span = Math.max(10 * tauB_s, 2 * cfg.cell_um * cfg.cell_um / D0);
     const T = c.n_frames, dt = 1 / c.frame_rate_hz, need = span / (T * dt);
     const k0 = c.log_timing ? c.log_timing.factor : 1;
-    if (need > k0) c.log_timing = { factor: Math.min(2000, Math.max(2, need)) };
+    if (need > k0) c.log_timing = { factor: Math.min(1000, Math.max(2, need)) };
     return c;
   }
   /* what the result table shows of a run of the published method */

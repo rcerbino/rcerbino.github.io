@@ -129,7 +129,7 @@
   // Mason's local power law: |G*| = kT / (pi a <dr^2>_3D(1/w) Gamma(1 + alpha)), G' = |G*| cos(pi alpha / 2), G'' = |G*| sin(..)
   function masonModuli(J, alpha) {
     const al = Math.max(0, Math.min(1, alpha)), g = 1 / (J * gammaFn(1 + al));
-    return [g * Math.cos(Math.PI * al / 2), g * Math.sin(Math.PI * al / 2)];
+    return [al >= 1 ? 0 : g * Math.cos(Math.PI * al / 2), al <= 0 ? 0 : g * Math.sin(Math.PI * al / 2)];
   }
 
   function* analyse(movie, opts) {
@@ -140,6 +140,10 @@
     const inversion = published ? "mason" : (opts.inversion || "spectrum");
     const a_um = opts.radius_um; need(a_um > 0, "tracer radius missing");
     const kT = KB * (movie.T_C + 273.15);
+    // a camera filled to its full well records nothing more: stop with a plain message
+    { const fw = movie.info && movie.info.full_well_e; if (fw < Infinity) { let n = 0; const fr = movie.frames, m = Math.min(fr.length, movie.n * movie.n * 8); for (let i = 0; i < m; i++) if (fr[i] >= fw * 0.999) n++;
+      need(n <= 0.01 * m, "the camera is saturated (" + Math.round(100 * n / m) + " % of the pixels at the full well): turn the lamp power down"); } }
+    need(!(opts.q_min_per_um > 0 && opts.q_max_per_um > 0 && opts.q_min_per_um >= opts.q_max_per_um), "the lowest q of the fit range is above the highest");
     // windowing: each frame first loses its mean brightness, so that the uniform background does not leak into every q
     let mvS = movie;
     if (opts.windowing) {

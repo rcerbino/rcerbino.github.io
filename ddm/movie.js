@@ -468,7 +468,7 @@
     function setupInteract() {
       const sg = classes[0].d, D0 = classes[0].hyd.D_t, tauB = sg * sg / D0, kind = INTC.kind;
       const U0 = kind === "yukawa" ? num(INTC, "U0", 0, 1000) : 0, ks = kind === "yukawa" ? num(INTC, "kappa_sigma", 0.5, 100) : 1, kap = ks / sg;
-      const rc = kind === "yukawa" ? Math.min(sg + 6 / kap, Math.min(L, Lz) / 2) : sg;
+      const rc = kind === "yukawa" ? Math.max(sg, Math.min(sg + 6 / kap, Math.min(L, Lz) / 2)) : sg;      // never below the hard core
       const lf = INTC.label_fraction === undefined ? 1 : num(INTC, "label_fraction", 0, 1);
       // time step: free steps of 0.03 diameters rms, and the repulsion moving a particle by at most that much where it is
       // 10 kT (closer approaches are rare: the push there is capped at 0.1 diameters per step, and overlaps are removed)
