@@ -473,6 +473,11 @@ dqt.set_frame_rate(frame_rate)     # frames per second
           </figure>
           <div class="step-body">
             <div class="result" id="result" aria-live="polite"></div>
+            <div class="predict" data-predict="slow" data-right="limit">
+              <div class="q">Predict first: 200 nm polystyrene beads settle at about 1 nm/s, with the microscope on its side. What will the page report?</div>
+              <div class="btns"><button type="button" data-guess="zero">The beads do not drift</button><button type="button" data-guess="limit">A drift too slow for this movie</button></div>
+              <div class="a" hidden><span class="verdict"></span> Too slow for this movie. In this movie a drift of 1 nm/s and no drift at all look the same, so the page does not claim the beads stand still: it gives the slowest drift this movie could show, and a slower one is not ruled out, only not seen. The bench now runs with these beads; the result above says where the limit is.</div>
+            </div>
             <figure class="viz lvl-3">
               <figcaption>The drift seen by patterns of each direction: the same fit as the velocity, with only the patterns within 7.5&deg; of each direction, gives the speed along <b>q</b>, which should be <i>v</i> cos(&theta; &minus; &theta;<sub>v</sub>): largest along the drift, zero across it and negative beyond. Error bars: jackknife over groups of <i>q</i>. The line is the result.</figcaption>
               <div class="chart short"><canvas id="chart-sector" aria-label="Speed along each direction of q"></canvas></div>

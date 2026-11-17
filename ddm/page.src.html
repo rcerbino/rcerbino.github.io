@@ -230,6 +230,7 @@ pre.code { font-family: var(--mono); font-size: 0.8rem; background: var(--paper)
 .predict .q { font-weight: 600; }
 .predict .a { color: var(--ink); }
 .predict .verdict { font-weight: 600; }
+.legend .compare { flex-basis: 100%; display: block; color: var(--ink); }
 .predict button:disabled { cursor: default; opacity: 0.55; }
 .predict button[aria-pressed="true"] { opacity: 1; border-color: var(--accent); font-weight: 600; }
 
@@ -437,7 +438,7 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
           <div class="predict" data-predict="size" data-right="right">
             <div class="q">Predict first: the particles become twice as large. Do the curves move to the left or to the right?</div>
             <div class="btns"><button type="button" data-guess="left">Left, faster</button><button type="button" data-guess="right">Right, slower</button></div>
-            <div class="a" hidden><span class="verdict"></span> To the right. A particle twice as large has half the diffusion coefficient, so every pattern takes twice as long to change. The bench now runs with the larger particles so you can check.</div>
+            <div class="a" hidden><span class="verdict"></span> To the right. A particle twice as large has half the diffusion coefficient, so every pattern takes twice as long to change. The bench now runs with the larger particles so you can check: the chart keeps one curve of the earlier run, dashed, next to the new one at the same stripe spacing, and marks where each has gone halfway.</div>
           </div>
         </div>
         <details class="math" data-open-at="researcher">
@@ -465,6 +466,11 @@ fit_res, model_res = fit_multik(aa, model, k_ref, use_err=True,
             <p>Now plot how fast each pattern changes against how fine it is. For particles that wander at random, halving the stripe spacing makes the change four times faster. On these logarithmic axes the points fall on a straight line of slope 2.</p>
             <p>The height of that line gives the diffusion coefficient. The Stokes-Einstein relation turns it into a size, using the temperature and the viscosity of the liquid.</p>
             <p>Hollow grey points are outside what this movie can measure: patterns as large as the image or finer than the microscope resolves, changes faster than one frame or slower than half the movie, signal lost in the camera noise. They are left out of the result.</p>
+            <div class="predict" data-predict="slowcam" data-right="camera">
+              <div class="q">Predict first: a camera that is too slow and a movie that is too short both lose points of this plot. Which one loses the finest patterns, at the right end?</div>
+              <div class="btns"><button type="button" data-guess="camera">The slow camera</button><button type="button" data-guess="movie">The short movie</button></div>
+              <div class="a" hidden><span class="verdict"></span> The slow camera. Fine patterns change fastest: with too few frames per second they renew between two frames, and their points turn hollow at the right end. A movie that is too short loses the other end, the wide patterns, which change so slowly that the movie ends before they have renewed. The bench now runs at 8 frames per second; the card "A movie that is too short", under What matters, shows the other end.</div>
+            </div>
             <p class="lvl-2">Below the plot the result compares the size from several ways of fitting, and checks it against the quality criteria of the standard for dynamic light scattering, ISO 22412. "Repeat 5 times" records five new movies with the same settings, as the standard asks for repeatability.</p>
             <p id="turn-note">Particles that turn add a second, faster step to each curve. Its rate is the translation rate plus a constant, 6 D<sub>R</sub>, so on this plot it lies above the line and flattens out at small q. The squares show it when the fit finds it.</p>
           </div>
@@ -477,7 +483,7 @@ fit_res, model_res = fit_multik(aa, model, k_ref, use_err=True,
             <div class="predict" data-predict="warm" data-right="no">
               <div class="q">Predict first: you warm the water from 22 to 45 &deg;C. Does the measured size change?</div>
               <div class="btns"><button type="button" data-guess="yes">Yes</button><button type="button" data-guess="no">No</button></div>
-              <div class="a" hidden><span class="verdict"></span> No. The particles move faster because warm water is less viscous and the thermal kicks are stronger, but Stokes-Einstein uses the new temperature and viscosity, so the size comes out the same. The bench now runs at 45 &deg;C.</div>
+              <div class="a" hidden><span class="verdict"></span> No. The particles move faster because warm water is less viscous and the thermal kicks are stronger, but Stokes-Einstein uses the new temperature and viscosity, so the size comes out the same. The bench now runs at 45 &deg;C; the curves of step 5 keep one curve of the earlier run, dashed, to show how much faster the patterns change.</div>
             </div>
           </div>
           <figure class="viz lvl-2">
