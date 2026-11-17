@@ -686,11 +686,12 @@
   function start(kind) {
     runStart = performance.now();
     if (kind === "analyse" && inflight === "simulate") kind = "simulate";   // the worker's movie would not match the page's
-    const token = ++runToken;
+    const token = ++runToken, busy = inflight !== null;
     inflight = kind;
     $("error").hidden = true;
     const cfg = simConfig(), opts = analysisOptions();
-    if (kind === "simulate" && worker) { worker.terminate(); worker = null; }
+    // a busy worker is stopped; an idle one is kept, with the optical kernels it has already computed (movie.js memo)
+    if (kind === "simulate" && worker && busy) { worker.terminate(); worker = null; }
     if (workerOK && !worker) worker = makeWorker();
     if (worker) {
       worker.onmessage = function (ev) {
@@ -1219,10 +1220,11 @@
   function pctTxt(x) { return x === null || x === undefined || !isFinite(x) ? "-" : (100 * x < 1 ? "<1" : Math.round(100 * x)) + " %"; }
   // how far a set of moduli is from the material's: mean |ln ratio| over the frequencies measured, counting each modulus
   // where it is at least a tenth of the larger one (a modulus far below the other is beyond what any method resolves)
-  let offUsed = [0, 0];      // how many G' and G'' values the last comparison counted
+  let offUsed = [0, 0], offParts = [null, null];      // how many G' and G'' values the last comparison counted, and how far each was
   function offFromTruth(ws, gp, gpp) {
-    const mat = materialSpec(), es = cache.movie.viscosity_Pa_s; let s = 0, n = 0; offUsed = [0, 0];
-    ws.forEach(function (w, k) { const g = VISCO.gstar(mat, es, w), mx = Math.max(g[0], g[1]); [[gp[k], g[0]], [gpp[k], g[1]]].forEach(function (p, j) { if (p[1] >= 0.1 * mx && p[0] > 0) { s += Math.abs(Math.log(p[0] / p[1])); n++; offUsed[j]++; } }); });
+    const mat = materialSpec(), es = cache.movie.viscosity_Pa_s; let s = 0, n = 0; const sp = [0, 0]; offUsed = [0, 0];
+    ws.forEach(function (w, k) { const g = VISCO.gstar(mat, es, w), mx = Math.max(g[0], g[1]); [[gp[k], g[0]], [gpp[k], g[1]]].forEach(function (p, j) { if (p[1] >= 0.1 * mx && p[0] > 0) { const d = Math.abs(Math.log(p[0] / p[1])); s += d; n++; sp[j] += d; offUsed[j]++; } }); });
+    offParts = [offUsed[0] ? sp[0] / offUsed[0] : null, offUsed[1] ? sp[1] / offUsed[1] : null];
     return n ? s / n : null;
   }
   // G' and G'' nearly equal over the range (a gel point): crossings there are only noise
@@ -1244,6 +1246,11 @@
     const r = cache.res, off = offFromTruth(r.w_rad_s, r.Gp_Pa, r.Gpp_Pa), ws = r.w_rad_s;
     if (off === null) return { cls: "info", text: "No moduli to compare" };
     const win = " from " + fmtSig(ws[0], 2) + " to " + fmtSig(ws[ws.length - 1], 2) + " rad/s", only = !offUsed[0] ? ", G'' only (G' too small there)" : !offUsed[1] ? ", G' only (G'' too small there)" : "";
+    // one modulus right and the other clearly off: say which (the mean of both would hide it)
+    if (offParts[0] !== null && offParts[1] !== null && Math.max(offParts[0], offParts[1]) > 0.5) {
+      const bad = offParts[0] > offParts[1] ? 0 : 1, nm = ["G'", "G''"];
+      return { cls: offParts[1 - bad] < 0.2 ? "warn" : "bad", text: (offParts[1 - bad] < 0.2 ? nm[1 - bad] + " matches the rheometer; " : "") + nm[bad] + " off by a factor " + fmtSig(Math.exp(offParts[bad]), 2) + win };
+    }
     return off < 0.2 ? { cls: only ? "info" : "good", text: "Matches the rheometer" + win + only } : off < 0.5 ? { cls: "warn", text: "Off from the rheometer by about " + Math.round(100 * (Math.exp(off) - 1)) + " %" + win + only } : { cls: "bad", text: "Far from the rheometer (a factor " + fmtSig(Math.exp(off), 2) + " on average)" + win + only };
   }
   function renderResult() {

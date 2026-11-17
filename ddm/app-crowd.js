@@ -673,11 +673,12 @@
     // a setup that would keep the browser busy for minutes is not started
     if (kind === "simulate" && simSeconds() > MAX_SECONDS) { ++runToken; inflight = null; showError("this setup would take about " + Math.round(simSeconds() / 60) + " minutes to simulate in the browser: shorten the movie (frame rate, number of frames, log-spaced stretch), use smaller particles or a lower viscosity, or a lower volume fraction."); return; }
     if (kind === "analyse" && inflight === "simulate") kind = "simulate";   // the worker's movie would not match the page's
-    const token = ++runToken;
+    const token = ++runToken, busy = inflight !== null;
     inflight = kind;
     $("error").hidden = true;
     const cfg = simConfig(), opts = analysisOptions();
-    if (kind === "simulate" && worker) { worker.terminate(); worker = null; }
+    // a busy worker is stopped; an idle one is kept, with the optical kernels it has already computed (movie.js memo)
+    if (kind === "simulate" && worker && busy) { worker.terminate(); worker = null; }
     if (workerOK && !worker) worker = makeWorker();
     if (worker) {
       worker.onmessage = function (ev) {
@@ -704,13 +705,16 @@
     });
   }
   // the reference: a dilute sample of the same particles, filmed the same way, for the amplitude of one particle alone
-  let refMovieHere = null, refHere = {};
+  let refMovieHere = null, refHere = {}, refKeyHere = null;
   async function runHere(kind, token, cfg, opts) {
     let movie = cache.movie;
     if (kind === "simulate" || !movie) {
       movie = await drive(MOVIE.simulate(cfg), token, 0, 0.75); if (!movie) return;
-      refMovieHere = await drive(MOVIE.simulate(CROWD.referenceConfig(cfg, movie.truth.interact.tau_B_s)), token, 0.75, 0.82, "Dilute reference movie: "); if (!refMovieHere) return;
-      refHere = {};
+      const rc = CROWD.referenceConfig(cfg, movie.truth.interact.tau_B_s), rk = JSON.stringify(rc);
+      if (rk !== refKeyHere) {
+        refKeyHere = null; refMovieHere = await drive(MOVIE.simulate(rc), token, 0.75, 0.82, "Dilute reference movie: "); if (!refMovieHere) return;
+        refHere = {}; refKeyHere = rk;
+      }
     }
     const wk = opts.windowing ? "w" : "n";
     if (!refHere[wk]) { refHere[wk] = await drive(CROWD.referenceAmplitude(refMovieHere, { windowing: !!opts.windowing }), token, 0.82, 0.85, "Dilute reference movie: "); if (!refHere[wk]) return; }
@@ -1197,7 +1201,7 @@
     a.done();
     const ul = $("sq-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
-    add(level === "curious" ? "Dots: how strong each pattern is in this movie, against the same particles far apart (a second, dilute movie), in the colours of step 5. Red line: how the simulated particles are really arranged. Above 1, patterns at the spacing of neighbours; below 1 at the wide patterns, which the crowd smooths out." : "Dots: S(q) = (A / N) / (A_ref / N_ref), the amplitude per dyed particle against a dilute movie of the same particles, filmed the same way (bars: scatter over five neighbouring q). Red line: the S(q) of the simulated particles" + (tr.label_fraction < 1 ? ", as the dyed ones show it, 1 + x (S - 1) with x = " + tr.label_fraction : "") + ".");
+    add(level === "curious" ? "Dots: how strong each pattern is in this movie, against the same particles far apart (a second, dilute movie), in the colours of step 5. Red line: how the simulated particles are really arranged. Above 1, patterns at the spacing of neighbours; below 1 at the wide patterns, which the crowd smooths out." : "Dots: S(q) = (A / N) / (A_ref / N_ref), the amplitude per dyed particle against a dilute movie of the same particles, filmed the same way (bars: scatter of neighbouring q about a smooth curve). Red line: the S(q) of the simulated particles" + (tr.label_fraction < 1 ? ", as the dyed ones show it, 1 + x (S - 1) with x = " + tr.label_fraction : "") + ".");
     if (tr.kind === "hard" && level !== "curious") add("Dashed: Percus-Yevick theory for hard spheres at volume fraction " + fmtSig(tr.phi, 2) + ".");
     if (TRANS() && level !== "curious") add("In transmitted light the finest patterns read S(q) too high in this simulation; in fluorescence and confocal, where each particle shines on its own, S(q) comes out cleanly.");
     if (level !== "curious") add("At the widest patterns DDM reads S higher than the simulation: each pattern collects particles over the depth in focus, so it also takes in density waves tilted along the axis of the microscope, which have a shorter wavelength and a higher S.");

@@ -485,7 +485,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
           <summary>The math: from the curves to S(q) and D(q)</summary>
           <div class="eq"><i>S</i>(<i>q</i>) = [<i>A</i>(<i>q</i>) / <i>N</i>] / [<i>A</i><sub>ref</sub>(<i>q</i>) / <i>N</i><sub>ref</sub>]</div>
           <div class="eq">&Gamma;(<i>q</i>) = &minus;d ln <i>f</i> / d&Delta;<i>t</i> at short times = <i>D</i><sub>0</sub> <i>q</i><sup>2</sup> <i>H</i>(<i>q</i>) / <i>S</i>(<i>q</i>), &nbsp;&nbsp; <i>D</i>(<i>q</i>) = <i>D</i><sub>0</sub> &Gamma;(<i>q</i>) / &Gamma;<sub>ref</sub>(<i>q</i>)</div>
-          <p><b>Amplitudes.</b> <i>A</i>(<i>q</i>) = 2&lang;|<i>F</i>(<i>q</i>)|<sup>2</sup>&rang; &minus; <i>B</i>, from the mean power of each pattern, with <i>B</i> = 2 (excess-noise factor &times; mean count + read noise<sup>2</sup>), the camera noise, the same at every <i>q</i>. The reference is a movie of the same particles at a volume fraction of 4 %, without interactions, through the same optics, long enough for its particles to wander through the whole depth of the box twice (the number near the focus sets the amplitude); <i>A</i><sub>ref</sub> and its rates are smoothed over seven neighbouring <i>q</i>. Only <i>q</i> where both movies carry more signal than <i>B</i> are used. The uncertainty of S(q) is the scatter over five neighbouring <i>q</i>.</p>
+          <p><b>Amplitudes.</b> <i>A</i>(<i>q</i>) = 2&lang;|<i>F</i>(<i>q</i>)|<sup>2</sup>&rang; &minus; <i>B</i>, from the mean power of each pattern, with <i>B</i> = 2 (excess-noise factor &times; mean count + read noise<sup>2</sup>), the camera noise, the same at every <i>q</i>. The reference is a movie of the same particles at a volume fraction of 4 %, without interactions, through the same optics, long enough for its particles to wander through the whole depth of the box twice (the number near the focus sets the amplitude); <i>A</i><sub>ref</sub> and its rates are smoothed over seven neighbouring <i>q</i>. Only <i>q</i> where both movies carry more signal than <i>B</i> are used. The uncertainty of S(q) is the scatter of seven neighbouring <i>q</i> about a parabola through them.</p>
           <p><b>Rates.</b> At each <i>q</i>, a straight line through ln <i>f</i> against the delay, weighted by the noise of <i>f</i>, from the first delay down to <i>f</i> = 0.6 (at least three delays); its slope is &minus;&Gamma;. The same line through the reference movie gives &Gamma;<sub>ref</sub> = <i>D</i><sub>0</sub><i>q</i><sup>2</sup> plus what motion along the axis adds: particles leaving the layer in focus change the patterns too. Their ratio gives <i>D</i>(<i>q</i>). Uncertainties from a jackknife over ten parts of the movie. Without hydrodynamic interactions the hydrodynamic function <i>H</i>(<i>q</i>) is 1. For hard spheres, the Percus-Yevick structure factor (Wertheim 1963) is drawn for comparison.</p>
           <p><b>What the page does not fix.</b> Each pattern of the image collects particles over the depth in focus, so it mixes in wave vectors along the axis: at the widest patterns S(q) and D(q) take in some of their neighbours at larger q, and the peak looks a little lower and broader. The short-time rate needs delays before the cages are felt; the fit reaches a little beyond them.</p>
         </details>
@@ -1523,24 +1523,43 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     // in-place FFT of every row of an n x n array (no copies)
     rows: function (re, im, n, tb, sign, only) {
       const rev = tb.rev, C = tb.c, Sn = tb.s;
+      let bits = 0; while ((1 << bits) < n) bits++;
       for (let o = 0; o < n * n; o += n) {
         if (only && !only[o / n]) continue;
         for (let i = 0; i < n; i++) { const j = rev[i]; if (j > i) { const a = o + i, b = o + j; let t = re[a]; re[a] = re[b]; re[b] = t; t = im[a]; im[a] = im[b]; im[b] = t; } }
-        for (let size = 2; size <= n; size <<= 1) {
-          const half = size >> 1, step = n / size;
-          for (let k = 0; k < half; k++) {
-            const c = C[k * step], s = sign * Sn[k * step];
-            for (let st = o + k; st < o + n; st += size) {
-              const b = st + half, tr = re[b] * c - im[b] * s, ti = re[b] * s + im[b] * c;
-              re[b] = re[st] - tr; im[b] = im[st] - ti; re[st] += tr; im[st] += ti;
+        let m = 1;
+        if (bits & 1) {       // an odd number of stages: the first one alone (size 2, twiddle 1)
+          for (let st = o; st < o + n; st += 2) { const b = st + 1, tr = re[b] * C[0] - im[b] * (sign * Sn[0]), ti = re[b] * (sign * Sn[0]) + im[b] * C[0]; re[b] = re[st] - tr; im[b] = im[st] - ti; re[st] += tr; im[st] += ti; }
+          m = 2;
+        }
+        // two radix-2 stages per pass (sizes 2m and 4m): the same operations in the same order for each element, fewer
+        // loads and stores
+        for (; m < n; m *= 4) {
+          const s2 = n / (2 * m), s4 = n / (4 * m), m2 = 2 * m, m3 = 3 * m, m4 = 4 * m;
+          for (let k = 0; k < m; k++) {
+            const c1 = C[k * s2], z1 = sign * Sn[k * s2], c2 = C[k * s4], z2 = sign * Sn[k * s4], c3 = C[(k + m) * s4], z3 = sign * Sn[(k + m) * s4];
+            for (let a = o + k; a < o + n; a += m4) {
+              const b = a + m, c = a + m2, d = a + m3;
+              let tr = re[b] * c1 - im[b] * z1, ti = re[b] * z1 + im[b] * c1;
+              const p1r = re[a] - tr, p1i = im[a] - ti, p0r = re[a] + tr, p0i = im[a] + ti;
+              tr = re[d] * c1 - im[d] * z1; ti = re[d] * z1 + im[d] * c1;
+              const q1r = re[c] - tr, q1i = im[c] - ti, q0r = re[c] + tr, q0i = im[c] + ti;
+              tr = q0r * c2 - q0i * z2; ti = q0r * z2 + q0i * c2;
+              re[c] = p0r - tr; im[c] = p0i - ti; re[a] = p0r + tr; im[a] = p0i + ti;
+              tr = q1r * c3 - q1i * z3; ti = q1r * z3 + q1i * c3;
+              re[d] = p1r - tr; im[d] = p1i - ti; re[b] = p1r + tr; im[b] = p1i + ti;
             }
           }
         }
       }
     },
+    // in blocks of 16 x 16 (the plain double loop jumps a whole row in memory at every step)
     transpose: function (re, im, n) {
-      for (let y = 0; y < n; y++) for (let x = y + 1; x < n; x++) {
-        const a = y * n + x, b = x * n + y; let t = re[a]; re[a] = re[b]; re[b] = t; t = im[a]; im[a] = im[b]; im[b] = t;
+      const B = n < 16 ? n : 16;
+      for (let by = 0; by < n; by += B) for (let bx = by; bx < n; bx += B) {
+        for (let y = by; y < by + B; y++) for (let x = (bx === by ? y + 1 : bx); x < bx + B; x++) {
+          const a = y * n + x, b = x * n + y; let t = re[a]; re[a] = re[b]; re[b] = t; t = im[a]; im[a] = im[b]; im[b] = t;
+        }
       }
     },
     // 2D FFT, result in transposed layout [kx][ky] (one transpose saved)
@@ -2029,7 +2048,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     }
     // particles that push each other: Brownian dynamics of the whole box (see the header)
     let INT = null;
-    if (INTC) INT = setupInteract();
+    if (INTC) { yield { stage: "Placing the particles", frac: 0.14 }; INT = setupInteract(); }
     function setupInteract() {
       const sg = classes[0].d, D0 = classes[0].hyd.D_t, tauB = sg * sg / D0, kind = INTC.kind;
       const U0 = kind === "yukawa" ? num(INTC, "U0", 0, 1000) : 0, ks = kind === "yukawa" ? num(INTC, "kappa_sigma", 0.5, 100) : 1, kap = ks / sg;
@@ -2058,46 +2077,66 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
         }
       };
       const wrapAll = function (i) { X[i] -= L * Math.floor(X[i] / L); Y[i] -= L * Math.floor(Y[i] / L); H[i] -= Lz * Math.floor(H[i] / Lz); };
-      // visit every pair closer than rc once: fn(i, j, dx, dy, dz, r2) with (dx, dy, dz) from i to j, minimum image
-      const pairs = function (fn) {
+      // the 27 neighbours of each cell (itself included), in the order (dz, dy, dx) = (-1..1)^3, periodic
+      const nCell = nc[0] * nc[1] * nc[2], NB = new Int32Array(27 * nCell);
+      for (let cz = 0; cz < nc[2]; cz++) for (let cy = 0; cy < nc[1]; cy++) for (let cx = 0; cx < nc[0]; cx++) {
+        let o = 27 * ((cz * nc[1] + cy) * nc[0] + cx);
+        for (let dz = -1; dz <= 1; dz++) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++)
+          NB[o++] = ((((cz + dz) % nc[2] + nc[2]) % nc[2]) * nc[1] + (((cy + dy) % nc[1] + nc[1]) % nc[1])) * nc[0] + (((cx + dx) % nc[0] + nc[0]) % nc[0]);
+      }
+      const hL = L / 2, hLz = Lz / 2, rc2 = rc * rc, sg2 = sg * sg;
+      // pair loops written out (no function call per pair), same order as before: every pair closer than rc once,
+      // (ex, ey, ez) from i to j, minimum image
+      // overlaps pushed apart along the line of centres (each particle half the overlap); returns how many there were
+      // deeper than tol (a fraction of the diameter; 0: all)
+      const unlap = function (tol) {
         build();
-        for (let cz = 0; cz < nc[2]; cz++) for (let cy = 0; cy < nc[1]; cy++) for (let cx = 0; cx < nc[0]; cx++) {
-          const c0 = (cz * nc[1] + cy) * nc[0] + cx;
+        const lim = tol ? Math.pow(sg * (1 - tol), 2) : sg2;
+        let n = 0;
+        for (let c0 = 0; c0 < nCell; c0++) {
           for (let i = head[c0]; i >= 0; i = next[i]) {
-            for (let dz = -1; dz <= 1; dz++) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-              const c1 = ((((cz + dz) % nc[2] + nc[2]) % nc[2]) * nc[1] + (((cy + dy) % nc[1] + nc[1]) % nc[1])) * nc[0] + (((cx + dx) % nc[0] + nc[0]) % nc[0]);
-              for (let j = head[c1]; j >= 0; j = next[j]) {
-                if (j <= i) continue;
+            for (let q = 27 * c0 + 13, qe = 27 * c0 + 27; q < qe; q++) {
+              for (let j = q === 27 * c0 + 13 ? next[i] : head[NB[q]]; j >= 0; j = next[j]) {
                 let ex = X[j] - X[i], ey = Y[j] - Y[i], ez = H[j] - H[i];
-                ex -= L * Math.round(ex / L); ey -= L * Math.round(ey / L); ez -= Lz * Math.round(ez / Lz);
-                const r2 = ex * ex + ey * ey + ez * ez; if (r2 < rc * rc) fn(i, j, ex, ey, ez, r2);
+                if (ex > hL) ex -= L; else if (ex < -hL) ex += L;
+                if (ey > hL) ey -= L; else if (ey < -hL) ey += L;
+                if (ez > hLz) ez -= Lz; else if (ez < -hLz) ez += Lz;
+                const r2 = ex * ex + ey * ey + ez * ez; if (r2 >= sg2) continue;
+                const r = Math.sqrt(r2) || 1e-9, m = 0.5 * (sg - r) / r * 1.0001; if (r2 < lim) n++;
+                X[i] -= m * ex; Y[i] -= m * ey; H[i] -= m * ez; X[j] += m * ex; Y[j] += m * ey; H[j] += m * ez;
+                UXd[i] -= m * ex; UYd[i] -= m * ey; UXd[j] += m * ex; UYd[j] += m * ey;
               }
             }
           }
         }
-      };
-      // overlaps pushed apart along the line of centres (each particle half the overlap); returns how many there were
-      const unlap = function () {
-        let n = 0;
-        pairs(function (i, j, ex, ey, ez, r2) {
-          if (r2 >= sg * sg) return;
-          const r = Math.sqrt(r2) || 1e-9, m = 0.5 * (sg - r) / r * 1.0001; n++;
-          X[i] -= m * ex; Y[i] -= m * ey; H[i] -= m * ez; X[j] += m * ex; Y[j] += m * ey; H[j] += m * ez;
-          UXd[i] -= m * ex; UYd[i] -= m * ey; UXd[j] += m * ex; UYd[j] += m * ey;
-        });
         for (let i = 0; i < nTot; i++) wrapAll(i);
         return n;
+      };
+      const forces = function () {
+        build();
+        for (let c0 = 0; c0 < nCell; c0++) {
+          for (let i = head[c0]; i >= 0; i = next[i]) {
+            for (let q = 27 * c0 + 13, qe = 27 * c0 + 27; q < qe; q++) {
+              for (let j = q === 27 * c0 + 13 ? next[i] : head[NB[q]]; j >= 0; j = next[j]) {
+                let ex = X[j] - X[i], ey = Y[j] - Y[i], ez = H[j] - H[i];
+                if (ex > hL) ex -= L; else if (ex < -hL) ex += L;
+                if (ey > hL) ey -= L; else if (ey < -hL) ey += L;
+                if (ez > hLz) ez -= Lz; else if (ez < -hLz) ez += Lz;
+                const r2 = ex * ex + ey * ey + ez * ez; if (r2 >= rc2) continue;
+                const r = Math.sqrt(r2); if (r < sg * 0.999) continue;
+                const f = U0 * sg * Math.exp(-kap * (r - sg)) * (kap * r + 1) / (r2 * r);     // |F| / r, kT / um^2
+                FX[i] -= f * ex; FY[i] -= f * ey; FZ[i] -= f * ez; FX[j] += f * ex; FY[j] += f * ey; FZ[j] += f * ez;
+              }
+            }
+          }
+        }
       };
       const FX = new Float64Array(nTot), FY = new Float64Array(nTot), FZ = new Float64Array(nTot);
       const st = Math.sqrt(2 * D0 * h);
       const step = function () {
         if (U0 > 0) {
           FX.fill(0); FY.fill(0); FZ.fill(0);
-          pairs(function (i, j, ex, ey, ez, r2) {
-            const r = Math.sqrt(r2); if (r < sg * 0.999) return;
-            const f = U0 * sg * Math.exp(-kap * (r - sg)) * (kap * r + 1) / (r2 * r);     // |F| / r, kT / um^2
-            FX[i] -= f * ex; FY[i] -= f * ey; FZ[i] -= f * ez; FX[j] += f * ex; FY[j] += f * ey; FZ[j] += f * ez;
-          });
+          forces();
         }
         for (let i = 0; i < nTot; i++) {
           let px = D0 * FX[i] * h, py = D0 * FY[i] * h, pz = D0 * FZ[i] * h; const pm = Math.sqrt(px * px + py * py + pz * pz);
@@ -2109,7 +2148,9 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
       };
       // start: random places (H uniform in the box), overlaps removed, then one Brownian time
       for (let i = 0; i < nTot; i++) H[i] = rng.u() * Lz;
-      for (let it = 0; it < 2000 && unlap() > 0; it++) { /* push apart */ }
+      // (until no overlap is deeper than 0.1 % of a diameter: in a crowd the pushes keep making new overlaps of about 1e-5
+      // diameters, so asking for none at all always ran the full 2000 passes)
+      for (let it = 0; it < 2000 && unlap(1e-3) > 0; it++) { /* push apart */ }
       // settle long enough for the widest density waves of the box to relax from the random start: they relax at the
       // collective rate D0 k^2 / S(k), with S(0) of hard spheres (Percus-Yevick) as a guide; twice that time, at
       // least one Brownian time (INTC.settle_tauB overrides)
@@ -2267,8 +2308,8 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
       foldIdx[j] = (k1 % N) * N + (k2 % N);
     }
     const tbG = O.FFT.tables(G), tbN = O.FFT.tables(N), wN = O.FFT.work(N);
-    const grid = new Float64Array(G * G * M);           // interleaved: grid[p * M + m]
-    const zr = new Float64Array(G * G), zi = new Float64Array(G * G);
+    const GG = G * G, grid = new Float64Array(GG * (M + (M & 1)));   // one plane per basis function: grid[m * G * G + p] (an even number of planes)
+    const planes = []; for (let m = 0; m < M + (M & 1); m++) planes.push(grid.subarray(m * GG, (m + 1) * GG));
     const S_r = new Float64Array(G * G), S_i = new Float64Array(G * G);
     const Fr = new Float64Array(N * N), Fi = new Float64Array(N * N);
     const re = new Float64Array(N * N), im = new Float64Array(N * N);
@@ -2443,18 +2484,18 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
       for (let m = 0; m < M; m++) wm[m] += wgt * (Vm[m][col] + f * (Vm[m][col + 1] - Vm[m][col]));
     };
     // (column offsets computed once per point; the rank-M weights added in one pass per grid cell)
-    const colOff = new Int32Array(tabN), rowM = G * M;
+    const colOff = new Int32Array(tabN);
     const splat = function (xp, yp) {
       const px = xp / h, py = yp / h, cx = Math.round(px), cy = Math.round(py);
       for (let j = -R; j <= R; j++) { const dx = cx + j - px, dy = cy + j - py; gx[j + R] = Math.exp(-dx * dx * inv2s2); gy[j + R] = Math.exp(-dy * dy * inv2s2); }
-      for (let jx = 0; jx < tabN; jx++) { let c = (cx - R + jx) % G; if (c < 0) c += G; colOff[jx] = c * M; }
+      for (let jx = 0; jx < tabN; jx++) { let c = (cx - R + jx) % G; if (c < 0) c += G; colOff[jx] = c; }
       const g = grid, w0 = wm;
       for (let jy = 0; jy < tabN; jy++) {
         let row = (cy - R + jy) % G; if (row < 0) row += G;
-        const rb = row * rowM, wy = gy[jy];
+        const rb = row * G, wy = gy[jy];
         for (let jx = 0; jx < tabN; jx++) {
           const w = wy * gx[jx], base = rb + colOff[jx];
-          for (let m = 0; m < M; m++) g[base + m] += w * w0[m];
+          for (let m = 0, o = base; m < M; m++, o += GG) g[o] += w * w0[m];
         }
       }
     };
@@ -2475,7 +2516,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     // particles that interact: equilibrate, then move the whole box to each frame time; snapshots for the true S(q)
     const snapAt = INT ? new Set(Array.from({ length: 8 }, function (_, k) { return Math.round(k * (T - 1) / 7); })) : null, snaps = [];
     let disp0 = null;
-    if (INT) for (let k = 0; k < INT.nEq; k++) { INT.step(); if (k % 2000 === 1999) yield { stage: "Letting the particles settle", frac: 0.2 * k / INT.nEq }; }
+    if (INT) for (let k = 0; k < INT.nEq; k++) { INT.step(); if (k % 200 === 199) yield { stage: "Letting the particles settle", frac: 0.14 + 0.16 * k / INT.nEq }; }
     for (let t = 0; t < T; t++) {
       grid.fill(0);
       const t0 = times ? times[t] : t * dtFrame;
@@ -2548,7 +2589,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
       S_r.fill(0); S_i.fill(0);
       for (let m = 0; m < M; m += 2) {
         const two = m + 1 < M;
-        for (let p = 0, o = m; p < G * G; p++, o += M) { zr[p] = grid[o]; zi[p] = two ? grid[o + 1] : 0; }
+        const zr = planes[m], zi = planes[m + 1];           // transformed in place (the grid is cleared for the next frame)
         O.FFT.fft2T(zr, zi, G, tbG, -1, needRow);
         const W1 = UW[m], W2 = two ? UW[m + 1] : null, X1 = UWI[m], X2 = two ? UWI[m + 1] : null;
         for (let j = 0; j < act.length; j++) {
@@ -2583,7 +2624,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
       O.FFT.fft2(re, im, N, tbN, wN, -1);
       const fo2 = 2 * fo;
       for (let p = 0; p < N * N; p++) { fft[fo2 + 2 * p] = re[p]; fft[fo2 + 2 * p + 1] = im[p]; }
-      if ((t & 3) === 3) yield { stage: "Recording the movie", frac: 0.15 + 0.85 * (t + 1) / T };
+      if ((t & 3) === 3) yield { stage: "Recording the movie", frac: INT ? 0.3 + 0.7 * (t + 1) / T : 0.15 + 0.85 * (t + 1) / T };
     }
 
     // values the analysis has to recover, kept apart from the movie
@@ -4006,6 +4047,15 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
   "use strict";
   const DDM = (typeof module !== "undefined" && module.exports) ? require("./ddm-engine.js") : root.DDM;
   const K = 10;
+  // the structure function of each movie, kept for the next analysis of the same movie (the published method, or another
+  // analysis setting): of the analysis settings only the windowing changes it
+  const sMemo = new WeakMap();
+  function* structureOf(movie, opts) {
+    let c = sMemo.get(movie); if (!c) { c = {}; sMemo.set(movie, c); }
+    const k = opts.windowing ? "w" : "p";
+    if (!c[k]) c[k] = yield* DDM.structure(opts.windowing ? demeaned(movie) : movie, Object.assign({}, opts, { blocks: K }));
+    return c[k];
+  }
   function need(c, m) { if (!c) throw new Error("Crowded particles: " + m); }
 
   /* Percus-Yevick structure factor of hard spheres (Wertheim, Thiele), x = q sigma, eta the volume fraction */
@@ -4099,7 +4149,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     const D0 = opts.D0_um2_s;
     checkSaturation(movie);
     need(!(opts.q_min_per_um > 0 && opts.q_max_per_um > 0 && opts.q_min_per_um >= opts.q_max_per_um), "the lowest q of the fit range is above the highest");
-    const S = yield* DDM.structure(opts.windowing ? demeaned(movie) : movie, Object.assign({}, opts, { blocks: K }));
+    const S = yield* structureOf(movie, opts);
     const nb = S.nb, L = S.L, taus = S.taus_s, qv = S.q_per_um;
     const jack = []; for (let j = 0; j < S.blocks; j++) jack.push(S.jackDq(j));
     const camB = pub || opts.noise === "fit" ? null : DDM.detectorNoiseB(movie, S.window);
@@ -4136,11 +4186,19 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
         D_um2_s: r && per ? r.rate * per : null, D_err_um2_s: r && rerr && per ? rerr * per : null };
     });
     // the uncertainty of S(q): the scatter of neighbouring q about a smooth curve is the honest one (each q holds few
-    // independent looks at the arrangement); here the local scatter over five neighbours
+    // independent looks at the arrangement); here the scatter of seven neighbours about a parabola through them, so that the
+    // curvature of a sharp peak does not count as noise
     rows.forEach(function (r, k) {
-      const nb5 = rows.slice(Math.max(0, k - 2), Math.min(rows.length, k + 3)).map(function (x) { return x.S; });
-      const m = nb5.reduce(function (a, x) { return a + x; }, 0) / nb5.length;
-      r.S_err = nb5.length > 2 ? Math.sqrt(nb5.reduce(function (a, x) { return a + (x - m) * (x - m); }, 0) / (nb5.length - 1)) : null;
+      const lo = Math.max(0, Math.min(rows.length - 7, k - 3)), pts = rows.slice(lo, Math.min(rows.length, lo + 7)), n = pts.length;
+      if (n < 5) { r.S_err = null; return; }
+      let S0 = 0, S1 = 0, S2 = 0, S3 = 0, S4 = 0, Y0 = 0, Y1 = 0, Y2 = 0;
+      pts.forEach(function (x, i) { const t = i - (n - 1) / 2, y = x.S; S0++; S1 += t; S2 += t * t; S3 += t * t * t; S4 += t * t * t * t; Y0 += y; Y1 += t * y; Y2 += t * t * y; });
+      const det = S0 * (S2 * S4 - S3 * S3) - S1 * (S1 * S4 - S3 * S2) + S2 * (S1 * S3 - S2 * S2);
+      const c0 = (Y0 * (S2 * S4 - S3 * S3) - S1 * (Y1 * S4 - S3 * Y2) + S2 * (Y1 * S3 - S2 * Y2)) / det;
+      const c1 = (S0 * (Y1 * S4 - S3 * Y2) - Y0 * (S1 * S4 - S3 * S2) + S2 * (S1 * Y2 - Y1 * S2)) / det;
+      const c2 = (S0 * (S2 * Y2 - Y1 * S3) - S1 * (S1 * Y2 - Y1 * S2) + Y0 * (S1 * S3 - S2 * S2)) / det;
+      let rss = 0; pts.forEach(function (x, i) { const t = i - (n - 1) / 2, d = x.S - (c0 + c1 * t + c2 * t * t); rss += d * d; });
+      r.S_err = Math.sqrt(rss / (n - 3));
     });
     // the peak of S(q) (largest S among the q used, refined by a parabola through it and its neighbours)
     let kp = -1;
@@ -4195,7 +4253,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
    (CROWD), keep both for re-analysis. */
 (function () {
   "use strict";
-  let movie = null, refMovie = null, refAmp = {};
+  let movie = null, refMovie = null, refAmp = {}, refKey = null;
   function drive(gen, token, a, b, pre) {
     let r, last = -1;
     while (!(r = gen.next()).done) {
@@ -4209,9 +4267,11 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     try {
       let out = null;
       if (m.type === "simulate" || !movie) {
+        movie = null;     // the worker now lives on between runs: let the old movie go before the new one is made
         movie = drive(MOVIE.simulate(m.cfg), m.token, 0, 0.75);
-        refMovie = drive(MOVIE.simulate(CROWD.referenceConfig(m.cfg, movie.truth.interact.tau_B_s)), m.token, 0.75, 0.82, "Dilute reference movie: ");
-        refAmp = {};
+        // the reference does not depend on how crowded the sample is or how the particles push: kept while its own settings stay
+        const rc = CROWD.referenceConfig(m.cfg, movie.truth.interact.tau_B_s), rk = JSON.stringify(rc);
+        if (rk !== refKey) { refKey = null; refMovie = drive(MOVIE.simulate(rc), m.token, 0.75, 0.82, "Dilute reference movie: "); refAmp = {}; refKey = rk; }
         out = { n: movie.n, T: movie.T, frames: movie.frames.slice(0), pixel_um: movie.pixel_um, L_um: movie.L_um, frame_rate_hz: movie.frame_rate_hz,
           T_C: movie.T_C, viscosity_Pa_s: movie.viscosity_Pa_s, q_opt_per_um: movie.q_opt_per_um, q_signal_max_per_um: movie.q_signal_max_per_um, times_s: movie.times_s, info: movie.info, truth: movie.truth };
       }
@@ -4223,6 +4283,8 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
       const res = drive(CROWD.analyse(movie, o2), m.token, 0.85, m.opts.compare_published ? 0.93 : 1);
       // the published method on the same movie ("Addict" level); it may find too little to work with
       if (m.opts.compare_published) { try { res.published = CROWD.publishedSummary(drive(CROWD.analyse(movie, Object.assign({}, o2, { published_only: true })), m.token, 0.93, 1)); } catch (e) { res.published = { failed: e.message }; } }
+      // copies: the engine keeps the structure function of this movie for the next analysis
+      res.d2d = res.d2d.map(function (a) { return a.slice(); });
       const transfer = res.d2d.map(function (a) { return a.buffer; });
       if (out) transfer.push(out.frames.buffer);
       self.postMessage({ type: "done", token: m.token, movie: out, res: res }, transfer);
@@ -4959,11 +5021,12 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     // a setup that would keep the browser busy for minutes is not started
     if (kind === "simulate" && simSeconds() > MAX_SECONDS) { ++runToken; inflight = null; showError("this setup would take about " + Math.round(simSeconds() / 60) + " minutes to simulate in the browser: shorten the movie (frame rate, number of frames, log-spaced stretch), use smaller particles or a lower viscosity, or a lower volume fraction."); return; }
     if (kind === "analyse" && inflight === "simulate") kind = "simulate";   // the worker's movie would not match the page's
-    const token = ++runToken;
+    const token = ++runToken, busy = inflight !== null;
     inflight = kind;
     $("error").hidden = true;
     const cfg = simConfig(), opts = analysisOptions();
-    if (kind === "simulate" && worker) { worker.terminate(); worker = null; }
+    // a busy worker is stopped; an idle one is kept, with the optical kernels it has already computed (movie.js memo)
+    if (kind === "simulate" && worker && busy) { worker.terminate(); worker = null; }
     if (workerOK && !worker) worker = makeWorker();
     if (worker) {
       worker.onmessage = function (ev) {
@@ -4990,13 +5053,16 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     });
   }
   // the reference: a dilute sample of the same particles, filmed the same way, for the amplitude of one particle alone
-  let refMovieHere = null, refHere = {};
+  let refMovieHere = null, refHere = {}, refKeyHere = null;
   async function runHere(kind, token, cfg, opts) {
     let movie = cache.movie;
     if (kind === "simulate" || !movie) {
       movie = await drive(MOVIE.simulate(cfg), token, 0, 0.75); if (!movie) return;
-      refMovieHere = await drive(MOVIE.simulate(CROWD.referenceConfig(cfg, movie.truth.interact.tau_B_s)), token, 0.75, 0.82, "Dilute reference movie: "); if (!refMovieHere) return;
-      refHere = {};
+      const rc = CROWD.referenceConfig(cfg, movie.truth.interact.tau_B_s), rk = JSON.stringify(rc);
+      if (rk !== refKeyHere) {
+        refKeyHere = null; refMovieHere = await drive(MOVIE.simulate(rc), token, 0.75, 0.82, "Dilute reference movie: "); if (!refMovieHere) return;
+        refHere = {}; refKeyHere = rk;
+      }
     }
     const wk = opts.windowing ? "w" : "n";
     if (!refHere[wk]) { refHere[wk] = await drive(CROWD.referenceAmplitude(refMovieHere, { windowing: !!opts.windowing }), token, 0.82, 0.85, "Dilute reference movie: "); if (!refHere[wk]) return; }
@@ -5483,7 +5549,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     a.done();
     const ul = $("sq-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
-    add(level === "curious" ? "Dots: how strong each pattern is in this movie, against the same particles far apart (a second, dilute movie), in the colours of step 5. Red line: how the simulated particles are really arranged. Above 1, patterns at the spacing of neighbours; below 1 at the wide patterns, which the crowd smooths out." : "Dots: S(q) = (A / N) / (A_ref / N_ref), the amplitude per dyed particle against a dilute movie of the same particles, filmed the same way (bars: scatter over five neighbouring q). Red line: the S(q) of the simulated particles" + (tr.label_fraction < 1 ? ", as the dyed ones show it, 1 + x (S - 1) with x = " + tr.label_fraction : "") + ".");
+    add(level === "curious" ? "Dots: how strong each pattern is in this movie, against the same particles far apart (a second, dilute movie), in the colours of step 5. Red line: how the simulated particles are really arranged. Above 1, patterns at the spacing of neighbours; below 1 at the wide patterns, which the crowd smooths out." : "Dots: S(q) = (A / N) / (A_ref / N_ref), the amplitude per dyed particle against a dilute movie of the same particles, filmed the same way (bars: scatter of neighbouring q about a smooth curve). Red line: the S(q) of the simulated particles" + (tr.label_fraction < 1 ? ", as the dyed ones show it, 1 + x (S - 1) with x = " + tr.label_fraction : "") + ".");
     if (tr.kind === "hard" && level !== "curious") add("Dashed: Percus-Yevick theory for hard spheres at volume fraction " + fmtSig(tr.phi, 2) + ".");
     if (TRANS() && level !== "curious") add("In transmitted light the finest patterns read S(q) too high in this simulation; in fluorescence and confocal, where each particle shines on its own, S(q) comes out cleanly.");
     if (level !== "curious") add("At the widest patterns DDM reads S higher than the simulation: each pattern collects particles over the depth in focus, so it also takes in density waves tilted along the axis of the microscope, which have a shorter wavelength and a higher S.");

@@ -132,6 +132,7 @@
     return [al >= 1 ? 0 : g * Math.cos(Math.PI * al / 2), al <= 0 ? 0 : g * Math.sin(Math.PI * al / 2)];
   }
 
+  const sMemo = new WeakMap();      // structure functions by movie and windowing
   function* analyse(movie, opts) {
     opts = opts || {};
     const published = opts.published_only === true;
@@ -145,13 +146,20 @@
       need(n <= 0.01 * m, "the camera is saturated (" + Math.round(100 * n / m) + " % of the pixels at the full well): turn the lamp power down"); } }
     need(!(opts.q_min_per_um > 0 && opts.q_max_per_um > 0 && opts.q_min_per_um >= opts.q_max_per_um), "the lowest q of the fit range is above the highest");
     // windowing: each frame first loses its mean brightness, so that the uniform background does not leak into every q
-    let mvS = movie;
-    if (opts.windowing) {
-      const P0 = movie.n * movie.n, fr = new Float32Array(movie.frames.length);
-      for (let t = 0; t < movie.T; t++) { const o = t * P0; let m = 0; for (let p = 0; p < P0; p++) m += movie.frames[o + p]; m /= P0; for (let p = 0; p < P0; p++) fr[o + p] = movie.frames[o + p] - m; }
-      mvS = Object.assign({}, movie, { frames: fr, fft: null });
+    // kept for the next analysis of the same movie (the plain method, or another analysis setting; of these only the windowing
+    // changes the structure function)
+    let memo = sMemo.get(movie); if (!memo) { memo = {}; sMemo.set(movie, memo); }
+    const mk = opts.windowing ? "w" : "p";
+    if (!memo[mk]) {
+      let mvS = movie;
+      if (opts.windowing) {
+        const P0 = movie.n * movie.n, fr = new Float32Array(movie.frames.length);
+        for (let t = 0; t < movie.T; t++) { const o = t * P0; let m = 0; for (let p = 0; p < P0; p++) m += movie.frames[o + p]; m /= P0; for (let p = 0; p < P0; p++) fr[o + p] = movie.frames[o + p] - m; }
+        mvS = Object.assign({}, movie, { frames: fr, fft: null });
+      }
+      memo[mk] = yield* DDM.structure(mvS, Object.assign({}, opts, { blocks: K }));
     }
-    const S = yield* DDM.structure(mvS, Object.assign({}, opts, { blocks: K }));
+    const S = memo[mk];
     const nb = S.nb, L = S.L, taus = S.taus_s, qv = S.q_per_um, dkq = 2 * Math.PI / movie.L_um;
     const winDq2 = S.window ? 2 * 0.603 * dkq * dkq : 0;
     const jack = []; for (let j = 0; j < S.blocks; j++) jack.push(S.jackDq(j));

@@ -19,6 +19,15 @@
   "use strict";
   const DDM = (typeof module !== "undefined" && module.exports) ? require("./ddm-engine.js") : root.DDM;
   const K = 10;
+  // the structure function of each movie, kept for the next analysis of the same movie (the published method, or another
+  // analysis setting): of the analysis settings only the windowing changes it
+  const sMemo = new WeakMap();
+  function* structureOf(movie, opts) {
+    let c = sMemo.get(movie); if (!c) { c = {}; sMemo.set(movie, c); }
+    const k = opts.windowing ? "w" : "p";
+    if (!c[k]) c[k] = yield* DDM.structure(opts.windowing ? demeaned(movie) : movie, Object.assign({}, opts, { blocks: K }));
+    return c[k];
+  }
   function need(c, m) { if (!c) throw new Error("Crowded particles: " + m); }
 
   /* Percus-Yevick structure factor of hard spheres (Wertheim, Thiele), x = q sigma, eta the volume fraction */
@@ -112,7 +121,7 @@
     const D0 = opts.D0_um2_s;
     checkSaturation(movie);
     need(!(opts.q_min_per_um > 0 && opts.q_max_per_um > 0 && opts.q_min_per_um >= opts.q_max_per_um), "the lowest q of the fit range is above the highest");
-    const S = yield* DDM.structure(opts.windowing ? demeaned(movie) : movie, Object.assign({}, opts, { blocks: K }));
+    const S = yield* structureOf(movie, opts);
     const nb = S.nb, L = S.L, taus = S.taus_s, qv = S.q_per_um;
     const jack = []; for (let j = 0; j < S.blocks; j++) jack.push(S.jackDq(j));
     const camB = pub || opts.noise === "fit" ? null : DDM.detectorNoiseB(movie, S.window);
@@ -149,11 +158,19 @@
         D_um2_s: r && per ? r.rate * per : null, D_err_um2_s: r && rerr && per ? rerr * per : null };
     });
     // the uncertainty of S(q): the scatter of neighbouring q about a smooth curve is the honest one (each q holds few
-    // independent looks at the arrangement); here the local scatter over five neighbours
+    // independent looks at the arrangement); here the scatter of seven neighbours about a parabola through them, so that the
+    // curvature of a sharp peak does not count as noise
     rows.forEach(function (r, k) {
-      const nb5 = rows.slice(Math.max(0, k - 2), Math.min(rows.length, k + 3)).map(function (x) { return x.S; });
-      const m = nb5.reduce(function (a, x) { return a + x; }, 0) / nb5.length;
-      r.S_err = nb5.length > 2 ? Math.sqrt(nb5.reduce(function (a, x) { return a + (x - m) * (x - m); }, 0) / (nb5.length - 1)) : null;
+      const lo = Math.max(0, Math.min(rows.length - 7, k - 3)), pts = rows.slice(lo, Math.min(rows.length, lo + 7)), n = pts.length;
+      if (n < 5) { r.S_err = null; return; }
+      let S0 = 0, S1 = 0, S2 = 0, S3 = 0, S4 = 0, Y0 = 0, Y1 = 0, Y2 = 0;
+      pts.forEach(function (x, i) { const t = i - (n - 1) / 2, y = x.S; S0++; S1 += t; S2 += t * t; S3 += t * t * t; S4 += t * t * t * t; Y0 += y; Y1 += t * y; Y2 += t * t * y; });
+      const det = S0 * (S2 * S4 - S3 * S3) - S1 * (S1 * S4 - S3 * S2) + S2 * (S1 * S3 - S2 * S2);
+      const c0 = (Y0 * (S2 * S4 - S3 * S3) - S1 * (Y1 * S4 - S3 * Y2) + S2 * (Y1 * S3 - S2 * Y2)) / det;
+      const c1 = (S0 * (Y1 * S4 - S3 * Y2) - Y0 * (S1 * S4 - S3 * S2) + S2 * (S1 * Y2 - Y1 * S2)) / det;
+      const c2 = (S0 * (S2 * Y2 - Y1 * S3) - S1 * (S1 * Y2 - Y1 * S2) + Y0 * (S1 * S3 - S2 * S2)) / det;
+      let rss = 0; pts.forEach(function (x, i) { const t = i - (n - 1) / 2, d = x.S - (c0 + c1 * t + c2 * t * t); rss += d * d; });
+      r.S_err = Math.sqrt(rss / (n - 3));
     });
     // the peak of S(q) (largest S among the q used, refined by a parabola through it and its neighbours)
     let kp = -1;

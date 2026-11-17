@@ -464,7 +464,7 @@
     }
     // particles that push each other: Brownian dynamics of the whole box (see the header)
     let INT = null;
-    if (INTC) INT = setupInteract();
+    if (INTC) { yield { stage: "Placing the particles", frac: 0.14 }; INT = setupInteract(); }
     function setupInteract() {
       const sg = classes[0].d, D0 = classes[0].hyd.D_t, tauB = sg * sg / D0, kind = INTC.kind;
       const U0 = kind === "yukawa" ? num(INTC, "U0", 0, 1000) : 0, ks = kind === "yukawa" ? num(INTC, "kappa_sigma", 0.5, 100) : 1, kap = ks / sg;
@@ -493,46 +493,66 @@
         }
       };
       const wrapAll = function (i) { X[i] -= L * Math.floor(X[i] / L); Y[i] -= L * Math.floor(Y[i] / L); H[i] -= Lz * Math.floor(H[i] / Lz); };
-      // visit every pair closer than rc once: fn(i, j, dx, dy, dz, r2) with (dx, dy, dz) from i to j, minimum image
-      const pairs = function (fn) {
+      // the 27 neighbours of each cell (itself included), in the order (dz, dy, dx) = (-1..1)^3, periodic
+      const nCell = nc[0] * nc[1] * nc[2], NB = new Int32Array(27 * nCell);
+      for (let cz = 0; cz < nc[2]; cz++) for (let cy = 0; cy < nc[1]; cy++) for (let cx = 0; cx < nc[0]; cx++) {
+        let o = 27 * ((cz * nc[1] + cy) * nc[0] + cx);
+        for (let dz = -1; dz <= 1; dz++) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++)
+          NB[o++] = ((((cz + dz) % nc[2] + nc[2]) % nc[2]) * nc[1] + (((cy + dy) % nc[1] + nc[1]) % nc[1])) * nc[0] + (((cx + dx) % nc[0] + nc[0]) % nc[0]);
+      }
+      const hL = L / 2, hLz = Lz / 2, rc2 = rc * rc, sg2 = sg * sg;
+      // pair loops written out (no function call per pair), same order as before: every pair closer than rc once,
+      // (ex, ey, ez) from i to j, minimum image
+      // overlaps pushed apart along the line of centres (each particle half the overlap); returns how many there were
+      // deeper than tol (a fraction of the diameter; 0: all)
+      const unlap = function (tol) {
         build();
-        for (let cz = 0; cz < nc[2]; cz++) for (let cy = 0; cy < nc[1]; cy++) for (let cx = 0; cx < nc[0]; cx++) {
-          const c0 = (cz * nc[1] + cy) * nc[0] + cx;
+        const lim = tol ? Math.pow(sg * (1 - tol), 2) : sg2;
+        let n = 0;
+        for (let c0 = 0; c0 < nCell; c0++) {
           for (let i = head[c0]; i >= 0; i = next[i]) {
-            for (let dz = -1; dz <= 1; dz++) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-              const c1 = ((((cz + dz) % nc[2] + nc[2]) % nc[2]) * nc[1] + (((cy + dy) % nc[1] + nc[1]) % nc[1])) * nc[0] + (((cx + dx) % nc[0] + nc[0]) % nc[0]);
-              for (let j = head[c1]; j >= 0; j = next[j]) {
-                if (j <= i) continue;
+            for (let q = 27 * c0 + 13, qe = 27 * c0 + 27; q < qe; q++) {
+              for (let j = q === 27 * c0 + 13 ? next[i] : head[NB[q]]; j >= 0; j = next[j]) {
                 let ex = X[j] - X[i], ey = Y[j] - Y[i], ez = H[j] - H[i];
-                ex -= L * Math.round(ex / L); ey -= L * Math.round(ey / L); ez -= Lz * Math.round(ez / Lz);
-                const r2 = ex * ex + ey * ey + ez * ez; if (r2 < rc * rc) fn(i, j, ex, ey, ez, r2);
+                if (ex > hL) ex -= L; else if (ex < -hL) ex += L;
+                if (ey > hL) ey -= L; else if (ey < -hL) ey += L;
+                if (ez > hLz) ez -= Lz; else if (ez < -hLz) ez += Lz;
+                const r2 = ex * ex + ey * ey + ez * ez; if (r2 >= sg2) continue;
+                const r = Math.sqrt(r2) || 1e-9, m = 0.5 * (sg - r) / r * 1.0001; if (r2 < lim) n++;
+                X[i] -= m * ex; Y[i] -= m * ey; H[i] -= m * ez; X[j] += m * ex; Y[j] += m * ey; H[j] += m * ez;
+                UXd[i] -= m * ex; UYd[i] -= m * ey; UXd[j] += m * ex; UYd[j] += m * ey;
               }
             }
           }
         }
-      };
-      // overlaps pushed apart along the line of centres (each particle half the overlap); returns how many there were
-      const unlap = function () {
-        let n = 0;
-        pairs(function (i, j, ex, ey, ez, r2) {
-          if (r2 >= sg * sg) return;
-          const r = Math.sqrt(r2) || 1e-9, m = 0.5 * (sg - r) / r * 1.0001; n++;
-          X[i] -= m * ex; Y[i] -= m * ey; H[i] -= m * ez; X[j] += m * ex; Y[j] += m * ey; H[j] += m * ez;
-          UXd[i] -= m * ex; UYd[i] -= m * ey; UXd[j] += m * ex; UYd[j] += m * ey;
-        });
         for (let i = 0; i < nTot; i++) wrapAll(i);
         return n;
+      };
+      const forces = function () {
+        build();
+        for (let c0 = 0; c0 < nCell; c0++) {
+          for (let i = head[c0]; i >= 0; i = next[i]) {
+            for (let q = 27 * c0 + 13, qe = 27 * c0 + 27; q < qe; q++) {
+              for (let j = q === 27 * c0 + 13 ? next[i] : head[NB[q]]; j >= 0; j = next[j]) {
+                let ex = X[j] - X[i], ey = Y[j] - Y[i], ez = H[j] - H[i];
+                if (ex > hL) ex -= L; else if (ex < -hL) ex += L;
+                if (ey > hL) ey -= L; else if (ey < -hL) ey += L;
+                if (ez > hLz) ez -= Lz; else if (ez < -hLz) ez += Lz;
+                const r2 = ex * ex + ey * ey + ez * ez; if (r2 >= rc2) continue;
+                const r = Math.sqrt(r2); if (r < sg * 0.999) continue;
+                const f = U0 * sg * Math.exp(-kap * (r - sg)) * (kap * r + 1) / (r2 * r);     // |F| / r, kT / um^2
+                FX[i] -= f * ex; FY[i] -= f * ey; FZ[i] -= f * ez; FX[j] += f * ex; FY[j] += f * ey; FZ[j] += f * ez;
+              }
+            }
+          }
+        }
       };
       const FX = new Float64Array(nTot), FY = new Float64Array(nTot), FZ = new Float64Array(nTot);
       const st = Math.sqrt(2 * D0 * h);
       const step = function () {
         if (U0 > 0) {
           FX.fill(0); FY.fill(0); FZ.fill(0);
-          pairs(function (i, j, ex, ey, ez, r2) {
-            const r = Math.sqrt(r2); if (r < sg * 0.999) return;
-            const f = U0 * sg * Math.exp(-kap * (r - sg)) * (kap * r + 1) / (r2 * r);     // |F| / r, kT / um^2
-            FX[i] -= f * ex; FY[i] -= f * ey; FZ[i] -= f * ez; FX[j] += f * ex; FY[j] += f * ey; FZ[j] += f * ez;
-          });
+          forces();
         }
         for (let i = 0; i < nTot; i++) {
           let px = D0 * FX[i] * h, py = D0 * FY[i] * h, pz = D0 * FZ[i] * h; const pm = Math.sqrt(px * px + py * py + pz * pz);
@@ -544,7 +564,9 @@
       };
       // start: random places (H uniform in the box), overlaps removed, then one Brownian time
       for (let i = 0; i < nTot; i++) H[i] = rng.u() * Lz;
-      for (let it = 0; it < 2000 && unlap() > 0; it++) { /* push apart */ }
+      // (until no overlap is deeper than 0.1 % of a diameter: in a crowd the pushes keep making new overlaps of about 1e-5
+      // diameters, so asking for none at all always ran the full 2000 passes)
+      for (let it = 0; it < 2000 && unlap(1e-3) > 0; it++) { /* push apart */ }
       // settle long enough for the widest density waves of the box to relax from the random start: they relax at the
       // collective rate D0 k^2 / S(k), with S(0) of hard spheres (Percus-Yevick) as a guide; twice that time, at
       // least one Brownian time (INTC.settle_tauB overrides)
@@ -702,8 +724,8 @@
       foldIdx[j] = (k1 % N) * N + (k2 % N);
     }
     const tbG = O.FFT.tables(G), tbN = O.FFT.tables(N), wN = O.FFT.work(N);
-    const grid = new Float64Array(G * G * M);           // interleaved: grid[p * M + m]
-    const zr = new Float64Array(G * G), zi = new Float64Array(G * G);
+    const GG = G * G, grid = new Float64Array(GG * (M + (M & 1)));   // one plane per basis function: grid[m * G * G + p] (an even number of planes)
+    const planes = []; for (let m = 0; m < M + (M & 1); m++) planes.push(grid.subarray(m * GG, (m + 1) * GG));
     const S_r = new Float64Array(G * G), S_i = new Float64Array(G * G);
     const Fr = new Float64Array(N * N), Fi = new Float64Array(N * N);
     const re = new Float64Array(N * N), im = new Float64Array(N * N);
@@ -878,18 +900,18 @@
       for (let m = 0; m < M; m++) wm[m] += wgt * (Vm[m][col] + f * (Vm[m][col + 1] - Vm[m][col]));
     };
     // (column offsets computed once per point; the rank-M weights added in one pass per grid cell)
-    const colOff = new Int32Array(tabN), rowM = G * M;
+    const colOff = new Int32Array(tabN);
     const splat = function (xp, yp) {
       const px = xp / h, py = yp / h, cx = Math.round(px), cy = Math.round(py);
       for (let j = -R; j <= R; j++) { const dx = cx + j - px, dy = cy + j - py; gx[j + R] = Math.exp(-dx * dx * inv2s2); gy[j + R] = Math.exp(-dy * dy * inv2s2); }
-      for (let jx = 0; jx < tabN; jx++) { let c = (cx - R + jx) % G; if (c < 0) c += G; colOff[jx] = c * M; }
+      for (let jx = 0; jx < tabN; jx++) { let c = (cx - R + jx) % G; if (c < 0) c += G; colOff[jx] = c; }
       const g = grid, w0 = wm;
       for (let jy = 0; jy < tabN; jy++) {
         let row = (cy - R + jy) % G; if (row < 0) row += G;
-        const rb = row * rowM, wy = gy[jy];
+        const rb = row * G, wy = gy[jy];
         for (let jx = 0; jx < tabN; jx++) {
           const w = wy * gx[jx], base = rb + colOff[jx];
-          for (let m = 0; m < M; m++) g[base + m] += w * w0[m];
+          for (let m = 0, o = base; m < M; m++, o += GG) g[o] += w * w0[m];
         }
       }
     };
@@ -910,7 +932,7 @@
     // particles that interact: equilibrate, then move the whole box to each frame time; snapshots for the true S(q)
     const snapAt = INT ? new Set(Array.from({ length: 8 }, function (_, k) { return Math.round(k * (T - 1) / 7); })) : null, snaps = [];
     let disp0 = null;
-    if (INT) for (let k = 0; k < INT.nEq; k++) { INT.step(); if (k % 2000 === 1999) yield { stage: "Letting the particles settle", frac: 0.2 * k / INT.nEq }; }
+    if (INT) for (let k = 0; k < INT.nEq; k++) { INT.step(); if (k % 200 === 199) yield { stage: "Letting the particles settle", frac: 0.14 + 0.16 * k / INT.nEq }; }
     for (let t = 0; t < T; t++) {
       grid.fill(0);
       const t0 = times ? times[t] : t * dtFrame;
@@ -983,7 +1005,7 @@
       S_r.fill(0); S_i.fill(0);
       for (let m = 0; m < M; m += 2) {
         const two = m + 1 < M;
-        for (let p = 0, o = m; p < G * G; p++, o += M) { zr[p] = grid[o]; zi[p] = two ? grid[o + 1] : 0; }
+        const zr = planes[m], zi = planes[m + 1];           // transformed in place (the grid is cleared for the next frame)
         O.FFT.fft2T(zr, zi, G, tbG, -1, needRow);
         const W1 = UW[m], W2 = two ? UW[m + 1] : null, X1 = UWI[m], X2 = two ? UWI[m + 1] : null;
         for (let j = 0; j < act.length; j++) {
@@ -1018,7 +1040,7 @@
       O.FFT.fft2(re, im, N, tbN, wN, -1);
       const fo2 = 2 * fo;
       for (let p = 0; p < N * N; p++) { fft[fo2 + 2 * p] = re[p]; fft[fo2 + 2 * p + 1] = im[p]; }
-      if ((t & 3) === 3) yield { stage: "Recording the movie", frac: 0.15 + 0.85 * (t + 1) / T };
+      if ((t & 3) === 3) yield { stage: "Recording the movie", frac: INT ? 0.3 + 0.7 * (t + 1) / T : 0.15 + 0.85 * (t + 1) / T };
     }
 
     // values the analysis has to recover, kept apart from the movie
