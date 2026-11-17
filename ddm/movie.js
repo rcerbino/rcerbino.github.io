@@ -18,6 +18,8 @@
 (function (root) {
   "use strict";
   const O = (typeof module !== "undefined" && module.exports) ? require("./optics.js") : root.OPTICS;
+  // tracer beads in a viscoelastic material (visco.js; loaded only by the page that uses it)
+  const VIS = (typeof module !== "undefined" && module.exports) ? require("./visco.js") : root.VISCO;
   const TWO_PI = 2 * Math.PI;
   const KB = 1.380649e-23;
   function fail(msg) { throw new Error("Movie: " + msg); }
@@ -138,6 +140,9 @@
    *    Swimmers move along their axis (spheres carry a direction that does not change their image), keep their
    *    Brownian motion, are not slowed near the walls and bounce off them by mirroring the vertical part of their
    *    direction. Plane swimmers keep their height and turn only within the plane.
+   *  visco (optional): the particles are tracer spheres in a linear viscoelastic material { modes: [[G_Pa, tau_s], ...],
+   *    G_inf_Pa (optional) }, the liquid being its solvent (see visco.js): each bead moves as an exact Ornstein-Uhlenbeck
+   *    process about its resting place, in x, y and z alike. Not with swimmers, gravity, walls, drift or non-spheres.
    */
   const SHAPES = ["sphere", "bisphere", "prolate", "oblate", "rod"];
   const TINY_UM = 0.03, TINY_M = 1.1;          // reference dipole for non-spherical bodies
@@ -207,6 +212,11 @@
     const body = shape === "prolate" || shape === "oblate" || shape === "rod";   // filled with dipoles
     const oriented = shape !== "sphere";                                          // carries an axis that rotates
     const pAsp = body ? num(cfg, "aspect", 1, 30) : 1;
+    const visco = cfg.visco || null;
+    if (visco) {
+      need(VIS, "the viscoelastic model (visco.js) is not loaded");
+      need(shape === "sphere" && !cfg.swim && cfg.gravity !== true && cfg.walls !== true && !(cfg.drift_um_s > 0) && !cfg.drift_z_um_s, "tracers in a viscoelastic material: spheres only, without swimming, gravity, walls or drift");
+    }
     const dn = shape === "sphere" || cfg.birefringence === undefined ? 0 : num(cfg, "birefringence", -0.5, 0.5);
     const pol = cfg.polarization || null;
     const hasP = !!pol && pol.polarizer_deg !== null && pol.polarizer_deg !== undefined, hasA = !!pol && pol.analyzer_deg !== null && pol.analyzer_deg !== undefined;
@@ -423,6 +433,22 @@
       if (oriented) randomAxis(i);
       fParMean += fWall(classes[c], H[i])[0] / nTot;
     }
+    // tracers in a viscoelastic material: resting place (X0, Y0, H0) and the state of each independent mode of the bead's
+    // motion, drawn from equilibrium (free diffusion modes start at 0); the bead sits at its resting place plus sum c_j w_j
+    let VE = null, X0 = null, Y0 = null, H0 = null, WS = null, NM = 0;
+    if (visco) {
+      VE = classes.map(function (c) { return VIS.embed(visco, c.ah, T_C, eta); });
+      NM = VE[0].lam.length; X0 = Float64Array.from(X); Y0 = Float64Array.from(Y); H0 = Float64Array.from(H); WS = new Float64Array(nTot * 3 * NM);
+      for (let i = 0; i < nTot; i++) {
+        const e = VE[cls[i]], o = 3 * NM * i;
+        for (let d = 0; d < 3; d++) {
+          let u = 0;
+          for (let j = 0; j < NM; j++) { const w = e.lam[j] > 0 ? rng.g() / Math.sqrt(e.lam[j]) : 0; WS[o + d * NM + j] = w; u += e.c[j] * w; }
+          if (d === 0) X[i] = X0[i] + u; else if (d === 1) Y[i] = Y0[i] + u; else H[i] = H0[i] - u;
+        }
+        reflectVisco(i);
+      }
+    }
     // swimmers: speeds from a Schulz (gamma) distribution with mean swV and relative SD swSpread
     const SP = new Float64Array(nTot), PL = new Uint8Array(nTot);
     const gammaDraw = function (k) {      // Marsaglia and Tsang, mean k, for shape k >= 1 (k < 1 by the boost u^(1/k))
@@ -562,6 +588,26 @@
       return r * det.t_row_s;
     };
     const freezeZ = cfg.test_freeze_z === true;
+    // tracers: each mode decays at its own rate and gets its thermal kick (exact for any time step)
+    const vEx = new Float64Array(64), vSd = new Float64Array(64);
+    const viscoAdvance = function (i, dt) {
+      const e = VE[cls[i]], o = 3 * NM * i;
+      for (let j = 0; j < NM; j++) { const l = e.lam[j]; if (l > 0) { const x = Math.exp(-l * dt); vEx[j] = x; vSd[j] = Math.sqrt(-Math.expm1(-2 * l * dt) / l); } else { vEx[j] = 1; vSd[j] = Math.sqrt(2 * dt); } }
+      for (let d = 0; d < 3; d++) {
+        let u = 0;
+        for (let j = 0; j < NM; j++) { const k = o + d * NM + j, w = vEx[j] * WS[k] + vSd[j] * rng.g(); WS[k] = w; u += e.c[j] * w; }
+        if (d === 0) X[i] = X0[i] + u; else if (d === 1) Y[i] = Y0[i] + u; else H[i] = H0[i] - u;
+      }
+      reflectVisco(i);
+    };
+    // the glass mirrors the bead: its resting place moves with it, so its motion goes on as before; x and y wrap around
+    function reflectVisco(i) {
+      const ae = classes[cls[i]].aex, lo = ae, hi = Lz - ae;
+      let hz = H[i];
+      while (hz < lo || hz > hi) { if (hz < lo) hz = 2 * lo - hz; if (hz > hi) hz = 2 * hi - hz; }
+      H0[i] += hz - H[i]; H[i] = hz;
+      X[i] -= L * Math.floor(X[i] / L); Y[i] -= L * Math.floor(Y[i] / L);
+    }
     const reflect = function (i) {
       const ae = classes[cls[i]].aex, lo = ae, hi = Lz - ae;
       let hz = H[i];
@@ -606,6 +652,7 @@
     const addFlow = function (i, dt) { if (drift === 0) return; const f = flowAt(H[i]); X[i] += vX * f * dt; Y[i] += vY * f * dt; };
     const advance = function (i, dt) {
       if (dt <= 0) return;
+      if (VE) { viscoAdvance(i, dt); return; }
       const c = classes[cls[i]], hy = c.hyd;
       if (!oriented) {
         const nst = wallSteps(c, H[i], dt), hh = dt / nst, st = Math.sqrt(2 * hy.D_t * hh);
@@ -872,6 +919,7 @@
               particle: { shape: shape, oriented: oriented, body: body, aspect: pAsp, birefringence: dn, geometry: cm.geo, points: body ? { xyz: cm.pts.xyz, n: cm.pts.n, spacing: cm.pts.spacing } : null,
                           alpha_perp: cm.aPerp, dalpha: cm.dA, alpha_ref: cm.aRef, Wtab: cm.Wtab || null, polarization: pol, background_share: bgf } },
       truth: { diameter_um: d0, mean_diameter_um: dnum, D_um2_s: hd0.D_t, D_seen_um2_s: Dseen, seen_table: seenTable, diameter_seen_um: kT / (3 * Math.PI * eta * Dseen * 1e-12) * 1e6, drift_um_s: drift, drift_deg: driftDeg, drift_profile: driftProfile, drift_z_um_s: driftZ,
+               visco: VE ? { lam: Array.from(VE[Math.floor(VE.length / 2)].lam), c: Array.from(VE[Math.floor(VE.length / 2)].c), a_um: VE[Math.floor(VE.length / 2)].a_um, eta_s_Pa_s: eta } : null,
                D_plane_um2_s: hd0.D_t * fParFocus, D_plane_all_um2_s: hd0.D_t * fParMean, walls: walls, gravity: gravity, gravitational_length_um: isFinite(classes[0].lg) ? classes[0].lg : null,
                swim: sw ? (function () {
                  const n = swList.length, m = n ? swList.reduce(function (p, v) { return p + v; }, 0) / n : 0;

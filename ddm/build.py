@@ -52,13 +52,19 @@ PAGES = {
               "description": "Differential dynamic microscopy (DDM) of particles carried by a flow, by gravity or by a temperature gradient (thermophoresis): simulate the experiment in your browser and measure the speed and direction of the drift, step by step.",
               "parts": {"/*OBJECTIVES*/": "data/objectives.min.json", "/*OPTICS*/": "optics.js", "/*MOVIE*/": "movie.js",
                         "/*ENGINE*/": "ddm-engine.js", "/*DRIFT*/": "drift-engine.js", "/*WORKER*/": "worker-drift.js", "/*TIFF*/": "tiff.js", "/*APP*/": "app-drift.js"}},
+    "rheology": {"src": "rheo.src.html", "out": "static/ddm/rheology/index.html", "preview": "ddm-rheology.html", "title": "DDM microrheology",
+                 "canonical": "https://rcerbino.github.io/ddm/rheology/", "up": "../../",
+                 "description": "Differential dynamic microscopy (DDM) microrheology: simulate tracer beads in a soft material in your browser and measure its elastic and viscous moduli, step by step, from the raw movie to G' and G''.",
+                 "parts": {"/*OBJECTIVES*/": "data/objectives.min.json", "/*OPTICS*/": "optics.js", "/*VISCO*/": "visco.js", "/*MOVIE*/": "movie.js",
+                           "/*ENGINE*/": "ddm-engine.js", "/*RHEO*/": "rheo-engine.js", "/*WORKER*/": "worker-rheo.js", "/*TIFF*/": "tiff.js", "/*APP*/": "app-rheo.js"}},
 }
 # links between the pages, as written in the sources (site addresses), and the file each points to in the previews
 PREVIEW_LINKS = {
-    "landing": {'href="sizing/': 'href="ddm-hands-on.html', 'href="swimmers/': 'href="ddm-swimmers.html', 'href="drift/': 'href="ddm-drift.html', '"sizing/" + location.hash': '"ddm-hands-on.html" + location.hash'},
-    "sizing": {'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../"': 'href="ddm-landing.html"'},
-    "swimmers": {'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../"': 'href="ddm-landing.html"'},
-    "drift": {'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "landing": {'href="sizing/': 'href="ddm-hands-on.html', 'href="swimmers/': 'href="ddm-swimmers.html', 'href="drift/': 'href="ddm-drift.html', 'href="rheology/': 'href="ddm-rheology.html', '"sizing/" + location.hash': '"ddm-hands-on.html" + location.hash'},
+    "sizing": {'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../rheology/"': 'href="ddm-rheology.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "swimmers": {'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../rheology/"': 'href="ddm-rheology.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "drift": {'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../rheology/"': 'href="ddm-rheology.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "rheology": {'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../"': 'href="ddm-landing.html"'},
 }
 
 

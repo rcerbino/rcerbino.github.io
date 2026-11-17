@@ -78,7 +78,8 @@ p { margin: 0 0 1rem; }
 .intro { padding-block: 2.75rem 1.25rem; }
 /* one card per application */
 .apps { padding-block: 1.5rem 2.5rem; }
-.app-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
+.app-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
+@media (min-width: 48rem) { .app-grid { grid-template-columns: repeat(2, 1fr); } }
 .app { position: relative; display: grid; grid-template-rows: auto auto 1fr; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
 .app:hover { border-color: var(--accent); box-shadow: 0 6px 24px -12px rgba(24, 32, 43, 0.35); transform: translateY(-2px); }
 .app:focus-within { border-color: var(--accent); }
@@ -197,6 +198,17 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
           <span class="go" aria-hidden="true">Open Drifting particles</span>
         </div>
       </article>
+      <article class="app">
+        <div class="head"><p class="eyebrow">Viscoelasticity</p>
+          <h2><a href="rheology/">Liquid or solid?</a></h2></div>
+        <div class="media"><canvas id="cv-rheo" width="240" height="150" aria-label="Animation: beads rattling in place in a soft gel, as seen in a bright-field microscope"></canvas><span class="tag">Bright field, beads in a gel (sketch)</span></div>
+        <div class="body">
+          <p>Measure how elastic and how viscous a soft material is, from how far tracer beads mixed into it get: microrheology with a microscope, from a drop of sample.</p>
+          <p class="what">Simple liquids, wormlike micelles, polymer solutions and a gel forming, with moduli known exactly; from the movie to G' and G'' over several decades of frequency.</p>
+          <ul class="chips"><li>Microrheology</li><li>G' and G''</li><li>Gelation</li></ul>
+          <span class="go" aria-hidden="true">Open Liquid or solid</span>
+        </div>
+      </article>
     </div>
   </section>
 
@@ -264,12 +276,16 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
   function wrap(x, L) { return ((x % L) + L) % L; }
 
   /* a field of round particles; bright field: dark core with a faint bright ring */
-  function makeBeads(W, H, n, core, step, drift) {
+  function makeBeads(W, H, n, core, step, drift, cage) {
     const p = []; for (let i = 0; i < n; i++) p.push([Math.random() * W, Math.random() * H]);
+    const home = p.map(function (q) { return q.slice(); }), off = p.map(function () { return [0, 0]; });
     const R = Math.ceil(core * 3.2), img = new Float32Array(W * H);
     return {
       W: W, H: H, img: img,
-      step: function () { for (const q of p) { q[0] = wrap(q[0] + step * gauss() + (drift || 0), W); q[1] = wrap(q[1] + step * gauss(), H); } },
+      step: function () {
+        if (cage) { p.forEach(function (q, i) { const o = off[i]; o[0] = (1 - cage) * o[0] + step * gauss(); o[1] = (1 - cage) * o[1] + step * gauss(); q[0] = wrap(home[i][0] + o[0], W); q[1] = wrap(home[i][1] + o[1], H); }); return; }   // beads held in cages (a gel)
+        for (const q of p) { q[0] = wrap(q[0] + step * gauss() + (drift || 0), W); q[1] = wrap(q[1] + step * gauss(), H); }
+      },
       render: function () {
         img.fill(0);
         for (const q of p) {
@@ -363,6 +379,8 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
   const cs = document.getElementById("cv-sizing"), ctxS = cs.getContext("2d"), beads = makeBeads(cs.width, cs.height, 80, 2.0, 0.55);
   scene(cs, beads.step, function () { grayTo(ctxS, beads.render(), cs.width, cs.height, 0.74, 0.9); });
 
+  const crh = document.getElementById("cv-rheo"), ctxR = crh.getContext("2d"), caged = makeBeads(crh.width, crh.height, 80, 2.0, 0.35, 0, 0.25);
+  scene(crh, caged.step, function () { grayTo(ctxR, caged.render(), crh.width, crh.height, 0.74, 0.9); });
   const cdr = document.getElementById("cv-drift"), ctxD = cdr.getContext("2d"), drifting = makeBeads(cdr.width, cdr.height, 80, 2.0, 0.45, 0.35);
   scene(cdr, drifting.step, function () { grayTo(ctxD, drifting.render(), cdr.width, cdr.height, 0.74, 0.9); });
 
