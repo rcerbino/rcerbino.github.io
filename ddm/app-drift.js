@@ -1120,7 +1120,24 @@
     if (level !== "curious") txt += ", q = <b>" + q.toFixed(2) + " " + MU + "m<sup>-1</sup></b>, direction " + ang + "&deg;";
     txt += ". Diffusion renews it in about <b>" + fmtTime(1 / (res.D_um2_s * q * q)) + "</b>";
     if (res.detected) txt += Math.abs(qv) > 1e-9 ? "; the drift carries it by one full spacing in <b>" + fmtTime(2 * Math.PI / Math.abs(qv)) + "</b>" : "; stripes along the drift are not moved by it";
-    $("pick-out").innerHTML = txt + ".";
+    $("pick-out").innerHTML = txt + "."; syncPick();
+  }
+  // the same choice from the keyboard: two sliders under the map, stripe spacing (wide to fine) and direction
+  function setPick() {
+    if (!cache.res) return;
+    const k = +$("pick-k").value, a = +$("pick-a").value * Math.PI / 180;
+    let kx = Math.round(k * Math.cos(a)), ky = Math.round(k * Math.sin(a)); if (kx === 0 && ky === 0) kx = 1;
+    sel = { kx: kx, ky: ky }; fromSlider = true; drawMapOverlay(); drawStripes();
+  }
+  // the pixel nearest to the sliders' setting stands for it; the sliders keep their own value, so that small steps add up
+  let fromSlider = false;
+  function syncPick() {
+    const n = cache.movie.n, k = Math.hypot(sel.kx, sel.ky), deg = ((Math.round(Math.atan2(sel.ky, sel.kx) * 180 / Math.PI) % 180) + 180) % 180, pk = $("pick-k"), pa = $("pick-a");
+    pk.max = Math.floor(n / 2) - 1;
+    if (!fromSlider) { pk.value = Math.round(k); pa.value = deg; }
+    fromSlider = false;
+    pk.setAttribute("aria-valuetext", "stripe spacing " + fmtSig(cache.movie.L_um / k, 2) + " micrometres");
+    pa.setAttribute("aria-valuetext", deg + " degrees");
   }
   function onMapClick(ev) {
     if (!cache.res) return;
@@ -1479,6 +1496,7 @@
   $("btn-play").textContent = playing ? "Pause" : "Play";
   $("lag").addEventListener("input", function () { if (!cache.res) return; renderLag(); drawDiff(frameIdx); drawMap(); });
   $("map-ov").addEventListener("click", onMapClick);
+  document.querySelectorAll(".pn-more").forEach(function (b) { b.addEventListener("click", function () { b.closest(".proto-note").classList.add("open"); b.setAttribute("aria-expanded", "true"); }); }); $("pick-k").addEventListener("input", setPick); $("pick-a").addEventListener("input", setPick);
   $("btn-copy").addEventListener("click", function () {
     const txt = $("settings-json").textContent;
     const fallback = function () { const r = document.createRange(); r.selectNodeContents($("settings-json")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $("btn-copy").textContent = "Selected, press copy"; };
