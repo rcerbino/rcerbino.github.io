@@ -68,10 +68,9 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
 .proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
 .pn-more { display: none; font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
-@media (max-width: 40rem) {   /* phones: one line, the rest on request */
-  .proto-note:not(.open) .pn-rest { display: none; }
-  .proto-note:not(.open) .pn-more { display: inline; }
-}
+/* one line, the rest on request */
+.proto-note:not(.open) .pn-rest { display: none; }
+.proto-note:not(.open) .pn-more { display: inline; }
 
 h1, h2, h3 { font-weight: 500; line-height: 1.2; text-wrap: balance; }
 h1 { font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem); margin: 0 0 1rem; letter-spacing: -0.01em; }
@@ -141,6 +140,8 @@ table.sizing .note { white-space: normal; display: block; font-size: 0.76rem; fo
 details.more summary { cursor: pointer; font-size: 0.85rem; color: var(--muted); }
 details.more dl { margin-top: 0.4rem; }
 .hero-result { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1rem; font-family: var(--sans); margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--rule); max-width: 44rem; }
+.start-here { font-family: var(--sans); font-size: 0.92rem; margin: 0.6rem 0 0; max-width: 44rem; }
+#try-double { scroll-margin-top: 1.5rem; }
 .hero-result .n { font-family: var(--serif); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
 
 /* bench */
@@ -297,6 +298,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
       <div class="hero-result" id="hero-result" aria-live="polite">
         <span>Simulating the movie...</span>
       </div>
+      <p class="start-here"><a href="#try-double">Try this first</a>: predict what happens to the curves when the beads are twice as large, then watch the page check it.</p>
     </div>
     <figure class="porthole">
       <div class="lens"><canvas id="hero-canvas" width="128" height="128" aria-label="Simulated microscope movie"></canvas></div>
@@ -441,7 +443,7 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
             <div class="chart"><canvas id="chart-curves" aria-label="Curves for several wave vectors"></canvas></div>
             <div class="legend" id="curves-legend"></div>
           </figure>
-          <div class="predict" data-predict="size" data-right="right">
+          <div class="predict" id="try-double" data-predict="size" data-right="right">
             <div class="q">Predict first: the particles become twice as large. Do the curves move to the left or to the right?</div>
             <div class="btns"><button type="button" data-guess="left">Left, faster</button><button type="button" data-guess="right">Right, slower</button></div>
             <div class="a" hidden><span class="verdict"></span> To the right. A particle twice as large has half the diffusion coefficient, so every pattern takes twice as long to change. The bench now runs with the larger particles so you can check: the chart keeps one curve of the earlier run, dashed, next to the new one at the same stripe spacing, and marks where each has gone halfway.</div>
@@ -582,6 +584,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     <h2 id="h-about">About this tool</h2>
     <p class="prose">This page is a simple tool, generated with Claude Opus 5.5, that simulates a realistic microscopy experiment in which DDM is used to study the roto-translational Brownian motion of colloidal particles. The microscope, light sources, cameras, spinning disk and point scanner are modelled mostly on the instruments of our SoMeX lab. The particles do not interact with each other: each one diffuses and turns on its own (if you choose, it also settles under gravity and slows down near the glass), so every sample is a dilute suspension. The aim is not to produce accurate, research-quality data, but to give anyone thinking of using DDM an idea of the many options and of how each one affects a DDM experiment.</p>
     <p class="prose">If you find something that looks wrong or does not work, please let us know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
+    <p class="prose">To cite this page: R. Cerbino, <i>DDM, hands on: sizing particles</i>, <a href="https://rcerbino.github.io/ddm/sizing/">rcerbino.github.io/ddm/sizing/</a> (2026), with the date you used it.</p>
   </section>
 
   <section class="wrap further" aria-labelledby="h-further">
@@ -5064,7 +5067,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const mid = pool[Math.floor(pool.length / 2)].q_per_um, sf = res.fits.find(function (f) { return f.bin === selBin(); });
     const order = pool.slice().sort(function (a, b) { return Math.abs(Math.log(a.q_per_um / mid)) - Math.abs(Math.log(b.q_per_um / mid)); });
     if (sf && sf.ok && sf.gamma_hz > 0) order.unshift(sf);
-    compare = { kind: kind, label: COMPARE_LABEL[kind](), fits: order.map(function (f) { return Object.assign({}, f); }) };
+    compare = { kind: kind, label: COMPARE_LABEL[kind](), res0: res, fits: order.map(function (f) { return Object.assign({}, f); }) };
   }
   // the delay at which a curve has gone halfway, from its fitted model
   function halfRise(f) {
@@ -5076,6 +5079,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   // the pair of curves to compare: the same q bin in both runs, both halfway points within the delays measured
   function comparePair(res) {
     if (!compare) return null;
+    if (res === compare.res0) { const o = compare.fits[0]; return { pending: true, old: o, ho: halfRise(o) }; }   // the new run is still being computed
     const t0 = res.taus_s[0], t1 = res.taus_s[res.taus_s.length - 1];
     for (let i = 0; i < compare.fits.length; i++) {
       const o = compare.fits[i], n = res.fits.find(function (f) { return f.bin === o.bin; });
@@ -5096,7 +5100,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const selF = res.fits.find(function (f) { return f.bin === selBin(); });
     if (selF && pick.indexOf(selF) < 0 && selF.ok) pick.push(selF);
     const pair = curveView === "change" ? comparePair(res) : null;
-    if (pair && pick.indexOf(pair.now) < 0) pick.push(pair.now);
+    if (pair && pair.now && pick.indexOf(pair.now) < 0) pick.push(pair.now);
     const x0 = taus[0] * 0.8, x1 = taus[taus.length - 1] * 1.25;
     let o;
     if (curveView === "change") o = { xlog: true, ylog: false, x0: x0, x1: x1, y0: -0.15, y1: 1.25, xlabel: "Delay (s)", ylabel: level === "curious" ? "How much has changed" : "1 \u2212 f(q, \u0394t)" };
@@ -5108,7 +5112,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const a = axes($("chart-curves"), o), ctx = a.ctx;
     pick.forEach(function (f) {
       const isSel = f === selF || (pair && f === pair.now), col = qColor(qPos(f.q_per_um));
-      ctx.globalAlpha = pair && f !== pair.now ? 0.3 : 1;   // during a comparison the other curves step back
+      ctx.globalAlpha = pair && !pair.pending && f !== pair.now ? 0.3 : 1;   // during a comparison the other curves step back
       const tr = function (v) { return curveView === "change" ? (v - f.B) / f.A : v; };
       ctx.strokeStyle = col; ctx.lineWidth = isSel ? 3 : 1.5; ctx.beginPath();
       for (let i = 0; i <= 120; i++) { const t = x0 * Math.pow(x1 / x0, i / 120), v = tr(modelAt(f, t)); if (curveView === "d" && !(v > 0)) continue; const X = a.fx(t), Y = a.fy(v); if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }
@@ -5117,16 +5121,21 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     });
     ctx.globalAlpha = 1;
     if (pair) {
-      const col = qColor(qPos(pair.now.q_per_um)), Y = a.fy(0.5);
+      const col = qColor(qPos(pair.old.q_per_um)), Y = a.fy(0.5);
       ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.setLineDash([6, 4]); ctx.beginPath();
       for (let i = 0; i <= 120; i++) { const t = x0 * Math.pow(x1 / x0, i / 120), X = a.fx(t), V = a.fy((modelAt(pair.old, t) - pair.old.B) / pair.old.A); if (i === 0) ctx.moveTo(X, V); else ctx.lineTo(X, V); }
       ctx.stroke(); ctx.setLineDash([]);
-      ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(a.fx(pair.ho), Y); ctx.lineTo(a.fx(pair.hn), Y); ctx.stroke();
-      dot(ctx, a.fx(pair.ho), Y, 4.5, C.paper, C.ink); dot(ctx, a.fx(pair.hn), Y, 4.5, C.ink, null);
+      if (!pair.pending) { ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(a.fx(pair.ho), Y); ctx.lineTo(a.fx(pair.hn), Y); ctx.stroke(); }
+      if (pair.ho) dot(ctx, a.fx(pair.ho), Y, 4.5, C.paper, C.ink);
+      if (!pair.pending) dot(ctx, a.fx(pair.hn), Y, 4.5, C.ink, null);
     }
     a.done();
     const leg = $("curves-legend"); leg.innerHTML = "";
-    if (pair) {
+    if (pair && pair.pending) {
+      const s = document.createElement("span"); s.className = "compare";
+      s.textContent = "Dashed: the run with " + compare.label + "; at a stripe spacing of " + fmtSig(2 * Math.PI / pair.old.q_per_um, 2) + " " + MU + "m it changes halfway after " + (pair.ho ? fmtDur(pair.ho) : "-") + " (open dot). Computing the run with " + COMPARE_LABEL[compare.kind]() + "...";
+      leg.appendChild(s);
+    } else if (pair) {
       const r = pair.hn / pair.ho, sp = fmtSig(2 * Math.PI / pair.now.q_per_um, 2) + " " + MU + "m", s = document.createElement("span");
       s.className = "compare";
       s.textContent = "Dashed: the earlier run (" + compare.label + "); solid: now (" + COMPARE_LABEL[compare.kind]() + "). At a stripe spacing of " + sp + " the pattern changes halfway after " + fmtDur(pair.ho) + " (open dot) and now after " + fmtDur(pair.hn) + " (filled dot): " + (r >= 1 ? fmtSig(r, 2) + " times longer." : fmtSig(1 / r, 2) + " times sooner.");
@@ -5622,6 +5631,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
           if (kind === "size") state.diameter_um = Math.min(5, state.diameter_um * 2);
           if (kind === "warm") state.T_C = 45;
           if (kind === "slowcam") { state.frame_rate_hz = 8; state.exposure_ms = 1; constrain(); }
+          if (compare && cache.res) drawCurves();   // the earlier curve, dashed, while the new run is computed
           syncControls(); schedule();
         });
       });

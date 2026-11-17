@@ -68,10 +68,9 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
 .proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
 .pn-more { display: none; font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
-@media (max-width: 40rem) {   /* phones: one line, the rest on request */
-  .proto-note:not(.open) .pn-rest { display: none; }
-  .proto-note:not(.open) .pn-more { display: inline; }
-}
+/* one line, the rest on request */
+.proto-note:not(.open) .pn-rest { display: none; }
+.proto-note:not(.open) .pn-more { display: inline; }
 
 h1, h2, h3 { font-weight: 500; line-height: 1.2; text-wrap: balance; }
 h1 { font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem); margin: 0 0 1rem; letter-spacing: -0.01em; }
@@ -615,6 +614,7 @@ A_est = 2 * aa.var - B_est
     <h2 id="h-about">About this tool</h2>
     <p class="prose">This page is a simple tool, generated with Claude Opus 5.5, that simulates a realistic motility assay in which DDM measures how fast cells swim. The microscope, light sources, cameras, spinning disk and point scanner are modelled mostly on the instruments of our SoMeX lab. The cells do not interact with each other: each one swims or diffuses on its own, so every sample is a dilute suspension. The aim is not to produce accurate, research-quality data, but to give anyone thinking of using DDM an idea of the many options and of how each one affects a DDM experiment.</p>
     <p class="prose">If you find something that looks wrong or does not work, please let us know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
+    <p class="prose">To cite this page: R. Cerbino, <i>DDM, hands on: swimming cells</i>, <a href="https://rcerbino.github.io/ddm/swimmers/">rcerbino.github.io/ddm/swimmers/</a> (2026), with the date you used it.</p>
   </section>
 
   <section class="wrap further" aria-labelledby="h-further">
@@ -6576,12 +6576,12 @@ A_est = 2 * aa.var - B_est
     html += h && h.no_swim ? '<div class="big">No swimming found</div>' : h ? '<div class="big">' + fmtV(h.v_um_s) + (h.v_rel_err ? ' <small>&plusmn; ' + Math.max(1, Math.round(100 * h.v_rel_err)) + ' %</small>' : '') + '</div>' : '<div class="big">No result</div>';
     html += '<span class="chip ' + v.cls + '">' + v.text + '</span>' + (sv ? ' <span class="chip ' + sv.cls + '">' + sv.text + '</span>' : '');
     if (v.why) html += '<p class="small" style="margin:0">' + v.why + '</p>';
-    if (h && h.no_swim) html += '<p class="small" style="margin:0">The curves are described as well by cells that only jiggle (and, for rods, turn) as by any share of swimmers.</p>';
-    else if (h) html += '<p class="small" style="margin:0">Mean swimming speed from the model of ' + MODEL_LABEL[swimModel()] + ' fitted to all q at once. True mean speed ' + fmtV(swt.v_mean_um_s) + (Math.abs(st.v / swt.v_mean_um_s - 1) > 0.02 ? ', ' + fmtV(st.v) + ' as weighted by the signal' : '') + '.</p>';
-    if (h && !h.no_swim && swt && mv.info.n_particles) html += '<div class="shares small"><b>Share of cells that swim</b><ul>' +
+    if (h && !h.no_swim && swt && mv.info.n_particles) html += '<div class="shares small"><b>Share of cells that swim:</b> DDM gives ' + Math.round(100 * h.alpha) + ' %; compare it with ' + Math.round(100 * st.share) + ' %, the share as the microscope sees it.<ul>' +
       '<li><span>in the simulated sample</span><b>' + Math.round(100 * swt.n_swimmers / mv.info.n_particles) + ' %</b><span class="note">' + swt.n_swimmers + ' of ' + mv.info.n_particles + ' cells</span></li>' +
       '<li><span>as the microscope sees it</span><b>' + Math.round(100 * st.share) + ' %</b><span class="note">each cell counted by how much it shows in the images: this is what DDM can measure</span></li>' +
       '<li><span>measured by DDM</span><b>' + Math.round(100 * h.alpha) + (h.alpha_err ? ' &plusmn; ' + Math.max(1, Math.round(100 * h.alpha_err)) : '') + ' %</b><span class="note">to compare with the line above</span></li></ul></div>';
+    if (h && h.no_swim) html += '<p class="small" style="margin:0">The curves are described as well by cells that only jiggle (and, for rods, turn) as by any share of swimmers.</p>';
+    else if (h) html += '<p class="small" style="margin:0">Mean swimming speed from the model of ' + MODEL_LABEL[swimModel()] + ' fitted to all q at once. True mean speed ' + fmtV(swt.v_mean_um_s) + (Math.abs(st.v / swt.v_mean_um_s - 1) > 0.02 ? ', ' + fmtV(st.v) + ' as weighted by the signal' : '') + '.</p>';
     if (h && !h.no_swim && h.err_from === "jackknife" && level !== "curious") html += '<p class="small" style="margin:0">&plusmn;: how much the result changes with the part of the movie it comes from (the fits repeated ' + h.jackknife.blocks + ' times, each time with one ' + ["", "", "half", "third", "quarter", "fifth", "sixth"][h.jackknife.blocks] + ' of the movie left out). Errors of the model itself are not included: compare with the true values, or repeat with new cells.</p>';
     if (h && h.stroke_um) html += '<p class="small" style="margin:0">Stroke of each swimmer: ' + fmtSig(h.stroke_um, 2) + (h.stroke_um_err ? ' &plusmn; ' + fmtSig(h.stroke_um_err, 1) : '') + ' ' + MU + 'm at ' + fmtSig(h.stroke_hz, 3) + (h.stroke_hz_err ? ' &plusmn; ' + fmtSig(h.stroke_hz_err, 1) : '') + ' Hz (true ' + fmtSig(swt.osc_amp_um || 0, 2) + ' ' + MU + 'm at ' + fmtSig(swt.osc_hz || 0, 3) + ' Hz' + (swt.osc_amp_um > 0 && swt.osc_dir === "across" && swimModel() === "stroke" ? '; the cells stroke sideways, the model assumes along' : '') + ').</p>';
     if (level !== "curious" && h) {

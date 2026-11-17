@@ -1108,7 +1108,7 @@
     const mid = pool[Math.floor(pool.length / 2)].q_per_um, sf = res.fits.find(function (f) { return f.bin === selBin(); });
     const order = pool.slice().sort(function (a, b) { return Math.abs(Math.log(a.q_per_um / mid)) - Math.abs(Math.log(b.q_per_um / mid)); });
     if (sf && sf.ok && sf.gamma_hz > 0) order.unshift(sf);
-    compare = { kind: kind, label: COMPARE_LABEL[kind](), fits: order.map(function (f) { return Object.assign({}, f); }) };
+    compare = { kind: kind, label: COMPARE_LABEL[kind](), res0: res, fits: order.map(function (f) { return Object.assign({}, f); }) };
   }
   // the delay at which a curve has gone halfway, from its fitted model
   function halfRise(f) {
@@ -1120,6 +1120,7 @@
   // the pair of curves to compare: the same q bin in both runs, both halfway points within the delays measured
   function comparePair(res) {
     if (!compare) return null;
+    if (res === compare.res0) { const o = compare.fits[0]; return { pending: true, old: o, ho: halfRise(o) }; }   // the new run is still being computed
     const t0 = res.taus_s[0], t1 = res.taus_s[res.taus_s.length - 1];
     for (let i = 0; i < compare.fits.length; i++) {
       const o = compare.fits[i], n = res.fits.find(function (f) { return f.bin === o.bin; });
@@ -1140,7 +1141,7 @@
     const selF = res.fits.find(function (f) { return f.bin === selBin(); });
     if (selF && pick.indexOf(selF) < 0 && selF.ok) pick.push(selF);
     const pair = curveView === "change" ? comparePair(res) : null;
-    if (pair && pick.indexOf(pair.now) < 0) pick.push(pair.now);
+    if (pair && pair.now && pick.indexOf(pair.now) < 0) pick.push(pair.now);
     const x0 = taus[0] * 0.8, x1 = taus[taus.length - 1] * 1.25;
     let o;
     if (curveView === "change") o = { xlog: true, ylog: false, x0: x0, x1: x1, y0: -0.15, y1: 1.25, xlabel: "Delay (s)", ylabel: level === "curious" ? "How much has changed" : "1 \u2212 f(q, \u0394t)" };
@@ -1152,7 +1153,7 @@
     const a = axes($("chart-curves"), o), ctx = a.ctx;
     pick.forEach(function (f) {
       const isSel = f === selF || (pair && f === pair.now), col = qColor(qPos(f.q_per_um));
-      ctx.globalAlpha = pair && f !== pair.now ? 0.3 : 1;   // during a comparison the other curves step back
+      ctx.globalAlpha = pair && !pair.pending && f !== pair.now ? 0.3 : 1;   // during a comparison the other curves step back
       const tr = function (v) { return curveView === "change" ? (v - f.B) / f.A : v; };
       ctx.strokeStyle = col; ctx.lineWidth = isSel ? 3 : 1.5; ctx.beginPath();
       for (let i = 0; i <= 120; i++) { const t = x0 * Math.pow(x1 / x0, i / 120), v = tr(modelAt(f, t)); if (curveView === "d" && !(v > 0)) continue; const X = a.fx(t), Y = a.fy(v); if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }
@@ -1161,16 +1162,21 @@
     });
     ctx.globalAlpha = 1;
     if (pair) {
-      const col = qColor(qPos(pair.now.q_per_um)), Y = a.fy(0.5);
+      const col = qColor(qPos(pair.old.q_per_um)), Y = a.fy(0.5);
       ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.setLineDash([6, 4]); ctx.beginPath();
       for (let i = 0; i <= 120; i++) { const t = x0 * Math.pow(x1 / x0, i / 120), X = a.fx(t), V = a.fy((modelAt(pair.old, t) - pair.old.B) / pair.old.A); if (i === 0) ctx.moveTo(X, V); else ctx.lineTo(X, V); }
       ctx.stroke(); ctx.setLineDash([]);
-      ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(a.fx(pair.ho), Y); ctx.lineTo(a.fx(pair.hn), Y); ctx.stroke();
-      dot(ctx, a.fx(pair.ho), Y, 4.5, C.paper, C.ink); dot(ctx, a.fx(pair.hn), Y, 4.5, C.ink, null);
+      if (!pair.pending) { ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(a.fx(pair.ho), Y); ctx.lineTo(a.fx(pair.hn), Y); ctx.stroke(); }
+      if (pair.ho) dot(ctx, a.fx(pair.ho), Y, 4.5, C.paper, C.ink);
+      if (!pair.pending) dot(ctx, a.fx(pair.hn), Y, 4.5, C.ink, null);
     }
     a.done();
     const leg = $("curves-legend"); leg.innerHTML = "";
-    if (pair) {
+    if (pair && pair.pending) {
+      const s = document.createElement("span"); s.className = "compare";
+      s.textContent = "Dashed: the run with " + compare.label + "; at a stripe spacing of " + fmtSig(2 * Math.PI / pair.old.q_per_um, 2) + " " + MU + "m it changes halfway after " + (pair.ho ? fmtDur(pair.ho) : "-") + " (open dot). Computing the run with " + COMPARE_LABEL[compare.kind]() + "...";
+      leg.appendChild(s);
+    } else if (pair) {
       const r = pair.hn / pair.ho, sp = fmtSig(2 * Math.PI / pair.now.q_per_um, 2) + " " + MU + "m", s = document.createElement("span");
       s.className = "compare";
       s.textContent = "Dashed: the earlier run (" + compare.label + "); solid: now (" + COMPARE_LABEL[compare.kind]() + "). At a stripe spacing of " + sp + " the pattern changes halfway after " + fmtDur(pair.ho) + " (open dot) and now after " + fmtDur(pair.hn) + " (filled dot): " + (r >= 1 ? fmtSig(r, 2) + " times longer." : fmtSig(1 / r, 2) + " times sooner.");
@@ -1666,6 +1672,7 @@
           if (kind === "size") state.diameter_um = Math.min(5, state.diameter_um * 2);
           if (kind === "warm") state.T_C = 45;
           if (kind === "slowcam") { state.frame_rate_hz = 8; state.exposure_ms = 1; constrain(); }
+          if (compare && cache.res) drawCurves();   // the earlier curve, dashed, while the new run is computed
           syncControls(); schedule();
         });
       });

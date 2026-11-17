@@ -79,13 +79,17 @@ p { margin: 0 0 1rem; }
 /* one card per application */
 .apps { padding-block: 1.5rem 2.5rem; }
 .app-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
-.app { position: relative; display: grid; grid-template-rows: auto 1fr; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
+.app { position: relative; display: grid; grid-template-rows: auto auto 1fr; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
 .app:hover { border-color: var(--accent); box-shadow: 0 6px 24px -12px rgba(24, 32, 43, 0.35); transform: translateY(-2px); }
 .app:focus-within { border-color: var(--accent); }
 .app .media { position: relative; aspect-ratio: 16 / 10; background: #000; border-bottom: 1px solid var(--rule); }
 .app canvas { display: block; width: 100%; height: 100%; }
 .app .tag { position: absolute; left: 0.75rem; bottom: 0.6rem; font-family: var(--sans); font-size: 0.72rem; color: #fff; background: rgba(0, 0, 0, 0.55); padding: 0.1rem 0.45rem; border-radius: 4px; }
-.app .body { display: grid; align-content: start; gap: 0.15rem; padding: 1.1rem 1.25rem 1.25rem; }
+.start-here { font-family: var(--sans); font-size: 0.95rem; margin: 0.9rem 0 0; }
+.app .head { padding: 1.1rem 1.25rem 0.8rem; }
+.app .head .eyebrow { margin-bottom: 0.2rem; }
+.app .head h2 { margin: 0; }
+.app .body { display: grid; align-content: start; gap: 0.15rem; padding: 1rem 1.25rem 1.25rem; }
 .app h2 { font-size: 1.7rem; margin: 0 0 0.35rem; }
 .app h2 a { color: var(--ink); text-decoration: none; }
 .app h2 a::after { content: ""; position: absolute; inset: 0; }   /* the whole card is the link */
@@ -155,15 +159,16 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
     <p class="eyebrow">Differential dynamic microscopy</p>
     <h1>DDM, hands on</h1>
     <p class="lede"><a href="https://en.wikipedia.org/wiki/Differential_dynamic_microscopy">Differential dynamic microscopy</a> (DDM), introduced in 2008 (R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Phys. Rev. Lett. 100, 188102</a>), turns an ordinary microscope movie into a light scattering experiment: it measures how fast the patterns of each size in the image fade, without following any single particle or cell. From those rates follow sizes, speeds and much more. Each page below simulates an experiment in your browser and takes you through the whole analysis, from the raw movie to the result.</p>
+    <p class="start-here">New here? <a href="sizing/#try-double">Try doubling the bead size</a>: predict how the curves move, then watch the page check it.</p>
   </section>
 
   <section class="wrap apps" aria-label="Applications">
     <div class="app-grid">
       <article class="app">
+        <div class="head"><p class="eyebrow">Brownian motion</p>
+          <h2><a href="sizing/">How big are they?</a></h2></div>
         <div class="media"><canvas id="cv-sizing" width="240" height="150" aria-label="Animation: particles jiggling in a liquid, as seen in a bright-field microscope"></canvas><span class="tag">Bright field, colloidal beads (sketch)</span></div>
         <div class="body">
-          <p class="eyebrow">Brownian motion</p>
-          <h2><a href="sizing/">How big are they?</a></h2>
           <p>Size colloidal particles from how fast they wander, as in dynamic light scattering, but with a microscope and in samples where light scattering struggles.</p>
           <p class="what">Spheres, ellipsoids and rods, some of which turn as well as wander; seven imaging modes from bright field to confocal; cameras, noise, depth of field and what each does to the result.</p>
           <ul class="chips"><li>Diffusion</li><li>Particle size</li><li>Rotation</li></ul>
@@ -171,10 +176,10 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
         </div>
       </article>
       <article class="app">
+        <div class="head"><p class="eyebrow">Active motion</p>
+          <h2><a href="swimmers/">How fast do they swim?</a></h2></div>
         <div class="media"><canvas id="cv-swim" width="240" height="150" aria-label="Animation: rod-shaped bacteria, some swimming and some still, as seen in a phase-contrast microscope"></canvas><span class="tag">Phase contrast, bacteria (sketch)</span></div>
         <div class="body">
-          <p class="eyebrow">Active motion</p>
-          <h2><a href="swimmers/">How fast do they swim?</a></h2>
           <p>Measure how fast bacteria, algae or sperm swim, how much the speeds spread and which share of the cells swims, from a motility movie with thousands of cells.</p>
           <p class="what">E. coli strains, Salmonella, B. subtilis, Chlamydomonas, Euglena and bull sperm, set up as in published experiments, or cells of your own design.</p>
           <ul class="chips"><li>Swimming speed</li><li>Speed spread</li><li>Share of swimmers</li></ul>
@@ -182,10 +187,10 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
         </div>
       </article>
       <article class="app">
+        <div class="head"><p class="eyebrow">Drift</p>
+          <h2><a href="drift/">Where are they going?</a></h2></div>
         <div class="media"><canvas id="cv-drift" width="240" height="150" aria-label="Animation: particles jiggling and carried slowly to the right by a flow, as seen in a bright-field microscope"></canvas><span class="tag">Bright field, beads in a flow (sketch)</span></div>
         <div class="body">
-          <p class="eyebrow">Drift</p>
-          <h2><a href="drift/">Where are they going?</a></h2>
           <p>Measure the speed and direction of particles carried by a flow, by gravity or by a temperature gradient, while they keep jiggling, and find out how slow a drift a movie can still show.</p>
           <p class="what">Plug and channel flows; sedimentation with the microscope upright or on its side; thermophoresis of polystyrene beads with Soret coefficients from published measurements.</p>
           <ul class="chips"><li>Flow</li><li>Sedimentation</li><li>Thermophoresis</li></ul>
@@ -226,7 +231,7 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
         <text class="lab" x="54" y="97" text-anchor="middle">q (log)</text><text class="lab sm" x="15" y="97">wide</text><text class="lab sm" x="94" y="97" text-anchor="end">fine</text>
         <text class="lab" x="8" y="48" text-anchor="middle" transform="rotate(-90 8 48)">rate (log)</text>
       </svg></div>
-        <figcaption><b>Model</b>Fit each curve to get one rate per pattern size (the dots, in the same colours). The axis is q, larger for finer patterns. How fast the rates grow with q (slope 2 for diffusion, 1 for swimming) gives the size, the speed, and more.</figcaption></figure>
+        <figcaption><b>Model</b>Fit each curve to get one rate per pattern size (the dots, in the same colours). The axis is q, larger for finer patterns. The slope tells the kind of motion: 2 for diffusion, 1 for swimming. The height of the line then gives the diffusion coefficient, and from it the size, or the swimming speed.</figcaption></figure>
     </div>
   </section>
 
@@ -244,6 +249,7 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
   <section class="wrap about" aria-labelledby="h-about">
     <h2 id="h-about">About these pages</h2>
     <p class="prose">These pages are a divertissement. For fun, we took configurations close to those of our <a href="https://somexlab.github.io/">SoMeX lab</a> and used them to simulate some typical DDM experiments in your browser. The simulations are simple and rely on many approximations; each page says which. More applications will follow. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
+    <p class="prose">To cite these pages: R. Cerbino, <i>DDM, hands on</i>, <a href="https://rcerbino.github.io/ddm/">rcerbino.github.io/ddm/</a> (2026), with the date you used them.</p>
   </section>
 </main>
 
