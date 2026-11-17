@@ -119,7 +119,14 @@
     const s = Math.sin(x), c = Math.cos(x);
     return 1 / (1 + 24 * eta / Math.pow(x, 6) * (a * x * x * x * (s - x * c) + b * x * x * (2 * x * s - (x * x - 2) * c - 2) + g * ((4 * x * x * x - 24 * x) * s - (x * x * x * x - 12 * x * x + 24) * c + 24)));
   }
-  function interactSpec() { return { kind: state.inter, U0: state.U0, kappa_sigma: state.kappa_sigma, label_fraction: state.label }; }
+  // hydrodynamic interactions from theory: hard spheres seen in fluorescence or confocal (the worker fills in the tables)
+  function HYDRO() { return state.hydro === "theory" && state.inter === "hard" && !TRANS(); }
+  function interactSpec() { const o = { kind: state.inter, U0: state.U0, kappa_sigma: state.kappa_sigma, label_fraction: state.label }; if (HYDRO()) o.hydro = true; return o; }
+  function hydroHint() {
+    if (state.inter !== "hard") return "Drawn for hard spheres only.";
+    if (TRANS()) return "Drawn for fluorescence and confocal movies only.";
+    return HYDRO() ? "The particles also push each other through the liquid. Simulating that particle by particle is beyond a browser, so the movie is drawn from theory instead: a field of density whose stripe patterns have the strength S(q) of hard spheres (Percus-Yevick) and fade at D0 q\u00b2 H(q) / S(q), with the hydrodynamic function H(q) of Beenakker and Mazur. Its blobs are not single particles." : "The particles push each other only by touching: no flow of the liquid between them (H = 1).";
+  }
   function interHint() {
     const ph = state.phi_c, gap = state.diameter_um * (Math.pow(0.74 / ph, 1 / 3) - 1);
     let h = "Volume fraction " + fmtSig(ph, 2) + ": " + (ph < 0.1 ? "dilute enough that the particles rarely meet." : ph < 0.3 ? "each particle often bumps into its neighbours." : "crowded: each particle sits in a cage of neighbours, about " + fmtSig(Math.max(0, gap) * 1000, 2) + " nm apart at the surfaces on average.");
@@ -134,7 +141,7 @@
   const BASE = {
     mode: "spinning", particle: "pmma", n_custom: 1.59, diameter_um: 1, size_spread: 0, size_dist: "schulz", phi: 1e-3,
     liquid: "glycerol", glycerol_w: 0.5, n_liquid: 1.333, visc_mPa_s: 1.0, T_C: 22, cell_um: 8, focus_frac: 0.5, optics: "auto",
-    phi_c: 0.3, inter: "hard", U0: 30, kappa_sigma: 10, label: 1,
+    phi_c: 0.3, inter: "hard", U0: 30, kappa_sigma: 10, hydro: "off", label: 1,
     objective: objIndexByName("CFI Plan Apochromat VC 60XC WI"), condenser: "elwd", na_c: 0.3, source: "green",
     dye: "green", rate_ph_ms: 1000, bg_e_ms: 2, light_frac: 0.5,
     camera: "orca", cam_mode: "standard", iface: "cameralink", binning: 1, roi: 256, sim_px: 128, n_frames: 512,
@@ -171,8 +178,8 @@
   function particlesFor(n) { return state.phi_c / geometry().volume * Math.pow(n * pixelUm(), 2) * state.cell_um; }
   // time step of the simulation (free steps of 3 % of the diameter) and particle-steps for a field of n pixels
   function stepS() { return Math.pow(0.03 * state.diameter_um, 2) / (2 * dSE()); }
-  function workFor(n) { const T = Math.min(state.n_frames, maxFrames(n)), dt = 1 / state.frame_rate_hz, span = BURSTS() ? MOVIE.logTimes(T, dt, state.log_factor)[T - 1] + dt : T * dt; return particlesFor(n) * (span + tauB()) / stepS() * (state.inter === "yukawa" ? 1.5 : 1); }
-  function simSeconds() { return workFor(simPx()) / 5e5; }
+  function workFor(n) { if (HYDRO()) return 0; const T = Math.min(state.n_frames, maxFrames(n)), dt = 1 / state.frame_rate_hz, span = BURSTS() ? MOVIE.logTimes(T, dt, state.log_factor)[T - 1] + dt : T * dt; return particlesFor(n) * (span + tauB()) / stepS() * (state.inter === "yukawa" ? 1.5 : 1); }
+  function simSeconds() { if (HYDRO()) { const n = simPx(); return n * n * 20 * (state.label < 1 ? 2 : 1) * Math.min(state.n_frames, maxFrames(n)) * 1e-7 + 2; } return workFor(simPx()) / 5e5; }
   function pointsPerParticle() {
     if (!BODY()) return 1;
     const lam = 0.85 * centralWavelength(), na = Math.min(objective().na, 1.34);   // shortest wavelengths set the spacing
@@ -296,6 +303,7 @@
     { key: "inter", group: "Sample", lvl: 1, label: "How they interact", kind: "select", options: Object.keys(INTER).map(function (k) { return [k, INTER[k]]; }) },
     { key: "U0", group: "Sample", lvl: 2, label: "Repulsion at contact", kind: "log", min: 3, max: 300, fmt: function (v) { return fmtSig(v, 2) + " kT"; }, when: function () { return state.inter === "yukawa"; } },
     { key: "kappa_sigma", group: "Sample", lvl: 2, label: "Range of the repulsion: diameter / Debye length", kind: "log", min: 2, max: 30, fmt: function (v) { return fmtSig(v, 2); }, when: function () { return state.inter === "yukawa"; }, hint: function () { return "Smaller numbers: less salt, a longer reach."; } },
+    { key: "hydro", group: "Sample", lvl: 1, label: "Flow of the liquid between the particles (hydrodynamic interactions)", kind: "select", options: [["off", "Left out"], ["theory", "From theory (the movie becomes a density field)"]], when: function () { return state.inter === "hard" && !TRANS(); }, hint: hydroHint },
     { key: "label", group: "Sample", lvl: 1, label: "Share of the particles that are dyed", kind: "select", options: [[1, "All"], [0.5, "Half"], [0.2, "One in five"], [0.05, "One in twenty"]], hint: labelHint },
     { key: "liquid", group: "Sample", lvl: 2, label: "Liquid", kind: "select", options: Object.keys(LIQUIDS).map(function (k) { return [k, LIQUIDS[k]]; }) },
     { key: "glycerol_w", group: "Sample", lvl: 2, label: "Glycerol (by mass)", kind: "lin", min: 0, max: 0.95, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, when: function () { return state.liquid === "glycerol"; }, hint: function () { return "Viscosity " + fmtSig(viscosity_mPa_s(), 2) + " mPa s at " + Math.round(state.T_C) + " " + DEG + "C."; } },
@@ -345,7 +353,7 @@
     { key: "log_factor", group: "Camera and recording", lvl: 2, label: "Log-spaced: how much longer the movie lasts", kind: "select", num: true, when: function () { return state.frame_timing === "log"; },
       options: function () { return [2, 5, 10, 20, 50].map(function (k) { return [k, k + " times (" + fmtDur(movieSpanS(k)) + ")"]; }); } },
     { key: "sim_px", group: "Camera and recording", lvl: 3, label: "Simulated part of the image", kind: "select", num: true, options: [[64, "64 x 64 pixels (fast)"], [128, "128 x 128 pixels"], [256, "256 x 256 pixels (slow)"]],
-      hint: function () { return "The particles push each other at every step of " + fmtTime(stepS()) + ": about " + fmtSig(Math.max(1, simSeconds()), 1) + " s to simulate" + (simPx() < Math.min(state.sim_px, outPx()) ? ", after halving the simulated part to " + simPx() + " x " + simPx() + " pixels to keep it short" : "") + "."; } },
+      hint: function () { if (HYDRO()) return "Drawn from theory as a density field: about " + fmtSig(Math.max(1, simSeconds()), 1) + " s to simulate."; return "The particles push each other at every step of " + fmtTime(stepS()) + ": about " + fmtSig(Math.max(1, simSeconds()), 1) + " s to simulate" + (simPx() < Math.min(state.sim_px, outPx()) ? ", after halving the simulated part to " + simPx() + " x " + simPx() + " pixels to keep it short" : "") + "."; } },
 
     { key: "windowing", group: "Analysis", lvl: 2, label: "Windowing (Giavazzi et al. 2017)", kind: "select", options: [["off", "Off"], ["on", "On: each frame multiplied by a window that falls to zero at the edges"]],
       hint: function () { return state.windowing === "on" ? "Cells or particles that cross the edge of the image no longer leave bands along the axes of the map in step 4, nor a fast decay that swamps the finest patterns. The price: the window darkens the edges, so less of the field counts and the results scatter more, and patterns wider than a fifth of the field are left out (the window mixes each pattern with its neighbours)." : "The Fourier transform treats the image as one tile of a repeating pattern, so cells or particles crossing the edges make jumps at the tile borders. The central cross of the map is left out to remove most of their effect."; } },
@@ -368,7 +376,7 @@
   // light is collected and recorded. Every control appears exactly once (checked at start-up).
   const LAYOUT = [
     ["Sample", [
-      ["The particles", ["phi_c", "inter", "U0", "kappa_sigma", "diameter_um", "particle", "n_custom", "label", "dye"]],
+      ["The particles", ["phi_c", "inter", "U0", "kappa_sigma", "hydro", "diameter_um", "particle", "n_custom", "label", "dye"]],
       ["Liquid and temperature", ["liquid", "glycerol_w", "n_liquid", "visc_mPa_s", "T_C"]],
       ["Chamber", ["cell_um"]]]],
     ["Microscope (Nikon Ti2-E)", [
@@ -385,7 +393,7 @@
   ];
   // one-line summary under each block title: [setting, text before, text after]
   const SUMMARY = {
-    "Sample": [["phi_c", "", " full"], ["inter"], ["diameter_um"], ["liquid", "in "]],
+    "Sample": [["phi_c", "", " full"], ["inter"], ["hydro", "flow "], ["diameter_um"], ["liquid", "in "]],
     "Microscope (Nikon Ti2-E)": [["mode"], ["objective"], ["na_c", "condenser NA "]],
     "Camera and recording": [["camera"], ["scanner"], ["frame_rate_hz"], ["exposure_ms", "exposure "], ["n_frames", "", " frames"]],
     "Analysis": [["windowing"]]
@@ -571,8 +579,8 @@
     }
     // particle limit: the simulated field is halved down to 32 pixels (simPx); beyond that the concentration is lowered
     const n32 = particlesFor(32), ppp = pointsPerParticle(), over = Math.max(n32 / MAX_PARTICLES, n32 * ppp / MAX_POINTS);
-    phiCapped = over > 1;
-    if (phiCapped) state.phi_c *= 0.95 / over;
+    phiCapped = over > 1 && !HYDRO();
+    if (phiCapped && !HYDRO()) state.phi_c *= 0.95 / over;
   }
   // zoom that samples the confocal spot at about Nyquist (pixel near lambda / 4 NA)
   function autoZoom() {
@@ -679,7 +687,8 @@
   async function runHere(kind, token, cfg, opts) {
     let movie = cache.movie;
     if (kind === "simulate" || !movie) {
-      movie = await drive(MOVIE.simulate(cfg), token, 0, 0.75); if (!movie) return;
+      const c2 = cfg.interact && cfg.interact.hydro === true ? Object.assign({}, cfg, { interact: Object.assign({}, cfg.interact, { hydro: CROWD.hydroTheory(cfg.volume_fraction) }) }) : cfg;
+      movie = await drive(MOVIE.simulate(c2), token, 0, 0.75); if (!movie) return;
       const rv = await drive(MOVIE.simulate(CROWD.referenceConfig(cfg, movie.truth.interact.tau_B_s)), token, 0.75, 0.82); if (!rv) return;
       refHere = await drive(CROWD.referenceAmplitude(rv), token, 0.82, 0.85); if (!refHere) return;
     }
@@ -1109,6 +1118,16 @@
     const S = sm(k) * (1 - w) + sm(k + 1) * w;
     return 1 + tr.label_fraction * (S - 1);
   }
+  // what the shortest delays should show: D(q) / D0 = [x H(q) + (1 - x) Ds/D0] / [1 + x (S - 1)], H = Ds/D0 = 1 without
+  // hydrodynamic interactions
+  function trueD(q) {
+    const tr = cache.movie.truth.interact, Sx = trueS(q); if (!Sx) return null;
+    if (!tr.hydro) return 1 / Sx;
+    const qs = tr.q_per_um; let k = 0; while (k < qs.length - 2 && qs[k + 1] < q) k++;
+    const w = (q - qs[k]) / (qs[k + 1] - qs[k]), H = tr.H[k] + w * (tr.H[k + 1] - tr.H[k]), x = tr.label_fraction;
+    return (x * H + (1 - x) * tr.Ds_over_D0) / Sx;
+  }
+  function trueH(q) { const tr = cache.movie.truth.interact; if (!tr.hydro) return 1; const qs = tr.q_per_um; let k = 0; while (k < qs.length - 2 && qs[k + 1] < q) k++; const w = (q - qs[k]) / (qs[k + 1] - qs[k]); return tr.H[k] + w * (tr.H[k + 1] - tr.H[k]); }
   function pyS(q) { const tr = cache.movie.truth.interact; return 1 + tr.label_fraction * (CROWD.percusYevick(tr.phi, q * tr.sigma_um) - 1); }
   // the true peak of S(q) within the q used
   function truePeak() {
@@ -1167,13 +1186,14 @@
   function drawDq() {
     const res = cache.res, rows = res.rows, D0 = res.D0_um2_s, x1 = res.window.q_max_used * 1.08;
     let top = 1.4; rows.forEach(function (r) { if (r.D_um2_s > 0) top = Math.max(top, (r.D_um2_s + (r.D_err_um2_s || 0)) / D0); });
-    for (let i = 1; i <= 100; i++) { const v = trueS(x1 * i / 100); if (v) top = Math.max(top, 1 / v); }
+    for (let i = 1; i <= 100; i++) { const v = trueD(x1 * i / 100); if (v) top = Math.max(top, v); }
     top = Math.min(top, 12);
+    const hyd = !!cache.movie.truth.interact.hydro;
     const a = axes($("chart-dq"), { xlog: false, ylog: false, x0: 0, x1: x1, y0: 0, y1: top * 1.1, xlabel: "q (" + MU + "m\u207b\u00b9)", ylabel: level === "curious" ? "How fast (alone = 1)" : "D(q) / D0" }), ctx = a.ctx;
     ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(a.m.l, a.fy(1)); ctx.lineTo(a.m.l + a.pw, a.fy(1)); ctx.stroke(); ctx.setLineDash([]);
-    ctx.strokeStyle = C["accent-2"]; ctx.lineWidth = 1.8; ctx.beginPath(); let on = false;
-    for (let i = 1; i <= 240; i++) { const q = x1 * i / 240, v = trueS(q); if (!v) { on = false; continue; } const X = a.fx(q), Y = a.fy(Math.min(top * 1.1, 1 / v)); if (!on) { ctx.moveTo(X, Y); on = true; } else ctx.lineTo(X, Y); }
-    ctx.stroke();
+    const curve = function (f, col, dash, wd) { ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.setLineDash(dash); ctx.beginPath(); let on = false; for (let i = 1; i <= 240; i++) { const q = x1 * i / 240, v = f(q); if (v === null || !isFinite(v)) { on = false; continue; } const X = a.fx(q), Y = a.fy(Math.min(top * 1.1, v)); if (!on) { ctx.moveTo(X, Y); on = true; } else ctx.lineTo(X, Y); } ctx.stroke(); ctx.setLineDash([]); };
+    if (hyd) curve(function (q) { const v = trueS(q); return v ? 1 / v : null; }, C.muted, [7, 4], 1.3);
+    curve(trueD, C["accent-2"], [], 1.8);
     rows.forEach(function (r) {
       if (!(r.D_um2_s > 0)) return; const X = a.fx(r.q_per_um), col = qColor(qPos(r.q_per_um)), v = r.D_um2_s / D0;
       if (r.D_err_um2_s > 0 && level !== "curious") { ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X, a.fy(v - r.D_err_um2_s / D0)); ctx.lineTo(X, a.fy(v + r.D_err_um2_s / D0)); ctx.stroke(); }
@@ -1182,8 +1202,9 @@
     a.done();
     const ul = $("dq-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
-    add(level === "curious" ? "Dots: how fast each pattern fades at first, against the same particles far apart. Red line: what to expect right after the start, before the particles have moved far: fastest where the crowd is smoothest, slowest at the spacing of neighbours." : (cache.res.ref_rate ? "Dots: D(q) / D0 = \u0393(q) / \u0393ref(q), the rate of each pattern at the first delays against that of the same pattern in the dilute reference (bars: jackknife over ten parts of the movie); D0 = " : "Dots: D(q) = \u0393(q) / q\u00b2 from the first delays (bars: jackknife over ten parts of the movie), against D0 = ") + fmtSig(D0, 3) + " " + MU + "m\u00b2/s. Red: D0 / S(q), what the shortest delays should show without hydrodynamic interactions (this simulation has none).");
-    if (level !== "curious") add("At the widest patterns the dots fall below the red line: each pattern of the image also takes in finer ones along the axis of the microscope, which fade more slowly, and the fit reaches delays where the crowd has begun to rearrange.");
+    add(level === "curious" ? "Dots: how fast each pattern fades at first, against the same particles far apart. Red line: what to expect right after the start, before the particles have moved far: fastest where the crowd is smoothest, slowest at the spacing of neighbours." : (cache.res.ref_rate ? "Dots: D(q) / D0 = \u0393(q) / \u0393ref(q), the rate of each pattern at the first delays against that of the same pattern in the dilute reference (bars: jackknife over ten parts of the movie); D0 = " : "Dots: D(q) = \u0393(q) / q\u00b2 from the first delays (bars: jackknife over ten parts of the movie), against D0 = ") + fmtSig(D0, 3) + " " + MU + "m\u00b2/s. " + (hyd ? "Red: D0 H(q) / S(q), what the shortest delays should show with the hydrodynamic function H(q) of the theory drawn here; dashed: D0 / S(q), without the flow of the liquid." : "Red: D0 / S(q), what the shortest delays should show without hydrodynamic interactions (this simulation has none)."));
+    if (level !== "curious") add(hyd ? "Here every pattern fades exponentially at its short-time rate, so the fit is not slowed by the cages; at the widest patterns each pattern of the image still takes in finer ones along the axis of the microscope." : "At the widest patterns the dots fall below the red line: each pattern of the image also takes in finer ones along the axis of the microscope, which fade more slowly, and the fit reaches delays where the crowd has begun to rearrange.");
+    if (hyd && level !== "curious") add("Dividing by the measured S(q) gives the hydrodynamic function: H(q) = D(q) S(q) / D0, below 1 because the flow each particle makes holds its neighbours back. At the peak this page measures " + (cache.res.peak.D_um2_s ? fmtSig(cache.res.peak.D_um2_s * cache.res.peak.S / D0, 2) : "-") + ", the theory " + fmtSig(trueH(cache.res.peak.q_per_um), 2) + ".");
   }
 
   // ---- result -------------------------------------------------------------------------------
@@ -1209,7 +1230,8 @@
     h += '<span class="chip ' + v.cls + '">' + v.text + '</span>';
     const nums = [], low = res.rows[0];
     if (hasPeak(res)) nums.push("S(q) peaks at " + fmtSig(res.peak.S, 3) + " at q = " + fmtSig(res.peak.q_per_um, 3) + " " + MU + "m\u207b\u00b9" + (tp ? " (simulation " + fmtSig(tp.S, 3) + " at " + fmtSig(tp.q_per_um, 3) + ")" : ""));
-    if (hasPeak(res) && res.peak.D_um2_s) nums.push("there the patterns fade " + fmtSig(D0 / res.peak.D_um2_s, 2) + " times more slowly than for one particle alone (expected about " + fmtSig(tp.S, 2) + " at the shortest delays)");
+    if (hasPeak(res) && res.peak.D_um2_s) nums.push("there the patterns fade " + fmtSig(D0 / res.peak.D_um2_s, 2) + " times more slowly than for one particle alone (expected about " + fmtSig(1 / trueD(tp.q_per_um), 2) + " at the shortest delays" + (tr.hydro ? ", with the flow of the liquid; " + fmtSig(tp.S, 2) + " without" : "") + ")");
+    if (tr.hydro && hasPeak(res) && res.peak.D_um2_s) nums.push("the hydrodynamic function there, D S / D0, is " + fmtSig(res.peak.D_um2_s * res.peak.S / D0, 2) + " (theory " + fmtSig(trueH(tp.q_per_um), 2) + ")");
     nums.push("at the widest patterns (q = " + fmtSig(low.q_per_um, 2) + ") S = " + fmtSig(res.S_low, 2) + (res.D_low_um2_s ? " and D = " + fmtSig(res.D_low_um2_s / D0, 2) + " D0" : ""));
     h += '<p class="small" style="margin:0">' + nums.join("; ") + '.</p>';
     if (level !== "curious") {
@@ -1223,14 +1245,14 @@
         t += pb.failed ? row("pub", "Published method only", "-", "-", "-", "-", "-", "could not run: " + pb.failed) : row("pub", "Published method only", pb.has_peak ? f2(pb.peak_q_per_um) : "-", pb.has_peak ? f2(pb.peak_S) : "-", pb.has_peak && pb.peak_D_um2_s ? f2(pb.peak_D_um2_s / D0) : "-", f2(pb.S_low), pb.D_low_um2_s ? f2(pb.D_low_um2_s / D0) : "-", "the same movies: B from the first delays, the line through f = 1, D = \u0393 / q\u00b2, the reference bin by bin");
       }
       const sLowT = trueS(low.q_per_um);
-      t += row("truth", "Simulation", pk && tp ? f2(tp.q_per_um) : "-", pk && tp ? f2(tp.S) : "-", pk && tp ? f2(1 / tp.S) + " (short times)" : "-", f2(sLowT), sLowT ? f2(1 / sLowT) + " (short times)" : "-", "");
+      t += row("truth", "Simulation", pk && tp ? f2(tp.q_per_um) : "-", pk && tp ? f2(tp.S) : "-", pk && tp ? f2(trueD(tp.q_per_um)) + " (short times)" : "-", f2(sLowT), sLowT ? f2(trueD(low.q_per_um)) + " (short times)" : "-", tr.hydro ? "Percus-Yevick S(q), Beenakker-Mazur H(q)" : "");
       t += '</tbody></table></div>';
       h += t;
       h += '<details class="more"><summary>Details</summary><dl>';
       h += '<dt>Patterns used</dt><dd>q from ' + fmtSig(res.window.q_min_used, 2) + ' to ' + fmtSig(res.window.q_max_used, 2) + ' ' + MU + 'm\u207b\u00b9 (' + res.rows.length + ' q), where both this movie and the reference carry more signal than the camera noise</dd>';
       h += '<dt>Reference</dt><dd>a dilute movie of the same particles (volume fraction 4 %, ' + res.n_reference + ' particles), same optics and camera: the amplitude of one particle alone</dd>';
       h += '<dt>Rates</dt><dd>a straight line through ln f over the first delays, down to f = 0.6 (at least three delays)' + (res.offset ? ', with its own intercept' : ', through f = 1 at zero delay') + '; ' + (res.B_camera ? 'B = ' + fmtSig(res.B_camera, 3) + ' from the mean count and the read noise' : 'B at each q from the first delays') + '</dd>';
-      h += '<dt>Simulation</dt><dd>Brownian dynamics, time step ' + fmtTime(tr.step_s) + ' (free steps of 3 % of the diameter, overlaps pushed apart), D0 = ' + fmtSig(tr.D0_um2_s, 3) + ' ' + MU + 'm\u00b2/s, Brownian time ' + fmtTime(tr.tau_B_s) + '; no hydrodynamic interactions; ' + tr.n_labelled + ' of ' + mv.info.n_particles + ' particles dyed</dd>';
+      h += '<dt>Simulation</dt><dd>' + (tr.hydro ? 'a density field from theory, ' + tr.n_modes + ' Fourier modes (' + tr.kz_modes + ' along the axis), each fading at D0 Q\u00b2 H(Q) / S(Q); short-time self-diffusion Ds = ' + fmtSig(tr.Ds_over_D0, 2) + ' D0' : 'Brownian dynamics, time step ' + fmtTime(tr.step_s) + ' (free steps of 3 % of the diameter, overlaps pushed apart); no hydrodynamic interactions') + '; D0 = ' + fmtSig(tr.D0_um2_s, 3) + ' ' + MU + 'm\u00b2/s, Brownian time ' + fmtTime(tr.tau_B_s) + '; ' + tr.n_labelled + ' of ' + mv.info.n_particles + ' particles dyed</dd>';
       h += '</dl></details>';
     }
     $("result").innerHTML = h;
@@ -1240,7 +1262,7 @@
   function renderText() {
     const m = cache.movie, cfg = cache.cfg, tr = m.truth.interact;
     const modeTxt = { brightfield: "a bright-field microscope", phase: "a phase-contrast microscope", darkfield: "a dark-field microscope", dic: "a DIC microscope", fluorescence: "a widefield fluorescence microscope", spinning: "a spinning-disk confocal microscope", scanning: "a point-scanning confocal microscope" }[state.mode];
-    $("movie-text").textContent = "The movie shows " + fmtSize(cfg.diameter_um) + " " + ({ ps: "polystyrene", pmma: "PMMA", silica: "silica" }[state.particle] || "") + " spheres filling " + Math.round(100 * tr.phi) + " % of the volume, " + (tr.kind === "hard" ? "which only touch" : "which repel each other before they touch") + ", filmed through " + modeTxt + (tr.label_fraction < 1 ? "; only " + tr.n_labelled + " of the " + m.info.n_particles + " are dyed and show" : "") + ". Each particle jiggles in a cage of neighbours and slowly escapes from it. " + (state.mode === "spinning" || state.mode === "scanning" ? "The confocal pinholes keep only a thin layer in focus, so the crowd does not blur into a grey haze." : "Particles above and below the focus add a blurred haze.");
+    $("movie-text").textContent = "The movie shows " + fmtSize(cfg.diameter_um) + " " + ({ ps: "polystyrene", pmma: "PMMA", silica: "silica" }[state.particle] || "") + " spheres filling " + Math.round(100 * tr.phi) + " % of the volume, " + (tr.kind === "hard" ? "which only touch" : "which repel each other before they touch") + ", filmed through " + modeTxt + (tr.label_fraction < 1 ? "; only " + tr.n_labelled + " of the " + m.info.n_particles + " are dyed and show" : "") + ". " + (tr.hydro ? "With the flow of the liquid switched on, the movie is drawn from theory as a field of density, not particle by particle: its blobs have the spacing of neighbouring particles but are not single particles, and where the crowd is sparse the field can even dip below the background. " : "Each particle jiggles in a cage of neighbours and slowly escapes from it. ") + (state.mode === "spinning" || state.mode === "scanning" ? "The confocal pinholes keep only a thin layer in focus, so the crowd does not blur into a grey haze." : "Particles above and below the focus add a blurred haze.");
     $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + (m.times_s ? m.T + " frames at log-spaced times over " + fmtDur(m.times_s[m.T - 1] + 1 / m.frame_rate_hz) + ", the closest " + fmtTime(1 / m.frame_rate_hz) + " apart" : m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s = " + fmtSig(m.T / m.frame_rate_hz, 3) + " s") + ". Box " + cfg.cell_um + " " + MU + "m deep, repeating in all directions, focus " + fmtSig(cfg.focus_um, 2) + " " + MU + "m from its bottom, " + m.info.n_particles + " particles.";
     $("diff-note").textContent = "A particle that moved leaves a pair of spots, one darker and one brighter. In a crowd the pairs line up with the neighbours: a particle can only move where another has made room.";
     const sb = $("movie-scale"), target = m.L_um / 4, nice = niceStep(target) > target ? niceStep(target) / 2 : niceStep(target);
@@ -1270,8 +1292,8 @@
       shows: [{ label: "All dyed", set: {}, go: "step-rates" }, { label: "One in twenty", set: { label: 0.05 }, go: "step-rates" }] },
     { lvl: 2, title: "Confocal or widefield", text: "In a widefield microscope the particles above and below the focus add a blurred haze to every frame. It brings shot noise but almost no fine pattern, so the finest patterns sink into the noise sooner: in this thin chamber the range used shrinks, but still reaches past the peak of S(q). In thicker samples, or with smaller particles, whose peak lies at finer patterns, widefield loses the peak; the pinholes of a confocal remove the haze. That is why Lu et al. (2012) used confocal DDM for concentrated suspensions.",
       shows: [{ label: "Widefield fluorescence", set: { mode: "fluorescence" }, go: "step-rates" }, { label: "Spinning-disk confocal", set: {}, go: "step-rates" }] },
-    { lvl: 2, title: "Hydrodynamic interactions: not here yet", text: "Real particles in a liquid also push each other through the flow each one makes as it moves. This changes the collective rate to D0 q\u00b2 H(q) / S(q): the hydrodynamic function H(q) is below 1 at most q in concentrated hard spheres, with a minimum near the peak of S(q), about 0.6 at 30 % (Segre, Behrend and Pusey 1995; Banchio and Nagele 2008). This simulation leaves the flow out (H = 1), so D(q) S(q) / D0 should come out as 1 at the shortest delays. It comes out somewhat lower, because the fit reaches delays where the cages are already felt, and because the particles move in finite steps. Measuring H(q) is how DDM, like light scattering, sees hydrodynamics.",
-      shows: [] }
+    { lvl: 1, title: "Hydrodynamic interactions", text: "Real particles in a liquid also push each other through the flow each one makes as it moves. This changes the collective rate to D0 q\u00b2 H(q) / S(q): in concentrated hard spheres the hydrodynamic function H(q) is below 1 at all q, lowest near the peak of S(q), about 0.6 at 30 % (Segre, Behrend and Pusey 1995; Banchio and Nagele 2008). Simulating the flow particle by particle is beyond a browser, so with the flow switched on the page draws the movie from theory, as a field of density with H(q) of Beenakker and Mazur, and DDM measures H(q) back: D(q) S(q) / D0. Without the flow the particles are simulated one by one, and H = 1.",
+      shows: [{ label: "Without the flow", set: {}, go: "step-rates" }, { label: "With the flow (theory)", set: { hydro: "theory" }, go: "step-rates" }] }
   ];
   function buildCards() {
     const host = $("cards");

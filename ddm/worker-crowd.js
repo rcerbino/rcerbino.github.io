@@ -16,7 +16,9 @@
     try {
       let out = null;
       if (m.type === "simulate" || !movie) {
-        movie = drive(MOVIE.simulate(m.cfg), m.token, 0, 0.75);
+        // hydrodynamic interactions from theory: the tables of S(q) and H(q) for this volume fraction
+        const c2 = m.cfg.interact && m.cfg.interact.hydro === true ? Object.assign({}, m.cfg, { interact: Object.assign({}, m.cfg.interact, { hydro: CROWD.hydroTheory(m.cfg.volume_fraction) }) }) : m.cfg;
+        movie = drive(MOVIE.simulate(c2), m.token, 0, 0.75);
         const rv = drive(MOVIE.simulate(CROWD.referenceConfig(m.cfg, movie.truth.interact.tau_B_s)), m.token, 0.75, 0.82);
         ref = drive(CROWD.referenceAmplitude(rv), m.token, 0.82, 0.85);
         out = { n: movie.n, T: movie.T, frames: movie.frames.slice(0), pixel_um: movie.pixel_um, L_um: movie.L_um, frame_rate_hz: movie.frame_rate_hz,

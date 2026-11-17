@@ -1852,6 +1852,13 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const oriented = shape !== "sphere";                                          // carries an axis that rotates
     const pAsp = body ? num(cfg, "aspect", 1, 30) : 1;
     const visco = cfg.visco || null;
+    // hydrodynamic interactions from theory: the movie is drawn as a density field (setupField below)
+    const HYD = INTC && INTC.hydro ? INTC.hydro : null;
+    if (HYD) {
+      need(INTC.kind === "hard", "hydrodynamic interactions are drawn for hard spheres only");
+      need(mode === "fluorescence" || confocal, "hydrodynamic interactions are drawn for fluorescence and confocal movies only");
+      need(Array.isArray(HYD.q_sigma) && Array.isArray(HYD.S) && Array.isArray(HYD.H) && HYD.Ds_over_D0 > 0, "hydrodynamic interactions: the theory tables are missing");
+    }
     if (INTC) {
       need(INTC.kind === "hard" || INTC.kind === "yukawa", "interact.kind must be hard or yukawa");
       need(shape === "sphere" && !visco && !cfg.swim && cfg.gravity !== true && cfg.walls !== true && !(cfg.drift_um_s > 0) && !(spread > 0), "particles that interact: spheres of one size, without swimming, gravity, walls, drift or a material");
@@ -2094,7 +2101,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     }
     // particles that push each other: Brownian dynamics of the whole box (see the header)
     let INT = null;
-    if (INTC) INT = setupInteract();
+    if (INTC && !HYD) INT = setupInteract();
     function setupInteract() {
       const sg = classes[0].d, D0 = classes[0].hyd.D_t, tauB = sg * sg / D0, kind = INTC.kind;
       const U0 = kind === "yukawa" ? num(INTC, "U0", 0, 1000) : 0, ks = kind === "yukawa" ? num(INTC, "kappa_sigma", 0.5, 100) : 1, kap = ks / sg;
@@ -2532,13 +2539,94 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const seenAcc = (!split && !body && classes.length > 1) ? classes.map(function () { return new Float64Array(nq); }) : null;
     const seenEvery = Math.max(1, Math.floor(T / 32));
     const swSeen = { ws: new Float64Array(nq), wn: new Float64Array(nq), wv: new Float64Array(nq), wv2: new Float64Array(nq) };
+    /* Hydrodynamic interactions from theory (HYD): instead of particles, the movie is drawn from the density of the
+     * particles as a Gaussian field. Each Fourier mode Q = (k, kz) of the density in the periodic box is an
+     * Ornstein-Uhlenbeck process with variance N S(Q) (Percus-Yevick) and rate D0 Q^2 H(Q) / S(Q) (H from theory), as in
+     * the short-time limit, at all delays. With a share x of the particles dyed, the dyed density is x times that field
+     * plus the fluctuation of the dye among the particles (variance N x (1 - x), rate Ds Q^2, Ds the short-time
+     * self-diffusion). The image of one particle at depth z, K(k, z), becomes K_m(k) = int dH K(k, focus - H)
+     * exp(-i kz_m H) over the depth of the box, kz_m = 2 pi m / Lz, and the image spectrum is sum_m K_m(k) rho(k, m) / Lz,
+     * on the camera grid (no aliasing beyond its Nyquist frequency, no blur during the exposure, no row timing).
+     * Modes are drawn with twice the variance and the real part of the image kept: that is the same as a field with the
+     * symmetry of a real density. */
+    let FIELD = null;
+    if (HYD) FIELD = (function () {
+      const sg = classes[0].d, D0 = classes[0].hyd.D_t, lf = INTC.label_fraction === undefined ? 1 : num(INTC, "label_fraction", 0, 1);
+      const Ds = D0 * HYD.Ds_over_D0, qsT = HYD.q_sigma, nT = qsT.length, dqT = qsT[1] - qsT[0];
+      const tab = function (arr, Q, far) { const t = (Q * sg - qsT[0]) / dqT; if (t <= 0) return arr[0]; if (t >= nT - 1) return far; const i = Math.floor(t); return arr[i] + (t - i) * (arr[i + 1] - arr[i]); };
+      const B = blocks[chans[0].all], nzb = B.z_um.length;
+      const nH = Math.max(256, Math.ceil(Lz / 0.02)), dH = Lz / nH;
+      // K(q, focus - H) on the H grid, for every kernel q
+      const Kz = new Float64Array(nq * nH);
+      for (let j = 0; j < nH; j++) { zLocate(B, hf - (j + 0.5) * dH); const lo = zw.col - B.off, f = zw.f; for (let iq = 0; iq < nq; iq++) { const o = iq * nzb + lo; Kz[iq * nH + j] = B.Kr[o] + f * (B.Kr[o + 1] - B.Kr[o]); } }
+      // K_m(q) for m >= 0 (K real: K_-m = conj K_m); kept while the largest |K_m| is above 1e-3 of K_0(0)
+      const KmR = [], KmI = [];
+      const k00 = (function () { let v = 0; for (let j = 0; j < nH; j++) v += Kz[j] * dH; return Math.abs(v); })();
+      for (let m = 0; m <= Math.min(200, nH / 2); m++) {
+        const r = new Float64Array(nq), im = new Float64Array(nq), kz = TWO_PI * m / Lz;
+        let mx = 0;
+        for (let iq = 0; iq < nq; iq++) { let ar = 0, ai = 0; for (let j = 0; j < nH; j++) { const ph = kz * (j + 0.5) * dH, v = Kz[iq * nH + j] * dH; ar += v * Math.cos(ph); ai -= v * Math.sin(ph); } r[iq] = ar; im[iq] = ai; mx = Math.max(mx, Math.hypot(ar, ai)); }
+        if (m > 0 && mx < 1e-3 * k00) break;
+        KmR.push(r); KmI.push(im);
+      }
+      const Mz = KmR.length - 1;
+      // camera-grid wave vectors (transposed layout: index k1 * N + k2, k1 along x) inside the kernel range
+      const qn = new Float64Array(N); for (let k = 0; k < N; k++) qn[k] = (k < N / 2 ? k : k - N) * TWO_PI / L;
+      const pixN = new Float64Array(N); for (let k = 0; k < N; k++) { const u = qn[k] * a / 2; pixN[k] = det.kind === "scanner" || Math.abs(u) < 1e-12 ? 1 : Math.sin(u) / u; }
+      const idx = [], wr = [], wi = [], gc = [], vc = [], gs = [], vs = [];
+      const Nlab = lf * nTot;
+      let mean0 = 0;
+      for (let k1 = 0; k1 < N; k1++) for (let k2 = 0; k2 < N; k2++) {
+        const kk = Math.hypot(qn[k1], qn[k2]), t = kk / qKmax * (nq - 2);
+        if (t >= nq - 2) continue;
+        const i = Math.floor(t), f = t - i, w0 = pixN[k1] * pixN[k2] / (a * a * Lz);
+        for (let m = -Mz; m <= Mz; m++) {
+          const R = KmR[Math.abs(m)], I = KmI[Math.abs(m)];
+          const kr = (R[i] + f * (R[i + 1] - R[i])) * w0, ki = (I[i] + f * (I[i + 1] - I[i])) * w0 * (m < 0 ? -1 : 1);
+          if (k1 === 0 && k2 === 0) { if (m === 0) mean0 = kr * Nlab; continue; }
+          const kz = TWO_PI * m / Lz, Q = Math.hypot(kk, kz), Sq = tab(HYD.S, Q, 1), Hq = tab(HYD.H, Q, HYD.Ds_over_D0);
+          idx.push(k1 * N + k2); wr.push(kr); wi.push(ki);
+          gc.push(D0 * Q * Q * Hq / Sq); vc.push(2 * nTot * Sq * lf * lf);       // collective part, times x
+          gs.push(Ds * Q * Q); vs.push(2 * nTot * lf * (1 - lf));               // the dye among the particles
+        }
+      }
+      const nV = idx.length, two = lf < 1;
+      const IDX = Int32Array.from(idx), WR = Float64Array.from(wr), WI = Float64Array.from(wi), GC = Float64Array.from(gc), VC = Float64Array.from(vc), GS = Float64Array.from(gs), VS = Float64Array.from(vs);
+      need(nV * (two ? 4 : 2) <= 12e6, "too many density modes for the browser: use a smaller field or a thinner cell");
+      const cR = new Float32Array(nV), cI = new Float32Array(nV), sR = two ? new Float32Array(nV) : null, sI = two ? new Float32Array(nV) : null;
+      for (let v = 0; v < nV; v++) { const sc = Math.sqrt(VC[v] / 2); cR[v] = sc * rng.g(); cI[v] = sc * rng.g(); if (two) { const ss = Math.sqrt(VS[v] / 2); sR[v] = ss * rng.g(); sI[v] = ss * rng.g(); } }
+      let tNow = 0;
+      const evolve = function (dt, Re, Im, G, V) {
+        for (let v = 0; v < nV; v++) {
+          const x = G[v] * dt;
+          if (x > 20) { const sc = Math.sqrt(V[v] / 2); Re[v] = sc * rng.g(); Im[v] = sc * rng.g(); continue; }
+          const e = Math.exp(-x), sc = Math.sqrt(V[v] / 2 * (1 - e * e));
+          Re[v] = e * Re[v] + sc * rng.g(); Im[v] = e * Im[v] + sc * rng.g();
+        }
+      };
+      return {
+        frame: function (t0) {
+          const dt = t0 - tNow; if (dt > 0) { evolve(dt, cR, cI, GC, VC); if (two) evolve(dt, sR, sI, GS, VS); tNow = t0; }
+          Fr.fill(0); Fi.fill(0); Fr[0] = mean0;
+          for (let v = 0; v < nV; v++) {
+            let r = cR[v], im = cI[v]; if (two) { r += sR[v]; im += sI[v]; }
+            const p = IDX[v]; Fr[p] += WR[v] * r - WI[v] * im; Fi[p] += WR[v] * im + WI[v] * r;
+          }
+        },
+        truth: function (span) {
+          return { kind: "hard", hydro: true, sigma_um: sg, phi: phi, D0_um2_s: D0, tau_B_s: sg * sg / D0, Ds_over_D0: HYD.Ds_over_D0, D_self_movie_um2_s: null, movie_s: span,
+                   q_per_um: qsT.map(function (x) { return x / sg; }), S: HYD.S.slice(), H: HYD.H.slice(), n_labelled: Math.round(Nlab), label_fraction: lf, step_s: null, n_modes: nV, kz_modes: 2 * Mz + 1 };
+        }
+      };
+    })();
     // particles that interact: equilibrate, then move the whole box to each frame time; snapshots for the true S(q)
     const snapAt = INT ? new Set(Array.from({ length: 8 }, function (_, k) { return Math.round(k * (T - 1) / 7); })) : null, snaps = [];
     let disp0 = null;
     if (INT) for (let k = 0; k < INT.nEq; k++) { INT.step(); if (k % 2000 === 1999) yield { stage: "Letting the particles settle", frac: 0.2 * k / INT.nEq }; }
     for (let t = 0; t < T; t++) {
-      grid.fill(0);
       const t0 = times ? times[t] : t * dtFrame;
+      if (FIELD) FIELD.frame(t0); else {
+      grid.fill(0);
       if (INT) {
         while (INT.t + INT.h <= t0) { INT.step(); INT.t += INT.h; }
         if (t === 0) disp0 = [Float64Array.from(INT.UXd), Float64Array.from(INT.UYd)];
@@ -2628,14 +2716,17 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       // fold the fine spectrum onto the camera grid (aliasing); still transposed layout
       Fr.fill(0); Fi.fill(0);
       for (let j = 0; j < act.length; j++) { const p = act[j], pc = foldIdx[j]; Fr[pc] += S_r[p]; Fi[pc] += S_i[p]; }
+      }   // particles (not FIELD)
       // inverse transform from transposed layout returns the image in normal layout
       O.FFT.fft2T(Fr, Fi, N, tbN, +1);
       const fo = t * N * N, inv = 1 / (N * N);
       for (let p = 0; p < N * N; p++) {
         const signal = Fr[p] * inv;                // particle part of the pixel value
         let e = (bgE + sigScale * signal) * colGain[p % N];
-        if (e < 0) e = 0;
-        e += Math.sqrt(enf * e) * rng.g() + readE * rng.g();
+        // a density field (FIELD) is Gaussian and can dip below zero where the crowd is sparse: kept, so that its
+        // fluctuations stay as the theory says (shot noise from the positive part only)
+        if (e < 0 && !FIELD) e = 0;
+        e += Math.sqrt(enf * Math.max(0, e)) * rng.g() + readE * rng.g();
         if (e > fullWell) e = fullWell;
         frames[fo + p] = e; re[p] = e; im[p] = 0;
       }
@@ -2687,7 +2778,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
               particle: { shape: shape, oriented: oriented, body: body, aspect: pAsp, birefringence: dn, geometry: cm.geo, points: body ? { xyz: cm.pts.xyz, n: cm.pts.n, spacing: cm.pts.spacing } : null,
                           alpha_perp: cm.aPerp, dalpha: cm.dA, alpha_ref: cm.aRef, Wtab: cm.Wtab || null, polarization: pol, background_share: bgf } },
       truth: { diameter_um: d0, mean_diameter_um: dnum, D_um2_s: hd0.D_t, D_seen_um2_s: Dseen, seen_table: seenTable, diameter_seen_um: kT / (3 * Math.PI * eta * Dseen * 1e-12) * 1e6, drift_um_s: drift, drift_deg: driftDeg, drift_profile: driftProfile, drift_z_um_s: driftZ,
-               interact: INT ? interactTruth() : null,
+               interact: INT ? interactTruth() : FIELD ? FIELD.truth(times ? times[T - 1] : (T - 1) * dtFrame) : null,
                visco: VE ? { lam: Array.from(VE[Math.floor(VE.length / 2)].lam), c: Array.from(VE[Math.floor(VE.length / 2)].c), a_um: VE[Math.floor(VE.length / 2)].a_um, eta_s_Pa_s: eta } : null,
                D_plane_um2_s: hd0.D_t * fParFocus, D_plane_all_um2_s: hd0.D_t * fParMean, walls: walls, gravity: gravity, gravitational_length_um: isFinite(classes[0].lg) ? classes[0].lg : null,
                swim: sw ? (function () {
