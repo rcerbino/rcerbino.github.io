@@ -613,6 +613,7 @@
     state.zoom = opts.filter(function (z) { return FIELD_NUMBER_MM * 1000 / Math.SQRT2 / objective().m / z / state.scan_px <= target * 1.5; })[0] || 32;
   }
   let lastKey = null, lastMat = BASE.mat;
+  let prevMode = BASE.mode;
   function onChange(key) {
     lastKey = key;
     // switching to phase contrast with an objective that has no phase ring: take the phase objective of the same
@@ -627,6 +628,9 @@
     if (key === "mat" && state.mat === "custom") { const m = lastMat ? VE[lastMat] : null; if (m && !m.custom) { const md = m.modes(); state.mat_G = md.length ? Math.round(md[0][0] * 100) / 100 : 0.5; state.mat_tau = md.length ? md[0][1] : 0.5; state.mat_Ginf = m.Ginf || 0; } }
     if (key === "mat") lastMat = state.mat;
     if (SCANNING() && (key === "mode" || key === "objective" || key === "scan_px")) autoZoom();
+    // back from the point scanner to a camera: the scanner's slow frame rate is not kept
+    if (key === "mode" && prevMode === "scanning" && !SCANNING()) state.frame_rate_hz = BASE.frame_rate_hz;
+    if (key === "mode") prevMode = state.mode;
     if (key === "camera") { const c = cam(); state.cam_mode = Object.keys(c.modes)[0]; state.iface = Object.keys(c.ifaces)[0]; state.binning = 1; }
     resetPredictions();
     constrain(); syncControls(); drawFov();
@@ -673,7 +677,10 @@
   // the progress bar is pinned to the bottom of the window; "busy" while a run is going
   function progress(frac, stage) { $("bar").style.width = (100 * frac).toFixed(1) + "%"; $("status").textContent = stage + "..."; $("runbar").classList.add("busy"); }
   function idle() { $("runbar").classList.remove("busy"); }
-  function showError(msg) { const el = $("error"); el.hidden = false; el.textContent = "The run stopped: " + msg; $("status").textContent = "The run stopped: see the message under the settings."; $("bar").style.width = "0"; idle(); }
+  // a run that stops: say so where the visitor looks (the error, the hero) and grey out the steps, which still show the last run
+  function showError(msg) { const el = $("error"); el.hidden = false; el.textContent = "The run stopped: " + msg; $("status").textContent = "The run stopped: see the message under the settings."; $("bar").style.width = "0"; idle();
+    $("hero-result").innerHTML = '<span class="chip bad">The run stopped</span><span>' + msg.replace(/[<>&]/g, "") + '</span>';
+    document.querySelector(".steps").classList.add("stale"); }
   let inflight = null;
   let runStart = 0;
   function start(kind) {
@@ -719,6 +726,7 @@
     finish(movie, res, kind === "simulate" ? cfg : cache.cfg, opts);
   }
   function finish(movie, res, cfg, opts) {
+    document.querySelector(".steps").classList.remove("stale");
     const fresh = movie !== cache.movie;
     cache.movie = movie; cache.res = res; cache.cfg = cfg; cache.opts = opts;
     // a new movie: the delay slider in the middle of the delays where the beads moved measurably, and the lower map zoomed on
@@ -1016,6 +1024,7 @@
     const cx = S / 2 + 0.5 * s, cy = S / 2 + 0.5 * s;
     const kopt = cache.res.window.q_opt_per_um * cache.movie.L_um / (2 * Math.PI);
     ctx.lineWidth = 2;
+    if ($("kopt-note")) $("kopt-note").hidden = !(kopt < n / 2);
     if (level !== "curious" && kopt < n / 2) { ctx.setLineDash([8, 8]); ctx.strokeStyle = "rgba(255,255,255,0.75)"; ctx.beginPath(); ctx.arc(cx, cy, kopt * s, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]); }
     const px = cx + sel.kx * s, py = cy - sel.ky * s;
     ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(px, py, 9, 0, 2 * Math.PI); ctx.stroke();
@@ -1171,7 +1180,7 @@
     a.done();
     const ul = $("msd-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
-    add(level === "curious" ? "Coloured dots: from each stripe spacing alone, in the colours of step 5. Black: all of them together, with the curve through them." : "Coloured dots: the displacement that gives the measured f at each q alone (colours of step 5; with the depth of field, see the math), where f is clearly below 1 and above 0.15. Black: combined over q, with its uncertainty (jackknife over ten parts of the movie), and the smooth curve used below.");
+    add(level === "curious" ? "Coloured dots: from each stripe spacing alone, in the colours of step 5. Large dots and line: all of them together." : "Coloured dots: the displacement that gives the measured f at each q alone (colours of step 5; with the depth of field, see the math), where f is clearly below 1 and above 0.15. Large dots and line: combined over q, with its uncertainty (jackknife over ten parts of the movie), and the smooth curve used below.");
     if (level !== "curious") add("Dashed red: what the simulated beads do in this material (exact). A slope of 1 on these axes is free diffusion; a flat stretch, beads held in cages.");
   }
   // storage (G') and loss (G'') moduli against frequency, with the rheometer (the material simulated)
@@ -1226,6 +1235,7 @@
   // what the beads say about the material, in a few words
   function kindOf(r) {
     if (r.plateau_Pa) return { word: "A solid", text: "at long times the beads stay in their cages: G' levels off" };
+    if (r.eta_long_Pa_s && r.crossings.some(function (c) { return c.elastic_above; })) return { word: "A viscoelastic liquid", text: "elastic at high frequencies, it flows at long times: the beads first rattle in cages, then diffuse freely" };
     if (r.eta_long_Pa_s) return { word: "A liquid", text: "at long times the beads diffuse freely: the material flows" };
     return { word: "In between", text: "the beads neither diffuse freely nor stay put within the movie" };
   }
@@ -1346,6 +1356,7 @@
   function applyPreset(set) {
     const keep = state.seed, sp = state.sim_px;
     state = Object.assign({}, BASE, set); state.seed = LEVEL_RANK[level] >= 3 ? keep : BASE.seed; state.sim_px = set.sim_px || sp;
+    prevMode = state.mode;
     lastMat = state.mat;
     resetPredictions();
     if (state.mode === "scanning" && !set.zoom) autoZoom();
@@ -1453,7 +1464,7 @@
   });
   $("btn-times").addEventListener("click", function () {
     const t = frameTimes(); if (!t) return;
-    let csv = "frame,time_s\n"; for (let i = 0; i < t.length; i++) csv += i + "," + t[i] + "\n";
+    let csv = "frame,time_s\n"; for (let i = 0; i < t.length; i++) csv += i + "," + (+t[i].toPrecision(9)) + "\n";
     DDM_TIFF.save(movieName() + "-times.csv", csv, "text/csv");
   });
 

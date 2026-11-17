@@ -191,6 +191,7 @@ body { padding-bottom: 3.2rem; }
 .error { color: var(--bad); background: var(--bad-bg); border-radius: 6px; padding: 0.6rem 0.8rem; font-family: var(--sans); font-size: 0.9rem; }
 
 .steps { display: grid; gap: 3rem; min-width: 0; }
+.steps.stale { opacity: 0.35; }
 .step { display: grid; gap: 1rem; min-width: 0; scroll-margin-top: 1rem; }
 .step-title { display: flex; gap: 0.75rem; align-items: baseline; }
 .step-title .num { font-family: var(--sans); font-size: 0.85rem; font-weight: 600; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; min-width: 1.7rem; height: 1.7rem; display: inline-grid; place-items: center; flex: none; }
@@ -290,7 +291,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
       <p class="eyebrow">Differential dynamic microscopy</p>
       <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><span aria-current="page">Liquid or solid</span><a href="../crowded/">Crowded particles</a></nav>
       <h1>Is it a liquid or a solid? Microrheology with tracer beads</h1>
-      <p class="lede">Many soft materials are a bit of both: a polymer solution springs back if you poke it quickly but flows if you wait, and a gel that is just forming is barely solid. A rheometer measures this by shearing the sample. Microrheology lets the material be: it mixes in a few tiny beads and watches how far the thermal kicks of the molecules push them in a given time. In a liquid the beads wander off; in a solid they rattle in place. From that motion follow the storage modulus G' (how elastic) and the loss modulus G'' (how viscous), over many decades of frequency, from a drop of sample. Differential dynamic microscopy (DDM) reads the motion of the beads from an ordinary microscope movie, without following any of them (Edera et al. 2017). Here a simulated microscope lets you do it on materials whose moduli are known exactly.</p>
+      <p class="lede">Many soft materials are a bit of both: a polymer solution springs back if you poke it quickly but flows if you wait, and a gel that is just forming is barely solid. Microrheology measures it without shearing the sample: it mixes in a few tiny beads and watches how far the thermal kicks of the molecules push them in a given time. In a liquid the beads wander off; in a solid they rattle in place. From that motion follow the storage modulus G' (how elastic) and the loss modulus G'' (how viscous), over many decades of frequency, from a drop of sample. Differential dynamic microscopy (DDM) reads the motion of the beads from an ordinary microscope movie, without following any of them (Edera et al. 2017). Here a simulated microscope lets you do it on materials whose moduli are known exactly.</p>
       <fieldset class="levels">
         <legend>How deep do you want to go?</legend>
         <div class="level-opts" role="radiogroup">
@@ -418,7 +419,7 @@ img_seq = fd.read_images(file_names)</pre>
             <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie. The centre of the map holds wide stripes, the edge fine ones. The beads move the same way in every direction, so the map is round.</p>
             <p>A bead that moves by a fraction of a stripe spacing already changes that pattern; to renew a wide pattern it must go much further. So fine stripes are a magnifying glass for small motions, wide stripes for large ones, and together they cover displacements from nanometres to micrometres.</p>
             <p>The second map shows how much of each pattern is left after the delay: red where it is still all there, the colour of the page where it has faded. In a gel the wide patterns stay red at every delay.</p>
-            <p class="lvl-2">The dashed circle on the strength map marks the finest pattern the objective can resolve.</p>
+            <p class="lvl-2" id="kopt-note">The dashed circle on the strength map marks the finest pattern the objective can resolve.</p>
           </div>
         </div>
         <details class="math" data-open-at="researcher">
@@ -476,7 +477,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             <div class="predict" data-predict="bigger" data-right="no">
               <div class="q">Predict first: the beads are twice as large. Do the moduli change?</div>
               <div class="btns"><button type="button" data-guess="yes">Yes</button><button type="button" data-guess="no">No</button></div>
-              <div class="a" hidden><span class="verdict"></span> No. Larger beads move less: their mean squared displacement halves. But the Stokes-Einstein relation multiplies it by the size again, so the moduli, which belong to the material, stay the same. The bench now runs with beads twice as large (at most 3 &micro;m).</div>
+              <div class="a" hidden><span class="verdict"></span> No. Larger beads move less: their mean squared displacement halves. But the rule that turns displacement into moduli multiplies it by the size again, so the moduli, which belong to the material, stay the same. The bench now runs with beads twice as large (at most 3 &micro;m).</div>
             </div>
           </div>
         </div>

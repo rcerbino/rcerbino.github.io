@@ -123,7 +123,13 @@
   function interHint() {
     const ph = state.phi_c, gap = state.diameter_um * (Math.pow(0.74 / ph, 1 / 3) - 1);
     let h = "Volume fraction " + fmtSig(ph, 2) + ": " + (ph < 0.1 ? "dilute enough that the particles rarely meet." : ph < 0.3 ? "each particle often bumps into its neighbours." : "crowded: each particle sits in a cage of neighbours, about " + fmtSig(Math.max(0, gap) * 1000, 2) + " nm apart at the surfaces on average.");
-    if (state.inter === "yukawa") h += " The repulsion reaches about " + fmtSig(state.diameter_um / state.kappa_sigma * 1000, 2) + " nm (the Debye length) beyond contact, with " + fmtSig(state.U0, 2) + " kT at contact.";
+    if (state.inter === "yukawa") {
+      h += " The repulsion reaches about " + fmtSig(state.diameter_um / state.kappa_sigma * 1000, 2) + " nm (the Debye length) beyond contact, with " + fmtSig(state.U0, 2) + " kT at contact.";
+      // effective hard-sphere diameter: where the repulsion falls to 1 kT; beyond about 0.49 of effective volume fraction
+      // hard spheres freeze
+      let r = 1; if (state.U0 > 1) { let lo = 1, hi = 1 + 30 / state.kappa_sigma; for (let i = 0; i < 50; i++) { const m = 0.5 * (lo + hi); if (state.U0 * Math.exp(-state.kappa_sigma * (m - 1)) / m > 1) lo = m; else hi = m; } r = lo; }
+      if (ph * r * r * r > 0.49) h += " This crowded and this charged, a real sample would freeze into a crystal; the simulation is too short to show it, and its peak of S(q) becomes very sharp.";
+    }
     return h;
   }
   function labelHint() {
@@ -296,7 +302,7 @@
     { key: "inter", group: "Sample", lvl: 1, label: "How they interact", kind: "select", options: Object.keys(INTER).map(function (k) { return [k, INTER[k]]; }) },
     { key: "U0", group: "Sample", lvl: 2, label: "Repulsion at contact", kind: "log", min: 3, max: 300, fmt: function (v) { return fmtSig(v, 2) + " kT"; }, when: function () { return state.inter === "yukawa"; } },
     { key: "kappa_sigma", group: "Sample", lvl: 2, label: "Range of the repulsion: diameter / Debye length", kind: "log", min: 2, max: 30, fmt: function (v) { return fmtSig(v, 2); }, when: function () { return state.inter === "yukawa"; }, hint: function () { return "Smaller numbers: less salt, a longer reach."; } },
-    { key: "label", group: "Sample", lvl: 1, label: "Share of the particles that are dyed", kind: "select", options: [[1, "All"], [0.5, "Half"], [0.2, "One in five"], [0.05, "One in twenty"]], hint: labelHint },
+    { key: "label", group: "Sample", lvl: 1, label: "Share of the particles that are dyed", when: function () { return !TRANS(); }, kind: "select", options: [[1, "All"], [0.5, "Half"], [0.2, "One in five"], [0.05, "One in twenty"]], hint: labelHint },
     { key: "liquid", group: "Sample", lvl: 2, label: "Liquid", kind: "select", options: Object.keys(LIQUIDS).map(function (k) { return [k, LIQUIDS[k]]; }) },
     { key: "glycerol_w", group: "Sample", lvl: 2, label: "Glycerol (by mass)", kind: "lin", min: 0, max: 0.95, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, when: function () { return state.liquid === "glycerol"; }, hint: function () { return "Viscosity " + fmtSig(viscosity_mPa_s(), 2) + " mPa s at " + Math.round(state.T_C) + " " + DEG + "C."; } },
     { key: "n_liquid", group: "Sample", lvl: 3, label: "Liquid refractive index", kind: "lin", min: 1.30, max: 1.60, step: 0.005, fmt: function (v) { return v.toFixed(3); }, when: function () { return state.liquid === "custom"; } },
@@ -385,7 +391,7 @@
   ];
   // one-line summary under each block title: [setting, text before, text after]
   const SUMMARY = {
-    "Sample": [["phi_c", "", " full"], ["inter"], ["diameter_um"], ["liquid", "in "]],
+    "Sample": [["inter"], ["diameter_um"], ["phi_c", "", " by volume"], ["liquid", "in "]],
     "Microscope (Nikon Ti2-E)": [["mode"], ["objective"], ["na_c", "condenser NA "]],
     "Camera and recording": [["camera"], ["scanner"], ["frame_rate_hz"], ["exposure_ms", "exposure "], ["n_frames", "", " frames"]],
     "Analysis": [["windowing"]]
@@ -573,6 +579,7 @@
     const n32 = particlesFor(32), ppp = pointsPerParticle(), over = Math.max(n32 / MAX_PARTICLES, n32 * ppp / MAX_POINTS);
     phiCapped = over > 1;
     if (phiCapped) state.phi_c *= 0.95 / over;
+    if (TRANS() && state.label !== 1) state.label = 1;     // in transmitted light every particle scatters, dyed or not
   }
   // zoom that samples the confocal spot at about Nyquist (pixel near lambda / 4 NA)
   function autoZoom() {
@@ -581,6 +588,7 @@
     state.zoom = opts.filter(function (z) { return FIELD_NUMBER_MM * 1000 / Math.SQRT2 / objective().m / z / state.scan_px <= target * 1.5; })[0] || 32;
   }
   let lastKey = null;
+  let prevMode = BASE.mode;
   function onChange(key) {
     lastKey = key;
     // switching to phase contrast with an objective that has no phase ring: take the phase objective of the same
@@ -592,6 +600,9 @@
     }
     if ((key === "mode" || key === "objective") && state.mode === "phase" && objRing()) state.annulus = objRing();
     if (SCANNING() && (key === "mode" || key === "objective" || key === "scan_px")) autoZoom();
+    // back from the point scanner to a camera: the scanner's slow frame rate is not kept
+    if (key === "mode" && prevMode === "scanning" && !SCANNING()) state.frame_rate_hz = BASE.frame_rate_hz;
+    if (key === "mode") prevMode = state.mode;
     if (key === "camera") { const c = cam(); state.cam_mode = Object.keys(c.modes)[0]; state.iface = Object.keys(c.ifaces)[0]; state.binning = 1; }
     resetPredictions();
     constrain(); syncControls(); drawFov();
@@ -638,7 +649,10 @@
   // the progress bar is pinned to the bottom of the window; "busy" while a run is going
   function progress(frac, stage) { $("bar").style.width = (100 * frac).toFixed(1) + "%"; $("status").textContent = stage + "..."; $("runbar").classList.add("busy"); }
   function idle() { $("runbar").classList.remove("busy"); }
-  function showError(msg) { const el = $("error"); el.hidden = false; el.textContent = "The run stopped: " + msg; $("status").textContent = "The run stopped: see the message under the settings."; $("bar").style.width = "0"; idle(); }
+  // a run that stops: say so where the visitor looks (the error, the hero) and grey out the steps, which still show the last run
+  function showError(msg) { const el = $("error"); el.hidden = false; el.textContent = "The run stopped: " + msg; $("status").textContent = "The run stopped: see the message under the settings."; $("bar").style.width = "0"; idle();
+    $("hero-result").innerHTML = '<span class="chip bad">The run stopped</span><span>' + msg.replace(/[<>&]/g, "") + '</span>';
+    document.querySelector(".steps").classList.add("stale"); }
   let inflight = null;
   let runStart = 0;
   function start(kind) {
@@ -662,12 +676,12 @@
     } else runHere(kind, token, cfg, opts);
   }
   // fallback without a worker: time-sliced on the page
-  function drive(gen, token, a, b) {
+  function drive(gen, token, a, b, pre) {
     return new Promise(function (resolve) {
       function step() {
         if (token !== runToken) { resolve(null); return; }
         const t0 = performance.now(); let r;
-        try { do { r = gen.next(); if (!r.done) progress(a + (b - a) * r.value.frac, r.value.stage); } while (!r.done && performance.now() - t0 < 30); }
+        try { do { r = gen.next(); if (!r.done) progress(a + (b - a) * r.value.frac, (pre || "") + (pre ? r.value.stage.charAt(0).toLowerCase() + r.value.stage.slice(1) : r.value.stage)); } while (!r.done && performance.now() - t0 < 30); }
         catch (e) { showError(e.message); resolve(null); return; }
         if (r.done) resolve(r.value); else setTimeout(step, 0);
       }
@@ -680,8 +694,8 @@
     let movie = cache.movie;
     if (kind === "simulate" || !movie) {
       movie = await drive(MOVIE.simulate(cfg), token, 0, 0.75); if (!movie) return;
-      const rv = await drive(MOVIE.simulate(CROWD.referenceConfig(cfg, movie.truth.interact.tau_B_s)), token, 0.75, 0.82); if (!rv) return;
-      refHere = await drive(CROWD.referenceAmplitude(rv), token, 0.82, 0.85); if (!refHere) return;
+      const rv = await drive(MOVIE.simulate(CROWD.referenceConfig(cfg, movie.truth.interact.tau_B_s)), token, 0.75, 0.82, "Dilute reference movie: "); if (!rv) return;
+      refHere = await drive(CROWD.referenceAmplitude(rv), token, 0.82, 0.85, "Dilute reference movie: "); if (!refHere) return;
     }
     const o2 = Object.assign({}, opts, { reference: refHere, n_labelled: movie.truth.interact.n_labelled, D0_um2_s: movie.truth.interact.D0_um2_s });
     const res = await drive(CROWD.analyse(movie, o2), token, 0.85, opts.compare_published ? 0.93 : 1);
@@ -691,6 +705,7 @@
     finish(movie, res, kind === "simulate" ? cfg : cache.cfg, opts);
   }
   function finish(movie, res, cfg, opts) {
+    document.querySelector(".steps").classList.remove("stale");
     const fresh = movie !== cache.movie;
     cache.movie = movie; cache.res = res; cache.cfg = cfg; cache.opts = opts;
     // a new movie: the delay slider in the middle of the delays where the beads moved measurably, and the lower map zoomed on
@@ -986,7 +1001,11 @@
     const cx = S / 2 + 0.5 * s, cy = S / 2 + 0.5 * s;
     const kopt = cache.res.window.q_opt_per_um * cache.movie.L_um / (2 * Math.PI);
     ctx.lineWidth = 2;
+    if ($("kopt-note")) $("kopt-note").hidden = !(kopt < n / 2);
     if (level !== "curious" && kopt < n / 2) { ctx.setLineDash([8, 8]); ctx.strokeStyle = "rgba(255,255,255,0.75)"; ctx.beginPath(); ctx.arc(cx, cy, kopt * s, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]); }
+    const kpk = hasPeak(cache.res) ? cache.res.peak.q_per_um * cache.movie.L_um / (2 * Math.PI) : 0;
+    if ($("peak-note")) $("peak-note").hidden = !(kpk > 0);
+    if (kpk > 0 && kpk < n / 2) { ctx.setLineDash([2, 5]); ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, kpk * s, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]); }
     const px = cx + sel.kx * s, py = cy - sel.ky * s;
     ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(px, py, 9, 0, 2 * Math.PI); ctx.stroke();
     ctx.beginPath(); ctx.arc(2 * cx - px, 2 * cy - py, 6, 0, 2 * Math.PI); ctx.stroke();
@@ -1128,18 +1147,20 @@
     const a = axes($("chart-curves"), { xlog: true, ylog: false, x0: x0, x1: x1, y0: -0.15, y1: 1.15, xlabel: "Delay (s)", ylabel: level === "curious" ? "How much of the pattern is left" : "f(q, \u0394t)" }), ctx = a.ctx;
     ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.m.l, a.fy(0)); ctx.lineTo(a.m.l + a.pw, a.fy(0)); ctx.stroke();
     const pick = pickRows(res.rows);
+    const pkk = hasPeak(res) ? res.peak.k : -1;
     pick.forEach(function (k) {
-      const r = res.rows[k], col = qColor(qPos(r.q_per_um));
+      const r = res.rows[k], col = k === pkk ? C.ink : qColor(qPos(r.q_per_um));
+      if (k === pkk) { ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.beginPath(); let on = false; r.f.forEach(function (f, li) { if (!isFinite(f)) return; const X = a.fx(taus[li]), Y = a.fy(Math.max(-0.15, Math.min(1.15, f))); if (!on) { ctx.moveTo(X, Y); on = true; } else ctx.lineTo(X, Y); }); ctx.stroke(); }
       if (r.rate_hz > 0 && level !== "curious") {
         ctx.strokeStyle = col; ctx.lineWidth = 1.3; ctx.setLineDash([6, 4]); ctx.beginPath(); let on = false;
         for (let i = 0; i <= 120; i++) { const t = x0 * Math.pow(x1 / x0, i / 120), v = Math.exp(-r.rate_hz * t); if (v < 0.2) break; const X = a.fx(t), Y = a.fy(v); if (!on) { ctx.moveTo(X, Y); on = true; } else ctx.lineTo(X, Y); }
         ctx.stroke(); ctx.setLineDash([]);
       }
-      r.f.forEach(function (f, li) { if (isFinite(f)) dot(ctx, a.fx(taus[li]), a.fy(Math.max(-0.15, Math.min(1.15, f))), 2.4, col, null); });
+      r.f.forEach(function (f, li) { if (isFinite(f)) dot(ctx, a.fx(taus[li]), a.fy(Math.max(-0.15, Math.min(1.15, f))), k === pkk ? 3.2 : 2.4, col, null); });
     });
     a.done();
     const leg = $("curves-legend"); leg.innerHTML = "";
-    pick.forEach(function (k) { const q = res.rows[k].q_per_um, s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(q)) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / q, 2) + " " + MU + "m" : "q = " + q.toFixed(2) + " " + MU + "m\u207b\u00b9") + (k === res.peak.k && hasPeak(res) ? (level === "curious" ? " (neighbours)" : " (peak of S)") : ""); leg.appendChild(s); });
+    pick.forEach(function (k) { const q = res.rows[k].q_per_um, s = document.createElement("span"); s.innerHTML = '<i style="background:' + (k === pkk ? C.ink : qColor(qPos(q))) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / q, 2) + " " + MU + "m" : "q = " + q.toFixed(2) + " " + MU + "m\u207b\u00b9") + (k === res.peak.k && hasPeak(res) ? (level === "curious" ? " (neighbours)" : " (peak of S)") : ""); leg.appendChild(s); });
   }
   // the structure factor: measured (dots), the simulation (line) and, for hard spheres, the Percus-Yevick theory (dashed)
   function drawSq() {
@@ -1159,7 +1180,7 @@
     a.done();
     const ul = $("sq-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
-    add(level === "curious" ? "Dots: how strong each pattern is in this movie, against the same particles far apart (a second, dilute movie), in the colours of step 5. Red line: how the simulated particles are really arranged. Above 1, patterns at the spacing of neighbours; below 1 at the wide patterns, which the crowd smooths out." : "Dots: S(q) = (A / N) / (A_ref / N_ref), the amplitude per dyed particle against a dilute movie of the same particles, filmed the same way (bars: scatter over five neighbouring q). Red: the S(q) of the simulated particles" + (tr.label_fraction < 1 ? ", as the dyed ones show it, 1 + x (S - 1) with x = " + tr.label_fraction : "") + ".");
+    add(level === "curious" ? "Dots: how strong each pattern is in this movie, against the same particles far apart (a second, dilute movie), in the colours of step 5. Red line: how the simulated particles are really arranged. Above 1, patterns at the spacing of neighbours; below 1 at the wide patterns, which the crowd smooths out." : "Dots: S(q) = (A / N) / (A_ref / N_ref), the amplitude per dyed particle against a dilute movie of the same particles, filmed the same way (bars: scatter over five neighbouring q). Red line: the S(q) of the simulated particles" + (tr.label_fraction < 1 ? ", as the dyed ones show it, 1 + x (S - 1) with x = " + tr.label_fraction : "") + ".");
     if (tr.kind === "hard" && level !== "curious") add("Dashed: Percus-Yevick theory for hard spheres at volume fraction " + fmtSig(tr.phi, 2) + ".");
     if (level !== "curious") add("At the widest patterns DDM reads S higher than the simulation: each pattern collects particles over the depth in focus, so it also takes in density waves tilted along the axis of the microscope, which have a shorter wavelength and a higher S.");
   }
@@ -1192,8 +1213,10 @@
   // a peak worth the name: above 1.15 and at least 0.25 above the widest patterns measured, inside the q used
   function hasPeak(r) { return r.peak.S > 1.15 && r.peak.S - r.S_low > 0.25 && r.peak.k > 0 && r.peak.k < r.rows.length - 1; }
   function kindOf(r) {
-    if (cache.movie.truth.interact.label_fraction < 0.3 && !hasPeak(r)) return { word: "Single particles", text: "with few particles dyed the patterns follow single particles: S(q) stays near 1, and the decay gives how each one diffuses among its neighbours" };
+    if (cache.movie.truth.interact.label_fraction <= 0.1 || (cache.movie.truth.interact.label_fraction < 0.3 && !hasPeak(r))) return { word: "Single particles", text: "with few particles dyed the patterns follow single particles: S(q) stays near 1, and the decay gives how each one diffuses among its neighbours" };
     if (hasPeak(r)) return { word: "Neighbours " + fmtSig(2 * Math.PI / r.peak.q_per_um, 2) + " " + MU + "m apart", text: "the patterns are strongest at the spacing of neighbouring particles (2\u03c0 / q at the peak of S(q))" };
+    const tp = truePeak();
+    if (tp && tp.S > 1.15) return { word: "Peak not seen", text: "the simulated particles have a peak of S(q) = " + fmtSig(tp.S, 2) + " at q = " + fmtSig(tp.q_per_um, 2) + " " + MU + "m\u207b\u00b9, but this movie does not show it" };
     if (r.S_low < 0.85) return { word: "No clear peak", text: "the particles keep out of each other's way, so wide patterns are weaker than in a dilute sample (S = " + fmtSig(r.S_low, 2) + " at the widest), but no spacing of neighbours stands out within the patterns measured" };
     return { word: "No clear structure", text: "S(q) stays close to 1: the particles hardly arrange themselves at this volume fraction" };
   }
@@ -1295,6 +1318,7 @@
   function applyPreset(set) {
     const keep = state.seed, sp = state.sim_px;
     state = Object.assign({}, BASE, set); state.seed = LEVEL_RANK[level] >= 3 ? keep : BASE.seed; state.sim_px = set.sim_px || sp;
+    prevMode = state.mode;
     resetPredictions();
     if (state.mode === "scanning" && !set.zoom) autoZoom();
     if (set.camera && !set.cam_mode) { const c = cam(); state.cam_mode = Object.keys(c.modes)[0]; state.iface = Object.keys(c.ifaces)[0]; }
@@ -1315,7 +1339,7 @@
           box.querySelector(".verdict").textContent = btn.getAttribute("data-guess") === box.getAttribute("data-right") ? "Well guessed." : "Not quite.";
           box.querySelector(".a").hidden = false;
           const kind = box.getAttribute("data-predict");
-          if (kind === "dyed") state.label = 0.05;
+          if (kind === "dyed") { state.label = 0.05; state.phi_c = 0.3; }
           if (kind === "crowd") state.phi_c = 0.45;
           predicting = true; constrain(); syncControls(); predicting = false; schedule();
         });
@@ -1401,7 +1425,7 @@
   });
   $("btn-times").addEventListener("click", function () {
     const t = frameTimes(); if (!t) return;
-    let csv = "frame,time_s\n"; for (let i = 0; i < t.length; i++) csv += i + "," + t[i] + "\n";
+    let csv = "frame,time_s\n"; for (let i = 0; i < t.length; i++) csv += i + "," + (+t[i].toPrecision(9)) + "\n";
     DDM_TIFF.save(movieName() + "-times.csv", csv, "text/csv");
   });
 

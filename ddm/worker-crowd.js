@@ -3,11 +3,11 @@
 (function () {
   "use strict";
   let movie = null, ref = null;
-  function drive(gen, token, a, b) {
+  function drive(gen, token, a, b, pre) {
     let r, last = -1;
     while (!(r = gen.next()).done) {
       const f = a + (b - a) * r.value.frac;
-      if (f - last > 0.01) { self.postMessage({ type: "progress", token: token, frac: f, stage: r.value.stage }); last = f; }
+      if (f - last > 0.01) { self.postMessage({ type: "progress", token: token, frac: f, stage: pre ? pre + r.value.stage.charAt(0).toLowerCase() + r.value.stage.slice(1) : r.value.stage }); last = f; }
     }
     return r.value;
   }
@@ -17,8 +17,8 @@
       let out = null;
       if (m.type === "simulate" || !movie) {
         movie = drive(MOVIE.simulate(m.cfg), m.token, 0, 0.75);
-        const rv = drive(MOVIE.simulate(CROWD.referenceConfig(m.cfg, movie.truth.interact.tau_B_s)), m.token, 0.75, 0.82);
-        ref = drive(CROWD.referenceAmplitude(rv), m.token, 0.82, 0.85);
+        const rv = drive(MOVIE.simulate(CROWD.referenceConfig(m.cfg, movie.truth.interact.tau_B_s)), m.token, 0.75, 0.82, "Dilute reference movie: ");
+        ref = drive(CROWD.referenceAmplitude(rv), m.token, 0.82, 0.85, "Dilute reference movie: ");
         out = { n: movie.n, T: movie.T, frames: movie.frames.slice(0), pixel_um: movie.pixel_um, L_um: movie.L_um, frame_rate_hz: movie.frame_rate_hz,
           T_C: movie.T_C, viscosity_Pa_s: movie.viscosity_Pa_s, q_opt_per_um: movie.q_opt_per_um, q_signal_max_per_um: movie.q_signal_max_per_um, times_s: movie.times_s, info: movie.info, truth: movie.truth };
       }

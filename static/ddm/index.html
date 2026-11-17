@@ -317,7 +317,7 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
   /* a crowd of dyed spheres that push each other apart (soft discs for the sketch); confocal: bright spots on black */
   function makeCrowd(W, H, n, rad, step) {
     const p = []; for (let i = 0; i < n; i++) p.push([Math.random() * W, Math.random() * H]);
-    const R = Math.ceil(rad * 2.5), img = new Float32Array(W * H), d0 = 2.2 * rad;
+    const R = Math.ceil(rad * 2.5), img = new Float32Array(W * H), d0 = 2.9 * rad;
     const push = function () {
       for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
         let dx = p[j][0] - p[i][0], dy = p[j][1] - p[i][1]; dx -= W * Math.round(dx / W); dy -= H * Math.round(dy / H);
