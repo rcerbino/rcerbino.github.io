@@ -141,7 +141,7 @@ details.more summary { cursor: pointer; font-size: 0.85rem; color: var(--muted);
 details.more dl { margin-top: 0.4rem; }
 .hero-result { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1rem; font-family: var(--sans); margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--rule); max-width: 44rem; }
 .start-here { font-family: var(--sans); font-size: 0.92rem; margin: 0.6rem 0 0; max-width: 44rem; }
-#try-double { scroll-margin-top: 1.5rem; }
+#try-double { scroll-margin-top: 1rem; }   /* the shortcut lands on the chart, with the question right below it */
 .hero-result .n { font-family: var(--serif); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
 
 /* bench */
@@ -438,12 +438,12 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
             <p class="only-1">Each curve rises from 0, nothing has changed, to 1, the pattern is completely renewed. The points are the measurement, the lines a fit.</p>
             <p class="lvl-2">Each curve is the structure function <i>d</i>(<i>q</i>, &Delta;<i>t</i>) for one <i>q</i>. It rises from the camera noise level <i>B</i>(<i>q</i>) to <i>A</i>(<i>q</i>) + <i>B</i>(<i>q</i>). The delay where it is about two thirds of the way up is the relaxation time &tau;(<i>q</i>) = 1/&Gamma;(<i>q</i>). The "Change" view removes <i>A</i> and <i>B</i> so all curves share one scale.</p>
           </div>
-          <figure class="viz">
+          <figure class="viz" id="try-double">
             <div class="toolbar lvl-2"><span>Show</span><div class="seg" role="group" aria-label="Curve view"><button type="button" id="view-change" aria-pressed="true">Change, 0 to 1</button><button type="button" id="view-d" aria-pressed="false">Structure function</button></div></div>
             <div class="chart"><canvas id="chart-curves" aria-label="Curves for several wave vectors"></canvas></div>
             <div class="legend" id="curves-legend"></div>
           </figure>
-          <div class="predict" id="try-double" data-predict="size" data-right="right">
+          <div class="predict" data-predict="size" data-right="right">
             <div class="q">Predict first: the particles become twice as large. Do the curves move to the left or to the right?</div>
             <div class="btns"><button type="button" data-guess="left">Left, faster</button><button type="button" data-guess="right">Right, slower</button></div>
             <div class="a" hidden><span class="verdict"></span> To the right. A particle twice as large has half the diffusion coefficient, so every pattern takes twice as long to change. The bench now runs with the larger particles so you can check: the chart keeps one curve of the earlier run, dashed, next to the new one at the same stripe spacing, and marks where each has gone halfway.</div>
