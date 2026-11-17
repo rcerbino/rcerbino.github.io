@@ -615,7 +615,7 @@
   let lastKey = null, lastMat = BASE.mat;
   let prevMode = BASE.mode;
   function onChange(key) {
-    lastKey = key;
+    lastKey = key; compare = null;
     // switching to phase contrast with an objective that has no phase ring: take the phase objective of the same
     // magnification with the closest NA (Plan Fluor 20X -> Plan Fluor DLL 20X Ph1), so phase contrast is really on
     if (key === "mode" && state.mode === "phase" && !objRing()) {
@@ -1144,21 +1144,49 @@
   }
   // the true mean squared displacement in the image plane, from the simulated material
   function trueMsd(t) { const v = cache.movie.truth.visco; return v ? 2 * VISCO.msd1({ lam: v.lam, c: v.c }, t) : null; }
+  // before and after the starting exercise: the earlier run's displacement stays, so its curve can be drawn, dashed,
+  // at the stripe spacing of a curve of the new run, and its displacement next to the new one
+  let compare = null;
+  function takeSnapshot() {
+    compare = null; const res = cache.res; if (!res || !res.smooth) return;
+    compare = { label: VE[state.mat].short, res0: res, t_s: res.smooth.t_s.slice(), m_um2: res.smooth.m_um2.slice() };
+  }
+  function msdOld(t) {
+    const ts = compare.t_s; if (t < ts[0] || t > ts[ts.length - 1]) return null;
+    let i = 1; while (i < ts.length - 1 && ts[i] < t) i++;
+    const f = Math.log(t / ts[i - 1]) / Math.log(ts[i] / ts[i - 1]);
+    return Math.exp(Math.log(compare.m_um2[i - 1]) + f * (Math.log(compare.m_um2[i]) - Math.log(compare.m_um2[i - 1])));
+  }
   // five of the q used: how much of each pattern is left, with the line that the measured displacement implies
   function drawCurves() {
     const res = cache.res, taus = res.taus_s, x0 = taus[0] * 0.8, x1 = taus[taus.length - 1] * 1.25;
     const a = axes($("chart-curves"), { xlog: true, ylog: false, x0: x0, x1: x1, y0: -0.15, y1: 1.15, xlabel: "Delay (s)", ylabel: level === "curious" ? "How much of the pattern is left" : "f(q, \u0394t)" }), ctx = a.ctx;
     ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.m.l, a.fy(0)); ctx.lineTo(a.m.l + a.pw, a.fy(0)); ctx.stroke();
     const nb = res.bins.length, pick = []; for (let i = 0; i < Math.min(5, nb); i++) pick.push(Math.round(i * (nb - 1) / Math.max(1, Math.min(5, nb) - 1)));
+    const cmp = compare && res !== compare.res0 ? pick[Math.floor(pick.length / 2)] : null;
     pick.forEach(function (k) {
       const b = res.bins[k], q = res.q_per_um[b], col = qColor(qPos(q));
-      ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.beginPath(); let on = false;
+      ctx.globalAlpha = cmp !== null && k !== cmp ? 0.3 : 1;   // during a comparison the other curves step back
+      ctx.strokeStyle = col; ctx.lineWidth = k === cmp ? 3 : 1.5; ctx.beginPath(); let on = false;
       for (let i = 0; i <= 160; i++) { const t = x0 * Math.pow(x1 / x0, i / 160), m = msdAt(t); if (m === null) { on = false; continue; } const X = a.fx(t), Y = a.fy(Math.exp(-q * q * m / 4)); if (!on) { ctx.moveTo(X, Y); on = true; } else ctx.lineTo(X, Y); }
       ctx.stroke();
       res.f[k].forEach(function (f, li) { if (isFinite(f)) dot(ctx, a.fx(taus[li]), a.fy(Math.max(-0.15, Math.min(1.15, f))), 2.4, col, null); });
     });
+    ctx.globalAlpha = 1;
+    let cmpTxt = null;
+    if (compare && res === compare.res0) cmpTxt = "Computing the run with " + VE[state.mat].short + "...";
+    else if (cmp !== null) {
+      const q = res.q_per_um[res.bins[cmp]];
+      ctx.strokeStyle = qColor(qPos(q)); ctx.lineWidth = 2.5; ctx.setLineDash([6, 4]); ctx.beginPath(); let on = false;
+      for (let i = 0; i <= 160; i++) { const t = x0 * Math.pow(x1 / x0, i / 160), m = msdOld(t); if (m === null) { on = false; continue; } const X = a.fx(t), Y = a.fy(Math.exp(-q * q * m / 4)); if (!on) { ctx.moveTo(X, Y); on = true; } else ctx.lineTo(X, Y); }
+      ctx.stroke(); ctx.setLineDash([]);
+      const tEnd = Math.min(compare.t_s[compare.t_s.length - 1], res.smooth.t_s[res.smooth.t_s.length - 1]), mo = msdOld(tEnd), mn = msdAt(tEnd);
+      const left = function (m) { return Math.round(100 * Math.exp(-q * q * m / 4)) + " %"; };
+      cmpTxt = "Dashed: the earlier run (" + compare.label + "); thick line: now (" + VE[state.mat].short + "), both at a stripe spacing of " + fmtSig(2 * Math.PI / q, 2) + " " + MU + "m." + (mo && mn ? " After " + fmtDur(tEnd) + ", " + left(mo) + " of the pattern was left before, " + left(mn) + " now." : "");
+    }
     a.done();
     const leg = $("curves-legend"); leg.innerHTML = "";
+    if (cmpTxt) { const s = document.createElement("span"); s.className = "compare"; s.textContent = cmpTxt; leg.appendChild(s); }
     pick.forEach(function (k) { const q = res.q_per_um[res.bins[k]], s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(q)) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / q, 2) + " " + MU + "m" : "q = " + q.toFixed(2) + " " + MU + "m\u207b\u00b9"); leg.appendChild(s); });
   }
   // mean squared displacement: from each q (coloured), combined (black, with its uncertainty), and the truth
@@ -1166,12 +1194,15 @@
     const res = cache.res, taus = res.taus_s, x0 = taus[0] * 0.8, x1 = taus[taus.length - 1] * 1.25, m = res.msd;
     const vals = []; res.msd_q.forEach(function (r) { r.forEach(function (v) { if (v > 0) vals.push(v); }); });
     taus.forEach(function (t) { const v = trueMsd(t); if (v > 0) vals.push(v); });
+    const cmpOn = compare && res !== compare.res0;
+    if (cmpOn) compare.m_um2.forEach(function (v) { if (v > 0) vals.push(v); });
     const y0 = Math.min.apply(null, vals) / 2, y1 = Math.max.apply(null, vals) * 2;
     const a = axes($("chart-msd"), { xlog: true, ylog: true, x0: x0, x1: x1, y0: y0, y1: y1, xlabel: "Delay (s)", ylabel: level === "curious" ? "How far the beads get (" + MU + "m\u00b2)" : "<\u0394r\u00b2> in the image plane (" + MU + "m\u00b2)" }), ctx = a.ctx;
     // the truth (dashed) and slopes 1 and 0 as guides at the Student level
     if (level !== "curious") { ctx.strokeStyle = C["accent-2"]; ctx.lineWidth = 1.5; ctx.setLineDash([7, 4]); ctx.beginPath(); for (let i = 0; i <= 160; i++) { const t = x0 * Math.pow(x1 / x0, i / 160), v = trueMsd(t), X = a.fx(t), Y = a.fy(v); if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); } ctx.stroke(); ctx.setLineDash([]); }
     res.msd_q.forEach(function (r, k) { const col = qColor(qPos(res.q_per_um[res.bins[k]])); ctx.globalAlpha = 0.55; r.forEach(function (v, li) { if (v > 0) dot(ctx, a.fx(taus[li]), a.fy(v), 1.8, col, null); }); });
     ctx.globalAlpha = 1;
+    if (cmpOn) { ctx.strokeStyle = C.ink; ctx.globalAlpha = 0.6; ctx.lineWidth = 2; ctx.setLineDash([3, 4]); ctx.beginPath(); compare.t_s.forEach(function (t, i) { const X = a.fx(t), Y = a.fy(compare.m_um2[i]); if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
     ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath(); res.smooth.t_s.forEach(function (t, i) { const X = a.fx(t), Y = a.fy(res.smooth.m_um2[i]); if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }); ctx.stroke();
     m.m_um2.forEach(function (v, li) {
       if (!(v > 0)) return; const X = a.fx(taus[li]), e = m.err_ln[li];
@@ -1182,6 +1213,7 @@
     const ul = $("msd-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
     add(level === "curious" ? "Coloured dots: from each stripe spacing alone, in the colours of step 5. Large dots and line: all of them together." : "Coloured dots: the displacement that gives the measured f at each q alone (colours of step 5; with the depth of field, see the math), where f is clearly below 1 and above 0.15. Large dots and line: combined over q, with its uncertainty (jackknife over ten parts of the movie), and the smooth curve used below.");
+    if (cmpOn) add("Dotted black: the earlier run (" + compare.label + "). Now (" + VE[state.mat].short + ") the line " + (res.plateau_Pa ? "levels off: the beads stay in their cages." : res.eta_long_Pa_s ? "reaches a slope of 1 in the end: the beads escape." : "keeps rising, more and more slowly.") );
     if (level !== "curious") add("Dashed red: what the simulated beads do in this material (exact). A slope of 1 on these axes is free diffusion; a flat stretch, beads held in cages.");
   }
   // storage (G') and loss (G'') moduli against frequency, with the rheometer (the material simulated)
@@ -1249,9 +1281,9 @@
     // one modulus right and the other clearly off: say which (the mean of both would hide it)
     if (offParts[0] !== null && offParts[1] !== null && Math.max(offParts[0], offParts[1]) > 0.5) {
       const bad = offParts[0] > offParts[1] ? 0 : 1, nm = ["G'", "G''"];
-      return { cls: offParts[1 - bad] < 0.2 ? "warn" : "bad", text: (offParts[1 - bad] < 0.2 ? nm[1 - bad] + " matches the rheometer; " : "") + nm[bad] + " off by a factor " + fmtSig(Math.exp(offParts[bad]), 2) + win };
+      return { cls: offParts[1 - bad] < 0.2 ? "warn" : "bad", text: (offParts[1 - bad] < 0.2 ? nm[1 - bad] + " matches the simulated material; " : "") + nm[bad] + " off by a factor " + fmtSig(Math.exp(offParts[bad]), 2) + win };
     }
-    return off < 0.2 ? { cls: only ? "info" : "good", text: "Matches the rheometer" + win + only } : off < 0.5 ? { cls: "warn", text: "Off from the rheometer by about " + Math.round(100 * (Math.exp(off) - 1)) + " %" + win + only } : { cls: "bad", text: "Far from the rheometer (a factor " + fmtSig(Math.exp(off), 2) + " on average)" + win + only };
+    return off < 0.2 ? { cls: only ? "info" : "good", text: "Matches the simulated material" + win + only } : off < 0.5 ? { cls: "warn", text: "Off from the simulated material by about " + Math.round(100 * (Math.exp(off) - 1)) + " %" + win + only } : { cls: "bad", text: "Far from the simulated material (a factor " + fmtSig(Math.exp(off), 2) + " on average)" + win + only };
   }
   function renderResult() {
     const res = cache.res, mv = cache.movie, v = verdict(), k = kindOf(res), facts = materialFacts();
@@ -1260,7 +1292,7 @@
     h += '<span class="chip ' + v.cls + '">' + v.text + '</span>';
     const nums = [];
     const par = parallelOf(res.w_rad_s, res.Gp_Pa, res.Gpp_Pa);
-    if (par) nums.push("G' and G'' run side by side, nearly equal at every frequency measured: the signature of a gel point");
+    if (par) nums.push("G' and G'' run side by side, nearly equal at every frequency measured: parallel moduli are the signature of a gel point");
     else if (crossEl.length) nums.push("G' and G'' cross at " + fmtW(crossEl[0].w) + " (a relaxation time of about " + fmtTime(1 / crossEl[0].w) + "): more elastic at higher frequencies, more viscous at lower ones");
     if (res.eta_long_Pa_s) nums.push("viscosity at long times " + fmtPas(res.eta_long_Pa_s) + " (true " + fmtPas(facts.eta0) + ")");
     // the plateau is 1 / J at the end of the movie; the truth the same, from the exact displacement there
@@ -1272,7 +1304,7 @@
     if (level !== "curious") {
       const row = function (cls, name, cross, eta, plat, off, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + cross + '</td><td>' + eta + '</td><td>' + plat + '</td><td>' + off + '</td></tr>'; };
       const crossTxt = function (cs, ws, gp, gpp) { if (ws && parallelOf(ws, gp, gpp)) return "side by side"; const c = cs.filter(function (x) { return x.elastic_above; }); return c.length ? fmtW(c[0].w) : "none"; };
-      let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">G\' = G\'\'</th><th scope="col">Viscosity</th><th scope="col">Plateau</th><th scope="col">Off from the rheometer</th></tr></thead><tbody>';
+      let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">G\' = G\'\'</th><th scope="col">Viscosity</th><th scope="col">Plateau</th><th scope="col">Off from the truth</th></tr></thead><tbody>';
       const offTxt = function (o) { return o === null ? "-" : o > Math.log(2) ? "a factor " + fmtSig(Math.exp(o), 2) : Math.round(100 * (Math.exp(o) - 1)) + " %"; };
       t += row("main", res.inversion === "mason" ? "Mason's formulas" : "Retardation spectrum", crossTxt(res.crossings, res.w_rad_s, res.Gp_Pa, res.Gpp_Pa), res.eta_long_Pa_s ? fmtPas(res.eta_long_Pa_s) : "-", res.plateau_Pa ? fmtPa(res.plateau_Pa) : "-", offTxt(offFromTruth(res.w_rad_s, res.Gp_Pa, res.Gpp_Pa)), "the headline");
       if (LEVEL_RANK[level] >= 3 && res.inversion !== "mason") t += row("", "Mason's formulas, same displacement", crossTxt(crossingsOf(res.w_rad_s, res.mason.Gp_Pa, res.mason.Gpp_Pa), res.w_rad_s, res.mason.Gp_Pa, res.mason.Gpp_Pa), "-", "-", offTxt(offFromTruth(res.w_rad_s, res.mason.Gp_Pa, res.mason.Gpp_Pa)), "G* from the local slope of <\u0394r\u00b2> (Mason 2000)");
@@ -1286,6 +1318,7 @@
       t += '</tbody></table></div>';
       h += t;
       h += '<details class="more"><summary>Details</summary><dl>';
+      h += '<dt>Agreement</dt><dd>The chip compares the moduli from the beads with those of the material simulated (what a rheometer would measure on it), frequency by frequency: on average within about 20 % it matches, within a factor 1.6 it is off, beyond that far; if one modulus is off by more than a factor 1.6, it says which. Where a modulus is less than a tenth of the other, it is not compared at that frequency: no method resolves it next to the larger one</dd>';
       h += '<dt>Patterns used</dt><dd>q from ' + fmtSig(res.window.q_min_used, 2) + ' to ' + fmtSig(res.window.q_max_used, 2) + ' ' + MU + 'm\u207b\u00b9 (' + res.bins.length + ' q); at each delay those where f is clearly below 1 and above 0.15, at least three</dd>';
       h += '<dt>Delays and displacements</dt><dd>' + fmtTime(res.window.t_lo_s) + ' to ' + fmtDur(res.window.t_hi_s) + '; &lang;&Delta;r&sup2;&rang; from ' + fmtSig(res.window.msd_lo_um2, 2) + ' to ' + fmtSig(res.window.msd_hi_um2, 2) + ' ' + MU + 'm&sup2; (the smallest a bead moved, the largest)</dd>';
       h += '<dt>Amplitude and noise</dt><dd>' + (state.x_amp === "off" ? "A = 2 var - B" : "A = 2 &lang;|F|&sup2;&rang; - B (the mean power)") + '; ' + (res.B_camera ? 'B = ' + fmtSig(res.B_camera, 3) + ' from the mean count and the read noise, the same at every q' : 'B at each q from the first delays') + '</dd>';
@@ -1329,7 +1362,7 @@
   const CARDS = [
     { lvl: 1, title: "A liquid, a solid, and in between", text: "In water the beads diffuse freely: the mean squared displacement grows in proportion to time and only G'' shows, growing with frequency. In a solution of wormlike micelles they first rattle in a cage, then escape once the micelles relax: elastic at high frequencies, viscous at low ones, with G' and G'' crossing in between. In a soft gel they never escape: the displacement levels off and G' keeps a plateau down to the lowest frequencies.",
       shows: [{ label: "Water", set: { mat: "newtonian", log_factor: 10 }, go: "step-rates" }, { label: "Wormlike micelles", set: { mat: "micelles" }, go: "step-rates" }, { label: "Soft gel", set: { mat: "gel" }, go: "step-rates" }] },
-    { lvl: 1, title: "Watching a gel form", text: "As a sample gels, its slowest relaxation gets slower and slower. Just before the gel point it still flows at long times. At the gel point the relaxation times have no end: G' and G'' are parallel lines, equal at every frequency (both grow as the square root of frequency here), and the beads' mean squared displacement grows as the square root of time over the whole movie. Past it a plateau appears: a solid, still very soft.",
+    { lvl: 1, title: "Watching a gel form", text: "As a sample gels, its slowest relaxation gets slower and slower. The three buttons show three fixed stages of gelation, each a material of its own. Just before the gel point it still flows at long times. At the gel point the relaxation times have no end and G' and G'' are parallel lines. For the exponent chosen here, one half, they are also equal at every frequency and both grow as the square root of frequency, and the beads' mean squared displacement grows as the square root of time over the whole movie. Past it a plateau appears: a solid, still very soft.",
       shows: [{ label: "Before", set: { mat: "pregel" }, go: "step-rates" }, { label: "At the gel point", set: { mat: "critical" }, go: "step-rates" }, { label: "After", set: { mat: "gel" }, go: "step-rates" }] },
     { lvl: 1, title: "Too stiff for these beads", text: "Concentrated wormlike micelles (Lennon et al. 2020) have a plateau of 40 Pa: in it a 500 nm bead rattles by only about 10 nm, far below what these patterns can see. DDM sees nothing until a few seconds, when the micelles let the beads flow: it gets the viscosity, but not the elastic part. Beads of 200 nm move further and open the window a little earlier (up to about 0.7 rad/s), still short of where G' and G'' cross (1.6 rad/s). Rheometers, or light scattering through the whole sample (DWS), reach stiffer materials.",
       shows: [{ label: "500 nm beads", set: { mat: "stiff" }, go: "step-rates" }, { label: "200 nm beads", set: { mat: "stiff", diameter_um: 0.2 }, go: "step-rates" }] },
@@ -1362,7 +1395,7 @@
   }
   function applyPreset(set) {
     const keep = state.seed, sp = state.sim_px;
-    state = Object.assign({}, BASE, set); state.seed = LEVEL_RANK[level] >= 3 ? keep : BASE.seed; state.sim_px = set.sim_px || sp;
+    compare = null; state = Object.assign({}, BASE, set); state.seed = LEVEL_RANK[level] >= 3 ? keep : BASE.seed; state.sim_px = set.sim_px || sp;
     prevMode = state.mode;
     lastMat = state.mat;
     resetPredictions();
@@ -1385,9 +1418,12 @@
           box.querySelector(".verdict").textContent = btn.getAttribute("data-guess") === box.getAttribute("data-right") ? "Well guessed." : "Not quite.";
           box.querySelector(".a").hidden = false;
           const kind = box.getAttribute("data-predict");
-          if (kind === "gel") { state.mat = "gel"; lastMat = "gel"; }
+          compare = null;
+          if (kind === "gel" && state.mat !== "gel") { takeSnapshot(); state.mat = "gel"; lastMat = "gel"; }
           if (kind === "bigger") state.diameter_um = Math.min(3, 2 * state.diameter_um);
-          predicting = true; constrain(); syncControls(); predicting = false; schedule();
+          predicting = true; constrain(); syncControls(); predicting = false;
+          if (compare && cache.res) { drawCurves(); drawMsd(); }   // say what is being computed
+          schedule();
         });
       });
     });
@@ -1397,7 +1433,7 @@
   buildControls(); buildCards(); buildPredictions();
   document.querySelectorAll('input[name="level"]').forEach(function (r) { r.addEventListener("change", function () { if (r.checked) setLevel(r.value, true); }); });
   document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }); });
-  $("btn-reset").addEventListener("click", function () { const keep = LEVEL_RANK[level] >= 3 ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
+  $("btn-reset").addEventListener("click", function () { compare = null; const keep = LEVEL_RANK[level] >= 3 ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
   $("btn-seed").addEventListener("click", function () { state.seed = (state.seed * 1103515245 + 12345) % 2147483647; schedule(); });
   $("btn-play").addEventListener("click", function () { playing = !playing; $("btn-play").textContent = playing ? "Pause" : "Play"; });
   $("btn-play").textContent = playing ? "Pause" : "Play";
