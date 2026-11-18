@@ -250,7 +250,7 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
   B2/A2, k_D = 2 A2 M - 6.55 v_h, D0, S(0) and D_c to first order in c), `field-movie.js` (the movie as a density field, not single
   proteins: cosine modes between the walls, each a random process with variance N S(0) and rate D_c (q^2 + k^2), exact averaging over
   the exposure), `protein-engine.js` (at each q: d = A g + B, B from the camera, g with the depth of field and the exposure; D the
-  weighted mean of ln D; a series gives D0, k_D, R_h and A2 from two weighted lines, the amplitudes refitted at the D of the line) and
+  weighted mean of ln D; a series gives D0, k_D, R_h and the static A2 (called B2 in the paper) from two weighted lines, the second through c/<A>, i.e. <A> = k c / (1 + c/c0) as in Guidolin et al. eq. 5, plotted that way; the amplitudes refitted at the D of the line) and
   `worker-protein.js` (the bench: four movies analysed together; the series: five concentrations, each with its own seeds). Presets in
   `PROTEINS` in `app-protein.js`: an antibody (attraction set for k_D near -5 mL/g at 115 mM, Laber et al. 2022), albumin (radius and k_D as
   in Guidolin et al., Macromolecules 56, 8290, 2023), lysozyme and an illustrative sticky antibody. Standard bench: ORCA binned 2 x 2,

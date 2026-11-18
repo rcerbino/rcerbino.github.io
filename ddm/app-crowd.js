@@ -378,7 +378,7 @@
     { key: "x_offset", lvl: 4, label: "Rate from a line that may miss f = 1", kind: "select", options: ONOFF("the line goes through f = 1 at zero delay"),
       hint: function () { return "On: the straight line through ln f over the first delays has its own intercept, so a small error in A, or a fast part before the first delay, does not tilt it. Off: it is forced through ln f = 0 at zero delay."; } },
     { key: "x_refrate", lvl: 4, label: "Rates against the reference", kind: "select", options: ONOFF("D(q) = \u0393 / q\u00b2"),
-      hint: function () { return "On: D(q) / D0 = \u0393 / \u0393ref, the rate of each pattern against that of the same pattern in the dilute reference, which holds what motion along the axis of the microscope adds. Off: D(q) = \u0393 / q\u00b2."; } },
+      hint: function () { return "On: D(q) / D0 = \u0393 / \u0393ref, the rate of each pattern against that of the same pattern in the dilute reference, which holds what motion along the axis of the microscope adds, so that it largely cancels. Off: D(q) = \u0393 / q\u00b2."; } },
     { key: "x_refsmooth", lvl: 4, label: "Reference smoothed over q", kind: "select", options: ONOFF("each q bin of the reference on its own"),
       hint: function () { return "On: the amplitude and the rates of the reference, which change smoothly with q, are smoothed over seven neighbouring q bins. Off: each bin on its own, with its own noise."; } }
   );
@@ -1269,9 +1269,43 @@
     }
     add((cache.res.ref_rate ? "Dots: D(q) / D0 = \u0393(q) / \u0393ref(q), the rate of each pattern at the first delays against that of the same pattern in the dilute reference (bars: jackknife over ten parts of the movie); D0 = " : "Dots: D(q) = \u0393(q) / q\u00b2 from the first delays (bars: jackknife over ten parts of the movie), against D0 = ") + fmtSig(D0, 3) + " " + MU + "m\u00b2/s. Red: " + (x < 1 ? "D0 / [1 + x (S - 1)], with x = " + x + (few ? ", close to D0" : "") : "D0 / S(q)") + ", what the shortest delays should show without hydrodynamic interactions (this simulation has none).");
     if (few) add("With few particles dyed the dots follow self diffusion. They sit below D0 because the fit, down to f = 0.6, reaches delays where each particle already feels its cage.");
-    else add("Why S(q) can match while D(q) sits below the red line: S(q) comes from the amplitudes, which do not depend on timing, but D(q) needs the initial slope of ln f, and the fit, down to f = 0.6, reaches delays where the cages are already felt. At the widest patterns each pattern of the image also takes in waves tilted along the axis of the microscope, where D0 / S is lower. Real colloids would also have hydrodynamic interactions, H(q) different from 1, which this simulation leaves out.");
+    else add("Why S(q) can match while D(q) sits below the red line: S(q) comes from the amplitudes, which do not depend on timing, but D(q) needs the initial slope of ln f, and the fit, down to f = 0.6, reaches delays where the cages are already felt. The widest patterns also take in tilted density waves, as for S(q) above.");
   }
 
+  function ampPoints() { const r = cache.res, out = []; for (let b = 1; b < r.q_per_um.length; b++) if (r.A[b] > 0 || r.bins.indexOf(b) >= 0) out.push({ q: r.q_per_um[b], A: r.A[b], B: r.B[b], used: r.bins.indexOf(b) >= 0 }); return out; }
+  // signal A(q) and camera noise B(q) at each q, as on the sizing page (Researcher level): where A sinks into B, the
+  // patterns carry no usable signal and are left out
+  // one line in the result box: how the signal compares with the camera noise over the patterns used
+  function ampLine() {
+    if (!cache.res) return "";
+    const pts = ampPoints().filter(function (p) { return p.used && p.A > 0 && p.B > 0; });
+    if (pts.length < 2) return "";
+    const r = pts.map(function (p) { return p.A / p.B; }).sort(function (a, b) { return a - b; }), As = pts.map(function (p) { return p.A; }), Bs = pts.map(function (p) { return p.B; });
+    const bLo = Math.min.apply(null, Bs), bHi = Math.max.apply(null, Bs);
+    const fx = function (v) { return v >= 1e5 ? v.toExponential(1).replace("e+", "e") : fmtSig(v, 2); };
+    return '<p class="small amp-line" style="margin:0.5rem 0 0"><b>Signal and camera noise:</b> over the ' + pts.length + ' patterns used, the signal A is ' + fmtSig(r[0], 2) + ' to ' + fmtSig(r[r.length - 1], 2) + ' times the camera noise B' +
+      (level === "curious" ? '' : ' (A from ' + fx(Math.min.apply(null, As)) + ' to ' + fx(Math.max.apply(null, As)) + ', B ' + (bHi / bLo < 1.05 ? '= ' + fx(bLo) : 'from ' + fx(bLo) + ' to ' + fx(bHi)) + ')') + '; the chart of A and B is in this step.</p>';
+  }
+  function drawAmp() {
+    if (!cache.res) return;
+    const res = cache.res, pts = ampPoints().filter(function (p) { return p.q > 0 && (p.A > 0 || p.B > 0); });
+    const vals = []; pts.forEach(function (p) { if (p.A > 0) vals.push(p.A); if (p.B > 0) vals.push(p.B); });
+    if (vals.length < 2) return;
+    vals.sort(function (p, q) { return p - q; });
+    const y0 = vals[0] / 2.5, y1 = vals[vals.length - 1] * 2.5, qs = pts.map(function (p) { return p.q; });
+    const x0 = Math.min.apply(null, qs) * 0.8, x1 = Math.max.apply(null, qs) * 1.25;
+    const a = axes($("chart-amp"), { xlog: true, ylog: true, x0: x0, x1: x1, y0: y0, y1: y1, xlabel: "Wave vector q (" + MU + "m\u207b\u00b9)", ylabel: "A(q), B(q)" }), ctx = a.ctx;
+    const clampY = function (v) { return Math.min(y1 / 1.05, Math.max(y0 * 1.05, v)); };
+    ctx.strokeStyle = C.muted; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]); ctx.beginPath(); let on = false;
+    pts.forEach(function (p) { if (!(p.B > 0)) { on = false; return; } const X = a.fx(p.q), Y = a.fy(clampY(p.B)); if (!on) { ctx.moveTo(X, Y); on = true; } else ctx.lineTo(X, Y); });
+    ctx.stroke(); ctx.setLineDash([]);
+    pts.forEach(function (p) { if (p.A > 0) dot(ctx, a.fx(p.q), a.fy(clampY(p.A)), p.used ? 3 : 2.4, p.used ? C.accent : null, C.accent); });
+    const qo = res.window && res.window.q_opt_per_um;
+    if (qo > x0 && qo < x1) { ctx.setLineDash([5, 4]); ctx.strokeStyle = C.muted; ctx.lineWidth = 1; const xq = a.fx(qo); ctx.beginPath(); ctx.moveTo(xq, a.m.t); ctx.lineTo(xq, a.m.t + a.ph); ctx.stroke(); ctx.setLineDash([]); }
+    a.done();
+    $("amp-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>A: signal at each q (filled: used, hollow: left out)</span><span><i style="background:' + C.muted + '"></i>B: camera noise (dashed)</span><span>Vertical dashed line: the finest pattern the objective resolves</span>';
+    fillNumbers("amp-numbers", ["q (" + MU + "m\u207b\u00b9)", "A", "B", "Used"], pts.map(function (p) { return [p.q, p.A > 0 ? p.A : null, p.B > 0 ? p.B : null, p.used ? "yes" : "no"]; }));
+  }
   // ---- result -------------------------------------------------------------------------------
   const MODE_SHORT = { brightfield: "bright-field", phase: "phase-contrast", darkfield: "dark-field", dic: "DIC", fluorescence: "widefield fluorescence", spinning: "spinning-disk confocal (X-Light V3)", scanning: "point-scanning confocal (AX R)" };
   function spotWidth() { return 0.61 * centralWavelength() / Math.min(objective().na, nLiquid(centralWavelength())); }
@@ -1327,7 +1361,7 @@
       h += '<dt>Simulation</dt><dd>Brownian dynamics, time step ' + fmtTime(tr.step_s) + ' (free steps of 3 % of the diameter, overlaps pushed apart), D0 = ' + fmtSig(tr.D0_um2_s, 3) + ' ' + MU + 'm\u00b2/s, Brownian time ' + fmtTime(tr.tau_B_s) + '; no hydrodynamic interactions; ' + tr.n_labelled + ' of ' + mv.info.n_particles + ' particles dyed</dd>';
       h += '</dl></details>';
     }
-    $("result").innerHTML = h;
+    $("result").innerHTML = h + ampLine();
     $("hero-result").innerHTML = '<span>Volume fraction</span><span class="n">' + Math.round(100 * tr.phi) + ' %</span><span>Measured by DDM</span><span class="n">' + k.word.charAt(0).toLowerCase() + k.word.slice(1) + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
     $("hero-cap").textContent = "Simulated " + MODE_SHORT[state.mode] + " movie, " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
   }
@@ -1360,7 +1394,7 @@
   function renderAll() {
     if (!cache.res) return;
     readColors(); grey = greyRange(cache.movie); diffScale = null;
-    setQSpan(); renderLag(); renderText(); drawFov(); drawParticle(); drawMovieFrames(); drawMap(); drawStripes(); drawCurves(); drawSq(); drawDq(); renderResult(); renderSettings();
+    setQSpan(); renderLag(); renderText(); drawFov(); drawParticle(); drawMovieFrames(); drawMap(); drawStripes(); drawCurves(); drawSq(); drawDq(); drawAmp(); renderResult(); renderSettings();
   }
 
   // ---- "what matters" cards ---------------------------------------------------------------
@@ -1492,7 +1526,7 @@
     try { navigator.clipboard.writeText(txt).then(function () { $("btn-copy").textContent = "Copied"; }, fallback); } catch (e) { fallback(); }
   });
   let rz = null;
-  const redraw = function () { clearTimeout(rz); rz = setTimeout(function () { readColors(); drawFov(); if (cache.res) { drawCurves(); drawSq(); drawDq(); drawMapOverlay(); } }, 80); };
+  const redraw = function () { clearTimeout(rz); rz = setTimeout(function () { readColors(); drawFov(); if (cache.res) { drawCurves(); drawSq(); drawDq(); drawAmp(); drawMapOverlay(); } }, 80); };
   new ResizeObserver(redraw).observe(document.querySelector(".steps"));
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
   new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });

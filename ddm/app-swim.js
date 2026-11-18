@@ -643,6 +643,7 @@
     });
   }
   function syncControls() {
+    if (typeof curvesSteps === "function") curvesSteps();
     syncPredictionBases();
     CONTROLS.forEach(function (c) {
       const e = ctlEls[c.kind === "qrange" ? "qrange" : c.key];
@@ -1317,8 +1318,8 @@
     if (h.no_swim) {
       lines.push("<b>One kind of motion: diffusion.</b> The curves fall on one curve against q\u00b2\u0394t (second chart), not against q\u0394t (first chart): every cell wanders at random" + (TURNS() ? " and turns" : "") + ", D = " + fmtSig(h.D_um2_s, 2) + " " + MU + "m\u00b2/s. Nothing swims." + (TURNS() ? " The widest patterns (blue) fade sooner than the others: for them it is the turning of the rods, not their wandering, that renews the pattern." : ""));
     } else {
-      lines.push("<b>Swimmers, " + Math.round(100 * h.alpha) + " % of the signal:</b> " + (state.swim_tumble > 0 ? "runs broken by tumbles" : state.swim_osc_amp > 0 ? "runs with a back-and-forth stroke" : "straight runs") + ". The fast first step of every curve falls on one curve against q\u0394t (first chart; thick line: the swimmer model), as it must for motion at constant speed: a pattern renews when a cell has swum across it. Mean speed " + fmtV(h.v_um_s) + (res.fast && level !== "curious" ? "; the swimmers' rate per q rises with slope " + res.fast.slope.toFixed(2) + " (rate chart)" : "") + ".");
-      lines.push("<b>The others, " + Math.round(100 * (1 - h.alpha)) + " %:</b> they only diffuse" + (TURNS() ? " and turn (turning rods also pull the curves a little below the dashed level)" : "") + ". The level between the two steps (dashed) is their share; their slow final step falls on one curve against q\u00b2\u0394t (second chart; thick line: D = " + fmtSig(h.D_um2_s, 2) + " " + MU + "m\u00b2/s)." + (still < 0.5 ? " In this movie they barely move (D q\u00b2\u0394t = " + fmtSig(still, 2) + " at the finest pattern and longest delay), so their step is cut short: their share is read from how far each curve still has to fall." : ""));
+      lines.push("<b>Swimmers, " + Math.round(100 * h.alpha) + " % of the signal:</b> " + (state.swim_tumble > 0 ? "runs broken by tumbles" : state.swim_osc_amp > 0 ? "runs with a back-and-forth stroke" : "straight runs") + "; their fast first step lines up against q\u0394t (first chart). Mean speed " + fmtV(h.v_um_s) + (res.fast && level !== "curious" ? "; the swimmers' rate per q rises with slope " + res.fast.slope.toFixed(2) + " (rate chart)" : "") + ".");
+      lines.push("<b>The others, " + Math.round(100 * (1 - h.alpha)) + " %:</b> they only diffuse" + (TURNS() ? " and turn (turning rods also pull the curves a little below the dashed level)" : "") + "; their slow final step lines up against q\u00b2\u0394t (second chart), with D = " + fmtSig(h.D_um2_s, 2) + " " + MU + "m\u00b2/s." + (still < 0.5 ? " In this movie they barely move (D q\u00b2\u0394t = " + fmtSig(still, 2) + " at the finest pattern and longest delay), so their step is cut short: their share is read from how far each curve still has to fall." : ""));
     }
     if (tr && tr.n_swimmers > 0 && h && !h.no_swim && Math.abs(h.alpha - st.share) > 0.08) lines.push("The measured share is off by " + Math.round(100 * Math.abs(h.alpha - st.share)) + " points from the truth: see the checks below.");
     el.innerHTML = html + lines.map(function (t) { return '<p class="small" style="margin:0">' + t + '</p>'; }).join("");
@@ -1359,10 +1360,10 @@
     const counts = {}; res.fits.forEach(function (f) { if (f.reason) counts[f.reason] = (counts[f.reason] || 0) + 1; });
     const ul = $("reasons"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
-    if (res.fast) add(level === "curious" ? "Dots: how fast the swimmers renew each pattern. Solid line: what the fitted swimmer model predicts. For swimmers the dots rise in step with the fineness of the pattern; for long cells a little more slowly at the finest patterns." : "Dots: rate of the swimmers' step at each q (one exponential exp(-(\u0393 \u0394t)^\u03b2) for the swimmers, with the share, D and turning of the others fixed from the swimmer fit). Solid line: the same rate from the fitted model (1/e of its swimmer part). For point-like swimmers it grows as q (slope 1); long cells grow more slowly at large q (here slope " + res.fast.slope.toFixed(2) + ").");
+    if (res.fast) add(level === "curious" ? "Dots: how fast the swimmers renew each pattern. Solid line: what the fitted swimmer model predicts. For swimmers the dots rise in step with the fineness of the pattern; for long cells a little more slowly at the finest patterns." : "Dots: rate of the swimmers' step at each q (one exponential exp(-(\u0393 \u0394t)^\u03b2) for the swimmers, with the share, D and turning of the others fixed from the swimmer fit). Solid line: the same rate from the fitted model (1/e of its swimmer part).");
     else add("Solid line: rate = v\u2080 q, fitted to the points" + (res.compressed ? " (v\u2080 = " + fmtSig(res.compressed.v0_um_s, 3) + " " + MU + "m/s" + (level !== "curious" ? ", slope " + res.compressed.slope.toFixed(2) + " on these axes" : "") + ")" : "") + ". One exponential per q: with no swimmers found, the rate of the whole curve.");
     if (level !== "curious") {
-      add("Dotted grey line: D q\u00b2 of the cells that do not swim, from the swimmer model. Swimming gives slope 1, diffusion slope 2.");
+      add("Dotted grey line: D q\u00b2 of the cells that do not swim, from the swimmer model.");
       add("Dashed red line: the same model at the true speeds of the simulated cells. It lies below q times the speed: in 3D a pattern has changed by 1 \u2212 1/e when q v \u0394t is about 2.2, because most cells swim at an angle to the stripes.");
     }
     add(res.used.length + " points used.");
@@ -1421,8 +1422,20 @@
   // estimates from the data (lines: B from the zero-delay intercept, A = 2 var - B). The axis range
   // comes from the measurable window, so runaway fits outside it (curves that never level off) cannot
   // squash the plot; such points are drawn at the edge.
+  function ampPoints() { const r = cache.res; return (r.fits || []).map(function (f) { return { q: f.q_per_um, A: f.A, B: f.B > 0 ? f.B : (r.B_est ? r.B_est[f.bin] : null), used: !!f.ok && f.reason === null }; }).sort(function (a, b) { return a.q - b.q; }); }
+  // one line in the result box: how the signal compares with the camera noise over the patterns used
+  function ampLine() {
+    if (!cache.res) return "";
+    const pts = ampPoints().filter(function (p) { return p.used && p.A > 0 && p.B > 0; });
+    if (pts.length < 2) return "";
+    const r = pts.map(function (p) { return p.A / p.B; }).sort(function (a, b) { return a - b; }), As = pts.map(function (p) { return p.A; }), Bs = pts.map(function (p) { return p.B; });
+    const bLo = Math.min.apply(null, Bs), bHi = Math.max.apply(null, Bs);
+    const fx = function (v) { return v >= 1e5 ? v.toExponential(1).replace("e+", "e") : fmtSig(v, 2); };
+    return '<p class="small amp-line" style="margin:0.5rem 0 0"><b>Signal and camera noise:</b> over the ' + pts.length + ' patterns used, the signal A is ' + fmtSig(r[0], 2) + ' to ' + fmtSig(r[r.length - 1], 2) + ' times the camera noise B' +
+      (level === "curious" ? '' : ' (A from ' + fx(Math.min.apply(null, As)) + ' to ' + fx(Math.max.apply(null, As)) + ', B ' + (bHi / bLo < 1.05 ? '= ' + fx(bLo) : 'from ' + fx(bLo) + ' to ' + fx(bHi)) + ')') + '; the chart of A and B is in this step.</p>';
+  }
   function drawAmp() {
-    if (level !== "researcher") return;
+    if (!cache.res) return;
     const res = cache.res, w = res.window;
     const inWin = function (q) { return q >= 2 * w.q_lo_per_um && q <= w.q_hi_per_um; };
     const vals = [];
@@ -1558,7 +1571,7 @@
       html += '<dt>Simulated cells</dt><dd>' + mv.info.n_particles + ', of which ' + swt.n_swimmers + ' swim' + (swt.n_plane ? ', all along the glass' : '') + '</dd>';
       html += '</dl></details>';
     }
-    $("result").innerHTML = html;
+    $("result").innerHTML = html + ampLine();
     const br = $("btn-repeat"); if (br) br.addEventListener("click", startRepeat);
     $("hero-result").innerHTML = '<span>True mean speed</span><span class="n">' + fmtV(swt.v_mean_um_s) + '</span><span>Measured by DDM</span><span class="n">' + (h ? fmtV(h.v_um_s) : "-") + '</span>' +
       '<span>Cells that swim: ' + Math.round(100 * swt.fraction) + ' % true' + (swt.n_swimmers > 0 && Math.abs(st.share - swt.fraction) >= 0.025 ? ' (' + Math.round(100 * st.share) + ' % of what the microscope sees)' : '') + ', ' + (h ? Math.round(100 * (h.no_swim ? 0 : h.alpha)) + ' %' : '-') + ' measured</span><span class="chip ' + v.cls + '">' + v.text + '</span>' + (sv && sv.cls !== "good" && swt.n_swimmers > 0 ? ' <span class="chip ' + sv.cls + '">' + sv.text + '</span>' : '');
@@ -1580,9 +1593,13 @@
     if (d >= w) return "The cells are larger than the smallest detail the microscope resolves, so you can see their shape; DDM still never needs to find or follow them.";
     return "Each cell is smaller than the smallest detail the microscope resolves (about " + fmtSig(w, 2) + " " + MU + "m here), so it shows as a blurred spot of about that width.";
   }
+  // step 5 describes the curves of the sample on the bench: updated as soon as the share of swimmers changes, not only when the run ends
+  function curvesSteps() {
+    $("curves-steps").textContent = state.swim_frac < 0.05 ? "Here no cell swims, so each curve rises in one step, as the cells, which only jiggle, wander off." : state.swim_frac > 0.95 ? "Here almost every cell swims, so each curve rises mostly in one quick step, as the swimmers carry the pattern away." : "Each curve rises in two steps: first quickly, because the swimmers carry the pattern away, then slowly, as the cells that only jiggle wander off.";
+  }
   function renderText() {
     // step 5 describes the curves of the sample on the bench
-    $("curves-steps").textContent = state.swim_frac < 0.05 ? "Here no cell swims, so each curve rises in one step, as the cells, which only jiggle, wander off." : state.swim_frac > 0.95 ? "Here almost every cell swims, so each curve rises mostly in one quick step, as the swimmers carry the pattern away." : "Each curve rises in two steps: first quickly, because the swimmers carry the pattern away, then slowly, as the cells that only jiggle wander off.";
+    curvesSteps();
     const m = cache.movie, cfg = cache.cfg, sw = m.truth.swim;
     const modeTxt = { brightfield: "a bright-field microscope", phase: "a phase-contrast microscope", darkfield: "a dark-field microscope", dic: "a DIC microscope", fluorescence: "a widefield fluorescence microscope", spinning: "a spinning-disk confocal microscope", scanning: "a point-scanning confocal microscope" }[state.mode];
     $("movie-text").textContent = "The movie shows " + (state.shape === "rod" ? fmtSize(cfg.diameter_um) + " long rod-shaped cells" : fmtSize(cfg.diameter_um) + " round cells") + ", filmed through " + modeTxt + " " + (m.times_s ? "at log-spaced times, in cycles that start at " + fmtNum(cfg.frame_rate_hz) + " frames a second and slow down (" + fmtDur(m.times_s[m.T - 1] + 1 / m.frame_rate_hz) + " in all). " : fmtNum(cfg.frame_rate_hz) + " times a second. ") +

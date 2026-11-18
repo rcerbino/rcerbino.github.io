@@ -428,7 +428,7 @@ img_seq = fd.read_images(file_names)</pre>
             <p id="diff-note"></p>
           </div>
         </div>
-        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what moved; what stayed put is gone. The longer the delay, the more has changed.</p>
+        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what changed. Random motion usually makes the difference grow with the delay; directed motion can also make it swing up and down.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: the difference image</summary>
           <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
@@ -455,7 +455,7 @@ img_seq = fd.read_images(file_names)</pre>
             <p class="lvl-2">Distance from the centre is the size of the wave vector, <i>q</i> = 2&pi; / spacing. The particles have no preferred direction, so the map is round (DIC and drift are exceptions), and we average it along circles to get one value for each <i>q</i>. The dashed circle marks the finest pattern the objective can resolve.</p>
           </div>
         </div>
-        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing (each q, one ring of the map) and each delay, how much the movie has changed. A point near the centre of the map is a wide pattern, a point far out a fine one.</p>
+        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing (each q, one ring of the map) and each delay, how much the movie has changed.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: image structure function</summary>
           <div class="eq"><i>d</i>(<b>q</b>, &Delta;<i>t</i>) = &lang; |<i>F</i>[&Delta;<i>I</i>](<b>q</b>; <i>t</i>, &Delta;<i>t</i>)|<sup>2</sup> &rang;<sub><i>t</i></sub></div>
@@ -474,7 +474,7 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
         <div class="step-title"><span class="num">5</span><h2 id="h-curves">Watch each pattern change</h2></div>
         <div class="step-body">
           <div class="text">
-            <p>For each stripe spacing, ask how different the movie looks after a given delay. Fine stripes (red) change quickly, because a cell only has to move a little to shift them. Wide stripes (blue) take longer. <span id="curves-steps">Each curve rises in two steps: first quickly, because the swimmers carry the pattern away, then slowly, as the cells that only jiggle wander off.</span></p>
+            <p>For each stripe spacing, ask how different the movie looks after a given delay. Fine stripes (red) change quickly, because a cell only has to move a little to shift them. Wide stripes (blue) take longer. <span id="curves-steps">For the standard mixture of swimming and non-swimming cells, each curve rises in two steps: first quickly, because the swimmers carry the pattern away, then slowly, as the cells that only jiggle wander off.</span></p>
             <p class="only-1">The page first measures how different two frames a delay apart look, for each stripe spacing. Two numbers for each spacing then put all the curves on one scale: the camera noise, there even at the shortest delay, is taken away, and what is left is divided by the full change, reached once the pattern is completely renewed. So each curve rises from 0, nothing has changed, to 1. The points are this measurement. The lines are one swimmer model fitted to all of them at once (step 6): a good match shows that the model describes the points, and the comparison with the simulated cells in step 6 shows whether the speed is right.</p>
             <p class="lvl-2">Each curve is the structure function <i>d</i>(<i>q</i>, &Delta;<i>t</i>) for one <i>q</i>. It rises from the camera noise level <i>B</i>(<i>q</i>) to <i>A</i>(<i>q</i>) + <i>B</i>(<i>q</i>). The lines are one swimmer model fitted to all <i>q</i> at once, with a shared speed distribution, share of swimmers and diffusion coefficient. The "Change" view removes <i>A</i> and <i>B</i> so all curves share one scale. Camera noise is white, so <i>B</i> is the same at every <i>q</i>: with a camera the page takes it from the frames themselves, <i>B</i> = 2(&lang;<i>N</i>&rang; + &sigma;<sub>read</sub><sup>2</sup>), with &lang;<i>N</i>&rang; the mean count in electrons and &sigma;<sub>read</sub> the read noise, instead of fitting it at each <i>q</i>, where it would soak up any misfit of the model. <b>The order of the analysis.</b> <i>d</i> is measured first; <i>B</i> comes from the camera (with the point scanner it is fitted, between 0 and the first point of each curve); <i>A</i> of each <i>q</i> follows from the swimmer fit. The points of the "Change" view are (<i>d</i> &minus; <i>B</i>)/<i>A</i>, rising from 0 to 1; step 6 plots what remains, <i>f</i> = 1 &minus; (<i>d</i> &minus; <i>B</i>)/<i>A</i>, which a swimmer can push a little below zero. The lines show how well the model describes the points; the comparison with the simulated cells tests the result.</p>
           </div>
@@ -556,7 +556,7 @@ A_est = 2 * aa.var - B_est
             <div class="chart short"><canvas id="chart-pv" aria-label="Distribution of swimming speeds"></canvas></div>
             <div class="legend" id="pv-legend"></div>
           </figure>
-          <figure class="viz lvl-3">
+          <figure class="viz">
             <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>). <i>A</i> falls at high <i>q</i> because the optics blur fine patterns; where it sinks into <i>B</i> the rates can no longer be read.</figcaption>
             <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
             <div class="legend" id="amp-legend"></div>

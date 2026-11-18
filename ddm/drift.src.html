@@ -407,7 +407,7 @@ img_seq = fd.read_images(file_names)</pre>
             <p id="diff-note"></p>
           </div>
         </div>
-        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what moved; what stayed put is gone. The longer the delay, the more has changed.</p>
+        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what changed. Random motion usually makes the difference grow with the delay; directed motion can also make it swing up and down.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: the difference image</summary>
           <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
@@ -451,7 +451,7 @@ img_seq = fd.read_images(file_names)</pre>
           <div class="btns"><button type="button" data-guess="yes">Yes</button><button type="button" data-guess="no">No</button></div>
           <div class="a" hidden><span class="verdict"></span> No. The difference only keeps how far each pattern travelled, not which way, so the fringes stay where they are. The phase map (Student level) turns its colours around. The bench now runs with a flow in the opposite direction.</div>
         </div>
-        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing (each q, one ring of the map) and each delay, how much the movie has changed. A point near the centre of the map is a wide pattern, a point far out a fine one.</p>
+        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing (each q, one ring of the map) and each delay, how much the movie has changed.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: structure function and cross spectrum with a drift</summary>
           <p>A particle carried by a drift <b>v</b> while it diffuses multiplies the Fourier transform of the image by e<sup>&minus;<i>i</i><b>q</b>&middot;<b>v</b>&Delta;<i>t</i></sup> as well as letting it fade. For independent particles</p>
@@ -499,13 +499,18 @@ dqt.set_frame_rate(frame_rate)     # frames per second
           <div class="text">
             <p>Each pattern gives two numbers: how fast it fades, and how fast it swings along the drift. Fading comes from the random motion: halving the stripe spacing makes it four times faster, a line of slope 2 on these logarithmic axes. Swinging comes from the drift: halving the spacing makes it only twice as fast, a line of slope 1. The height of the first line gives the diffusion coefficient, and from it the size; the height of the second gives the speed.</p>
             <p>The two lines cross where the drift and diffusion act equally fast (for fast drifts, beyond the right edge of the plot). Where they cross, the drift shifts each pattern by one radian of its cycle, about a sixth of a stripe, in the time diffusion takes to renew it. To their left the shift is larger, and once it passes a quarter of a stripe before the pattern fades, the curves swing below zero. To their right diffusion wins and no curve swings, but the drift is still there: each pattern is carried a little before it fades, and the page measures this small shift from the phase of the pattern, averaged over all patterns and the whole movie. As with tracking, a slow drift then only takes a longer movie (four times longer halves the noise) or a wider field. The result says how slow a drift this movie can show.</p>
-            <p class="lvl-2">Below the plot, the result gives the speed, its direction and the diffusion coefficient, and what they say about the cause: the density of the particles for sedimentation, the thermal diffusion coefficient and the Soret coefficient for thermophoresis.</p>
           </div>
           <figure class="viz">
             <div class="chart"><canvas id="chart-rates" aria-label="Rates of fading and of swinging against wave vector"></canvas></div>
             <ul class="reasons" id="reasons"></ul>
           </figure>
           <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <figure class="viz">
+            <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>) of the patterns used. <i>A</i> falls at high <i>q</i> because the optics blur fine patterns; where it sinks into <i>B</i> neither the fading nor the swinging of the patterns can be read.</figcaption>
+            <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
+            <div class="legend" id="amp-legend"></div>
+          </figure>
+          <details class="numbers" id="amp-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <div class="step-body">
             <div class="result" id="result" aria-live="polite"></div>
             <div class="predict" data-predict="slow" data-right="limit">

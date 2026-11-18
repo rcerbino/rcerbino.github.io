@@ -339,6 +339,8 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
     </aside>
 
     <div class="steps">
+      <nav class="step-index" aria-label="Steps on this page"><ol><li><a href="#step-setup" data-title="Set up the microscope" aria-label="Step 1: Set up the microscope">1</a></li><li><a href="#step-movie" data-title="Record a movie" aria-label="Step 2: Record a movie">2</a></li><li><a href="#step-diff" data-title="Subtract two frames" aria-label="Step 3: Subtract two frames">3</a></li><li><a href="#step-map" data-title="Split it into stripe patterns" aria-label="Step 4: Split it into stripe patterns">4</a></li><li><a href="#step-curves" data-title="Watch each pattern change" aria-label="Step 5: Watch each pattern change">5</a></li><li><a href="#step-rates" data-title="From speed of change to particle size" aria-label="Step 6: From speed of change to particle size">6</a></li></ol><span class="now" aria-hidden="true"></span></nav>
+
       <!-- 1 -->
       <section class="step" id="step-setup" aria-labelledby="h-setup">
         <div class="step-title"><span class="num">1</span><h2 id="h-setup">Set up the microscope</h2></div>
@@ -407,7 +409,7 @@ img_seq = fd.read_images(file_names)</pre>
             <p id="diff-note"></p>
           </div>
         </div>
-        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what moved; what stayed put is gone. The longer the delay, the more has changed.</p>
+        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what changed. Random motion usually makes the difference grow with the delay; directed motion can also make it swing up and down.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: the difference image</summary>
           <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
@@ -434,7 +436,7 @@ img_seq = fd.read_images(file_names)</pre>
             <p class="lvl-2">Distance from the centre is the size of the wave vector, <i>q</i> = 2&pi; / spacing. The particles have no preferred direction, so the map is round (DIC and drift are exceptions), and we average it along circles to get one value for each <i>q</i>. The dashed circle marks the finest pattern the objective can resolve.</p>
           </div>
         </div>
-        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing (each q, one ring of the map) and each delay, how much the movie has changed. A point near the centre of the map is a wide pattern, a point far out a fine one.</p>
+        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing (each q, one ring of the map) and each delay, how much the movie has changed.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: image structure function</summary>
           <div class="eq"><i>d</i>(<b>q</b>, &Delta;<i>t</i>) = &lang; |<i>F</i>[&Delta;<i>I</i>](<b>q</b>; <i>t</i>, &Delta;<i>t</i>)|<sup>2</sup> &rang;<sub><i>t</i></sub></div>
@@ -526,7 +528,7 @@ fit_res, model_res = fit_multik(aa, model, k_ref, use_err=True,
             <div class="chart short"><canvas id="chart-size" aria-label="Apparent size against wave vector"></canvas></div>
           </figure>
           <details class="numbers lvl-2" id="size-numbers"><summary>The numbers behind this chart</summary><div></div></details>
-          <figure class="viz lvl-3">
+          <figure class="viz">
             <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>). <i>A</i> falls at high <i>q</i> because the optics blur fine patterns; where it sinks into <i>B</i> the rates can no longer be read.</figcaption>
             <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
             <div class="legend" id="amp-legend"></div>
@@ -641,6 +643,31 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     </ul>
   </section>
 </main>
+<style>
+.step-index { position: sticky; top: 0; z-index: 6; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; padding: 0.45rem 0; margin-bottom: -1.5rem; background: var(--paper); border-bottom: 1px solid var(--rule); font-size: 0.85rem; }
+.step-index ol { display: flex; gap: 0.3rem; list-style: none; margin: 0; padding: 0; }
+.step-index a { display: inline-flex; align-items: center; justify-content: center; min-width: 1.9rem; height: 1.9rem; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink); text-decoration: none; font-variant-numeric: tabular-nums; }
+.step-index a:hover { border-color: var(--accent); }
+.step-index a[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.step-index .now { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 12rem; }
+.step { scroll-margin-top: 3.5rem; }
+@media (max-width: 40rem) { .step-index .now { display: none; } .step-index a { min-width: 1.75rem; height: 1.75rem; } }
+</style>
+<script>
+(function () {
+  var nav = document.querySelector(".step-index"); if (!nav) return;
+  var links = Array.prototype.slice.call(nav.querySelectorAll("a")), now = nav.querySelector(".now");
+  var steps = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
+  function mark() {
+    var k = 0, y = nav.getBoundingClientRect().bottom + 40;
+    steps.forEach(function (s, i) { if (s && s.getBoundingClientRect().top <= y) k = i; });
+    links.forEach(function (a, i) { if (i === k) a.setAttribute("aria-current", "step"); else a.removeAttribute("aria-current"); });
+    now.textContent = "Step " + (k + 1) + " of " + links.length + ": " + links[k].getAttribute("data-title");
+  }
+  window.addEventListener("scroll", mark, { passive: true }); window.addEventListener("resize", mark); mark();
+})();
+</script>
+
 <!-- progress of the simulation, pinned to the bottom of the window so it is always in view -->
 <div class="runbar" id="runbar">
   <div class="wrap runbar-inner">
@@ -5520,8 +5547,20 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   // estimates from the data (lines: B from the zero-delay intercept, A = 2 var - B). The axis range
   // comes from the measurable window, so runaway fits outside it (curves that never level off) cannot
   // squash the plot; such points are drawn at the edge.
+  function ampPoints() { const r = cache.res; return (r.fits || []).map(function (f) { return { q: f.q_per_um, A: f.A, B: f.B > 0 ? f.B : (r.B_est ? r.B_est[f.bin] : null), used: !!f.ok && f.reason === null }; }).sort(function (a, b) { return a.q - b.q; }); }
+  // one line in the result box: how the signal compares with the camera noise over the patterns used
+  function ampLine() {
+    if (!cache.res) return "";
+    const pts = ampPoints().filter(function (p) { return p.used && p.A > 0 && p.B > 0; });
+    if (pts.length < 2) return "";
+    const r = pts.map(function (p) { return p.A / p.B; }).sort(function (a, b) { return a - b; }), As = pts.map(function (p) { return p.A; }), Bs = pts.map(function (p) { return p.B; });
+    const bLo = Math.min.apply(null, Bs), bHi = Math.max.apply(null, Bs);
+    const fx = function (v) { return v >= 1e5 ? v.toExponential(1).replace("e+", "e") : fmtSig(v, 2); };
+    return '<p class="small amp-line" style="margin:0.5rem 0 0"><b>Signal and camera noise:</b> over the ' + pts.length + ' patterns used, the signal A is ' + fmtSig(r[0], 2) + ' to ' + fmtSig(r[r.length - 1], 2) + ' times the camera noise B' +
+      (level === "curious" ? '' : ' (A from ' + fx(Math.min.apply(null, As)) + ' to ' + fx(Math.max.apply(null, As)) + ', B ' + (bHi / bLo < 1.05 ? '= ' + fx(bLo) : 'from ' + fx(bLo) + ' to ' + fx(bHi)) + ')') + '; the chart of A and B is in this step.</p>';
+  }
   function drawAmp() {
-    if (level !== "researcher") return;
+    if (!cache.res) return;
     const res = cache.res, w = res.window;
     const inWin = function (q) { return q >= 2 * w.q_lo_per_um && q <= w.q_hi_per_um; };
     const vals = [];
@@ -5633,7 +5672,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     } else h += '<dt>Particles</dt><dd>' + SHAPES[state.shape].toLowerCase() + ', ' + fmtSize(tr.diameter_um) + (BODY() ? ', aspect ratio ' + fmtSig(cache.cfg.aspect, 2) : '') + '</dd>';
     if (LEVEL_RANK[level] >= 3 && r && r.gain !== undefined) h += '<dt>Second mode</dt><dd>removes ' + Math.round(100 * r.gain) + ' % of the one-mode misfit; ' + Math.round(100 * (r.fast_share || 0)) + ' % of the signal' + (r.D_r_s ? '; rate from the ' + (r.from || 'joint fit') + (r.joint_rate_s && r.from !== 'joint fit' ? ' (joint fit: ' + fmtRate(r.joint_rate_s) + ')' : '') : '') + '</dd>';
     h += '</dl>';
-    $("result").innerHTML = h;
+    $("result").innerHTML = h + ampLine();
     $("hero-result").innerHTML = '<span>True turning rate</span><span class="n">' + fmtRate(6 * tr.D_r_s) + '</span><span>Measured by DDM</span><span class="n">' + (r && r.D_r_s ? fmtRate(6 * r.D_r_s) : "not seen") + '</span><span class="chip ' + rv.cls + '">' + rv.text + '</span>';
     $("hero-cap").textContent = "Simulated " + MODE_SHORT[state.mode] + " movie" + (cache.cfg.polarization ? " between polarizers" : "") + ", " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
   }
@@ -5744,7 +5783,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     }
     const ax = axialNote(res, v);
     if (ax) h += '<p class="small" style="margin:0">' + ax + '</p>';
-    $("result").innerHTML = h;
+    $("result").innerHTML = h + ampLine();
     const br = $("btn-repeat"); if (br) br.addEventListener("click", startRepeat);
     $("hero-result").innerHTML = res.diameter_um === null
       ? '<span>Particles of ' + fmtSize(tr.diameter_um) + '. With these settings DDM cannot size them.</span><span class="chip bad">Not measurable</span>'

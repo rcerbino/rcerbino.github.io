@@ -409,7 +409,7 @@ img_seq = fd.read_images(file_names)</pre>
             <p id="diff-note"></p>
           </div>
         </div>
-        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what moved; what stayed put is gone. The longer the delay, the more has changed.</p>
+        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what changed. Random motion usually makes the difference grow with the delay; directed motion can also make it swing up and down.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: the difference image</summary>
           <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
@@ -436,7 +436,7 @@ img_seq = fd.read_images(file_names)</pre>
             <p class="lvl-2">Distance from the centre is the size of the wave vector, <i>q</i> = 2&pi; / spacing. The particles have no preferred direction, so the map is round (DIC and drift are exceptions), and we average it along circles to get one value for each <i>q</i>. The dashed circle marks the finest pattern the objective can resolve.</p>
           </div>
         </div>
-        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing (each q, one ring of the map) and each delay, how much the movie has changed. A point near the centre of the map is a wide pattern, a point far out a fine one.</p>
+        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing (each q, one ring of the map) and each delay, how much the movie has changed.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: image structure function</summary>
           <div class="eq"><i>d</i>(<b>q</b>, &Delta;<i>t</i>) = &lang; |<i>F</i>[&Delta;<i>I</i>](<b>q</b>; <i>t</i>, &Delta;<i>t</i>)|<sup>2</sup> &rang;<sub><i>t</i></sub></div>
@@ -528,7 +528,7 @@ fit_res, model_res = fit_multik(aa, model, k_ref, use_err=True,
             <div class="chart short"><canvas id="chart-size" aria-label="Apparent size against wave vector"></canvas></div>
           </figure>
           <details class="numbers lvl-2" id="size-numbers"><summary>The numbers behind this chart</summary><div></div></details>
-          <figure class="viz lvl-3">
+          <figure class="viz">
             <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>). <i>A</i> falls at high <i>q</i> because the optics blur fine patterns; where it sinks into <i>B</i> the rates can no longer be read.</figcaption>
             <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
             <div class="legend" id="amp-legend"></div>

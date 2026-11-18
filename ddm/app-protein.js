@@ -1044,7 +1044,6 @@
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
     if (level === "curious") {
       add("Dots: how fast the proteins spread, read from each pattern (hollow: patterns left out, mostly lost in the camera noise). Dotted line: their average. Red line: how fast the crowd spreads in the simulation. Dashed grey: one protein alone.");
-      add(Dc > D0 ? "The red line lies above the grey one: the proteins push each other apart, so the crowd evens itself out faster than one protein wanders." : "The red line lies below the grey one: the proteins attract each other and drag on each other, so the crowd evens itself out more slowly than one protein wanders.");
       return;
     }
     const nu = res.rows.filter(function (r) { return r.used; }).length, why = {};
@@ -1087,35 +1086,73 @@
     if (fit.lineD) seg(function (c) { return lineD(fit.lineD, c); }, C.ink, [7, 4], 1.4);
     pts.forEach(function (p) { if (!(p.D > 0)) return; const X = a.fx(p.c); ctx.strokeStyle = C.ink; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X, a.fy(p.D * (1 - p.D_rel_err))); ctx.lineTo(X, a.fy(p.D * (1 + p.D_rel_err))); ctx.stroke(); dot(ctx, X, a.fy(p.D), 3, C.ink, null); });
     a.done();
-    // concentration over amplitude, relative to its value at c = 0
+    // the amplitude against the concentration, as in Guidolin et al. (2023), eq. 5: <A> = k c / (1 + c / c0), c0 = 1 / (2 A2 M).
+    // Shown divided by k (from the fit), so that proteins that do not interact would lie on the line y = c. The fit is the
+    // weighted straight line through c / A = (1 + c / c0) / k, the same model.
     const a0 = fit.lineA ? fit.lineA.a : null;
-    // the simulated line on the same scale: the true amplitudes give c / A_true = a_t (1 + 2 A2 M c)
+    // the simulated curve on the same scale: the true amplitudes give c / A_true = a_t (1 + 2 A2 M c)
     let at = 0, nt = 0; pts.forEach(function (p) { if (p.A_true > 0) { at += (p.c / p.A_true) / trueRel(p.c, r); nt++; } }); at = nt ? at / nt : null;
     const norm = a0 || at || 1;
-    lo = Infinity; hi = -Infinity;
-    const rel = pts.filter(function (p) { return p.A > 0; }).map(function (p) { return { c: p.c, y: p.c / p.A / norm, e: p.c / p.A / norm * p.A_rel_err }; });
-    rel.forEach(function (p) { consider(p.y - p.e); consider(p.y + p.e); });
-    const tline = function (c) { return (at ? at / norm : 1) * trueRel(c, r); };
-    [0, cmax].forEach(function (c) { consider(tline(c)); if (fit.lineA) consider((fit.lineA.a + fit.lineA.b * c) / norm); if (compare) consider(1 + compare.A * Math.min(c, compare.cmax)); });
-    const padA = 0.15 * (hi - lo || 1);
-    const b = axes($("chart-sa"), { xlog: false, ylog: false, x0: 0, x1: cmax, y0: lo - padA, y1: hi + padA, xlabel: "Concentration (mg/mL)", ylabel: level === "curious" ? "Concentration / signal (relative)" : "c / A (relative)" }), cb = b.ctx;
-    const segB = function (f, col, dash, wd, alpha, end) { const ce = end || cmax; cb.strokeStyle = col; cb.lineWidth = wd; cb.setLineDash(dash); cb.globalAlpha = alpha || 1; cb.beginPath(); cb.moveTo(b.fx(0), b.fy(f(0))); cb.lineTo(b.fx(ce), b.fy(f(ce))); cb.stroke(); cb.setLineDash([]); cb.globalAlpha = 1; };
-    if (compare) segB(function (c) { return 1 + compare.A * c; }, C.ink, [2, 4], 2, 0.65, compare.cmax);
-    segB(tline, C["accent-2"], [], 1.8);
-    if (fit.lineA) segB(function (c) { return (fit.lineA.a + fit.lineA.b * c) / norm; }, C.ink, [7, 4], 1.4);
+    lo = 0; hi = -Infinity;
+    const rel = pts.filter(function (p) { return p.A > 0; }).map(function (p) { return { c: p.c, y: p.A * norm, e: p.A * norm * p.A_rel_err }; });
+    rel.forEach(function (p) { consider(p.y + p.e); });
+    const tcurve = function (c) { return (at ? norm / at : 1) * c / trueRel(c, r); };
+    const fcurve = function (c) { return c / (1 + fit.lineA.b / fit.lineA.a * c); };
+    const ccurve = function (c) { return c / (1 + compare.A * c); };
+    [cmax / 2, cmax].forEach(function (c) { consider(c); consider(tcurve(c)); if (fit.lineA) consider(fcurve(c)); if (compare) consider(ccurve(Math.min(c, compare.cmax))); });
+    const b = axes($("chart-sa"), { xlog: false, ylog: false, x0: 0, x1: cmax, y0: 0, y1: hi * 1.1, xlabel: "Concentration (mg/mL)", ylabel: level === "curious" ? "Signal (relative)" : "<A> / k (mg/mL)" }), cb = b.ctx;
+    const curveB = function (f, col, dash, wd, alpha, end) { const ce = end || cmax; cb.strokeStyle = col; cb.lineWidth = wd; cb.setLineDash(dash); cb.globalAlpha = alpha || 1; cb.beginPath(); for (let i = 0; i <= 60; i++) { const c = ce * i / 60, X = b.fx(c), Y = b.fy(f(c)); if (i === 0) cb.moveTo(X, Y); else cb.lineTo(X, Y); } cb.stroke(); cb.setLineDash([]); cb.globalAlpha = 1; };
+    curveB(function (c) { return c; }, C.muted, [3, 3], 1.2);
+    if (compare) curveB(ccurve, C.ink, [2, 4], 2, 0.65, compare.cmax);
+    curveB(tcurve, C["accent-2"], [], 1.8);
+    if (fit.lineA) curveB(fcurve, C.ink, [7, 4], 1.4);
     rel.forEach(function (p) { const X = b.fx(p.c); cb.strokeStyle = C.ink; cb.lineWidth = 1; cb.beginPath(); cb.moveTo(X, b.fy(p.y - p.e)); cb.lineTo(X, b.fy(p.y + p.e)); cb.stroke(); dot(cb, X, b.fy(p.y), 3, C.ink, null); });
     b.done();
-    fillNumbers("series-numbers", ["c (mg/mL)", "D_c measured (" + MU + "m\u00b2/s)", "Uncertainty (%)", "D_c simulated", "c / A measured (relative)", "Uncertainty (%)", "c / A simulated (relative)"],
-      pts.map(function (p) { return [p.c, p.D, 100 * p.D_rel_err, r.Dc(p.c), p.A > 0 ? p.c / p.A / norm : null, p.A > 0 ? 100 * p.A_rel_err : null, tline(p.c)]; }));
+    fillNumbers("series-numbers", ["c (mg/mL)", "D_c measured (" + MU + "m\u00b2/s)", "Uncertainty (%)", "D_c simulated", "&lt;A&gt; / k measured (mg/mL)", "Uncertainty (%)", "&lt;A&gt; / k simulated (mg/mL)"],
+      pts.map(function (p) { return [p.c, p.D, 100 * p.D_rel_err, r.Dc(p.c), p.A > 0 ? p.A * norm : null, p.A > 0 ? 100 * p.A_rel_err : null, tcurve(p.c)]; }));
     const notes = function (id, list) { const ul = $(id); ul.innerHTML = ""; list.forEach(function (t) { if (!t) return; const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); }); };
     const cmp = compare ? "Dotted line: the earlier " + (compare.measured ? "series" : "sample as simulated") + " (" + compare.label + ")." : null;
     if (level === "curious") {
-      notes("sd-notes", [cmp, "Dots: how fast the proteins spread at each concentration (bars: uncertainty). Dashed: the straight line through them; where it meets the left edge is one protein alone, which gives its size. Red: the simulation.", r.kD_mL_g >= 0 ? "Rising: the proteins push each other apart." : "Falling: the proteins attract each other, or the drag of their neighbours wins."]);
-      notes("sa-notes", [cmp, "Dots: the concentration divided by how strong the patterns are, against its value with no proteins. Rising: the proteins keep evenly spread, so the crowd ripples less than as many independent proteins would. Falling: they cluster a little, and ripple more."]);
+      notes("sd-notes", [cmp, "Dots: how fast the proteins spread at each concentration (bars: uncertainty). Dashed: the straight line through them; where it meets the left edge is one protein on its own. Red: the simulation."]);
+      notes("sa-notes", [cmp, "Dots: how strong the patterns are at each concentration. Grey: what proteins that do not interact would give, growing in step with the concentration. Below it, the proteins keep evenly spread; above it, they cluster a little. Dashed: the fit. Red: the simulation."]);
       return;
     }
     notes("sd-notes", [cmp, "Dots: D_c at each concentration, from step 6 (bars: jackknife). Dashed: weighted line D_c = D0 (1 + k_D c). Red: as simulated, k_D = " + fmtSig(r.kD_mL_g, 3) + " mL/g." + (fit.lineD ? " Fit: D0 = " + fmtSig(fit.D0, 3) + " +- " + fmtSig(fit.D0_err, 2) + " " + MU + "m\u00b2/s, k_D = " + fmtSig(fit.kD_mL_g, 3) + " +- " + fmtSig(fit.kD_err, 2) + " mL/g." : "")]);
-    notes("sa-notes", [cmp, "Dots: c / A, with A the amplitude averaged over q = " + fmtSig(cache.res.amp_q[0], 2) + "-" + fmtSig(cache.res.amp_q[1], 2) + " " + MU + "m\u207b\u00b9" + (cache.opts && cache.opts.fix_D !== false ? " and fitted again at the D_c of the line" : "") + ", divided by the intercept of the line. Since A is proportional to c S(0), c / A = (1 + 2 A2 M c) / K. Red: as simulated, A2 = " + fmtA2(r.A2_mol_mL_g2) + " mol mL/g\u00b2." + (fit.lineA ? " Fit: A2 = " + fmtA2(fit.A2) + " +- " + fmtA2(fit.A2_err) + "." : "")]);
+    notes("sa-notes", [cmp, "Dots: <A>, the amplitude averaged over q = " + fmtSig(cache.res.amp_q[0], 2) + "-" + fmtSig(cache.res.amp_q[1], 2) + " " + MU + "m\u207b\u00b9" + (cache.opts && cache.opts.fix_D !== false ? " and fitted again at the D_c of the line" : "") + ", divided by k. Grey: <A> = k c, proteins that do not interact. Dashed: <A> = k c / (1 + c / c0) with c0 = 1 / (2 A2 M), as in Guidolin et al. (2023); A2 is their B2, in mol mL/g\u00b2. Red: as simulated, A2 = " + fmtA2(r.A2_mol_mL_g2) + "." + (fit.lineA ? " Fit: A2 = " + fmtA2(fit.A2) + " +- " + fmtA2(fit.A2_err) + " mol mL/g\u00b2" + (fit.lineA.b > 0 ? ", c0 = " + fmtSig(fit.lineA.a / fit.lineA.b, 2) + " mg/mL" : "") + "." : "")]);
+  }
+  function ampPoints() { const r = cache.res; return r.rows.map(function (x) { return { q: x.q_per_um, A: x.A, B: r.B_camera, used: x.used }; }); }
+  // signal A(q) and camera noise B(q) at each q, as on the sizing page (Researcher level): where A sinks into B, the
+  // patterns carry no usable signal and are left out
+  // one line in the result box: how the signal compares with the camera noise over the patterns used
+  function ampLine() {
+    if (!cache.res) return "";
+    const pts = ampPoints().filter(function (p) { return p.used && p.A > 0 && p.B > 0; });
+    if (pts.length < 2) return "";
+    const r = pts.map(function (p) { return p.A / p.B; }).sort(function (a, b) { return a - b; }), As = pts.map(function (p) { return p.A; }), Bs = pts.map(function (p) { return p.B; });
+    const bLo = Math.min.apply(null, Bs), bHi = Math.max.apply(null, Bs);
+    const fx = function (v) { return v >= 1e5 ? v.toExponential(1).replace("e+", "e") : fmtSig(v, 2); };
+    return '<p class="small amp-line" style="margin:0.5rem 0 0"><b>Signal and camera noise:</b> over the ' + pts.length + ' patterns used, the signal A is ' + fmtSig(r[0], 2) + ' to ' + fmtSig(r[r.length - 1], 2) + ' times the camera noise B' +
+      (level === "curious" ? '' : ' (A from ' + fx(Math.min.apply(null, As)) + ' to ' + fx(Math.max.apply(null, As)) + ', B ' + (bHi / bLo < 1.05 ? '= ' + fx(bLo) : 'from ' + fx(bLo) + ' to ' + fx(bHi)) + ')') + '; the chart of A and B is in this step.</p>';
+  }
+  function drawAmp() {
+    if (!cache.res) return;
+    const res = cache.res, pts = ampPoints().filter(function (p) { return p.q > 0 && (p.A > 0 || p.B > 0); });
+    const vals = []; pts.forEach(function (p) { if (p.A > 0) vals.push(p.A); if (p.B > 0) vals.push(p.B); });
+    if (vals.length < 2) return;
+    vals.sort(function (p, q) { return p - q; });
+    const y0 = vals[0] / 2.5, y1 = vals[vals.length - 1] * 2.5, qs = pts.map(function (p) { return p.q; });
+    const x0 = Math.min.apply(null, qs) * 0.8, x1 = Math.max.apply(null, qs) * 1.25;
+    const a = axes($("chart-amp"), { xlog: true, ylog: true, x0: x0, x1: x1, y0: y0, y1: y1, xlabel: "Wave vector q (" + MU + "m\u207b\u00b9)", ylabel: "A(q), B(q)" }), ctx = a.ctx;
+    const clampY = function (v) { return Math.min(y1 / 1.05, Math.max(y0 * 1.05, v)); };
+    ctx.strokeStyle = C.muted; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]); ctx.beginPath(); let on = false;
+    pts.forEach(function (p) { if (!(p.B > 0)) { on = false; return; } const X = a.fx(p.q), Y = a.fy(clampY(p.B)); if (!on) { ctx.moveTo(X, Y); on = true; } else ctx.lineTo(X, Y); });
+    ctx.stroke(); ctx.setLineDash([]);
+    pts.forEach(function (p) { if (p.A > 0) dot(ctx, a.fx(p.q), a.fy(clampY(p.A)), p.used ? 3 : 2.4, p.used ? C.accent : null, C.accent); });
+    const qo = res.window && res.window.q_opt_per_um;
+    if (qo > x0 && qo < x1) { ctx.setLineDash([5, 4]); ctx.strokeStyle = C.muted; ctx.lineWidth = 1; const xq = a.fx(qo); ctx.beginPath(); ctx.moveTo(xq, a.m.t); ctx.lineTo(xq, a.m.t + a.ph); ctx.stroke(); ctx.setLineDash([]); }
+    a.done();
+    $("amp-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>A: signal at each q (filled: used, hollow: left out)</span><span><i style="background:' + C.muted + '"></i>B: camera noise (dashed)</span><span>Vertical dashed line: the finest pattern the objective resolves</span>';
+    fillNumbers("amp-numbers", ["q (" + MU + "m\u207b\u00b9)", "A", "B", "Used"], pts.map(function (p) { return [p.q, p.A > 0 ? p.A : null, p.B > 0 ? p.B : null, p.used ? "yes" : "no"]; }));
   }
   // ---- result -------------------------------------------------------------------------------
   function rApp(D) { return KB * (state.T_C + 273.15) / (6 * Math.PI * viscosity_mPa_s() * 1e-3 * D * 1e-12) * 1e9; }
@@ -1136,20 +1173,20 @@
     const D = res.D_um2_s, Ra = D > 0 ? rApp(D) : NaN, ok = seriesValid(), s = ok ? cache.series : null, f = s ? s.fit : null;
     let h = '<div class="eyebrow">Result</div>';
     h += '<div class="big">' + (D > 0 ? (level === "curious" ? "Looks " + fmtSig(Ra, 3) + " nm in radius" : "Apparent radius " + fmtSig(Ra, 3) + " nm") : "No diffusion found") + '</div>';
-    h += '<p class="small" style="margin:0">' + (D > 0 ? "At " + fmtSig(conc, 3) + " mg/mL the proteins spread with D = " + fmtSig(D, 3) + " +- " + fmtSig(D * res.D_rel_err, 2) + " " + MU + "m\u00b2/s; read as one protein alone (Stokes-Einstein) that is a radius of " + fmtSig(Ra, 3) + " nm. The true radius is " + fmtSig(r.Rh_nm, 3) + " nm: " +
-      (Math.abs(r.kD_mL_g * conc * 1e-3) < 0.02 ? "at this concentration the interactions hardly change it." : r.kD_mL_g > 0 ? "the proteins repel each other, so the crowd spreads faster than one alone and looks smaller." : "the proteins attract or drag on each other, so the crowd spreads more slowly than one alone and looks larger.") : "No pattern carried enough signal above the camera noise.") + '</p>';
+    h += '<p class="small" style="margin:0">' + (D > 0 ? "At " + fmtSig(conc, 3) + " mg/mL the proteins spread with D = " + fmtSig(D, 3) + " +- " + fmtSig(D * res.D_rel_err, 2) + " " + MU + "m\u00b2/s. The radius set in the simulation is " + fmtSig(r.Rh_nm, 3) + " nm: " +
+      (Math.abs(r.kD_mL_g * conc * 1e-3) < 0.02 ? "at this concentration the interactions hardly change it." : r.kD_mL_g > 0 ? "the repulsion between the proteins outweighs the drag of their neighbours, so the crowd spreads faster than one alone and looks smaller." : "the drag of neighbours, and any attraction, outweigh the repulsion, so the crowd spreads more slowly than one alone and looks larger.") : "No pattern carried enough signal above the camera noise.") + '</p>';
     h += '<span class="chip ' + v.cls + '">' + v.text + '</span>';
     if (f && f.lineD) {
       const sv = seriesVerdict(f, s.props);
-      h += '<p class="small" style="margin:0.5rem 0 0"><b>From the series (step 7):</b> ' + (level === "curious" ? "one protein alone is " + fmtSig(f.Rh_nm, 2) + " nm in radius (true " + fmtSig(s.props.Rh_nm, 2) + "), and the denser the crowd, the " + (f.kD_mL_g > 0 ? "faster it spreads: repulsion wins" : "more slowly it spreads: attraction and drag win") + " (k_D = " + fmtSig(f.kD_mL_g, 2) + " mL/g, simulated " + fmtSig(s.props.kD_mL_g, 2) + ")." :
-        "R_h = " + fmtSig(f.Rh_nm, 3) + " nm (true " + fmtSig(s.props.Rh_nm, 3) + "), k_D = " + fmtSig(f.kD_mL_g, 3) + " +- " + fmtSig(f.kD_err, 2) + " mL/g (" + fmtSig(s.props.kD_mL_g, 3) + ")" + (f.A2 !== undefined ? ", A2 = " + fmtA2(f.A2) + " +- " + fmtA2(f.A2_err) + " mol mL/g\u00b2 (" + fmtA2(s.props.A2_mol_mL_g2) + ")" : "") + ".") + '</p>';
+      h += '<p class="small" style="margin:0.5rem 0 0"><b>From the series (step 7):</b> ' + (level === "curious" ? "one protein on its own is " + fmtSig(f.Rh_nm, 2) + " nm in radius (set in the simulation: " + fmtSig(s.props.Rh_nm, 2) + "), and the denser the crowd, the " + (f.kD_mL_g > 0 ? "faster it spreads: repulsion outweighs the drag of neighbours" : "more slowly it spreads: the drag of neighbours, and any attraction, outweigh the repulsion") + " (k_D = " + fmtSig(f.kD_mL_g, 2) + " mL/g, simulated " + fmtSig(s.props.kD_mL_g, 2) + ")." :
+        "R_h at infinite dilution = " + fmtSig(f.Rh_nm, 3) + " nm (simulated " + fmtSig(s.props.Rh_nm, 3) + "), k_D = " + fmtSig(f.kD_mL_g, 3) + " +- " + fmtSig(f.kD_err, 2) + " mL/g (" + fmtSig(s.props.kD_mL_g, 3) + ")" + (f.A2 !== undefined ? ", A2 = " + fmtA2(f.A2) + " +- " + fmtA2(f.A2_err) + " mol mL/g\u00b2 (" + fmtA2(s.props.A2_mol_mL_g2) + ")" : "") + ".") + '</p>';
       if (sv) h += '<span class="chip ' + sv.cls + '">' + sv.text + '</span>';
     }
     if (level !== "curious") {
       const f3 = function (x) { return x === null || x === undefined || !isFinite(x) ? "-" : fmtSig(x, 3); };
       const pm = function (x, e) { return x === null || x === undefined || !isFinite(x) ? "-" : fmtSig(x, 3) + (e > 0 ? " +- " + fmtSig(e, 2) : ""); };
       const row = function (cls, name, d, ra, kd, a2, rh, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + d + '</td><td>' + ra + '</td><td>' + kd + '</td><td>' + a2 + '</td><td>' + rh + '</td></tr>'; };
-      let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">D at ' + fmtSig(conc, 3) + ' mg/mL (' + MU + 'm\u00b2/s)</th><th scope="col">Apparent radius (nm)</th><th scope="col">k_D (mL/g)</th><th scope="col">A2 (1e-4 mol mL/g\u00b2)</th><th scope="col">R_h from D0 (nm)</th></tr></thead><tbody>';
+      let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">D at ' + fmtSig(conc, 3) + ' mg/mL (' + MU + 'm\u00b2/s)</th><th scope="col">Apparent radius (nm)</th><th scope="col">k_D (mL/g)</th><th scope="col">A2, static (1e-4 mol mL/g\u00b2)</th><th scope="col">R_h from D0 (nm)</th></tr></thead><tbody>';
       t += row("main", "This page", pm(D, D * res.D_rel_err), f3(Ra), f ? pm(f.kD_mL_g, f.kD_err) : "-", f && f.A2 !== undefined ? pm(f.A2 * 1e4, f.A2_err * 1e4) : "-", f && f.Rh_nm ? f3(f.Rh_nm) : "-", "the headline; series values once step 7 has run");
       if (level === "addict" && res.published) {
         const pb = res.published, fp = s ? s.published : null;
@@ -1167,15 +1204,15 @@
       h += '<dt>Simulation</dt><dd>a density field: ' + fmtCount(mv.truth.n_proteins) + ' proteins in a chamber ' + fmtSig(cache.cfg.cell_um, 3) + ' ' + MU + 'm deep, S(0) = ' + fmtSig(mv.truth.S0, 3) + ', D_c = ' + fmtSig(mv.truth.Dc_um2_s, 3) + ' ' + MU + 'm\u00b2/s</dd>';
       h += '</dl></details>';
     }
-    $("result").innerHTML = h;
-    $("hero-result").innerHTML = '<span>' + (level === "curious" ? "True radius" : "R_h") + '</span><span class="n">' + fmtSig(r.Rh_nm, 3) + ' nm</span><span>Measured by DDM at ' + fmtSig(conc, 3) + ' mg/mL</span><span class="n">' + (D > 0 ? fmtSig(Ra, 3) + ' nm' : "-") + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
+    $("result").innerHTML = h + ampLine();
+    $("hero-result").innerHTML = '<span>' + (level === "curious" ? "Radius in the simulation" : "R_h, simulated") + '</span><span class="n">' + fmtSig(r.Rh_nm, 3) + ' nm</span><span>Measured by DDM at ' + fmtSig(conc, 3) + ' mg/mL</span><span class="n">' + (D > 0 ? fmtSig(Ra, 3) + ' nm' : "-") + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
     $("hero-cap").textContent = "Simulated bright-field movie of " + PROTEINS[state.protein].label.replace(/ \(.*$/, "").toLowerCase() + " at " + fmtSig(conc, 3) + " mg/mL, " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
   }
   function renderText() {
     const m = cache.movie, cfg = cache.cfg, r = props();
     $("movie-text").textContent = "The movie shows " + PROTEINS[state.protein].label.replace(/ \(.*$/, "").toLowerCase() + " at " + fmtSig(state.conc, 3) + " mg/mL in a buffer with " + fmtSig(state.salt_mM, 3) + " mM salt, filmed in bright field. No protein can be seen: what flickers is mostly the camera's shot noise. Under it, the number of proteins in each small volume rises and falls a little as they diffuse, and the light follows.";
     $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s = " + fmtSig(m.T / m.frame_rate_hz, 3) + " s, exposure " + fmtTime(m.exposure_s) + " (all rows together: global shutter assumed). " + (cache.res.repeats > 1 ? cache.res.repeats + " such movies of the same sample. " : "") + "Chamber " + cfg.cell_um + " " + MU + "m deep, focus " + fmtSig(cfg.focus_um, 3) + " " + MU + "m above its bottom, " + fmtCount(m.truth.n_proteins) + " proteins below the simulated field.";
-    $("diff-note").textContent = "Here the difference looks like pure noise: the proteins add a ripple far weaker than the camera's shot noise. Step 4 separates the two: the noise is the same for every pattern and every delay, while the ripple of the proteins grows with the delay.";
+    $("diff-note").textContent = "Here the difference looks like pure noise: the proteins add a ripple far weaker than the camera's shot noise. Step 4 tells the two apart.";
     const sb = $("movie-scale"), target = m.L_um / 4, nice = niceStep(target) > target ? niceStep(target) / 2 : niceStep(target);
     sb.querySelector("i").style.width = (100 * nice / m.L_um).toFixed(1) + "%"; sb.querySelector("span").textContent = fmtSig(nice, 2) + " " + MU + "m"; sb.style.width = "100%";
   }
@@ -1194,16 +1231,16 @@
   function renderAll() {
     if (!cache.res) return;
     readColors(); grey = greyRange(cache.movie); diffScale = null;
-    setQSpan(); renderLag(); renderText(); drawFov(); drawParticle(); drawMovieFrames(); drawMap(); drawStripes(); drawCurves(); drawDq(); drawSeries(); renderResult(); renderSettings();
+    setQSpan(); renderLag(); renderText(); drawFov(); drawParticle(); drawMovieFrames(); drawMap(); drawStripes(); drawCurves(); drawDq(); drawSeries(); drawAmp(); renderResult(); renderSettings();
   }
   // ---- "what matters" cards ---------------------------------------------------------------
   // a button may also start the series of step 7 once the bench has run
   const CARDS = [
-    { lvl: 1, title: "Apparent and true size", text: "At one concentration DDM gives how fast the proteins spread, and the Stokes-Einstein relation turns that into a radius. For the antibody in low salt the crowd spreads faster than one antibody alone, because the antibodies repel each other: at 8 mg/mL the radius comes out about 4.8 nm instead of 5.3 (in our tests 5.0 +- 0.15). At 2 mg/mL it would come out closer, 5.2 nm, but the signal is four times weaker: in our tests only a few patterns rose above the camera noise, and the uncertainty grew to about 20 %. The series of step 7, extrapolated to zero concentration, gives the true size with both problems kept in check.",
+    { lvl: 1, title: "Apparent radius and radius alone", text: "At one concentration DDM gives how fast the proteins spread, and the Stokes-Einstein relation turns that into a radius. For the antibody in low salt the crowd spreads faster than one antibody alone, because the antibodies repel each other: at 8 mg/mL the radius comes out about 4.8 nm instead of 5.3 (in our tests 5.0 +- 0.15). At 2 mg/mL it would come out closer, 5.2 nm, but the signal is four times weaker: in our tests only a few patterns rose above the camera noise, and the uncertainty grew to about 20 %. The series of step 7, extrapolated to zero concentration, gives the radius of one antibody on its own (the infinite-dilution hydrodynamic radius) with both problems kept in check.",
       shows: [{ label: "2 mg/mL", set: { conc: 2 }, go: "step-rates" }, { label: "8 mg/mL", set: {}, go: "step-rates" }, { label: "The series", set: {}, go: "step-series", series: true }] },
-    { lvl: 1, title: "Salt switches the interactions", text: "At 15 mM salt the antibodies, all positively charged, repel each other over a few nanometres (the Debye length is 2.5 nm): k_D is about +14 mL/g, and A2 is larger than for hard spheres of their size. At 115 mM the salt screens the charge within 0.9 nm and the short-range attraction wins: k_D falls to about -5 mL/g, while A2 stays positive but drops below the value for hard spheres. In our tests the series gave k_D = 10 +- 4 mL/g at 15 mM (up to 15 mg/mL) and -4.6 +- 0.6 at 115 mM (up to 30 mg/mL): the higher concentrations give a stronger signal and a longer lever.",
+    { lvl: 1, title: "Salt switches the interactions", text: "At 15 mM salt the antibodies, all positively charged, repel each other over a few nanometres (the Debye length is 2.5 nm): k_D is about +14 mL/g, and A2 is larger than for hard spheres of their size. At 115 mM the salt screens the charge within 0.9 nm, and in the diffusion slope the drag of neighbours and the short-range attraction outweigh what is left of the repulsion: k_D falls to about -5 mL/g. A2 stays positive, though below the value for hard spheres: on balance the antibodies still keep apart, mostly by their size. A negative k_D alone does not mean that proteins attract. In our tests the series gave k_D = 10 +- 4 mL/g at 15 mM (up to 15 mg/mL) and -4.6 +- 0.6 at 115 mM (up to 30 mg/mL): the higher concentrations give a stronger signal and a longer lever.",
       shows: [{ label: "15 mM salt", set: {}, go: "step-series", series: true }, { label: "115 mM salt", set: { salt_mM: 115, c_max: 30 }, go: "step-series", series: true }] },
-    { lvl: 1, title: "Albumin, as in our 2023 paper", text: "Bovine serum albumin in phosphate-buffered saline, as in our 2023 paper: its negative charge is mostly screened, so it behaves nearly as a hard sphere with a little extra repulsion. The model gives k_D = 4.5 mL/g, against 4 +- 1 measured by DDM in the paper. Albumin is less than half as heavy as an antibody, so its signal per mg/mL is weaker: in our tests the series gave k_D = 2 +- 2 mL/g and R_h = 3.3 nm (true 3.4).",
+    { lvl: 1, title: "Albumin, as in our 2023 paper", text: "Bovine serum albumin in phosphate-buffered saline, as in our 2023 paper: its negative charge is mostly screened, so it behaves nearly as a hard sphere with a little extra repulsion. The model gives k_D = 4.5 mL/g, against 4 +- 1 measured by DDM in the paper. In the paper the amplitudes also gave a static second virial coefficient, B2 = (3 +- 1)e-4 mol mL/g\u00b2 (the A2 of this page), larger than most published values; the model here uses 1.1e-4, the value that goes with the k_D. Albumin is less than half as heavy as an antibody, so its signal per mg/mL is weaker: in our tests the series gave k_D = 2 +- 2 mL/g, A2 = (1.2 +- 0.1)e-4 and R_h = 3.3 nm (set in the simulation: 3.4).",
       shows: [{ label: "Albumin in saline", set: { protein: "bsa" }, go: "step-series", series: true }] },
     { lvl: 1, title: "A sticky antibody", text: "An antibody with a stronger short-range attraction, at 115 mM salt: A2 is below zero, so the proteins cluster a little, and k_D is about -21 mL/g. At 18 mg/mL the crowd spreads 37 % more slowly than one antibody alone, and read at that concentration alone it would look 8.5 nm in radius instead of 5.3. A strong effect is easy to measure: in our tests the series gave k_D = -20.6 +- 0.9 mL/g and A2 = -1.1e-5 +- 0.3e-5 mol mL/g\u00b2 (simulated -1.4e-5).",
       shows: [{ label: "Sticky antibody", set: { protein: "sticky" }, go: "step-series", series: true }] },
@@ -1343,7 +1380,7 @@
     try { navigator.clipboard.writeText(txt).then(function () { $("btn-copy").textContent = "Copied"; }, fallback); } catch (e) { fallback(); }
   });
   let rz = null;
-  const redraw = function () { clearTimeout(rz); rz = setTimeout(function () { readColors(); drawFov(); if (cache.res) { drawCurves(); drawDq(); drawSeries(); drawMapOverlay(); } }, 80); };
+  const redraw = function () { clearTimeout(rz); rz = setTimeout(function () { readColors(); drawFov(); if (cache.res) { drawCurves(); drawDq(); drawSeries(); drawAmp(); drawMapOverlay(); } }, 80); };
   new ResizeObserver(redraw).observe(document.querySelector(".steps"));
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
   new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });

@@ -1269,7 +1269,7 @@
     if (level === "curious") add("Dots: how fast each pattern fades, on the black line of slope 2." + (res.detected ? " Squares: how fast it swings along the drift, on the blue line of slope 1." : ""));
     else add("Dots: how fast each pattern fades (\u0393), on the black line D q\u00b2 of slope 2." + (res.detected ? " Squares: how fast it swings along the drift (\u03c9), on the blue line v q of slope 1." : ""));
     if (level !== "curious") add("Dashed red: what the simulated particles should give (D q\u00b2 and, dotted, v q for the drift set).");
-    if (res.detected) add(res.visibility.swing ? "Where the blue line is below the black one, diffusion renews the pattern before the drift shifts it by about a sixth of a stripe (one radian of its cycle): those patterns do not swing, but their phase still shifts a little, and the measurement uses that too." : "No pattern swings here: diffusion renews each one before the drift shifts it by about a sixth of a stripe (one radian of its cycle). The drift is measured from the small shifts of the phase of all patterns, averaged over the movie.");
+    if (res.detected && !res.visibility.swing) add("No pattern swings here: the drift is measured from the small shifts of the phase of all patterns, averaged over the movie.");
     fillNumbers("chart-numbers", ["q (" + MU + "m\u207b\u00b9)", "Fading rate (1/s)", "Swing rate along the drift (rad/s)", "Used"], pts.map(function (e) { return [e.q_per_um, e.gamma_hz, e.omega_rad_s > 0 ? e.omega_rad_s : null, e.ok ? "yes" : "no"]; }));
   }
   // speed seen along each direction of q: v cos(theta - theta_v)
@@ -1289,6 +1289,40 @@
     a.done();
   }
 
+  function ampPoints() { const r = cache.res; return (r.bins || []).map(function (e) { return { q: r.q_per_um[e.b], A: e.A, B: e.B, used: true }; }).sort(function (a, b) { return a.q - b.q; }); }
+  // signal A(q) and camera noise B(q) at each q, as on the sizing page (Researcher level): where A sinks into B, the
+  // patterns carry no usable signal and are left out
+  // one line in the result box: how the signal compares with the camera noise over the patterns used
+  function ampLine() {
+    if (!cache.res) return "";
+    const pts = ampPoints().filter(function (p) { return p.used && p.A > 0 && p.B > 0; });
+    if (pts.length < 2) return "";
+    const r = pts.map(function (p) { return p.A / p.B; }).sort(function (a, b) { return a - b; }), As = pts.map(function (p) { return p.A; }), Bs = pts.map(function (p) { return p.B; });
+    const bLo = Math.min.apply(null, Bs), bHi = Math.max.apply(null, Bs);
+    const fx = function (v) { return v >= 1e5 ? v.toExponential(1).replace("e+", "e") : fmtSig(v, 2); };
+    return '<p class="small amp-line" style="margin:0.5rem 0 0"><b>Signal and camera noise:</b> over the ' + pts.length + ' patterns used, the signal A is ' + fmtSig(r[0], 2) + ' to ' + fmtSig(r[r.length - 1], 2) + ' times the camera noise B' +
+      (level === "curious" ? '' : ' (A from ' + fx(Math.min.apply(null, As)) + ' to ' + fx(Math.max.apply(null, As)) + ', B ' + (bHi / bLo < 1.05 ? '= ' + fx(bLo) : 'from ' + fx(bLo) + ' to ' + fx(bHi)) + ')') + '; the chart of A and B is in this step.</p>';
+  }
+  function drawAmp() {
+    if (!cache.res) return;
+    const res = cache.res, pts = ampPoints().filter(function (p) { return p.q > 0 && (p.A > 0 || p.B > 0); });
+    const vals = []; pts.forEach(function (p) { if (p.A > 0) vals.push(p.A); if (p.B > 0) vals.push(p.B); });
+    if (vals.length < 2) return;
+    vals.sort(function (p, q) { return p - q; });
+    const y0 = vals[0] / 2.5, y1 = vals[vals.length - 1] * 2.5, qs = pts.map(function (p) { return p.q; });
+    const x0 = Math.min.apply(null, qs) * 0.8, x1 = Math.max.apply(null, qs) * 1.25;
+    const a = axes($("chart-amp"), { xlog: true, ylog: true, x0: x0, x1: x1, y0: y0, y1: y1, xlabel: "Wave vector q (" + MU + "m\u207b\u00b9)", ylabel: "A(q), B(q)" }), ctx = a.ctx;
+    const clampY = function (v) { return Math.min(y1 / 1.05, Math.max(y0 * 1.05, v)); };
+    ctx.strokeStyle = C.muted; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]); ctx.beginPath(); let on = false;
+    pts.forEach(function (p) { if (!(p.B > 0)) { on = false; return; } const X = a.fx(p.q), Y = a.fy(clampY(p.B)); if (!on) { ctx.moveTo(X, Y); on = true; } else ctx.lineTo(X, Y); });
+    ctx.stroke(); ctx.setLineDash([]);
+    pts.forEach(function (p) { if (p.A > 0) dot(ctx, a.fx(p.q), a.fy(clampY(p.A)), p.used ? 3 : 2.4, p.used ? C.accent : null, C.accent); });
+    const qo = res.window && res.window.q_opt_per_um;
+    if (qo > x0 && qo < x1) { ctx.setLineDash([5, 4]); ctx.strokeStyle = C.muted; ctx.lineWidth = 1; const xq = a.fx(qo); ctx.beginPath(); ctx.moveTo(xq, a.m.t); ctx.lineTo(xq, a.m.t + a.ph); ctx.stroke(); ctx.setLineDash([]); }
+    a.done();
+    $("amp-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>A: signal at each q (filled: used, hollow: left out)</span><span><i style="background:' + C.muted + '"></i>B: camera noise (dashed)</span><span>Vertical dashed line: the finest pattern the objective resolves</span>';
+    fillNumbers("amp-numbers", ["q (" + MU + "m\u207b\u00b9)", "A", "B", "Used"], pts.map(function (p) { return [p.q, p.A > 0 ? p.A : null, p.B > 0 ? p.B : null, p.used ? "yes" : "no"]; }));
+  }
   // ---- result -------------------------------------------------------------------------------
   const MODE_SHORT = { brightfield: "bright-field", phase: "phase-contrast", darkfield: "dark-field", dic: "DIC", fluorescence: "widefield fluorescence", spinning: "spinning-disk confocal (X-Light V3)", scanning: "point-scanning confocal (AX R)" };
   function spotWidth() { return 0.61 * centralWavelength() / Math.min(objective().na, nLiquid(centralWavelength())); }
@@ -1404,7 +1438,7 @@
       if (res.velocity_from === "phase") h += '<dt>Pixels used for the velocity</dt><dd>' + res.v_jack.n_pixels + ' (pixel and delay pairs where the pattern is still clearly there)</dd>';
       h += '</dl></details>';
     }
-    $("result").innerHTML = h;
+    $("result").innerHTML = h + ampLine();
     $("hero-result").innerHTML = '<span>Drift set</span><span class="n">' + (!(ev.speed > 0) ? "none" : !ev.plane ? "along the axis" : ev.lo !== undefined ? fmtV(ev.lo) + " to " + fmtV(ev.hi) : fmtV(ev.speed)) + '</span><span>Measured by DDM</span><span class="n">' + (res.detected ? fmtV(res.v_um_s) : "none seen") + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
     $("hero-cap").textContent = "Simulated " + MODE_SHORT[state.mode] + " movie, " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
   }
@@ -1433,7 +1467,7 @@
   function renderAll() {
     if (!cache.res) return;
     readColors(); grey = greyRange(cache.movie); diffScale = null;
-    setQSpan(); renderLag(); renderText(); drawFov(); drawParticle(); drawMovieFrames(); drawMap(); drawStripes(); drawCurves(); drawRates(); drawSectorV(); renderResult(); renderSettings();
+    setQSpan(); renderLag(); renderText(); drawFov(); drawParticle(); drawMovieFrames(); drawMap(); drawStripes(); drawCurves(); drawRates(); drawSectorV(); drawAmp(); renderResult(); renderSettings();
   }
 
   // ---- "what matters" cards ---------------------------------------------------------------
@@ -1609,7 +1643,7 @@
     try { navigator.clipboard.writeText(txt).then(function () { $("btn-copy").textContent = "Copied"; }, fallback); } catch (e) { fallback(); }
   });
   let rz = null;
-  const redraw = function () { clearTimeout(rz); rz = setTimeout(function () { readColors(); drawFov(); if (cache.res) { drawCurves(); drawRates(); drawSectorV(); drawMapOverlay(); } }, 80); };
+  const redraw = function () { clearTimeout(rz); rz = setTimeout(function () { readColors(); drawFov(); if (cache.res) { drawCurves(); drawRates(); drawSectorV(); drawAmp(); drawMapOverlay(); } }, 80); };
   new ResizeObserver(redraw).observe(document.querySelector(".steps"));
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
   new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
