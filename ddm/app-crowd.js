@@ -1282,7 +1282,7 @@
     if (pts.length < 2) return "";
     const r = pts.map(function (p) { return p.A / p.B; }).sort(function (a, b) { return a - b; }), As = pts.map(function (p) { return p.A; }), Bs = pts.map(function (p) { return p.B; });
     const bLo = Math.min.apply(null, Bs), bHi = Math.max.apply(null, Bs);
-    const fx = function (v) { return v >= 1e5 ? v.toExponential(1) : fmtSig(v, 2); };
+    const fx = function (v) { return v >= 1e5 ? v.toExponential(1).replace("e+", "e") : fmtSig(v, 2); };
     return '<p class="small amp-line" style="margin:0.5rem 0 0"><b>Signal and camera noise:</b> over the ' + pts.length + ' patterns used, the signal A is ' + fmtSig(r[0], 2) + ' to ' + fmtSig(r[r.length - 1], 2) + ' times the camera noise B' +
       (level === "curious" ? '' : ' (A from ' + fx(Math.min.apply(null, As)) + ' to ' + fx(Math.max.apply(null, As)) + ', B ' + (bHi / bLo < 1.05 ? '= ' + fx(bLo) : 'from ' + fx(bLo) + ' to ' + fx(bHi)) + ')') + '; the chart of A and B is in this step.</p>';
   }
