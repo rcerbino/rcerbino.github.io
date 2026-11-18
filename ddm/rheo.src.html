@@ -241,6 +241,15 @@ pre.code { font-family: var(--mono); font-size: 0.8rem; background: var(--paper)
 .predict .q { font-weight: 600; }
 .predict .a { color: var(--ink); }
 .predict .verdict { font-weight: 600; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.numbers { font-family: var(--sans); font-size: 0.88rem; }
+.numbers summary { cursor: pointer; color: var(--muted); }
+.takeaway { font-family: var(--sans); font-size: 0.92rem; border-left: 3px solid var(--accent); padding: 0.1rem 0 0.1rem 0.8rem; max-width: var(--measure); margin: 0; }
+.transfer { font-family: var(--sans); font-size: 0.92rem; border: 1px solid var(--rule); border-radius: 6px; padding: 0.6rem 0.9rem; max-width: var(--measure); }
+.transfer summary, .inputs summary { cursor: pointer; }
+.inputs { font-family: var(--sans); font-size: 0.92rem; max-width: var(--measure); }
+.inputs p { margin: 0.5rem 0 0; }
+.transfer p { margin: 0.5rem 0 0; }
 .predict .base { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; color: var(--muted); }
 .predict button:disabled { cursor: default; opacity: 0.55; }
 .predict button[aria-pressed="true"] { opacity: 1; border-color: var(--accent); font-weight: 600; }
@@ -354,6 +363,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <div class="pstrip" id="particle-strip"></div>
           <figcaption id="particle-text"></figcaption>
         </figure>
+        <p class="takeaway"><b>What this step gives:</b> the finest stripes the movie can hold, and how strongly each particle shows in them: the objective and the light decide both.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: how each image is computed, and how the beads move</summary>
           <p>As on the <a href="../sizing/">sizing page</a>: the light scattered by each bead (Mie theory) interferes with the transmitted light through the condenser and objective apertures, or the dyed bead is convolved with the point spread function (fluorescence and confocal). Each frame is the sum of the images of all beads at their positions, with the detector's pixel size, quantum efficiency, shot noise, read noise and full well. The material itself does not show.</p>
@@ -378,6 +388,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
             <p class="readout lvl-2" id="movie-specs"></p>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> a stack of frames and the time of each. The time between frames and the length of the movie set the fastest and the slowest changes that can be measured.</p>
         <details class="math" data-open-at="researcher">
           <summary>In fastDDM</summary>
           <p>The structure function below is the same as fastDDM's. With your own movie you would start from the image files:</p>
@@ -399,6 +410,7 @@ img_seq = fd.read_images(file_names)</pre>
             <p id="diff-note"></p>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what moved; what stayed put is gone. The longer the delay, the more has changed.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: the difference image</summary>
           <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
@@ -429,6 +441,7 @@ img_seq = fd.read_images(file_names)</pre>
             <p class="lvl-2" id="kopt-note">The dashed circle on the strength map marks the finest pattern the objective can resolve.</p>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing (each q, one ring of the map) and each delay, how much the movie has changed. A point near the centre of the map is a wide pattern, a point far out a fine one.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: structure function of tracer beads</summary>
           <p>For beads that do not interact, with Gaussian displacements,</p>
@@ -500,6 +513,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             <div class="a" hidden><span class="verdict"></span> No. Each bead only rattles in its cage, so part of every pattern never changes: the curves level off above zero, higher for wider stripes, which a small rattle hardly moves. The height of the plateau gives how far the beads rattle, and from it the elastic modulus of the gel. The bench now runs with a soft gel so you can check: this chart keeps one curve of the earlier run, dashed, next to the new one at the same stripe spacing, and step 6 keeps the earlier displacement. Look for where the thick line levels off while the dashed one falls to zero.</div>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> how much of each pattern is left over time. Curves that level off above zero mean beads that stay caged.</p>
       </section>
 
       <!-- 6 -->
@@ -521,6 +535,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             <div class="chart"><canvas id="chart-moduli" aria-label="Storage and loss moduli against frequency"></canvas></div>
             <ul class="reasons" id="mod-notes"></ul>
           </figure>
+          <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <div class="step-body">
             <div class="result" id="result" aria-live="polite"></div>
             <div class="predict" data-predict="bigger" data-right="no">
@@ -530,6 +545,9 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             </div>
           </div>
         </div>
+        <details class="inputs"><summary>What the analysis is told, and what it finds</summary><p><b>Told (inputs):</b> the bead radius and the temperature; the pixel size and the times of the frames; the read noise and the gain of the camera, for <i>B</i>; the optics of the microscope, for the depth-of-field correction.</p><p><b>Found from the movie:</b> how much of each pattern is left over time and the mean squared displacement of the beads. The moduli follow from it with the bead radius and the temperature it was told.</p><p>In this simulation the analysis uses the same model of the optics that made the movie, so agreement here shows that the analysis recovers what was simulated under those assumptions; with a real microscope the optics are another input that can be wrong.</p></details>
+        <p class="takeaway"><b>What this step gives:</b> the mean squared displacement of the beads, measured. The moduli are an interpretation: they come from the generalised Stokes-Einstein relation, with the bead size and the temperature the analysis is told.</p>
+        <details class="transfer"><summary><b>A question to think about:</b> You double the bead size and the mean squared displacement halves. Which quantity should come out the same, and why?</summary><p>The moduli G' and G''. They belong to the material, and the generalised Stokes-Einstein relation multiplies the displacement by the bead radius, which undoes the change. If they did not come out the same, the beads would be probing something else than the bulk material: a layer depleted of polymer around them, or a mesh as large as they are.</p></details>
         <details class="math" data-open-at="researcher">
           <summary>The math: from f to the moduli</summary>
           <p><b>Notation.</b> &lang;&Delta;<i>r</i><sup>2</sup>&rang;, the mean squared displacement, measured in the image plane (two directions); for motion in three dimensions it is 1.5 times larger, &lang;&Delta;<i>r</i><sup>2</sup>&rang;<sub>3D</sub>. <i>J</i>(<i>t</i>), the creep compliance: how much the material deforms under a steady stress, per unit of stress (1/Pa); <i>J</i>&#770;(&omega;) its one-sided Fourier transform. <i>a</i>, the bead radius. &omega;, the angular frequency in rad/s; the ordinary frequency is &omega; / 2&pi;, in Hz. In Mason's formulas &Gamma; is the gamma function (not a rate, as on the other pages) and &alpha; the local slope of &lang;&Delta;<i>r</i><sup>2</sup>&rang; on logarithmic axes.</p>
@@ -589,6 +607,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
       <li>R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope</a>, Phys. Rev. Lett. 100, 188102 (2008); E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a>, J. Chem. Phys. 163, 161501 (2025).</li>
     </ul>
     <ul class="lvl-3">
+      <li>fastDDM tutorial notebook on real movies: <a href="https://github.com/somexlab/fastddm-tutorials/tree/main/Tutorial_9-Microrheology">microrheology of a polymer solution (tutorial 9)</a>; <a href="https://github.com/somexlab/fastddm-tutorials">all tutorials</a>.</li>
       <li><a href="https://github.com/somexlab/fastddm">fastDDM</a> (Python, CPU and GPU, GPL 3.0): <code>pip install fastddm</code>. <a href="https://fastddm.readthedocs.io/">Documentation</a>.</li>
       <li>For collaborations or questions about applying DDM to your samples, see <a href="https://rcerbino.github.io/contact/">Contact</a>.</li>
     </ul>

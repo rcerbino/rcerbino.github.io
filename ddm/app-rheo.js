@@ -1244,6 +1244,7 @@
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
     add(level === "curious" ? "Blue dots: how elastic the material is (G', the storage modulus). Red squares: how viscous (G'', the loss modulus). Dashed lines: what a rheometer would measure on the material simulated." : "Blue dots: G', red squares: G'', from the beads (bars: jackknife over ten parts of the movie). Dashed: the moduli of the material simulated, as a rheometer would give them. A modulus less than a tenth of the other is left out of the comparison in the result: this analysis does not consider it reliable next to the larger one.");
     if (LEVEL_RANK[level] >= 3) add("Dotted: Mason's local power-law formulas on the same mean squared displacement.");
+    fillNumbers("chart-numbers", ["Angular frequency (rad/s)", "G' measured (Pa)", "G'' measured (Pa)", "G' simulated (Pa)", "G'' simulated (Pa)"], res.w_rad_s.map(function (w, k) { const g = VISCO.gstar(mat, es, w); return [w, res.Gp_Pa[k], res.Gpp_Pa[k], g[0], g[1]]; }));
   }
 
   // ---- result -------------------------------------------------------------------------------
@@ -1440,7 +1441,7 @@
           box.classList.add("answered");
           box.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = true; b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
           box.querySelector(".verdict").textContent = btn.getAttribute("data-guess") === box.getAttribute("data-right") ? "Well guessed." : "Not quite.";
-          box.querySelector(".a").hidden = false;
+          box.querySelector(".a").hidden = false; announce(box.querySelector(".a").textContent);
           const kind = box.getAttribute("data-predict");
           compare = null;
           if (kind === "gel" && state.mat !== "gel") { takeSnapshot(); state.mat = "gel"; lastMat = "gel"; }
@@ -1451,6 +1452,21 @@
         });
       });
     });
+  }
+
+  // the numbers behind a chart, as a table (for screen readers, and for anyone who wants the values)
+  function fillNumbers(id, head, rows) {
+    const el = $(id); if (!el) return;
+    const v = function (x) { return x === null || x === undefined || (typeof x === "number" && !isFinite(x)) ? "-" : typeof x === "number" ? fmtSig(x, 3) : x; };
+    let h = '<div class="tscroll"><table class="sizing"><thead><tr>' + head.map(function (x) { return '<th scope="col">' + x + '</th>'; }).join("") + '</tr></thead><tbody>';
+    rows.forEach(function (r) { h += '<tr>' + r.map(function (x, i) { return i === 0 ? '<th scope="row">' + v(x) + '</th>' : '<td>' + v(x) + '</td>'; }).join("") + '</tr>'; });
+    el.querySelector("div").innerHTML = h + '</tbody></table></div>';
+  }
+  // exercise feedback, read out by screen readers
+  function announce(t) {
+    let el = $("sr-live");
+    if (!el) { el = document.createElement("div"); el.id = "sr-live"; el.className = "sr-only"; el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
+    el.textContent = ""; setTimeout(function () { el.textContent = t; }, 50);
   }
 
   // ---- wiring -------------------------------------------------------------------------------

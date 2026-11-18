@@ -1358,6 +1358,7 @@
     }
     add(res.used.length + " points used.");
     Object.keys(counts).sort(function (p, q) { return counts[q] - counts[p]; }).forEach(function (k) { add(counts[k] + " left out: " + k + "."); });
+    fillNumbers("chart-numbers", ["q (" + MU + "m\u207b\u00b9)", "Rate (1/s)", "Used"], ok.map(function (f) { return [f.q_per_um, rateOf(f), f.reason === null ? "yes" : "no"]; }));
   }
   // speed from each q alone (swimmer model with the spread and D of all q fixed): flat when the model fits
   function drawSize() {
@@ -1720,7 +1721,7 @@
           box.classList.add("answered");
           box.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = true; b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
           box.querySelector(".verdict").textContent = btn.getAttribute("data-guess") === box.getAttribute("data-right") ? "Well guessed." : "Not quite.";
-          box.querySelector(".a").hidden = false;
+          box.querySelector(".a").hidden = false; announce(box.querySelector(".a").textContent);
           const kind = box.getAttribute("data-predict");
           if (kind === "faster") state.swim_v = Math.min(100, state.swim_v * 2);
           if (kind === "fewer") state.swim_frac = Math.round(20 * state.swim_frac / 2) / 20;
@@ -1728,6 +1729,21 @@
         });
       });
     });
+  }
+
+  // the numbers behind a chart, as a table (for screen readers, and for anyone who wants the values)
+  function fillNumbers(id, head, rows) {
+    const el = $(id); if (!el) return;
+    const v = function (x) { return x === null || x === undefined || (typeof x === "number" && !isFinite(x)) ? "-" : typeof x === "number" ? fmtSig(x, 3) : x; };
+    let h = '<div class="tscroll"><table class="sizing"><thead><tr>' + head.map(function (x) { return '<th scope="col">' + x + '</th>'; }).join("") + '</tr></thead><tbody>';
+    rows.forEach(function (r) { h += '<tr>' + r.map(function (x, i) { return i === 0 ? '<th scope="row">' + v(x) + '</th>' : '<td>' + v(x) + '</td>'; }).join("") + '</tr>'; });
+    el.querySelector("div").innerHTML = h + '</tbody></table></div>';
+  }
+  // exercise feedback, read out by screen readers
+  function announce(t) {
+    let el = $("sr-live");
+    if (!el) { el = document.createElement("div"); el.id = "sr-live"; el.className = "sr-only"; el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
+    el.textContent = ""; setTimeout(function () { el.textContent = t; }, 50);
   }
 
   // ---- wiring -------------------------------------------------------------------------------

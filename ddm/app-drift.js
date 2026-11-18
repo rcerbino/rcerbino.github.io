@@ -1262,6 +1262,7 @@
     else add("Dots: how fast each pattern fades (\u0393), on the black line D q\u00b2 of slope 2." + (res.detected ? " Squares: how fast it swings along the drift (\u03c9), on the blue line v q of slope 1." : ""));
     if (level !== "curious") add("Dashed red: what the simulated particles should give (D q\u00b2 and, dotted, v q for the drift set).");
     if (res.detected) add(res.visibility.swing ? "Where the blue line is below the black one, diffusion renews the pattern before the drift shifts it by about a sixth of a stripe (one radian of its cycle): those patterns do not swing, but their phase still shifts a little, and the measurement uses that too." : "No pattern swings here: diffusion renews each one before the drift shifts it by about a sixth of a stripe (one radian of its cycle). The drift is measured from the small shifts of the phase of all patterns, averaged over the movie.");
+    fillNumbers("chart-numbers", ["q (" + MU + "m\u207b\u00b9)", "Fading rate (1/s)", "Swing rate along the drift (rad/s)", "Used"], pts.map(function (e) { return [e.q_per_um, e.gamma_hz, e.omega_rad_s > 0 ? e.omega_rad_s : null, e.ok ? "yes" : "no"]; }));
   }
   // speed seen along each direction of q: v cos(theta - theta_v)
   function drawSectorV() {
@@ -1516,7 +1517,7 @@
           box.classList.add("answered");
           box.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = true; b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
           box.querySelector(".verdict").textContent = btn.getAttribute("data-guess") === box.getAttribute("data-right") ? "Well guessed." : "Not quite.";
-          box.querySelector(".a").hidden = false;
+          box.querySelector(".a").hidden = false; announce(box.querySelector(".a").textContent);
           const kind = box.getAttribute("data-predict");
           if (kind === "reverse") state.flow_deg = (state.flow_deg + 180) % 360;
           if (kind === "double") state.flow_v = Math.min(20, 2 * state.flow_v);
@@ -1527,8 +1528,55 @@
     });
   }
 
+  // the numbers behind a chart, as a table (for screen readers, and for anyone who wants the values)
+  function fillNumbers(id, head, rows) {
+    const el = $(id); if (!el) return;
+    const v = function (x) { return x === null || x === undefined || (typeof x === "number" && !isFinite(x)) ? "-" : typeof x === "number" ? fmtSig(x, 3) : x; };
+    let h = '<div class="tscroll"><table class="sizing"><thead><tr>' + head.map(function (x) { return '<th scope="col">' + x + '</th>'; }).join("") + '</tr></thead><tbody>';
+    rows.forEach(function (r) { h += '<tr>' + r.map(function (x, i) { return i === 0 ? '<th scope="row">' + v(x) + '</th>' : '<td>' + v(x) + '</td>'; }).join("") + '</tr>'; });
+    el.querySelector("div").innerHTML = h + '</tbody></table></div>';
+  }
+  // exercise feedback, read out by screen readers
+  function announce(t) {
+    let el = $("sr-live");
+    if (!el) { el = document.createElement("div"); el.id = "sr-live"; el.className = "sr-only"; el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
+    el.textContent = ""; setTimeout(function () { el.textContent = t; }, 50);
+  }
+
   // ---- wiring -------------------------------------------------------------------------------
-  buildControls(); buildCards(); buildPredictions();
+  // the phase, shown: one stripe pattern carried to the right and one to the left, with a dial for each
+  function phaseDemo() {
+    const cv = $("phase-demo"); if (!cv) return;
+    let t0 = null, raf = null, visible = false;
+    const draw = function (t) {
+      const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
+      if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+      const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+      if (!C.ink) readColors();
+      const rowH = (H - 18) / 2, dialR = Math.min(rowH * 0.36, 28), sw = W - 2 * dialR - 110, period = Math.max(40, sw / 4);
+      const shift = (reduceMotion ? 0.35 : (t / 4000) % 1) * period;
+      [1, -1].forEach(function (dir, row) {
+        const y0 = 6 + row * (rowH + 6), x0 = 6, x = dir * shift;
+        const ink = hexToRgb(C.ink.length ? C.ink : "#222"), pap = hexToRgb(C.paper.length ? C.paper : "#fff");
+        for (let px = 0; px < sw; px += 2) {
+          const v = 0.5 + 0.5 * Math.cos(2 * Math.PI * (px - x) / period);
+          ctx.fillStyle = "rgb(" + [0, 1, 2].map(function (k) { return Math.round(pap[k] + (ink[k] - pap[k]) * (1 - v) * 0.85); }).join(",") + ")";
+          ctx.fillRect(x0 + px, y0, 2, rowH);
+        }
+        ctx.strokeStyle = C.accent; ctx.setLineDash([3, 3]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x0 + period, y0); ctx.lineTo(x0 + period, y0 + rowH); ctx.stroke(); ctx.setLineDash([]);
+        const cx = x0 + sw + 20 + dialR, cy = y0 + rowH / 2, ph = 2 * Math.PI * x / period;
+        ctx.strokeStyle = C.muted; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, cy, dialR, 0, 2 * Math.PI); ctx.stroke();
+        ctx.strokeStyle = C.accent; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + dialR * Math.sin(ph), cy - dialR * Math.cos(ph)); ctx.stroke();
+        ctx.fillStyle = C.ink; ctx.font = "12px " + getComputedStyle(document.body).fontFamily; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+        ctx.fillText(dir > 0 ? "to the right" : "to the left", cx + dialR + 8, cy);
+      });
+    };
+    const loop = function (t) { if (t0 === null) t0 = t; draw(t - t0); raf = visible && !reduceMotion ? requestAnimationFrame(loop) : null; };
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; if (visible && raf === null) raf = requestAnimationFrame(loop); }).observe(cv);
+    else { visible = true; raf = requestAnimationFrame(loop); }
+    window.addEventListener("resize", function () { draw(0); });
+  }
+  buildControls(); buildCards(); buildPredictions(); phaseDemo();
   document.querySelectorAll('input[name="level"]').forEach(function (r) { r.addEventListener("change", function () { if (r.checked) setLevel(r.value, true); }); });
   document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); const first = document.querySelector(".step"); if (first) first.scrollIntoView({ block: "start" }); else window.scrollTo(0, 0); }); });
   $("btn-reset").addEventListener("click", function () { const keep = LEVEL_RANK[level] >= 3 ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });

@@ -252,6 +252,15 @@ pre.code { font-family: var(--mono); font-size: 0.8rem; background: var(--paper)
 .predict .q { font-weight: 600; }
 .predict .a { color: var(--ink); }
 .predict .verdict { font-weight: 600; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.numbers { font-family: var(--sans); font-size: 0.88rem; }
+.numbers summary { cursor: pointer; color: var(--muted); }
+.takeaway { font-family: var(--sans); font-size: 0.92rem; border-left: 3px solid var(--accent); padding: 0.1rem 0 0.1rem 0.8rem; max-width: var(--measure); margin: 0; }
+.transfer { font-family: var(--sans); font-size: 0.92rem; border: 1px solid var(--rule); border-radius: 6px; padding: 0.6rem 0.9rem; max-width: var(--measure); }
+.transfer summary, .inputs summary { cursor: pointer; }
+.inputs { font-family: var(--sans); font-size: 0.92rem; max-width: var(--measure); }
+.inputs p { margin: 0.5rem 0 0; }
+.transfer p { margin: 0.5rem 0 0; }
 .predict .base { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; color: var(--muted); }
 .shares { margin: 0; }
 .shares ul { list-style: none; margin: 0.25rem 0 0; padding: 0; display: grid; gap: 0.2rem; }
@@ -357,6 +366,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <div class="pstrip" id="particle-strip"></div>
           <figcaption id="particle-text"></figcaption>
         </figure>
+        <p class="takeaway"><b>What this step gives:</b> the finest stripes the movie can hold, and how strongly each particle shows in them: the objective and the light decide both.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: how each image is computed</summary>
           <p><b>Bright field.</b> The condenser fills its aperture with mutually incoherent plane waves (spatial coherence) at the wavelengths of the lamp spectrum (temporal coherence). For each of them, the light scattered by the sphere, computed exactly with Mie theory from the particle and liquid refractive indices, interferes with the transmitted light after passing the objective pupil. The intensities are then added. The same formula covers the other transmitted-light methods by changing the illumination and the pupil: <b>phase contrast</b> lights the sample through a thin annulus and gives the objective pupil a ring that dims the direct light and shifts its phase by a quarter wave; <b>dark field</b> uses illumination steeper than the objective can collect, so only the |<i>E</i><sub>s</sub>|<sup>2</sup> term is left; <b>DIC</b> multiplies the pupil by <i>i</i> sin((<b>&kappa;</b>&middot;<b>s</b> + &phi;)/2), with <b>s</b> the shear and &phi; the bias, so the image depends on the direction of <b>q</b>. For a particle at distance <i>z</i> from focus, the Fourier transform of its image is</p>
@@ -384,9 +394,10 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
             <p class="readout lvl-2" id="movie-specs"></p>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> a stack of frames and the time of each. The time between frames and the length of the movie set the fastest and the slowest changes that can be measured.</p>
         <details class="math" data-open-at="researcher">
           <summary>In fastDDM</summary>
-          <p>The analysis below uses the same steps as fastDDM. With your own movie you would start from the image files:</p>
+          <p>The analysis below uses the same steps as fastDDM. The code lines on this page are excerpts that show which call does each step; the fastDDM <a href="https://github.com/somexlab/fastddm-tutorials/tree/main/Tutorial_8-Bacterial_motion">tutorial on bacteria</a> runs a complete analysis. With your own movie you would start from the image files:</p>
           <pre class="code">import fastddm as fd
 img_seq = fd.read_images(file_names)</pre>
         </details>
@@ -412,6 +423,7 @@ img_seq = fd.read_images(file_names)</pre>
             <p id="diff-note"></p>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what moved; what stayed put is gone. The longer the delay, the more has changed.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: the difference image</summary>
           <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
@@ -438,6 +450,7 @@ img_seq = fd.read_images(file_names)</pre>
             <p class="lvl-2">Distance from the centre is the size of the wave vector, <i>q</i> = 2&pi; / spacing. The particles have no preferred direction, so the map is round (DIC and drift are exceptions), and we average it along circles to get one value for each <i>q</i>. The dashed circle marks the finest pattern the objective can resolve.</p>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing (each q, one ring of the map) and each delay, how much the movie has changed. A point near the centre of the map is a wide pattern, a point far out a fine one.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: image structure function</summary>
           <div class="eq"><i>d</i>(<b>q</b>, &Delta;<i>t</i>) = &lang; |<i>F</i>[&Delta;<i>I</i>](<b>q</b>; <i>t</i>, &Delta;<i>t</i>)|<sup>2</sup> &rang;<sub><i>t</i></sub></div>
@@ -471,6 +484,7 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
             <div class="a" hidden><span class="verdict"></span> To the left, but only the first, fast step: twice the speed renews each pattern in half the time. The slow step of the cells that do not swim stays where it was. The bench now runs with the faster bacteria so you can check.</div>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> one curve per stripe spacing, holding two kinds of motion: a quick rise from swimming and a slow one from diffusion.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: the swimmer model</summary>
           <div class="eq"><i>d</i>(<i>q</i>, &Delta;<i>t</i>) = <i>A</i>(<i>q</i>) [1 &minus; <i>f</i>(<i>q</i>, &Delta;<i>t</i>)] + <i>B</i>(<i>q</i>)</div>
@@ -517,6 +531,7 @@ A_est = 2 * aa.var - B_est
             <div class="chart"><canvas id="chart-rates" aria-label="Rate against wave vector"></canvas></div>
             <ul class="reasons" id="reasons"></ul>
           </figure>
+          <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <div class="step-body">
             <div class="result" id="result" aria-live="polite"></div>
             <div class="predict" data-predict="fewer" data-right="no">
@@ -540,6 +555,9 @@ A_est = 2 * aa.var - B_est
             <div class="legend" id="amp-legend"></div>
           </figure>
         </div>
+        <details class="inputs"><summary>What the analysis is told, and what it finds</summary><p><b>Told (inputs):</b> the pixel size and the time between frames; the read noise and the gain of the camera, for <i>B</i>; the length and the width of the cells, which set how their shape weighs the patterns; the diffusion expected from that size and shape in this liquid, kept only when the data do not ask for another; for cells swimming along the glass, their height; the optics, for the cells' turning.</p><p><b>Found from the movie:</b> the share of the signal from swimming cells, their mean speed and how much the speeds spread, and how fast the other cells diffuse.</p><p>In this simulation the analysis uses the same model of the optics that made the movie, so agreement here shows that the analysis recovers what was simulated under those assumptions; with a real microscope the optics are another input that can be wrong.</p></details>
+        <p class="takeaway"><b>What this step gives:</b> a measured trend, which curves fall on one another against q&Delta;t or against q<sup>2</sup>&Delta;t, says that some cells swim and some only diffuse. The speeds and the share of swimmers are an interpretation: they come from the swimmer model fitted to the curves.</p>
+        <details class="transfer"><summary><b>A question to think about:</b> In another sample the quick rise of each curve shrinks, but it happens after the same delay. Which fitted number should change, and which should not?</summary><p>The share of the signal from swimming cells drops, because the quick rise is smaller. The mean speed stays, because the quick rise happens after the same delay: the swimmers left are as fast as before. The exercise with half the swimmers stopping shows it; compare the result tables before and after.</p></details>
         <details class="math" data-open-at="researcher">
           <summary>The math: rates, v&#8320; and the distribution of speeds</summary>
           <p>The points of the plot come from fitting each <i>q</i> on its own with a compressed exponential, <i>f</i> = exp[&minus;(&Gamma;&Delta;<i>t</i>)<sup>&beta;</sup>], as fastDDM tutorial 8a does for swimming bacteria (Lu et al. 2012). For swimmers &Gamma; = <i>v</i>&#8320; <i>q</i>. This <i>v</i>&#8320; is a speed scale, not the mean speed: in 3D the sine over its argument falls to 1/e at <i>qv</i>&Delta;<i>t</i> &asymp; 2.2, the compressed exponential at <i>qv</i>&#8320;&Delta;<i>t</i> = 1, so <i>v&#772;</i> &asymp; 2.2 <i>v</i>&#8320; for a narrow distribution of speeds and 2.4-2.8 <i>v</i>&#8320; for broad ones (in the plane 1.7-2.0 <i>v</i>&#8320;). A compressed exponent &beta; &asymp; 1.35 corresponds to a broad distribution, with a relative spread of about 70 %.</p>
@@ -633,7 +651,7 @@ A_est = 2 * aa.var - B_est
       <li>R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope</a>, Phys. Rev. Lett. 100, 188102 (2008). The paper that introduced DDM.</li>
       <li>E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a>, J. Chem. Phys. 163, 161501 (2025). A practical guide with the notation used here, including swimming bacteria (section V B).</li>
       <li>F. Giavazzi, P. Edera, P. J. Lu and R. Cerbino, <a href="https://doi.org/10.1140/epje/i2017-11587-3">Image windowing mitigates edge effects in differential dynamic microscopy</a>, Eur. Phys. J. E 40, 97 (2017). The windowing switch under Analysis.</li>
-      <li><a href="https://github.com/somexlab/fastddm-tutorials">fastDDM tutorials</a>: Jupyter notebooks that run DDM on real movies; tutorial 8 is about bacteria.</li>
+      <li>fastDDM tutorial notebooks on real movies of bacteria: <a href="https://github.com/somexlab/fastddm-tutorials/tree/main/Tutorial_8-Bacterial_motion">tutorial 8</a>; <a href="https://github.com/somexlab/fastddm-tutorials">all tutorials</a>.</li>
     </ul>
     <ul class="lvl-3">
       <li><a href="https://github.com/somexlab/fastddm">fastDDM</a> (Python, CPU and GPU, GPL 3.0): <code>pip install fastddm</code>. <a href="https://fastddm.readthedocs.io/">Documentation</a>.</li>
@@ -3525,7 +3543,7 @@ A_est = 2 * aa.var - B_est
                 gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz },
       B_floor: B_floor, B_est: B_est, A_est: A_est, fit_model: opts.fit_model,
       D: D, slope: slope,
-      diameter_um: D === null ? null : diameterFromD_um(D.D_um2_s, movie.T_C, movie.viscosity_Pa_s),
+      diameter_um: D === null ? null : diameterFromD_um(D.D_um2_s, movie.T_C, opts.viscosity_Pa_s > 0 ? opts.viscosity_Pa_s : movie.viscosity_Pa_s),   // the viscosity the analysis is told
       diameter_rel_err: D === null ? null : (jk ? Math.max(D.rel_err, jk.rel_err) : blocks ? Math.max(D.rel_err, blocks.rel_err_full) : D.rel_err),
       diameter_rel_err_points: D === null ? null : D.rel_err,
       beta_mean: stretched && used.length ? used.reduce(function (s, f) { return s + f.beta; }, 0) / used.length : null,
@@ -6676,6 +6694,7 @@ A_est = 2 * aa.var - B_est
     }
     add(res.used.length + " points used.");
     Object.keys(counts).sort(function (p, q) { return counts[q] - counts[p]; }).forEach(function (k) { add(counts[k] + " left out: " + k + "."); });
+    fillNumbers("chart-numbers", ["q (" + MU + "m\u207b\u00b9)", "Rate (1/s)", "Used"], ok.map(function (f) { return [f.q_per_um, rateOf(f), f.reason === null ? "yes" : "no"]; }));
   }
   // speed from each q alone (swimmer model with the spread and D of all q fixed): flat when the model fits
   function drawSize() {
@@ -7038,7 +7057,7 @@ A_est = 2 * aa.var - B_est
           box.classList.add("answered");
           box.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = true; b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
           box.querySelector(".verdict").textContent = btn.getAttribute("data-guess") === box.getAttribute("data-right") ? "Well guessed." : "Not quite.";
-          box.querySelector(".a").hidden = false;
+          box.querySelector(".a").hidden = false; announce(box.querySelector(".a").textContent);
           const kind = box.getAttribute("data-predict");
           if (kind === "faster") state.swim_v = Math.min(100, state.swim_v * 2);
           if (kind === "fewer") state.swim_frac = Math.round(20 * state.swim_frac / 2) / 20;
@@ -7046,6 +7065,21 @@ A_est = 2 * aa.var - B_est
         });
       });
     });
+  }
+
+  // the numbers behind a chart, as a table (for screen readers, and for anyone who wants the values)
+  function fillNumbers(id, head, rows) {
+    const el = $(id); if (!el) return;
+    const v = function (x) { return x === null || x === undefined || (typeof x === "number" && !isFinite(x)) ? "-" : typeof x === "number" ? fmtSig(x, 3) : x; };
+    let h = '<div class="tscroll"><table class="sizing"><thead><tr>' + head.map(function (x) { return '<th scope="col">' + x + '</th>'; }).join("") + '</tr></thead><tbody>';
+    rows.forEach(function (r) { h += '<tr>' + r.map(function (x, i) { return i === 0 ? '<th scope="row">' + v(x) + '</th>' : '<td>' + v(x) + '</td>'; }).join("") + '</tr>'; });
+    el.querySelector("div").innerHTML = h + '</tbody></table></div>';
+  }
+  // exercise feedback, read out by screen readers
+  function announce(t) {
+    let el = $("sr-live");
+    if (!el) { el = document.createElement("div"); el.id = "sr-live"; el.className = "sr-only"; el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
+    el.textContent = ""; setTimeout(function () { el.textContent = t; }, 50);
   }
 
   // ---- wiring -------------------------------------------------------------------------------

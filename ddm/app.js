@@ -119,7 +119,7 @@
     scanner: "resonant", scan_px: 512, zoom: 1, line_avg: 2, pinhole_au: 1, scan_rate: 2e7,
     frame_rate_hz: 100, exposure_ms: 0.2, frame_timing: "even", log_factor: 20,
     shape: "sphere", aspect: 3, dn: 0.1, dn_body: 0, polarizer: "off", analyzer: "off", pol_angle_deg: 90, extinction: 1e-4,
-    fit_model: "auto", images: "recorded", windowing: "off", q_min: null, q_max: null, seed: 1,
+    fit_model: "auto", images: "recorded", windowing: "off", q_min: null, q_max: null, seed: 1, told_eta: "true",
     x_noise: "on", x_depth: "on", x_expo: "on", x_outliers: "on", x_floor: "on", x_window: "on"
   };
   let state = Object.assign({}, BASE);
@@ -182,6 +182,9 @@
     if (state.liquid === "glycerol") return { glycerol_w: state.glycerol_w };
     return { n: state.n_liquid, viscosity_mPa_s: state.visc_mPa_s, density_g_cm3: state.rho_liquid };
   }
+  // the analysis is told the viscosity of the liquid (an input, not a result); "water" tells it that of water instead
+  function waterEta_Pa_s() { return OPTICS.viscosityWaterGlycerol_mPa_s(0, state.T_C) / 1000; }
+  function etaUsed() { return (cache.opts && cache.opts.viscosity_Pa_s > 0) ? cache.opts.viscosity_Pa_s : cache.movie.viscosity_Pa_s; }
   function viscosity_mPa_s() { const l = liquidSpec(); return l.viscosity_mPa_s !== undefined ? l.viscosity_mPa_s : OPTICS.viscosityWaterGlycerol_mPa_s(l.glycerol_w, state.T_C); }
   function nLiquid(l0) { return OPTICS.liquidIndex(liquidSpec(), l0); }
   function nParticle(l0) { return state.particle === "custom" ? state.n_custom : OPTICS.particleIndex(state.particle, l0); }
@@ -269,7 +272,8 @@
       // what this page adds to the published method, each switchable at the "Addict" level, where the published
       // method alone also runs on the same movie for comparison
       noise: state.x_noise === "off" ? "fit" : undefined, depth: state.x_depth !== "off", exposure: state.x_expo !== "off",
-      outliers: state.x_outliers !== "off", var_floor: state.x_floor !== "off", window_fix: state.x_window !== "off", compare_published: level === "addict" };
+      outliers: state.x_outliers !== "off", var_floor: state.x_floor !== "off", window_fix: state.x_window !== "off", compare_published: level === "addict",
+      viscosity_Pa_s: state.told_eta === "water" ? waterEta_Pa_s() : undefined };
   }
 
   // ---- controls -------------------------------------------------------------------
@@ -348,6 +352,7 @@
     { key: "sim_px", group: "Camera and recording", lvl: 3, label: "Simulated part of the image", kind: "select", num: true, options: [[64, "64 x 64 pixels (fast)"], [128, "128 x 128 pixels"], [256, "256 x 256 pixels (slow)"]] },
 
     { key: "fit_model", group: "Analysis", lvl: 2, label: "Fit at each q (sets the headline size)", kind: "select", options: [["auto", "Automatic: simple exponential, or modes for particles that turn"], ["simple", "Simple exponential (identical particles)"], ["schulz", "Schulz distribution of rates (mixed sizes)"], ["stretched", "Stretched exponential"], ["two", "Two modes: translation, translation + rotation"], ["three", "Three modes: adds 20 D_R (crossed polarizers)"]], hint: "Cumulants (as in DLS) and a Schulz fit are always computed too and shown next to the headline, so the methods can be compared. Repeatability and the other checks use the fit chosen here." },
+    { key: "told_eta", group: "Analysis", lvl: 2, label: "Viscosity the analysis is told", kind: "select", options: [["true", "That of the liquid in the sample"], ["water", "That of water (a wrong input, on purpose)"]], hint: function () { return state.told_eta === "water" ? "The fit is unchanged; the size is computed with the wrong viscosity." : "An input, like the temperature: DDM measures how fast the particles diffuse, and the size follows from it with the viscosity."; } },
     { key: "windowing", group: "Analysis", lvl: 2, label: "Windowing (Giavazzi et al. 2017)", kind: "select", options: [["off", "Off"], ["on", "On: each frame multiplied by a window that falls to zero at the edges"]],
       hint: function () { return state.windowing === "on" ? "Cells or particles that cross the edge of the image no longer leave bands along the axes of the map in step 4, nor a fast decay that swamps the finest patterns. The price: the window darkens the edges, so less of the field counts and the results scatter more, and patterns wider than a fifth of the field are left out (the window mixes each pattern with its neighbours)." : "The Fourier transform treats the image as one tile of a repeating pattern, so cells or particles crossing the edges make jumps at the tile borders. The central cross of the map is left out to remove most of their effect."; } },
     { key: "images", group: "Analysis", lvl: 2, label: "Images analysed", kind: "select", options: [["recorded", "As recorded"], ["squared_gradient", "Squared gradient of each frame (SG-DDM)"]], hint: function () { return state.images === "squared_gradient" ? "Squaring turns changes of shape into changes of brightness, so rotations show up in bright field (Giavazzi, Pal and Cerbino 2021)." : ""; } },
@@ -386,7 +391,7 @@
       ["Point scanner (Nikon AX R)", ["scanner", "scan_px", "zoom", "line_avg", "pinhole_au"]],
       ["Timing", ["frame_rate_hz", "exposure_ms", "n_frames", "frame_timing", "log_factor", "sim_px"]]]],
     ["Analysis", [
-      ["", ["images", "windowing", "fit_model", "qrange"]],
+      ["", ["images", "windowing", "fit_model", "qrange", "told_eta"]],
       ["Addict: what this page adds", ["x_noise", "x_depth", "x_expo", "x_outliers", "x_floor", "x_window"]]]]
   ];
   // one-line summary under each block title: [setting, text before, text after]
@@ -403,7 +408,7 @@
     const left = Object.keys(byKey); if (left.length) throw new Error("layout: controls not placed: " + left.join(", "));
     CONTROLS.length = 0; out.forEach(function (c) { CONTROLS.push(c); });
   })();
-  const ANALYSIS_KEYS = { fit_model: 1, q_min: 1, q_max: 1, images: 1, windowing: 1, x_noise: 1, x_depth: 1, x_expo: 1, x_outliers: 1, x_floor: 1, x_window: 1 };
+  const ANALYSIS_KEYS = { told_eta: 1, fit_model: 1, q_min: 1, q_max: 1, images: 1, windowing: 1, x_noise: 1, x_depth: 1, x_expo: 1, x_outliers: 1, x_floor: 1, x_window: 1 };
   function fmtRate(v) { return fmtSig(v, 2) + " s" + "\u207b\u00b9"; }
   function shapeHint() {
     if (!TURNS()) return "";
@@ -1247,6 +1252,7 @@
     }
     const li0 = document.createElement("li"); li0.textContent = res.used.length + " points used" + (res.D ? " for the black line of slope 2" : "") + (LEVEL_RANK[level] >= 3 && res.slope ? "; free fit gives slope " + res.slope.exponent.toFixed(2) + " (dotted)" : "") + "."; ul.appendChild(li0);
     Object.keys(counts).sort(function (p, q) { return counts[q] - counts[p]; }).forEach(function (k) { const li = document.createElement("li"); li.textContent = counts[k] + " left out: " + k + "."; ul.appendChild(li); });
+    fillNumbers("chart-numbers", ["q (" + MU + "m\u207b\u00b9)", "Rate (1/s)", "Rate / q\u00b2 (" + MU + "m\u00b2/s)", "Used"], ok.map(function (f) { return [f.q_per_um, f.gamma_hz, f.gamma_hz / (f.q_per_um * f.q_per_um), res.used.indexOf(f) >= 0 ? "yes" : "no"]; }));
   }
   // apparent size at each q: Stokes-Einstein applied to Gamma / q^2 of that q alone (points, with the fit error),
   // the measured size (black), cumulant sizes (open squares) and, for the simulated sample, what each q should give
@@ -1328,7 +1334,7 @@
     let d = 0, p = 0; qs.forEach(function (q) { const e = seenAt(tr, q); d += e.D; p += e.pi; });
     return { D: d / qs.length, pi: p / qs.length };
   }
-  function sizeFromD(D) { const mv = cache.movie, kT = 1.380649e-23 * (mv.T_C + 273.15); return kT / (3 * Math.PI * mv.viscosity_Pa_s * D * 1e-12) * 1e6; }
+  function sizeFromD(D) { const mv = cache.movie, kT = 1.380649e-23 * (mv.T_C + 273.15); return kT / (3 * Math.PI * etaUsed() * D * 1e-12) * 1e6; }
   // in-plane slow-down from the walls, averaged over where the particles are (1 without walls)
   function wallFactor(tr) { return tr.walls && tr.D_plane_um2_s > 0 ? tr.D_plane_um2_s / tr.D_um2_s : 1; }
   function trueD(tr) { return (cache.cfg.size_spread > 0 ? tr.D_seen_um2_s * tr.diameter_seen_um / seenDiameter(tr, cache.res) : tr.D_um2_s) * wallFactor(tr); }
@@ -1380,7 +1386,7 @@
     const res = cache.res, mv = cache.movie, tr = mv.truth, rv = rotVerdict(), r = res.rot;
     const devT = res.D ? res.D.D_um2_s / trueD(tr) - 1 : null;
     const tv = devT === null ? { cls: "bad", text: "Translation not measured" } : Math.abs(devT) <= Math.max(0.05, 2 * res.D.rel_err) ? { cls: "good", text: "Translation matches" } : Math.abs(devT) <= 0.15 ? { cls: "warn", text: "Translation off by " + Math.round(100 * Math.abs(devT)) + " %" } : { cls: "bad", text: "Translation wrong by " + Math.round(100 * Math.abs(devT)) + " %" };
-    const kT = 1.380649e-23 * (mv.T_C + 273.15), eta = mv.viscosity_Pa_s;
+    const kT = 1.380649e-23 * (mv.T_C + 273.15), eta = etaUsed();
     let h = '<div class="eyebrow">Result</div>';
     h += '<div class="big">' + (r && r.D_r_s ? fmtRate(6 * r.D_r_s) : "-") + ' <small>rotation rate 6 D<sub>R</sub>' + (r && r.D_r_s ? ' &plusmn; ' + Math.max(1, Math.round(100 * r.rel_err)) + ' %' : '') + '</small></div>';
     h += '<span class="chip ' + tv.cls + '">' + tv.text + '</span> <span class="chip ' + rv.cls + '">' + rv.text + '</span>';
@@ -1492,7 +1498,7 @@
       // details
       h += '<details class="more"><summary>Details</summary><dl>';
       h += '<dt>Diffusion coefficient</dt><dd>' + (res.D ? fmtSig(res.D.D_um2_s, 3) : "-") + ' ' + MU + 'm<sup>2</sup>/s (true ' + (cfg.size_spread > 0 ? fmtSig(trueD(tr) / wallFactor(tr), 3) + ' weighted by the signal' : fmtSig(tr.D_um2_s, 3)) + (fw < 0.97 ? ' in open liquid, ' + fmtSig(trueD(tr), 3) + ' averaged near the glass' : '') + ')</dd>';
-      h += '<dt>Liquid</dt><dd>' + LIQUIDS[state.liquid] + (state.liquid === "glycerol" ? " " + Math.round(100 * state.glycerol_w) + " %" : "") + ', ' + state.T_C.toFixed(0) + ' &deg;C, ' + (mv.viscosity_Pa_s * 1000).toFixed(2) + ' mPa s</dd>';
+      h += '<dt>Liquid</dt><dd>' + LIQUIDS[state.liquid] + (state.liquid === "glycerol" ? " " + Math.round(100 * state.glycerol_w) + " %" : "") + ', ' + state.T_C.toFixed(0) + ' &deg;C, ' + (mv.viscosity_Pa_s * 1000).toFixed(2) + ' mPa s' + (etaUsed() !== mv.viscosity_Pa_s ? '; the analysis was told ' + (etaUsed() * 1000).toFixed(2) + ' mPa s (water)' : '') + '</dd>';
       h += '<dt>Wave vectors used</dt><dd>' + (res.D ? res.D.n_points : 0) + (res.used.length ? ', ' + res.used[0].q_per_um.toFixed(2) + ' to ' + res.used[res.used.length - 1].q_per_um.toFixed(2) + ' ' + MU + 'm\u207b\u00b9' : '') + '</dd>';
       h += '<dt>Uncertainty</dt><dd>larger of the scatter between q (' + pctTxt(res.diameter_rel_err_points) + ')' + (res.jackknife ? ' and the jackknife: the fits repeated with one of ' + res.jackknife.blocks + ' parts of the movie left out (' + pctTxt(res.jackknife.rel_err) + ')' : res.blocks ? ' and the spread of ' + res.blocks.n_blocks + ' parts of the movie / &radic;' + res.blocks.n_blocks + ' (' + pctTxt(res.blocks.rel_err_full) + ')' : '') + '</dd>';
       h += '<dt>Camera noise</dt><dd>' + (res.noise_B ? 'B = ' + fmtSig(res.noise_B, 3) + ' from the mean count, the read noise and the excess-noise factor of the camera, the same at every q' : 'B fitted at each q, between 0 and the first point of the curve') + '</dd>';
@@ -1675,6 +1681,7 @@
   }
   const PREDICT_BASE = {
     size: function () { return state.diameter_um > 2.5 ? { text: "This question needs beads that can still double in size (at most 5 " + MU + "m); these are " + fmtSize(state.diameter_um) + ".", set: {} } : null; },
+    wrongeta: function () { return state.told_eta === "water" && state.liquid !== "water" ? { text: "The analysis is already told the wrong viscosity.", set: {} } : null; },
     warm: function () { return state.liquid !== "water" || state.T_C > 35 ? { text: "This question starts from beads in water at room temperature; the bench now has " + (state.liquid !== "water" ? "another liquid" : "water at " + Math.round(state.T_C) + " " + DEG + "C") + ".", set: {} } : null; }
   };
   const PREDICT_VALUES = { T: function () { return Math.round(state.T_C); } };
@@ -1704,17 +1711,33 @@
           box.classList.add("answered");
           box.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = true; b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
           box.querySelector(".verdict").textContent = btn.getAttribute("data-guess") === box.getAttribute("data-right") ? "Well guessed." : "Not quite.";
-          box.querySelector(".a").hidden = false;
+          box.querySelector(".a").hidden = false; announce(box.querySelector(".a").textContent);
           const kind = box.getAttribute("data-predict");
           takeSnapshot(kind);
           if (kind === "size") state.diameter_um = Math.min(5, state.diameter_um * 2);
           if (kind === "warm") state.T_C = 45;
+          if (kind === "wrongeta") { state.liquid = "glycerol"; state.glycerol_w = 0.5; state.told_eta = "water"; }
           if (kind === "slowcam") { state.frame_rate_hz = 8; state.exposure_ms = 1; constrain(); }
           if (compare && cache.res) drawCurves();   // the earlier curve, dashed, while the new run is computed
           syncControls(); schedule();
         });
       });
     });
+  }
+
+  // the numbers behind a chart, as a table (for screen readers, and for anyone who wants the values)
+  function fillNumbers(id, head, rows) {
+    const el = $(id); if (!el) return;
+    const v = function (x) { return x === null || x === undefined || (typeof x === "number" && !isFinite(x)) ? "-" : typeof x === "number" ? fmtSig(x, 3) : x; };
+    let h = '<div class="tscroll"><table class="sizing"><thead><tr>' + head.map(function (x) { return '<th scope="col">' + x + '</th>'; }).join("") + '</tr></thead><tbody>';
+    rows.forEach(function (r) { h += '<tr>' + r.map(function (x, i) { return i === 0 ? '<th scope="row">' + v(x) + '</th>' : '<td>' + v(x) + '</td>'; }).join("") + '</tr>'; });
+    el.querySelector("div").innerHTML = h + '</tbody></table></div>';
+  }
+  // exercise feedback, read out by screen readers
+  function announce(t) {
+    let el = $("sr-live");
+    if (!el) { el = document.createElement("div"); el.id = "sr-live"; el.className = "sr-only"; el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
+    el.textContent = ""; setTimeout(function () { el.textContent = t; }, 50);
   }
 
   // ---- wiring -------------------------------------------------------------------------------

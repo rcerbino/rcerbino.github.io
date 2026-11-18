@@ -240,6 +240,15 @@ pre.code { font-family: var(--mono); font-size: 0.8rem; background: var(--paper)
 .predict .q { font-weight: 600; }
 .predict .a { color: var(--ink); }
 .predict .verdict { font-weight: 600; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.numbers { font-family: var(--sans); font-size: 0.88rem; }
+.numbers summary { cursor: pointer; color: var(--muted); }
+.takeaway { font-family: var(--sans); font-size: 0.92rem; border-left: 3px solid var(--accent); padding: 0.1rem 0 0.1rem 0.8rem; max-width: var(--measure); margin: 0; }
+.transfer { font-family: var(--sans); font-size: 0.92rem; border: 1px solid var(--rule); border-radius: 6px; padding: 0.6rem 0.9rem; max-width: var(--measure); }
+.transfer summary, .inputs summary { cursor: pointer; }
+.inputs { font-family: var(--sans); font-size: 0.92rem; max-width: var(--measure); }
+.inputs p { margin: 0.5rem 0 0; }
+.transfer p { margin: 0.5rem 0 0; }
 .predict .base { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; color: var(--muted); }
 .predict button:disabled { cursor: default; opacity: 0.55; }
 .predict button[aria-pressed="true"] { opacity: 1; border-color: var(--accent); font-weight: 600; }
@@ -353,6 +362,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <div class="pstrip" id="particle-strip"></div>
           <figcaption id="particle-text"></figcaption>
         </figure>
+        <p class="takeaway"><b>What this step gives:</b> the finest stripes the movie can hold, and how strongly each particle shows in them: the objective and the light decide both.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: how each image is computed, and how the particles move</summary>
           <p>As on the <a href="../sizing/">sizing page</a>: each dyed particle is convolved with the point spread function of the microscope (fluorescence and confocal), or its scattered light interferes with the transmitted light (bright field and the other transmitted-light modes). Each frame is the sum of the images of the dyed particles at their positions, with the detector's pixel size, quantum efficiency, shot noise, read noise and full well. Undyed particles push like the others but do not show.</p>
@@ -377,6 +387,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
             <p class="readout lvl-2" id="movie-specs"></p>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> a stack of frames and the time of each. The time between frames and the length of the movie set the fastest and the slowest changes that can be measured.</p>
         <details class="math" data-open-at="researcher">
           <summary>In fastDDM</summary>
           <p>The structure function below is the same as fastDDM's. With your own movies (the sample and the dilute reference) you would start from the image files:</p>
@@ -399,6 +410,7 @@ ref_seq = fd.read_images(reference_file_names)</pre>
             <p id="diff-note"></p>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what moved; what stayed put is gone. The longer the delay, the more has changed.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: the difference image</summary>
           <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
@@ -430,6 +442,7 @@ ref_seq = fd.read_images(reference_file_names)</pre>
             <p class="lvl-2" id="kopt-note">The dashed circle on the strength map marks the finest pattern the objective can resolve.</p>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing (each q, one ring of the map) and each delay, how much the movie has changed. A point near the centre of the map is a wide pattern, a point far out a fine one.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: structure function of a crowd</summary>
           <p>For <i>N</i> identical dyed particles,</p>
@@ -502,6 +515,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             <div class="a" hidden><span class="verdict"></span> More slowly. A tighter crowd has a stronger order: the peak of S(q) grows, and the stronger the order, the more slowly that pattern fades. Each particle also has less room to move. The bench now runs at 45 %: in the new chart, find the curve whose spacing is closest to that of neighbours (step 6 gives it). It is now among the slowest of all, and the dotted lines of step 6 keep the earlier run.</div>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> how fast each pattern fades in a crowd. The order of the curves shows where the crowd resists change.</p>
       </section>
 
       <!-- 6 -->
@@ -530,10 +544,14 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             <div class="chart"><canvas id="chart-dq" aria-label="Collective diffusion coefficient against q"></canvas></div>
             <ul class="reasons" id="dq-notes"></ul>
           </figure>
+          <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <div class="step-body">
             <div class="result" id="result" aria-live="polite"></div>
           </div>
         </div>
+        <details class="inputs"><summary>What the analysis is told, and what it finds</summary><p><b>Told (inputs):</b> a second, dilute movie of the same particles, filmed the same way; the number of dyed particles in each movie; the diffusion coefficient of one particle alone, D0 (from its size and the viscosity), to give D(q) in units; the pixel size, the times of the frames and the camera noise.</p><p><b>Found from the movie:</b> S(q), from the amplitudes of the two movies, and D(q)/D0, from their rates.</p><p>In this simulation the analysis uses the same model of the optics that made the movie, so agreement here shows that the analysis recovers what was simulated under those assumptions; with a real microscope the optics are another input that can be wrong.</p></details>
+        <p class="takeaway"><b>What this step gives:</b> S(q) and D(q), measured as ratios to a dilute movie of the same particles. Reading them as the structure and the collective motion of the crowd assumes that the reference matches and leaves out hydrodynamic interactions.</p>
+        <details class="transfer"><summary><b>A question to think about:</b> With few particles dyed the measured structure factor is flat. What about the invisible neighbours is unchanged, and where in the plots can you still see them?</summary><p>Their arrangement: the crowd is as ordered as with all particles dyed, and the measured S(q) is 1 + x [S(q) - 1], flattened by the share x of dyed particles. You still see the neighbours in D(q): each dyed particle moves more slowly than alone, because its cage of invisible neighbours holds it back.</p></details>
         <details class="math" data-open-at="researcher">
           <summary>The math: from the curves to S(q) and D(q)</summary>
           <div class="eq"><i>S</i>(<i>q</i>) = [<i>A</i>(<i>q</i>) / <i>N</i>] / [<i>A</i><sub>ref</sub>(<i>q</i>) / <i>N</i><sub>ref</sub>]</div>
@@ -592,6 +610,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
       <li>R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope</a>, Phys. Rev. Lett. 100, 188102 (2008); E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a>, J. Chem. Phys. 163, 161501 (2025).</li>
     </ul>
     <ul class="lvl-3">
+      <li>fastDDM tutorial notebook on real movies: <a href="https://github.com/somexlab/fastddm-tutorials/tree/main/Tutorial_7-Intermolecular_interactions">interactions between proteins from how their diffusion changes with concentration (tutorial 7)</a>; <a href="https://github.com/somexlab/fastddm-tutorials">all tutorials</a>.</li>
       <li><a href="https://github.com/somexlab/fastddm">fastDDM</a> (Python, CPU and GPU, GPL 3.0): <code>pip install fastddm</code>. <a href="https://fastddm.readthedocs.io/">Documentation</a>.</li>
       <li>For collaborations or questions about applying DDM to your samples, see <a href="https://rcerbino.github.io/contact/">Contact</a>.</li>
     </ul>
