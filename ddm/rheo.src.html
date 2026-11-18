@@ -505,6 +505,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. Fine stripes (red) change first, because a bead only has to move a little to shift them; wide ones (blue) change later. In a liquid every curve falls to zero in the end: given time, the beads wander off and every pattern is renewed.</p>
             <p class="only-1">The points are measured: how different two frames a delay apart look, with the camera noise taken away and divided by the full change, then turned around so that 1 means the whole pattern is still there and 0 that it is gone. The lines are drawn from how far the beads move, found in step 6 from these same points, so they show that one displacement describes all the curves; the comparison with the simulated material in step 6 shows whether it is right.</p>
             <p class="lvl-2">The points are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i>. The lines are exp[&minus;<i>q</i><sup>2</sup> &lang;&Delta;<i>r</i><sup>2</sup>&rang; / 4] with the mean squared displacement of step 6 (leaving out the small effect of the depth of field), the same for every <i>q</i>: if the beads' displacements are Gaussian, one displacement explains all the curves. <b>The order of the analysis.</b> <i>d</i> is measured first; <i>B</i> comes from the camera and <i>A</i> from the mean power of each pattern; the points follow. The displacement comes from these points in step 6, so the lines test only that one displacement describes all of them; the comparison with the simulated material tests the result.</p>
+            <p>Things that never move vanish from the differences of step 3, but not from the full strength of each pattern, which the page needs in order to tell how much has changed. In a real sample dust or uneven light would bias that strength; a movie of the background, taken the same way, corrects for it.</p>
           </div>
           <figure class="viz" id="try-gel">
             <div class="chart"><canvas id="chart-curves" aria-label="How much of each pattern is left against the delay"></canvas></div>
@@ -517,7 +518,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             <div class="a" hidden><span class="verdict"></span> No. Each bead only rattles in its cage, so part of every pattern never changes: the curves level off above zero, higher for wider stripes, which a small rattle hardly moves. The height of the plateau gives how far the beads rattle, and from it the elastic modulus of the gel. The bench now runs with a soft gel so you can check: this chart keeps one curve of the earlier run, dashed, next to the new one at the same stripe spacing, and step 6 keeps the earlier displacement. Look for where the thick line levels off while the dashed one falls to zero.</div>
           </div>
         </div>
-        <p class="takeaway"><b>What this step gives:</b> how much of each pattern is left over time. Curves that level off above zero mean beads that stay caged.</p>
+        <p class="takeaway"><b>What this step gives:</b> how much of each pattern is left over time. Curves that level off above zero mean beads that stay caged over the time measured; whether they would ever escape, a movie of finite length cannot tell.</p>
       </section>
 
       <!-- 6 -->
@@ -526,8 +527,8 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
         <div class="step-body">
           <div class="text">
             <p>Each curve of step 5 gives, at each delay, how far the beads have moved: the mean squared displacement, the average of the squared distances they travel, in square micrometres (its square root is a typical distance). Fine stripes give the small displacements of short delays, wide stripes the large ones of long delays, and where they overlap they agree. Free diffusion makes the displacement grow in proportion to the delay (a slope of 1 on these axes); beads held in cages make it level off (a slope of 0).</p>
-            <p class="only-1">A rule that goes back to Einstein turns the displacement into the moduli: the stiffer the material, the less the beads move, and the faster it relaxes, the sooner they escape. A delay &Delta;<i>t</i> stands for a frequency of about 1/&Delta;<i>t</i>.</p>
-            <p class="lvl-2">The generalised Stokes-Einstein relation turns the displacement into the moduli: the stiffer the material, the less the beads move, and the faster it relaxes, the sooner they escape. A delay &Delta;<i>t</i> stands for a frequency of about 1/&Delta;<i>t</i>.</p>
+            <p class="only-1">A rule that goes back to Einstein turns the displacement into the moduli: the stiffer the material, the less the beads move, and the faster it relaxes, the sooner they escape. A delay &Delta;<i>t</i> stands for an angular frequency &omega; of about 1/&Delta;<i>t</i>, in rad/s (the frequency in hertz is &omega;/2&pi;).</p>
+            <p class="lvl-2">The generalised Stokes-Einstein relation turns the displacement into the moduli: the stiffer the material, the less the beads move, and the faster it relaxes, the sooner they escape. A delay &Delta;<i>t</i> stands for an angular frequency &omega; of about 1/&Delta;<i>t</i>, in rad/s (the frequency in hertz is &omega;/2&pi;).</p>
           </div>
           <figure class="viz">
             <figcaption>How far the beads get</figcaption>
@@ -542,7 +543,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
           </figure>
           <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <figure class="viz">
-            <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>). <i>A</i> falls at high <i>q</i> because the optics blur fine patterns; where it sinks into <i>B</i> the displacement of the beads can no longer be read.</figcaption>
+            <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>). <i>A</i> falls at high <i>q</i> because the optics blur fine patterns. As the signal becomes small next to the camera noise, more averaging is needed: a pattern is usable as long as its amplitude and its changes can be estimated reliably, and the checks of this step decide which are kept. A signal below the noise is not unusable as such: on the <a href="../proteins/#step-rates">proteins page</a> it is far below it and still gives the diffusion coefficient.</figcaption>
             <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
             <div class="legend" id="amp-legend"></div>
           </figure>

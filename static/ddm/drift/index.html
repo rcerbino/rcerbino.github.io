@@ -341,7 +341,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
     </aside>
 
     <div class="steps">
-      <nav class="step-index" aria-label="Steps on this page"><ol><li><a href="#step-setup" data-title="Set up the microscope" aria-label="Step 1: Set up the microscope">1</a></li><li><a href="#step-movie" data-title="Record a movie" aria-label="Step 2: Record a movie">2</a></li><li><a href="#step-diff" data-title="Subtract two frames" aria-label="Step 3: Subtract two frames">3</a></li><li><a href="#step-map" data-title="Split it into stripe patterns" aria-label="Step 4: Split it into stripe patterns">4</a></li><li><a href="#step-curves" data-title="Watch each pattern change, along and across the drift" aria-label="Step 5: Watch each pattern change, along and across the drift">5</a></li><li><a href="#step-rates" data-title="From the curves to the drift" aria-label="Step 6: From the curves to the drift">6</a></li></ol><span class="now" aria-hidden="true"></span></nav>
+      <nav class="step-index" aria-label="Steps on this page"><ol><li><a href="#step-setup" data-title="Set up the microscope" aria-label="Step 1: Set up the microscope">1</a></li><li><a href="#step-movie" data-title="Record a movie" aria-label="Step 2: Record a movie">2</a></li><li><a href="#step-diff" data-title="Subtract two frames" aria-label="Step 3: Subtract two frames">3</a></li><li><a href="#step-map" data-title="Split it into stripe patterns" aria-label="Step 4: Split it into stripe patterns">4</a></li><li><a href="#step-curves" data-title="Watch each pattern change, along and across the drift" aria-label="Step 5: Watch each pattern change, along and across the drift">5</a></li><li><a href="#step-rates" data-title="From the curves to the drift" aria-label="Step 6: From the curves to the drift">6</a></li></ol><span class="now" aria-hidden="true"></span><a class="gl" href="#glossary">Glossary</a></nav>
 
       <!-- 1 -->
       <section class="step" id="step-setup" aria-labelledby="h-setup">
@@ -435,7 +435,7 @@ img_seq = fd.read_images(file_names)</pre>
             <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie. The centre of the map holds wide stripes, the edge fine ones.</p>
             <p class="only-1">The charts further down label each pattern by <i>q</i>, a number that grows as the stripes get finer: <i>q</i> = 2&pi; divided by the stripe spacing, in inverse micrometres. Stripes 1 &micro;m apart have <i>q</i> of about 6.</p>
             <p>Without a drift the map is round: the particles wander equally in all directions. A drift makes the patterns along it travel. After the delay, a pattern that moved by exactly one stripe looks as before and almost cancels in the difference; one that moved by half a stripe is reversed and shows twice as strongly. So the map is crossed by dark and bright fringes at right angles to the drift, closer together for a faster drift or a longer delay. Move the delay slider and watch them close in.</p>
-            <p>The second map shows how much of each pattern is left after the delay: red where it is still all there, the colour of the page where it has faded, blue where it came back reversed, a value below zero. Among the causes on this page only a drift can turn a pattern around: carried by half a stripe, a pattern swaps bright and dark, and any shift beyond a quarter of a stripe makes the value negative. (Cells swimming in all directions can do it too, on the swimmers page.)</p>
+            <p>The second map shows how much of each pattern is left after the delay: red where it is still all there, the colour of the page where it has faded, blue where it came back reversed, a value below zero. Among the causes on this page only a drift can turn a pattern around: carried by half a stripe, a pattern swaps bright and dark: the value first turns negative after a shift of a quarter of a stripe, stays negative up to three quarters, and turns positive again as the shift nears a whole stripe, while diffusion weakens it all along. (Cells swimming in all directions can do it too, on the swimmers page.)</p>
             <p>Each pattern has a direction: across its stripes, from one bright stripe to the next (the direction of <i>q</i>). A pattern along the drift has stripes that the drift crosses at right angles, so it is carried away; a pattern across the drift has stripes parallel to it, which the drift only slides along without changing them.</p>
             <p class="only-1">How strong a pattern is cannot tell which way it was carried: a shift to the right and one to the left change it equally. Where the pattern sits within its cycle can, as the animation below shows. That position is called the phase: it advances when the pattern moves one way and goes back when it moves the other. Step 6 reads the drift, and its direction, from the phase of all the patterns.</p>
             <figure class="viz phase-demo">
@@ -489,7 +489,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
             </figure>
           </div>
         </div>
-        <p class="takeaway"><b>What this step gives:</b> curves along and across the drift. A swing below zero along it is the drift showing in the structure function itself; without a swing it is still in the phase.</p>
+        <p class="takeaway"><b>What this step gives:</b> curves along and across the direction of motion (along x and y of the image when no drift is found). A swing below zero is a drift showing in the structure function itself; without a swing a drift can still be in the phase.</p>
       </section>
 
       <!-- 6 -->
@@ -506,7 +506,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
           </figure>
           <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <figure class="viz">
-            <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>) of the patterns used. <i>A</i> falls at high <i>q</i> because the optics blur fine patterns; where it sinks into <i>B</i> neither the fading nor the swinging of the patterns can be read.</figcaption>
+            <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>) of the patterns used. <i>A</i> falls at high <i>q</i> because the optics blur fine patterns. As the signal becomes small next to the camera noise, more averaging is needed: a pattern is usable as long as its amplitude and its changes can be estimated reliably, and the checks of this step decide which are kept. A signal below the noise is not unusable as such: on the <a href="../proteins/#step-rates">proteins page</a> it is far below it and still gives the diffusion coefficient.</figcaption>
             <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
             <div class="legend" id="amp-legend"></div>
           </figure>
@@ -568,6 +568,11 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     </ul>
   </section>
 
+  <section class="wrap further" id="glossary" aria-labelledby="h-glossary">
+    <h2 id="h-glossary">Glossary</h2>
+    <dl class="glossary"><dt>Numerical aperture (NA)</dt><dd>How wide a cone of light the objective collects, or the condenser sends: n sin(half-angle). A larger NA resolves finer details and keeps a thinner layer in focus.</dd><dt>Wave vector q</dt><dd>Describes a stripe pattern of the image: q = 2&pi; divided by the stripe spacing, in &micro;m<sup>-1</sup>. Not the wave number of the light, k = 2&pi;n/&lambda;.</dd><dt>Structure function d(q, &Delta;t)</dt><dd>The average strength of pattern q in the difference of two frames taken &Delta;t apart.</dd><dt>Amplitude A and noise B</dt><dd>A(q): how much pattern q changes once the sample has fully renewed it. B: what the camera noise adds, at every delay.</dd><dt>Intermediate scattering function f(q, &Delta;t)</dt><dd>How much of pattern q is still there after a delay &Delta;t: 1, all of it; 0, gone.</dd><dt>Hydrodynamic radius</dt><dd>The radius of a sphere that would diffuse as the particle or protein does (Stokes-Einstein relation).</dd><dt>Self and collective diffusion</dt><dd>Self: how one particle wanders among the others. Collective: how ripples in the number of particles even out.</dd><dt>Mean squared displacement</dt><dd>The average of the squared distance the particles travel in a given time.</dd><dt>Storage and loss moduli G', G''</dt><dd>How elastic and how viscous a material is, at an angular frequency &omega; (rad/s; the frequency in hertz is &omega;/2&pi;).</dd><dt>Molar mass M</dt><dd>The mass of one mole of a protein, in g/mol; a protein of 148 kDa has M = 148 000 g/mol.</dd><dt>Second virial coefficient</dt><dd>How two molecules interact, on balance: B<sub>2</sub> per pair of molecules (a volume), A<sub>2</sub> = B<sub>2</sub>N<sub>A</sub>/M<sup>2</sup> per gram (mol mL/g<sup>2</sup>), with N<sub>A</sub> Avogadro's number. Positive: they keep apart; negative: they attract.</dd><dt>Diffusion interaction parameter k<sub>D</sub></dt><dd>How fast collective diffusion changes with the concentration: D = D<sub>0</sub>(1 + k<sub>D</sub>c). It holds the interactions and the drag of neighbours through the liquid.</dd></dl>
+  </section>
+
   <section class="wrap further" aria-labelledby="h-about">
     <h2 id="h-about">About this tool</h2>
     <p class="prose">This page is a simple tool, generated with Claude Opus 5.5, that simulates a realistic microscopy experiment in which DDM is used to study colloidal particles that diffuse and drift. The microscope, light sources, cameras, spinning disk and point scanner are modelled mostly on the instruments of our SoMeX lab. The particles are spheres that do not interact with each other, so every sample is a dilute suspension; the thermophoretic values come from the measurements cited on the page. The aim is not to produce research-quality data, but to give anyone thinking of using DDM an idea of what a drift does to a DDM experiment, and of when it can be measured.</p>
@@ -602,14 +607,19 @@ dqt.set_frame_rate(frame_rate)     # frames per second
 .step-index a { display: inline-flex; align-items: center; justify-content: center; min-width: 1.9rem; height: 1.9rem; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink); text-decoration: none; font-variant-numeric: tabular-nums; }
 .step-index a:hover { border-color: var(--accent); }
 .step-index a[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.step-index a.gl { min-width: 0; height: auto; border: 0; padding: 0 0.25rem; color: var(--accent); text-decoration: underline; }
 .step-index .now { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 12rem; }
 .step { scroll-margin-top: 3.5rem; }
+.glossary { display: grid; grid-template-columns: minmax(10rem, 16rem) 1fr; gap: 0.4rem 1.25rem; margin: 0; max-width: 60rem; }
+.glossary dt { font-weight: 600; }
+.glossary dd { margin: 0; }
+@media (max-width: 40rem) { .glossary { grid-template-columns: 1fr; } .glossary dd { margin-bottom: 0.5rem; } }
 @media (max-width: 40rem) { .step-index .now { display: none; } .step-index a { min-width: 1.75rem; height: 1.75rem; } }
 </style>
 <script>
 (function () {
   var nav = document.querySelector(".step-index"); if (!nav) return;
-  var links = Array.prototype.slice.call(nav.querySelectorAll("a")), now = nav.querySelector(".now");
+  var links = Array.prototype.slice.call(nav.querySelectorAll("ol a")), now = nav.querySelector(".now");
   var steps = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
   function mark() {
     var k = 0, y = nav.getBoundingClientRect().bottom + 40;

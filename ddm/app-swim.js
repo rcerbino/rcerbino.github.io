@@ -1498,7 +1498,7 @@
     const res = cache.res, out = [], c = res.compressed, h = res.head;
     if (res.fast && res.fast.dev_from_model !== null) {
       const dv = res.fast.dev_from_model;
-      out.push({ cls: dv < 0.1 ? "good" : dv < 0.25 ? "warn" : "bad", title: "Swimmers' rates follow the model", text: "At each q the rate of the swimmers' step (dots in the rate chart) differs from what the fitted model predicts by " + Math.round(100 * dv) + " % on average. On logarithmic axes the rates rise with slope " + res.fast.slope.toFixed(2) + ": 1 for point-like cells swimming straight, less for long cells at large q, more where cells leave the focal plane." });
+      out.push({ cls: dv < 0.1 ? "good" : dv < 0.25 ? "warn" : "bad", title: "Swimmers' rates follow the model", text: "A consistency check, not an independent test: the dots use the share of swimmers and the diffusion of the global fit. At each q the rate of the swimmers' step (dots in the rate chart) differs from what the fitted model predicts by " + Math.round(100 * dv) + " % on average. On logarithmic axes the rates rise with slope " + res.fast.slope.toFixed(2) + ": 1 for point-like cells swimming straight, less for long cells at large q, more where cells leave the focal plane." });
     } else if (c) {
       const e = c.slope, d = Math.abs(e - 1);
       // a note, not a test: one rate per q (compressed exponential) follows the slow step of a two-step curve at some q
@@ -1522,7 +1522,7 @@
     }
     if (res.pv && h) {
       const d = Math.abs(res.pv.data_still_share - (1 - h.alpha));
-      out.push({ cls: d < 0.07 ? "good" : "warn", title: "Model and shape-free distribution agree", text: "Share that does not swim: " + Math.round(100 * (1 - h.alpha)) + " % from the model, " + Math.round(100 * res.pv.data_still_share) + " % from the distribution found without a shape; mean speed " + fmtV(h.v_um_s) + " and " + fmtV(res.pv.data_mean_swimmers_um_s) + "." });
+      out.push({ cls: d < 0.07 ? "good" : "warn", title: "Model and shape-free distribution agree", text: "Share that does not swim: " + Math.round(100 * (1 - h.alpha)) + " % from the model, " + Math.round(100 * res.pv.data_still_share) + " % from the distribution found without assuming its shape; mean speed " + fmtV(h.v_um_s) + " and " + fmtV(res.pv.data_mean_swimmers_um_s) + "." });
     }
     return out;
   }

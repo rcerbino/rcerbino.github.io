@@ -1375,7 +1375,7 @@
     const x = tr.label_fraction, few = x <= 0.1;
     $("sq-all-1").hidden = few; $("sq-all-2").hidden = few; $("sq-few-1").hidden = !few; $("sq-few-2").hidden = !few; $("curves-few").hidden = !few;
     $("sq-title").textContent = few ? "What the dyed particles show of the order: pairs are too rare" : x < 1 ? "How the particles arrange, as the dyed ones show it: the structure factor" : "How the particles arrange: the structure factor";
-    $("dq-title").textContent = few ? "Motion of the dyed particles: their invisible neighbours still hold them back" : x < 1 ? "How fast each pattern starts to fade: collective and single-particle motion mixed" : "How fast each pattern starts to fade: collective diffusion";
+    $("dq-title").textContent = few ? "Motion of the dyed particles: their invisible neighbours still hold them back" : x < 1 ? "How fast each pattern starts to fade: collective and single-particle motion mixed" : "How fast each pattern fades over the first delays: collective diffusion";
     // the second movie the result depends on: the dilute reference
     const rc = CROWD.referenceConfig(cfg, tr.tau_B_s), rdt = 1 / rc.frame_rate_hz, rspan = rc.log_timing ? MOVIE.logTimes(rc.n_frames, rdt, rc.log_timing.factor)[rc.n_frames - 1] + rdt : rc.n_frames * rdt;
     $("movie-specs").innerHTML += " <b>Reference movie</b> (step 6 divides by it): the same particles, optics and camera, at 4 % and without interactions, " + rc.n_frames + " frames over about " + fmtDur(rspan) + ", long enough for its particles to wander through the depth of the box twice.";
