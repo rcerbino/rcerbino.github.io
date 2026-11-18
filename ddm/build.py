@@ -84,7 +84,7 @@ PAGES = {
     "tissues": {"src": "tissue.src.html", "out": "static/ddm/tissues/index.html", "preview": "ddm-tissues.html", "title": "DDM of moving tissues",
                 "canonical": "https://rcerbino.github.io/ddm/tissues/", "up": "../../",
                 "description": "Differential dynamic microscopy (DDM) of confluent cell monolayers: simulate a time-lapse of stained nuclei in your browser and find out whether the tissue is jammed, fluid or flocking, step by step, from the raw movie to the motion of the cells.",
-                "parts": {"/*TMOVIE*/": "tissue-movie.js", "/*ENGINE*/": "ddm-engine.js", "/*TENGINE*/": "tissue-engine.js", "/*WORKER*/": "worker-tissue.js", "/*TIFF*/": "tiff.js", "/*APP*/": "app-tissue.js"}},
+                "parts": {"/*TMOVIE*/": "tissue-movie.js", "/*ENGINE*/": "ddm-engine.js", "/*TENGINE*/": "tissue-engine.js", "/*TVORONOI*/": "tissue-voronoi.js", "/*WORKER*/": "worker-tissue.js", "/*TIFF*/": "tiff.js", "/*APP*/": "app-tissue.js"}},
     "exercises": {"src": "exercises.src.html", "out": "static/ddm/exercises/index.html", "preview": "ddm-exercises.html", "title": "DDM exercises",
                   "canonical": "https://rcerbino.github.io/ddm/exercises/", "up": "../../",
                   "description": "Exercises with model answers on differential dynamic microscopy (DDM): predict, compute and discuss, for each of the DDM, hands on pages, from sizing particles to protein interactions. Printable.",

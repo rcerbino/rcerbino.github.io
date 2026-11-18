@@ -16,7 +16,9 @@ const CASES = [
   { page: "ddm-rheology.html", set: { mat: "gel" }, checks: [["#result", true, /Solid-like/]] },
   { page: "ddm-proteins.html", set: { protein: "bsa" }, checks: [["#hero-cap", true, /albumin/], ["#result", true, /repulsion between the proteins outweighs/]] },
   { page: "ddm-proteins.html", set: { protein: "sticky" }, checks: [["#result", false, /repulsion between the proteins outweighs/], ["#result", true, /drag of neighbours/]] },
-  { page: "ddm-hands-on.html", set: { diameter_um: 0.4 }, checks: [["#result", true, /400 nm|0\.4/]] }
+  { page: "ddm-hands-on.html", set: { diameter_um: 0.4 }, checks: [["#result", true, /400 nm|0\.4/]] },
+  { page: "ddm-tissues.html", set: { tstate: "jammed" }, checks: [["#net-result", true, /the sheet is solid/], ["#net-result", true, /Neighbours as simulated/]] },
+  { page: "ddm-tissues.html", set: { tstate: "fluid", v0_um_h: 30 }, checks: [["#net-result", true, /Cells swap neighbours/], ["#net-result", false, /the sheet is solid/]] }
 ];
 (async () => {
   const b = await chromium.launch(); let fails = 0;
@@ -25,7 +27,7 @@ const CASES = [
     await pg.goto("file://" + path.join(__dirname, c.page) + "#student");
     const done = function () { return pg.waitForFunction(function () { const t = document.getElementById("status").textContent; return /^Done/.test(t) || /stopped/.test(t); }, null, { timeout: 400000 }); };
     await done();
-    await pg.evaluate(function (s) { DDM_PAGE.preset(s); }, c.set); await pg.waitForTimeout(400); await done();
+    await pg.evaluate(function (s) { document.getElementById("status").textContent = ""; DDM_PAGE.preset(s); }, c.set); await pg.waitForTimeout(400); await done();   // "Done" cleared first, so the wait is for the new run
     for (const k of c.checks) {
       const txt = await pg.evaluate(function (sel) { const el = document.querySelector(sel); return el ? el.innerText : ""; }, k[0]);
       const ok = k[2].test(txt) === k[1];

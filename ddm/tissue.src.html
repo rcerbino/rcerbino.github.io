@@ -219,6 +219,7 @@ figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(
 .chart.short { height: 220px; }
 .toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-family: var(--sans); font-size: 0.88rem; }
 .toolbar input[type="range"] { flex: 1 1 10rem; accent-color: var(--accent); }
+.toolbar select { font: inherit; padding: 0.25rem 0.4rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink); }
 .toolbar.pickbar { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 0.8rem; margin-top: 0.5rem; }
 .toolbar.pickbar input[type="range"] { width: 100%; min-width: 0; }
 @media (pointer: coarse) { input[type="range"] { min-height: 2.5rem; } }   /* a larger touch area; the track stays thin */
@@ -331,7 +332,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap bench-head" aria-labelledby="bench-title">
     <p class="eyebrow">Hands on</p>
     <h2 id="bench-title">The bench</h2>
-    <p class="prose">Choose how the cells move, then how they are filmed (controls on the left, or just below on a phone). The bench simulates a day of a monolayer and takes about ten seconds; the motility sweep of step 7 takes about two minutes. "Copy a link to this setup" gives an address that opens the bench with the same settings.</p>
+    <p class="prose">Choose how the cells move, then how they are filmed (controls on the left, or just below on a phone). The bench simulates a day of a monolayer and takes about ten seconds; the motility sweep of step 8 takes about two minutes. "Copy a link to this setup" gives an address that opens the bench with the same settings.</p>
   </section>
 
   <div class="wrap bench">
@@ -508,12 +509,65 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
       </section>
 
       <!-- 7 -->
+      <section class="step" id="step-network" aria-labelledby="h-network">
+        <div class="step-title"><span class="num">7</span><h2 id="h-network">The network of nuclei</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="chart fovbox"><canvas id="net" aria-label="A frame of the movie with the nuclei found and the Voronoi network they make"></canvas></div>
+            <div class="toolbar"><label for="net-frame">Frame</label><input type="range" id="net-frame" min="0" max="255" value="0"><output id="net-frame-out" class="readout"></output></div>
+            <div class="toolbar"><label for="net-colour">Colour the cells by</label><select id="net-colour"><option value="sides">number of neighbours</option><option value="shape">shape index</option></select></div>
+            <div class="legend" id="net-legend"></div>
+          </figure>
+          <div class="text">
+            <p>DDM never looks for single cells. Here the nuclei are bright and well apart, so the page can also find them one by one, follow each from frame to frame, and give each the part of the dish that is closer to it than to any other nucleus. These parts make the Voronoi network, a rough stand-in for the outlines of the cells. Two cells whose parts share a side are neighbours.</p>
+            <p>In a jammed sheet a cell keeps the same neighbours for the whole movie. In a fluid sheet cells squeeze past each other and swap neighbours within hours. Move the frame slider to watch the network change, or not.</p>
+            <p class="lvl-2">Nuclei: local maxima of the frame, lightly smoothed, brighter than everything within a third of a cell spacing and than the background plus a quarter of the brightest pixels; the position to a fraction of a pixel from a parabola through the logarithm of three pixels, in x and in y. Tracks: a nucleus in one frame and one in the next are the same when each is the other's nearest, closer than half a spacing. Cells: each cut out by the perpendicular bisectors towards its neighbours, kept only when every nucleus that could cut it is inside the field. Neighbours share a side longer than a tenth of a spacing; one is kept after a delay while the two still share a side of any length.</p>
+          </div>
+        </div>
+        <div class="step-body">
+          <figure class="viz">
+            <figcaption>Share of its neighbours a cell still has after a delay</figcaption>
+            <div class="chart short"><canvas id="chart-kept" aria-label="Share of neighbours kept against the delay"></canvas></div>
+            <div class="legend" id="kept-legend"></div>
+          </figure>
+          <details class="numbers" id="kept-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <figure class="viz lvl-2">
+            <figcaption>Shape index of the Voronoi cells: 3.72 for a regular hexagon, higher for elongated or ragged cells</figcaption>
+            <div class="chart short"><canvas id="chart-shape" aria-label="Distribution of the shape index of the cells"></canvas></div>
+            <div class="legend" id="shape-legend"></div>
+          </figure>
+          <details class="numbers lvl-2" id="shape-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <div class="result" id="net-result" aria-live="polite"></div>
+        </div>
+        <details class="inputs"><summary>What the analysis is told, and what it finds</summary><p><b>Told (inputs):</b> the pixel size, the time between frames, and the typical size of a cell, which sets how far apart two nuclei must be and how far a nucleus may move between frames.</p><p><b>Found from the movie:</b> the position of every nucleus in every frame, their tracks, the Voronoi cell of each, its number of sides and its shape, how many neighbours each cell keeps over time, and how far the nuclei move.</p><p>The page checks each of these against the true positions of the simulation. In a real monolayer nuclei divide, overlap and are not at the centre of their cell, and the true outlines need a stain of the membranes.</p></details>
+        <p class="takeaway"><b>What this step gives:</b> a second reading of the same movie, cell by cell: whether cells keep their neighbours, and how far each one moves, to set beside what DDM found without looking for any cell.</p>
+        <details class="transfer"><summary><b>A question to think about:</b> On this bench tracking the nuclei and DDM agree. When would you rather use DDM?</summary><p>When single cells are hard to find: in phase-contrast or bright-field movies without a stain, with dim or crowded nuclei, or out of focus. When cells move more than about half their spacing between frames, a nucleus can no longer be told apart from its neighbours from one frame to the next, and the tracks break. And when the movie is large: DDM gives the average motion of thousands of cells without deciding where each one is. Tracking gives what DDM cannot: who is next to whom, and how that changes.</p></details>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: Voronoi cells, shape index and neighbours</summary>
+          <p><b>Voronoi cell.</b> The cell of nucleus <i>i</i> is the set of points closer to <b>r</b><sub><i>i</i></sub> than to any other nucleus: the polygon cut out by the perpendicular bisectors towards its neighbours. It is complete once the next nucleus is more than twice as far as its farthest corner; in the image it is kept only if that whole range lies inside the field. <b>Shape index.</b> <i>p</i> = <i>P</i> / &radic;<i>A</i>, with <i>P</i> the perimeter and <i>A</i> the area: 3.72 for a regular hexagon, 3.81 for a regular pentagon, 4 for a square. In the vertex model and in the self-propelled Voronoi model of tissues, a target shape index near 3.81 is where the model sheet goes from solid to fluid (Bi et al. 2015, 2016), and Park et al. (2015) saw the cells of airway epithelium grow more elongated as the sheet unjammed. <b>Neighbours kept.</b> <i>K</i>(&Delta;<i>t</i>) = &Sigma; <i>n</i><sub>kept</sub> / &Sigma; <i>n</i><sub>0</sub> over cells followed in both frames and over 8 starting frames, counting only neighbours still followed.</p>
+          <p><b>What the page does not fix.</b> In this model the cells are soft discs, with no shape of their own, so the shape index only follows how disordered the arrangement is: in our tests the mean <i>p</i> was 3.77 in the jammed sheet and the flocking solid, 3.80 in the flocking liquid and 3.83 in the fluid sheet. That it falls on either side of 3.81 is suggestive, not a test of the vertex model, and Voronoi cells of nuclei are only an approximation of real outlines.</p>
+          <p>In Python, with the nuclei of one frame in <code>x</code>, <code>y</code> (scipy):</p>
+          <pre class="code">import numpy as np
+from scipy.spatial import Voronoi
+vor = Voronoi(np.c_[x, y])
+def shape_index(i):              # drop cells near the edge of the field
+    reg = vor.regions[vor.point_region[i]]
+    if not reg or -1 in reg: return np.nan
+    P = vor.vertices[reg]
+    area = 0.5 * abs(np.dot(P[:, 0], np.roll(P[:, 1], 1)) - np.dot(P[:, 1], np.roll(P[:, 0], 1)))
+    perim = np.hypot(*(P - np.roll(P, 1, axis=0)).T).sum()
+    return perim / np.sqrt(area)
+pairs = {tuple(sorted(p)) for p in vor.ridge_points}   # neighbours</pre>
+        </details>
+      </section>
+
+      <!-- 8 -->
       <section class="step" id="step-series" aria-labelledby="h-series">
-        <div class="step-title"><span class="num">7</span><h2 id="h-series">Waking up a jammed tissue: a motility sweep</h2></div>
+        <div class="step-title"><span class="num">8</span><h2 id="h-series">Waking up a jammed tissue: a motility sweep</h2></div>
         <div class="step-body">
           <div class="text">
             <p class="only-1">Repeat the measurement as the cells crawl harder, with and without the alignment. Without it, slow cells stay jammed and fast ones flow, each in its own direction. With it, the sheet flocks: slow cells move as one rigid block, fast ones flow while they travel together. This is how Malinverno et al. (2017) found that a jammed epithelium can be woken up: the protein RAB5A made the cells crawl harder and the sheet flow and flock.</p>
-            <p class="lvl-2">The sweep runs six crawling speeds <i>v</i><sub>0</sub> from 3 to 30 &micro;m/h, without alignment and with <i>J</i> = 2 per hour, a new movie each, and plots the displacement relative to the sheet after 2 hours and the order &psi;, with the values of the simulation.</p>
+            <p class="lvl-2">The sweep runs six crawling speeds <i>v</i><sub>0</sub> from 3 to 30 &micro;m/h, without alignment and with <i>J</i> = 2 per hour, a new movie each, and plots the displacement relative to the sheet after 2 hours, the order &psi; and the share of neighbours a cell keeps over 4 hours (step 7), with the values of the simulation.</p>
           </div>
           <div class="toolbar" id="try-sweep"><button type="button" id="btn-series">Run the motility sweep</button><span class="readout" id="series-msg" aria-live="polite"></span></div>
           <p class="readout" id="series-state"></p>
@@ -526,6 +580,10 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
             <figure class="viz">
               <figcaption>Order of the sheet, against how hard the cells crawl</figcaption>
               <div class="chart short"><canvas id="chart-order" aria-label="Order of the sheet against the crawling speed"></canvas></div>
+            </figure>
+            <figure class="viz">
+              <figcaption>Share of its neighbours a cell keeps over 4 hours, from the network of nuclei</figcaption>
+              <div class="chart short"><canvas id="chart-sweep-kept" aria-label="Share of neighbours kept in 4 hours against the crawling speed"></canvas></div>
               <ul class="reasons" id="sweep-notes"></ul>
             </figure>
             <details class="numbers" id="series-numbers"><summary>The numbers behind these charts</summary><div></div></details>
@@ -545,7 +603,7 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
   <section class="wrap matters" aria-labelledby="h-matters">
     <p class="eyebrow">In a real experiment</p>
     <h2 id="h-matters">What matters</h2>
-    <p class="prose">Each card sets the bench to a typical case and shows where to look; some also run the sweep of step 7. Use "Back to the standard sample" to start again.</p>
+    <p class="prose">Each card sets the bench to a typical case and shows where to look; some also run the sweep of step 8. Use "Back to the standard sample" to start again.</p>
     <div class="cards" id="cards"></div>
   </section>
 
@@ -579,6 +637,8 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
       <li>C. Malinverno, S. Corallino, F. Giavazzi, M. Bergert, Q. Li, M. Leoni, A. Disanza, E. Frittoli, A. Oldani, E. Martini, T. Lendenmann, G. Deflorian, G. V. Beznoussenko, D. Poulikakos, K. H. Ong, M. Uroz, X. Trepat, D. Parazzoli, P. Maiuri, W. Yu, A. Ferrari, R. Cerbino and G. Scita, <a href="https://doi.org/10.1038/nmat4848">Endocytic reawakening of motility in jammed epithelia</a>, Nat. Mater. 16, 587 (2017). RAB5A wakes up a jammed epithelial sheet into flowing, flocking streams.</li>
       <li>V. A. Martinez, R. Besseling, O. A. Croze, J. Tailleur, M. Reufer, J. Schwarz-Linek, L. G. Wilson, M. A. Bees and W. C. K. Poon, <a href="https://doi.org/10.1016/j.bpj.2012.08.045">Differential dynamic microscopy: a high-throughput method for characterizing the motility of microorganisms</a>, Biophys. J. 103, 1637 (2012); R. Colin, R. Zhang and L. G. Wilson, <a href="https://doi.org/10.1098/rsif.2014.0486">Fast, high-throughput measurement of collective behaviour in a bacterial population</a>, J. R. Soc. Interface 11, 20140486 (2014). DDM of motile cells, and the phase of the widest patterns for a collective drift.</li>
       <li>B. Szab&oacute;, G. J. Sz&ouml;ll&ouml;si, B. G&ouml;nci, Zs. Jur&aacute;nyi, D. Selmeczi and T. Vicsek, <a href="https://doi.org/10.1103/PhysRevE.74.061908">Phase transition in the collective migration of tissue cells: experiment and model</a>, Phys. Rev. E 74, 061908 (2006); S. Henkes, Y. Fily and M. C. Marchetti, <a href="https://doi.org/10.1103/PhysRevE.84.040301">Active jamming: self-propelled soft particles at high density</a>, Phys. Rev. E 84, 040301 (2011). Models of crowded crawling cells.</li>
+      <li>D. Bi, J. H. Lopez, J. M. Schwarz and M. L. Manning, <a href="https://doi.org/10.1038/nphys3471">A density-independent rigidity transition in biological tissues</a>, Nat. Phys. 11, 1074 (2015); D. Bi, X. Yang, M. C. Marchetti and M. L. Manning, <a href="https://doi.org/10.1103/PhysRevX.6.021011">Motility-driven glass and jamming transitions in biological tissues</a>, Phys. Rev. X 6, 021011 (2016). The shape index 3.81, in the vertex and the self-propelled Voronoi models.</li>
+      <li>J.-A. Park, J. H. Kim, D. Bi, J. A. Mitchel, N. T. Qazvini, K. Tantisira, C. Y. Park, M. McGill, S.-H. Kim, B. Gweon, J. Notbohm, R. Steward Jr, S. Burger, S. H. Randell, A. T. Kho, D. T. Tambe, C. Hardin, S. A. Shore, E. Israel, D. A. Weitz, D. J. Tschumperlin, E. P. Henske, S. T. Weiss, M. L. Manning, J. P. Butler, J. M. Drazen and J. J. Fredberg, <a href="https://doi.org/10.1038/nmat4357">Unjamming and cell shape in the asthmatic airway epithelium</a>, Nat. Mater. 14, 1040 (2015). Cell shape as a sign of unjamming in a real epithelium.</li>
     </ul>
     <ul class="lvl-3">
       <li><a href="../exercises/#tissues">Exercises with model answers for this page</a>: questions to predict, compute and discuss, printable, for a class or on your own.</li>
@@ -605,6 +665,9 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
 </script>
 <script id="tengine-src">
 /*TENGINE*/
+</script>
+<script id="tvoronoi-src">
+/*TVORONOI*/
 </script>
 <script type="text/plain" id="worker-src">
 /*WORKER*/

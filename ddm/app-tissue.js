@@ -39,7 +39,8 @@
   function nFrames() { return Math.min(state.n_frames, maxFrames(simPx())); }
   function nCells() { const L = simPx() * pixelUm(); return Math.round(state.packing * L * L / (Math.PI / 4 * state.cell_um * state.cell_um * 1.0225)); }
   function movieSeconds() { const n = simPx(); return 1.2 + 2.5 * nCells() / 600 * (nFrames() * state.frame_min / 60 + 6) / 27 * Math.max(1, state.v0_um_h / 15) + 3 * n * n * nFrames() / 8.4e6; }
-  function simSeconds() { return movieSeconds() * (level === "addict" ? 1.2 : 1); }
+  function netSeconds() { return 1.5 * nCells() / 600 * nFrames() / 256; }
+  function simSeconds() { return movieSeconds() * (level === "addict" ? 1.2 : 1) + netSeconds(); }
   function seriesSeconds() { return SWEEP.length * simSeconds(); }
   const MAX_SECONDS = 180, MAX_SERIES_SECONDS = 900;
   function simConfig(over) {
@@ -213,7 +214,7 @@
   // ---- running (in a background worker when the browser allows it) --------------------
   const cache = { movie: null, res: null, cfg: null, opts: null, series: null };
   let timer = null, worker = null, runToken = 0, workerOK = true, seriesQueued = false, inflight = null, pending = {};
-  function workerSource() { return ["tmovie-src", "engine-src", "tengine-src"].map(function (id) { return document.getElementById(id).textContent; }).join("\n") + "\n" + document.getElementById("worker-src").textContent; }
+  function workerSource() { return ["tmovie-src", "engine-src", "tengine-src", "tvoronoi-src"].map(function (id) { return document.getElementById(id).textContent; }).join("\n") + "\n" + document.getElementById("worker-src").textContent; }
   function makeWorker() { try { return new Worker(URL.createObjectURL(new Blob([workerSource()], { type: "text/javascript" }))); } catch (e) { workerOK = false; return null; } }
   function schedule() { clearTimeout(timer); timer = setTimeout(function () { start("simulate"); }, 150); }
   function scheduleAnalysis() { clearTimeout(timer); timer = setTimeout(function () { start(cache.movie ? "analyse" : "simulate"); }, 150); }
@@ -273,7 +274,11 @@
   let movieHere = null;
   function pubSummary(r) { return { msd: r.msd, taus_s: r.taus_s, state: r.state, psi: r.psi, V_um_h: r.V_um_h }; }
   async function runHere(kind, token, cfg, opts) {
-    if (kind === "simulate" || !movieHere) { const mv = await drive(TISSUE_MOVIE.simulate(cfg), token, 0, 0.85); if (!mv) return; movieHere = mv; }
+    if (kind === "simulate" || !movieHere) {
+      const mv = await drive(TISSUE_MOVIE.simulate(cfg), token, 0, 0.75); if (!mv) return;
+      const net = await drive(TISSUE_VORONOI.analyse(mv, { spacing_um: cfg.cell_um }), token, 0.75, 0.85); if (!net) return;
+      mv.net = net; movieHere = mv;
+    }
     const res = await drive(TISSUE_ENGINE.analyse(movieHere, opts), token, 0.85, 1); if (!res) return;
     if (opts.compare_published) { const rp = await drive(TISSUE_ENGINE.analyse(movieHere, Object.assign({}, opts, { published_only: true })), token, 0.95, 1); res.published = rp ? pubSummary(rp) : { failed: "stopped" }; }
     inflight = null;
@@ -283,9 +288,11 @@
     const pts = [];
     for (let i = 0; i < list.length; i++) {
       const pre = "Run " + (i + 1) + " of " + list.length + ": ";
-      const mv = await drive(TISSUE_MOVIE.simulate(cfgs[i]), token, i / list.length, (i + 0.85) / list.length, pre); if (!mv) return;
+      const mv = await drive(TISSUE_MOVIE.simulate(cfgs[i]), token, i / list.length, (i + 0.75) / list.length, pre); if (!mv) return;
+      const net = await drive(TISSUE_VORONOI.analyse(mv, { spacing_um: cfgs[i].cell_um }), token, (i + 0.75) / list.length, (i + 0.85) / list.length, pre); if (!net) return;
       const r = await drive(TISSUE_ENGINE.analyse(mv, p.opts), token, (i + 0.85) / list.length, (i + 1) / list.length, pre); if (!r) return;
-      pts.push({ set: list[i], msd: r.msd, taus_s: r.taus_s, msd_beyond: r.msd_beyond, msd_min_um2: r.msd_min_um2, psi: r.psi, V_um_h: r.V_um_h, state: r.state, truth: { msd: mv.truth.msd, order: mv.truth.order, drift_um_h: mv.truth.drift_um_h } });
+      const ns = function (x) { return x ? { p_mean: x.p_mean, hex_frac: x.hex_frac, kept: x.kept } : null; };
+      pts.push({ set: list[i], msd: r.msd, taus_s: r.taus_s, msd_beyond: r.msd_beyond, msd_min_um2: r.msd_min_um2, psi: r.psi, V_um_h: r.V_um_h, state: r.state, net: { measured: ns(net.measured), truth: ns(net.truth) }, truth: { msd: mv.truth.msd, order: mv.truth.order, drift_um_h: mv.truth.drift_um_h } });
     }
     inflight = null; finishSeries(pts, p);
   }
@@ -297,6 +304,7 @@
       // the delay slider at about one hour; the lower map zoomed on the patterns used
       const ta = res.taus_s; let li = 0; for (let k = 0; k < ta.length; k++) if (Math.abs(Math.log(ta[k])) < Math.abs(Math.log(ta[li]))) li = k;
       $("lag").max = ta.length - 1; $("lag").value = li;
+      $("net-frame").max = movie.T - 1; $("net-frame").value = 0;
       const qz = res.band.q_hi || 1;
       cache.zoomK = Math.max(8, Math.min(movie.n / 2 - 1, Math.round(qz * movie.L_um / (2 * Math.PI)) + 2));
     }
@@ -598,7 +606,119 @@
     fillNumbers("amp-numbers", ["q (" + MU + "m" + MINUS1 + ")", "A", "B", "Used"], pts.map(function (p) { return [p.q, p.A > 0 ? p.A : null, p.B > 0 ? p.B : null, p.used ? "yes" : "no"]; }));
   }
 
-  // ---- step 7: the motility sweep -----------------------------------------------------------------
+  // ---- step 7: the network of nuclei ------------------------------------------------------------
+  const T_KEPT = 4;   // hours: the delay at which the sweep reads the neighbours kept
+  // fraction of neighbours kept after h hours, interpolated in log time between the delays measured
+  function keptAt(list, h) {
+    if (!list) return null;
+    const pts = list.filter(function (k) { return k.kept !== null; });
+    for (let i = 0; i < pts.length; i++) {
+      if (Math.abs(pts[i].lag_h - h) < 1e-9) return pts[i].kept;
+      if (i > 0 && pts[i - 1].lag_h < h && pts[i].lag_h > h) { const w = Math.log(h / pts[i - 1].lag_h) / Math.log(pts[i].lag_h / pts[i - 1].lag_h); return pts[i - 1].kept + w * (pts[i].kept - pts[i - 1].kept); }
+    }
+    return null;
+  }
+  function msdAt(m, h) { if (!m || !m.lag_h.length) return null; let b = 0; m.lag_h.forEach(function (t, i) { if (Math.abs(Math.log(t / h)) < Math.abs(Math.log(m.lag_h[b] / h))) b = i; }); return Math.abs(Math.log(m.lag_h[b] / h)) < 0.3 ? m.um2[b] : null; }
+  function lastKept(list) { const p = (list || []).filter(function (k) { return k.kept !== null; }); return p.length ? p[p.length - 1] : null; }
+  function netBrief() {
+    const nt = cache && cache.movie && cache.movie.net; if (!nt) return null;
+    const m = nt.measured, t = nt.truth || {}, r3 = function (v) { return v === null || v === undefined ? null : +v.toPrecision(3); };
+    return { nuclei_per_frame: r3(m.n_detected), cells_simulated: t.n_cells || null, found_frac: r3(t.found_frac), position_error_um: r3(t.loc_err_um), frames_followed: r3(m.track_frames),
+      shape_index: r3(m.p_mean), shape_index_simulated: r3(t.p_mean), hexagons: r3(m.hex_frac), hexagons_simulated: r3(t.hex_frac),
+      kept_1h: r3(keptAt(m.kept, 1)), kept_1h_simulated: r3(keptAt(t.kept, 1)), kept_4h: r3(keptAt(m.kept, T_KEPT)), kept_4h_simulated: r3(keptAt(t.kept, T_KEPT)),
+      msd_1h_tracks_um2: r3(msdAt(m.msd, 1)), msd_1h_simulated_um2: r3(msdAt(t.msd, 1)) };
+  }
+  // the network of one frame, found on the page (a few milliseconds)
+  let netFrame = { movie: null, t: -1, cells: null };
+  function networkOf(t) {
+    const mv = cache.movie;
+    if (netFrame.movie === mv && netFrame.t === t) return netFrame;
+    const P = mv.n * mv.n, d = TISSUE_VORONOI.detect(mv.frames.subarray(t * P, (t + 1) * P), mv.n, mv.pixel_um, state.cell_um);
+    const v = TISSUE_VORONOI.voronoi(d.x, d.y, mv.L_um, state.cell_um, false, true);
+    netFrame = { movie: mv, t: t, x: d.x, y: d.y, cells: v };
+    return netFrame;
+  }
+  function sidesColor(k) { return k <= 4 ? C.warn : k === 5 ? C.accent : k === 6 ? null : k === 7 ? C["accent-2"] : C.bad; }
+  function drawNet() {
+    const cv = $("net"); if (!cv || !cache.movie) return;
+    const mv = cache.movie, t = Math.min(mv.T - 1, parseInt($("net-frame").value, 10) || 0), nw = networkOf(t), byShape = $("net-colour").value === "shape";
+    const c = prepCanvas(cv), ctx = c.ctx, W = c.W, H = c.H, S = Math.min(W, H), x0 = (W - S) / 2, y0 = (H - S) / 2, k = S / mv.L_um;
+    ctx.clearRect(0, 0, W, H);
+    const off = document.createElement("canvas"); drawFrame(off, mv, t);
+    ctx.imageSmoothingEnabled = false; ctx.drawImage(off, x0, y0, S, S);
+    ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, S, S); ctx.clip();
+    let nOk = 0;
+    nw.cells.forEach(function (o) {
+      if (!o.ok) return; nOk++;
+      ctx.beginPath(); o.px.forEach(function (x, j) { const X = x0 + x * k, Y = y0 + o.py[j] * k; if (j) ctx.lineTo(X, Y); else ctx.moveTo(X, Y); }); ctx.closePath();
+      const col = byShape ? qColor((o.p - 3.65) / 0.4) : sidesColor(o.sides);
+      if (col) { ctx.globalAlpha = 0.45; ctx.fillStyle = col; ctx.fill(); ctx.globalAlpha = 1; }
+      ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 1; ctx.stroke();
+    });
+    ctx.fillStyle = "rgba(255,255,255,0.9)";
+    for (let i = 0; i < nw.x.length; i++) { ctx.beginPath(); ctx.arc(x0 + nw.x[i] * k, y0 + nw.y[i] * k, 1.6, 0, 2 * Math.PI); ctx.fill(); }
+    ctx.restore();
+    ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.strokeRect(x0, y0, S, S);
+    const out = "t = " + fmtH(t * mv.frame_h) + ", frame " + (t + 1) + " of " + mv.T;
+    $("net-frame-out").textContent = out; $("net-frame").setAttribute("aria-valuetext", out);
+    const sw = function (col, txt) { return '<span><i style="background:' + col + ';border-radius:2px"></i>' + txt + '</span>'; };
+    $("net-legend").innerHTML = (byShape
+      ? sw(qColor(0), "shape index 3.65 or less") + sw(qColor(0.4), "3.81") + sw(qColor(1), "4.05 or more (elongated or ragged)")
+      : sw(C.warn, "4 sides or fewer") + sw(C.accent, "5 sides") + '<span>6 sides: no colour</span>' + sw(C["accent-2"], "7 sides") + sw(C.bad, "8 or more")) +
+      '<span>White dots: the nuclei found; only cells whose outline is complete inside the field are drawn (' + nOk + ' of ' + nw.x.length + ')</span>';
+  }
+  function drawKept() {
+    const nt = cache.movie && cache.movie.net; if (!nt) return;
+    const m = nt.measured.kept, tr = nt.truth ? nt.truth.kept : null, lags = m.map(function (k) { return k.lag_h; });
+    let lo = 1; [m, tr || []].forEach(function (l) { l.forEach(function (k) { if (k.kept !== null) lo = Math.min(lo, k.kept); }); });
+    const y0 = Math.max(0, Math.floor((lo - 0.05) * 10) / 10);
+    const a = axes($("chart-kept"), { xlog: true, ylog: false, x0: lags[0] / 1.3, x1: lags[lags.length - 1] * 1.3, y0: y0, y1: 1 + 0.03 * (1 - y0), xlabel: "Delay (hours)", ylabel: "Neighbours kept" }), ctx = a.ctx;
+    if (tr) poly(ctx, tr.map(function (k) { return k.kept !== null ? [a.fx(k.lag_h), a.fy(k.kept)] : null; }), C["accent-2"], 1.8);
+    m.forEach(function (k) { if (k.kept !== null) dot(ctx, a.fx(k.lag_h), a.fy(k.kept), 3, C.accent, null); });
+    a.done();
+    $("kept-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>Found from the movie</span><span><i style="background:' + C["accent-2"] + '"></i>As simulated (every cell, true positions)</span>';
+    fillNumbers("kept-numbers", ["Delay (h)", "Neighbours kept, from the movie", "simulated", "Cells counted"], m.map(function (k, i) { return [k.lag_h, k.kept, tr ? tr[i].kept : null, k.cells]; }));
+  }
+  function drawShape() {
+    const nt = cache.movie && cache.movie.net; if (!nt) return;
+    const m = nt.measured, tr = nt.truth, H = m.p_hist, nb = H.counts.length, w = (H.hi - H.lo) / nb;
+    const dens = function (h) { const s = h.counts.reduce(function (p, v) { return p + v; }, 0) || 1; return h.counts.map(function (v) { return v / s / w; }); };
+    const dm = dens(H), dt = tr ? dens(tr.p_hist) : null, ymax = Math.max.apply(null, dm.concat(dt || [])) * 1.1 || 1;
+    const a = axes($("chart-shape"), { xlog: false, ylog: false, x0: H.lo, x1: H.hi, y0: 0, y1: ymax, xlabel: "Shape index p = perimeter / " + "\u221a" + "area", ylabel: "Share of cells (per unit of p)" }), ctx = a.ctx;
+    ctx.fillStyle = C.accent; ctx.globalAlpha = 0.45;
+    dm.forEach(function (v, i) { const X0 = a.fx(H.lo + i * w), X1 = a.fx(H.lo + (i + 1) * w); ctx.fillRect(X0 + 0.5, a.fy(v), X1 - X0 - 1, a.fy(0) - a.fy(v)); });
+    ctx.globalAlpha = 1;
+    if (dt) poly(ctx, dt.map(function (v, i) { return [a.fx(H.lo + (i + 0.5) * w), a.fy(v)]; }), C["accent-2"], 1.8);
+    [[3.722, "hexagon"], [3.812, "3.81"]].forEach(function (r) { ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(a.fx(r[0]), a.m.t); ctx.lineTo(a.fx(r[0]), a.m.t + a.ph); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = C.muted; ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillText(r[1], a.fx(r[0]) + 3, a.m.t + 2); });
+    a.done();
+    $("shape-legend").innerHTML = '<span><i style="background:' + C.accent + ';border-radius:2px"></i>Found from the movie, mean ' + fmtSig(m.p_mean, 3) + '</span><span><i style="background:' + C["accent-2"] + '"></i>As simulated, mean ' + (tr ? fmtSig(tr.p_mean, 3) : "-") + '</span><span>Dashed: a regular hexagon (3.72), and 3.81, where vertex and Voronoi models of tissues go from solid to fluid</span>';
+    fillNumbers("shape-numbers", ["p (bin centre)", "Found from the movie", "Simulated"], dm.map(function (v, i) { return [H.lo + (i + 0.5) * w, v, dt ? dt[i] : null]; }));
+  }
+  function renderNetwork() {
+    const nt = cache.movie && cache.movie.net, el = $("net-result"); if (!el) return;
+    if (!nt) { el.innerHTML = ""; return; }
+    drawNet(); drawKept(); drawShape();
+    const m = nt.measured, t = nt.truth, pc = function (v) { return v === null ? "-" : fmtSig(100 * v, 3) + " %"; };
+    const k1 = keptAt(m.kept, 1), k1t = t ? keptAt(t.kept, 1) : null, kl = lastKept(m.kept), klt = t && kl ? t.kept.find(function (k) { return k.lag_h === kl.lag_h; }) : null;
+    let h = '<div class="eyebrow">The network of nuclei</div>';
+    let s = "In an hour a cell keeps " + pc(k1) + " of its neighbours" + (kl && kl.lag_h > 1.5 ? ", in " + fmtH(kl.lag_h) + " " + pc(kl.kept) : "") + ". ";
+    s += k1 !== null && k1 > 0.97 && (!kl || kl.kept > 0.9) ? "Each cell stays with the same neighbours: the sheet is solid. " : "Cells swap neighbours: the sheet flows. ";
+    if (t) s += "As simulated: " + pc(k1t) + (klt ? ", " + pc(klt.kept) : "") + ".";
+    h += '<p class="small" style="margin:0">' + s + '</p>';
+    const ok = k1 !== null && k1t !== null && Math.abs(k1 - k1t) < 0.03;
+    h += '<span class="chip ' + (ok ? "good" : "bad") + '">' + (ok ? "Neighbours as simulated" : "Simulated: " + pc(k1t)) + '</span>';
+    if (level !== "curious") {
+      const md = msdAt(m.msd, 1), mt = t ? msdAt(t.msd, 1) : null, dd = cache.res ? (function () { const r = cache.res; let b = null; r.taus_s.forEach(function (x, i) { if (r.msd[i] > 0 && (b === null || Math.abs(Math.log(x)) < Math.abs(Math.log(r.taus_s[b])))) b = i; }); return b !== null && Math.abs(Math.log(r.taus_s[b])) < 0.3 ? r.msd[b] : null; })() : null;
+      h += '<details class="more"><summary>Details</summary><dl>';
+      h += '<dt>Nuclei</dt><dd>' + fmtSig(m.n_detected, 3) + ' found per frame' + (t ? ' (' + t.n_cells + ' cells simulated; ' + pc(t.found_frac) + ' of the true nuclei found, within ' + fmtSig(t.loc_err_um, 2) + ' ' + MU + 'm rms)' : '') + '; each followed for ' + fmtSig(m.track_frames, 3) + ' frames on average</dd>';
+      h += '<dt>Cells</dt><dd>' + pc(m.kept_frac) + ' of the nuclei have a complete Voronoi cell inside the field; mean shape index ' + fmtSig(m.p_mean, 3) + ' +- ' + fmtSig(m.p_sd, 2) + ' (simulated ' + (t ? fmtSig(t.p_mean, 3) : "-") + '), ' + pc(m.hex_frac) + ' hexagons (simulated ' + (t ? pc(t.hex_frac) : "-") + ')</dd>';
+      h += '<dt>Displacement in 1 h</dt><dd>from the tracks, relative to the nuclei followed: ' + (md !== null ? fmtSig(md, 2) : "-") + ' ' + MU + 'm' + SQ + '; DDM, step 6: ' + (dd !== null ? fmtSig(dd, 2) : "-") + '; simulated: ' + (mt !== null ? fmtSig(mt, 2) : "-") + '</dd>';
+      h += '</dl></details>';
+    }
+    el.innerHTML = h;
+  }
+
+  // ---- step 8: the motility sweep -----------------------------------------------------------------
   const T2 = 2;   // hours: the delay at which the sweep reads the displacement
   function at2(p) { let best = null; p.taus_s.forEach(function (t, i) { if (p.msd[i] > 0 && (best === null || Math.abs(Math.log(t / T2)) < Math.abs(Math.log(p.taus_s[best] / T2)))) best = i; }); return best !== null && Math.abs(Math.log(p.taus_s[best] / T2)) < 0.25 ? p.msd[best] : null; }
   function true2(p) { const m = p.truth.msd; let i = 0; while (i < m.lag_h.length - 1 && m.lag_h[i + 1] < T2) i++; return m.um2[Math.min(i + 1, m.um2.length - 1)]; }
@@ -637,12 +757,27 @@
       ps.forEach(function (p) { if (p.psi !== null) dot(cb, b.fx(p.set.v0_um_h), b.fy(p.psi), 3.2, col, null); });
     });
     b.done();
+    const ck = $("chart-sweep-kept");
+    if (ck) {
+      const kv = pts.map(function (p) { return p.net && p.net.measured ? keptAt(p.net.measured.kept, T_KEPT) : null; }).concat(pts.map(function (p) { return p.net && p.net.truth ? keptAt(p.net.truth.kept, T_KEPT) : null; })).filter(function (v) { return v !== null; });
+      const k0 = Math.max(0, Math.floor((Math.min.apply(null, kv.concat([0.9])) - 0.05) * 10) / 10);
+      const e = axes(ck, { xlog: true, ylog: false, x0: 2.5, x1: 40, y0: k0, y1: 1 + 0.03 * (1 - k0), xlabel: "How hard the cells crawl, v0 (" + MU + "m/h)", ylabel: "Neighbours kept in " + T_KEPT + " h" }), ce = e.ctx;
+      SWEEP_J.forEach(function (J, k) {
+        const col = J === 0 ? C.accent : C["accent-2"], ps = pts.filter(function (p) { return p.set.J_h === J; });
+        poly(ce, ps.map(function (p) { const v = p.net && p.net.truth ? keptAt(p.net.truth.kept, T_KEPT) : null; return v !== null ? [e.fx(p.set.v0_um_h), e.fy(v)] : null; }), col, 1.6, [], 0.8);
+        ps.forEach(function (p) { const v = p.net && p.net.measured ? keptAt(p.net.measured.kept, T_KEPT) : null; if (v !== null) dot(ce, e.fx(p.set.v0_um_h * (1 + (k ? 0.02 : -0.02))), e.fy(v), 3.2, col, null); });
+      });
+      e.done();
+    }
     $("sweep-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>No alignment</span><span><i style="background:' + C["accent-2"] + '"></i>Alignment, J = 2 per hour</span><span>Dots: measured; lines: as simulated; arrows: beyond what the patterns used can follow; dotted: a tenth of a cell area, the line between jammed and fluid</span>';
-    fillNumbers("series-numbers", ["v0 (" + MU + "m/h)", "Alignment (1/h)", "<\u0394r" + SQ + "> in 2 h, measured", "simulated", "Order, measured", "simulated", "State found"], pts.map(function (p) { return [p.set.v0_um_h, p.set.J_h, at2(p) || (p.msd_beyond ? "more" : null), true2(p), p.psi, p.truth.order, p.state]; }));
+    const nk = function (p, w) { return p.net && p.net[w] ? keptAt(p.net[w].kept, T_KEPT) : null; }, np = function (p, w) { return p.net && p.net[w] ? p.net[w].p_mean : null; };
+    fillNumbers("series-numbers", ["v0 (" + MU + "m/h)", "Alignment (1/h)", "<\u0394r" + SQ + "> in 2 h, measured", "simulated", "Order, measured", "simulated", "State found", "Neighbours kept in " + T_KEPT + " h, measured", "simulated", "Shape index, measured", "simulated"], pts.map(function (p) { return [p.set.v0_um_h, p.set.J_h, at2(p) || (p.msd_beyond ? "more" : null), true2(p), p.psi, p.truth.order, p.state, nk(p, "measured"), nk(p, "truth"), np(p, "measured"), np(p, "truth")]; }));
     const ul = $("sweep-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
     const st = function (J) { return pts.filter(function (p) { return p.set.J_h === J; }).map(function (p) { return fmtSig(p.set.v0_um_h, 2) + ": " + p.state; }).join(", "); };
     add("States found without alignment: " + st(0) + ". With alignment: " + st(2) + ".");
+    const far = pts.filter(function (p) { return !at2(p) && p.msd_beyond && nk(p, "measured") !== null; });
+    if (far.length) add("Where the displacement is beyond what the patterns can follow (arrows), the network of nuclei still reads how fast cells swap neighbours: " + far.map(function (p) { return fmtSig(p.set.v0_um_h, 2) + (p.set.J_h ? " aligned" : "") + ": " + fmtSig(100 * nk(p, "measured"), 2) + " %"; }).join(", ") + " kept in " + T_KEPT + " h.");
   }
 
   // ---- result -------------------------------------------------------------------------------
@@ -695,7 +830,8 @@
     const res = cache.res, s = seriesValid() ? cache.series : null;
     const obj = { microscope: "Nikon Ti2-E, 10x, fluorescence", detector: "Hamamatsu ORCA-Flash4.0 V3, binned " + state.binning + " x " + state.binning, simulation: cache.cfg, analysis: cache.opts,
       result: { state: res.state, V_um_h: res.V_um_h.map(function (v) { return +v.toPrecision(3); }), psi: res.psi !== null ? +res.psi.toPrecision(3) : null, delays_h: res.taus_s.map(function (v) { return +v.toPrecision(3); }), msd_um2: res.msd.map(function (v) { return v ? +v.toPrecision(3) : null; }) },
-      sweep: s ? s.points.map(function (p) { return { v0_um_h: p.set.v0_um_h, J_h: p.set.J_h, state: p.state, psi: p.psi !== null ? +p.psi.toPrecision(3) : null }; }) : null };
+      network: netBrief(),
+      sweep: s ? s.points.map(function (p) { const k4 = p.net && p.net.measured ? keptAt(p.net.measured.kept, T_KEPT) : null; return { v0_um_h: p.set.v0_um_h, J_h: p.set.J_h, state: p.state, psi: p.psi !== null ? +p.psi.toPrecision(3) : null, neighbours_kept_4h: k4 !== null ? +k4.toPrecision(3) : null }; }) : null };
     $("settings-json").textContent = JSON.stringify(obj, null, 1).replace(/\[\s+([-\d.e+,\s\[\]nul]+?)\s+\]/g, function (m, a) { return "[" + a.replace(/\s+/g, " ") + "]"; });
     focusableScrollers();
   }
@@ -703,7 +839,7 @@
   function renderAll() {
     if (!cache.res) return;
     readColors(); grey = greyRange(cache.movie); diffScale = null;
-    setQSpan(); renderLag(); renderText(); drawCell(); drawMovieFrames(); drawMap(); drawStripes(); drawCurves(); drawMsd(); drawPath(); drawSeries(); drawAmp(); renderResult(); renderSettings();
+    setQSpan(); renderLag(); renderText(); drawCell(); drawMovieFrames(); drawMap(); drawStripes(); drawCurves(); drawMsd(); drawPath(); drawAmp(); renderResult(); renderNetwork(); drawSeries(); renderSettings();
   }
 
   // ---- "what matters" cards ---------------------------------------------------------------
@@ -815,11 +951,13 @@
     try { navigator.clipboard.writeText(txt).then(function () { $("btn-copy").textContent = "Copied"; }, fallback); } catch (e) { fallback(); }
   });
   let rz = null;
-  const redraw = function () { clearTimeout(rz); rz = setTimeout(function () { readColors(); if (cache.res) { drawCell(); drawCurves(); drawMsd(); drawPath(); drawSeries(); drawAmp(); drawMapOverlay(); } }, 80); };
+  const redraw = function () { clearTimeout(rz); rz = setTimeout(function () { readColors(); if (cache.res) { drawCell(); drawCurves(); drawMsd(); drawPath(); drawSeries(); drawAmp(); drawMapOverlay(); drawNet(); drawKept(); drawShape(); } }, 80); };
   new ResizeObserver(redraw).observe(document.querySelector(".steps"));
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
   new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   $("btn-series").addEventListener("click", function () { startSeries(); });
+  $("net-frame").addEventListener("input", function () { if (cache.movie) drawNet(); });
+  $("net-colour").addEventListener("change", function () { if (cache.movie) drawNet(); });
 
   const PAGE_NAME = "tissues";
   function setupHash() {
@@ -862,6 +1000,6 @@
     controls: function () { return CONTROLS.filter(function (c) { return c.kind !== "qrange" && (!c.when || c.when()); }).map(function (c) { return { key: c.key, kind: c.kind, lvl: c.lvl, min: c.min, max: c.max, options: c.kind === "select" ? c.options.map(function (o) { return o[0]; }) : null }; }); },
     truth: function () { return cache && cache.movie ? cache.movie.truth : null; },
     cfg: function () { return cache && cache.cfg ? JSON.parse(JSON.stringify(cache.cfg)) : null; },
-    result: function () { const r = cache && cache.res; if (!r) return null; const s = seriesValid() ? cache.series : null; return { state: r.state, true_state: trueState(), V: r.V_um_h, psi: r.psi, msd: r.msd, taus: r.taus_s, verdict: verdict().text, published: r.published || null, series: s ? s.points.map(function (p) { return { set: p.set, state: p.state, psi: p.psi }; }) : null }; }
+    result: function () { const r = cache && cache.res; if (!r) return null; const s = seriesValid() ? cache.series : null; return { state: r.state, true_state: trueState(), V: r.V_um_h, psi: r.psi, msd: r.msd, taus: r.taus_s, verdict: verdict().text, published: r.published || null, network: netBrief(), series: s ? s.points.map(function (p) { return { set: p.set, state: p.state, psi: p.psi }; }) : null }; }
   };
 })();

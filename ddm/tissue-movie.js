@@ -97,10 +97,11 @@
     const per = Math.max(1, Math.round(dtF / h)), hh = dtF / per;
     const R = Math.ceil(3 * rn / a), inv = 1 / (2 * rn * rn), norm = ph * a * a / (2 * Math.PI * rn * rn);
     const truthX = [], truthY = [], order = [], speed = [];
+    const posX = new Float32Array(T * N), posY = new Float32Array(T * N);   // true positions in the field, frame by frame (for the network of nuclei)
     const rr = makeRng((cfg.seed >>> 0) + 7919);
     for (let t = 0; t < T; t++) {
       if (t > 0) for (let k = 0; k < per; k++) { const hs = h; void hs; stepOnce(); }
-      truthX.push(Float64Array.from(UX)); truthY.push(Float64Array.from(UY));
+      truthX.push(Float64Array.from(UX)); truthY.push(Float64Array.from(UY)); posX.set(X, t * N); posY.set(Y, t * N);
       let ox = 0, oy = 0, vs = 0; for (let i = 0; i < N; i++) { const s = Math.hypot(VX[i], VY[i]); if (s > 0) { ox += VX[i] / s; oy += VY[i] / s; } vs += s; }
       order.push(Math.hypot(ox, oy) / N); speed.push(vs / N);
       img.fill(bg);
@@ -133,6 +134,7 @@
       truth: { n_cells: N, cell_um: sig, v0_um_h: v0, J_h: J, Dr_h: Dr, muk_h: muk, packing: N * meanA / (L * L),
         msd: { lag_h: lagsT.map(function (k) { return k * dtF; }), um2: msd }, drift_um_h: [cmx / tSpan, cmy / tSpan],
         order: order.reduce(function (q, v) { return q + v; }, 0) / T, speed_um_h: speed.reduce(function (q, v) { return q + v; }, 0) / T,
+        positions: { x: posX, y: posY },
         snapshot: { x: Array.from(X), y: Array.from(Y), vx: Array.from(VX), vy: Array.from(VY), d: Array.from(S) } }
     };
   }

@@ -267,8 +267,13 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
   `app-tissue.js`, `tissue-movie.js` (self-propelled soft discs with alignment of polarity to velocity, nuclei as Gaussian spots;
   times in hours: the movie's frame_rate_hz is per hour), `tissue-engine.js` (sheet path from the phase of the widest patterns,
   frames moved back by it (x_comoving), MSD as a Gaussian over a q band above the peak of A, order psi, state) and `worker-tissue.js`.
-  Method: Giavazzi et al., Front. Phys. 6, 120 (2018); model after Giavazzi et al., Soft Matter 14, 3471 (2018). Check:
-  `node test-tissue.js` (about a minute).
+  Step 7, the network of nuclei: `tissue-voronoi.js` finds the nuclei in every frame (local maxima, sub-pixel from a log-parabola),
+  links them (mutual nearest neighbours closer than half a spacing), cuts Voronoi cells by bisectors (kept only when complete inside
+  the field; the truth uses the periodic box and `truth.positions` from `tissue-movie.js`), and gives the shape index, sides and the
+  neighbours kept after a delay (an edge longer than a tenth of a spacing to count, any edge to stay); the sweep also plots the
+  neighbours kept in 4 h. In this model the mean shape index moves little (3.77 solid, 3.83 fluid): say so, do not present it as a
+  test of the vertex model. Method: Giavazzi et al., Front. Phys. 6, 120 (2018); model after Giavazzi et al., Soft Matter 14, 3471 (2018). Check:
+  `node test-tissue.js` (about two minutes).
 - Exercises /ddm/exercises/ (`static/ddm/exercises/index.html`, from `exercises.src.html`, no app): questions with model answers for
   every page, one section per page (anchor = page name), linked from each page's "Go further" and from the landing page. A new
   page gets a section; numbers in the answers must match the page.

@@ -224,6 +224,7 @@ figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(
 .chart.short { height: 220px; }
 .toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-family: var(--sans); font-size: 0.88rem; }
 .toolbar input[type="range"] { flex: 1 1 10rem; accent-color: var(--accent); }
+.toolbar select { font: inherit; padding: 0.25rem 0.4rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink); }
 .toolbar.pickbar { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 0.8rem; margin-top: 0.5rem; }
 .toolbar.pickbar input[type="range"] { width: 100%; min-width: 0; }
 @media (pointer: coarse) { input[type="range"] { min-height: 2.5rem; } }   /* a larger touch area; the track stays thin */
@@ -329,7 +330,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap bench-head" aria-labelledby="bench-title">
     <p class="eyebrow">Hands on</p>
     <h2 id="bench-title">The bench</h2>
-    <p class="prose">Choose how the cells move, then how they are filmed (controls on the left, or just below on a phone). The bench simulates a day of a monolayer and takes about ten seconds; the motility sweep of step 7 takes about two minutes. "Copy a link to this setup" gives an address that opens the bench with the same settings.</p>
+    <p class="prose">Choose how the cells move, then how they are filmed (controls on the left, or just below on a phone). The bench simulates a day of a monolayer and takes about ten seconds; the motility sweep of step 8 takes about two minutes. "Copy a link to this setup" gives an address that opens the bench with the same settings.</p>
   </section>
 
   <div class="wrap bench">
@@ -345,7 +346,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
     </aside>
 
     <div class="steps">
-      <nav class="step-index" aria-label="Steps on this page"><ol><li><a href="#step-setup" data-title="The monolayer and the microscope" aria-label="Step 1: The monolayer and the microscope">1</a></li><li><a href="#step-movie" data-title="Record a time-lapse" aria-label="Step 2: Record a time-lapse">2</a></li><li><a href="#step-diff" data-title="Subtract two frames" aria-label="Step 3: Subtract two frames">3</a></li><li><a href="#step-map" data-title="Split it into stripe patterns" aria-label="Step 4: Split it into stripe patterns">4</a></li><li><a href="#step-curves" data-title="Watch each pattern change" aria-label="Step 5: Watch each pattern change">5</a></li><li><a href="#step-rates" data-title="How far the cells wander, and where the sheet goes" aria-label="Step 6: How far the cells wander, and where the sheet goes">6</a></li><li><a href="#step-series" data-title="Waking up a jammed tissue: a motility sweep" aria-label="Step 7: Waking up a jammed tissue: a motility sweep">7</a></li></ol><span class="now" aria-hidden="true"></span><a class="gl" href="#glossary">Glossary</a></nav>
+      <nav class="step-index" aria-label="Steps on this page"><ol><li><a href="#step-setup" data-title="The monolayer and the microscope" aria-label="Step 1: The monolayer and the microscope">1</a></li><li><a href="#step-movie" data-title="Record a time-lapse" aria-label="Step 2: Record a time-lapse">2</a></li><li><a href="#step-diff" data-title="Subtract two frames" aria-label="Step 3: Subtract two frames">3</a></li><li><a href="#step-map" data-title="Split it into stripe patterns" aria-label="Step 4: Split it into stripe patterns">4</a></li><li><a href="#step-curves" data-title="Watch each pattern change" aria-label="Step 5: Watch each pattern change">5</a></li><li><a href="#step-rates" data-title="How far the cells wander, and where the sheet goes" aria-label="Step 6: How far the cells wander, and where the sheet goes">6</a></li><li><a href="#step-network" data-title="The network of nuclei" aria-label="Step 7: The network of nuclei">7</a></li><li><a href="#step-series" data-title="Waking up a jammed tissue: a motility sweep" aria-label="Step 8: Waking up a jammed tissue: a motility sweep">8</a></li></ol><span class="now" aria-hidden="true"></span><a class="gl" href="#glossary">Glossary</a></nav>
 
       <!-- 1 -->
       <section class="step" id="step-setup" aria-labelledby="h-setup">
@@ -508,12 +509,65 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
       </section>
 
       <!-- 7 -->
+      <section class="step" id="step-network" aria-labelledby="h-network">
+        <div class="step-title"><span class="num">7</span><h2 id="h-network">The network of nuclei</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="chart fovbox"><canvas id="net" aria-label="A frame of the movie with the nuclei found and the Voronoi network they make"></canvas></div>
+            <div class="toolbar"><label for="net-frame">Frame</label><input type="range" id="net-frame" min="0" max="255" value="0"><output id="net-frame-out" class="readout"></output></div>
+            <div class="toolbar"><label for="net-colour">Colour the cells by</label><select id="net-colour"><option value="sides">number of neighbours</option><option value="shape">shape index</option></select></div>
+            <div class="legend" id="net-legend"></div>
+          </figure>
+          <div class="text">
+            <p>DDM never looks for single cells. Here the nuclei are bright and well apart, so the page can also find them one by one, follow each from frame to frame, and give each the part of the dish that is closer to it than to any other nucleus. These parts make the Voronoi network, a rough stand-in for the outlines of the cells. Two cells whose parts share a side are neighbours.</p>
+            <p>In a jammed sheet a cell keeps the same neighbours for the whole movie. In a fluid sheet cells squeeze past each other and swap neighbours within hours. Move the frame slider to watch the network change, or not.</p>
+            <p class="lvl-2">Nuclei: local maxima of the frame, lightly smoothed, brighter than everything within a third of a cell spacing and than the background plus a quarter of the brightest pixels; the position to a fraction of a pixel from a parabola through the logarithm of three pixels, in x and in y. Tracks: a nucleus in one frame and one in the next are the same when each is the other's nearest, closer than half a spacing. Cells: each cut out by the perpendicular bisectors towards its neighbours, kept only when every nucleus that could cut it is inside the field. Neighbours share a side longer than a tenth of a spacing; one is kept after a delay while the two still share a side of any length.</p>
+          </div>
+        </div>
+        <div class="step-body">
+          <figure class="viz">
+            <figcaption>Share of its neighbours a cell still has after a delay</figcaption>
+            <div class="chart short"><canvas id="chart-kept" aria-label="Share of neighbours kept against the delay"></canvas></div>
+            <div class="legend" id="kept-legend"></div>
+          </figure>
+          <details class="numbers" id="kept-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <figure class="viz lvl-2">
+            <figcaption>Shape index of the Voronoi cells: 3.72 for a regular hexagon, higher for elongated or ragged cells</figcaption>
+            <div class="chart short"><canvas id="chart-shape" aria-label="Distribution of the shape index of the cells"></canvas></div>
+            <div class="legend" id="shape-legend"></div>
+          </figure>
+          <details class="numbers lvl-2" id="shape-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <div class="result" id="net-result" aria-live="polite"></div>
+        </div>
+        <details class="inputs"><summary>What the analysis is told, and what it finds</summary><p><b>Told (inputs):</b> the pixel size, the time between frames, and the typical size of a cell, which sets how far apart two nuclei must be and how far a nucleus may move between frames.</p><p><b>Found from the movie:</b> the position of every nucleus in every frame, their tracks, the Voronoi cell of each, its number of sides and its shape, how many neighbours each cell keeps over time, and how far the nuclei move.</p><p>The page checks each of these against the true positions of the simulation. In a real monolayer nuclei divide, overlap and are not at the centre of their cell, and the true outlines need a stain of the membranes.</p></details>
+        <p class="takeaway"><b>What this step gives:</b> a second reading of the same movie, cell by cell: whether cells keep their neighbours, and how far each one moves, to set beside what DDM found without looking for any cell.</p>
+        <details class="transfer"><summary><b>A question to think about:</b> On this bench tracking the nuclei and DDM agree. When would you rather use DDM?</summary><p>When single cells are hard to find: in phase-contrast or bright-field movies without a stain, with dim or crowded nuclei, or out of focus. When cells move more than about half their spacing between frames, a nucleus can no longer be told apart from its neighbours from one frame to the next, and the tracks break. And when the movie is large: DDM gives the average motion of thousands of cells without deciding where each one is. Tracking gives what DDM cannot: who is next to whom, and how that changes.</p></details>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: Voronoi cells, shape index and neighbours</summary>
+          <p><b>Voronoi cell.</b> The cell of nucleus <i>i</i> is the set of points closer to <b>r</b><sub><i>i</i></sub> than to any other nucleus: the polygon cut out by the perpendicular bisectors towards its neighbours. It is complete once the next nucleus is more than twice as far as its farthest corner; in the image it is kept only if that whole range lies inside the field. <b>Shape index.</b> <i>p</i> = <i>P</i> / &radic;<i>A</i>, with <i>P</i> the perimeter and <i>A</i> the area: 3.72 for a regular hexagon, 3.81 for a regular pentagon, 4 for a square. In the vertex model and in the self-propelled Voronoi model of tissues, a target shape index near 3.81 is where the model sheet goes from solid to fluid (Bi et al. 2015, 2016), and Park et al. (2015) saw the cells of airway epithelium grow more elongated as the sheet unjammed. <b>Neighbours kept.</b> <i>K</i>(&Delta;<i>t</i>) = &Sigma; <i>n</i><sub>kept</sub> / &Sigma; <i>n</i><sub>0</sub> over cells followed in both frames and over 8 starting frames, counting only neighbours still followed.</p>
+          <p><b>What the page does not fix.</b> In this model the cells are soft discs, with no shape of their own, so the shape index only follows how disordered the arrangement is: in our tests the mean <i>p</i> was 3.77 in the jammed sheet and the flocking solid, 3.80 in the flocking liquid and 3.83 in the fluid sheet. That it falls on either side of 3.81 is suggestive, not a test of the vertex model, and Voronoi cells of nuclei are only an approximation of real outlines.</p>
+          <p>In Python, with the nuclei of one frame in <code>x</code>, <code>y</code> (scipy):</p>
+          <pre class="code">import numpy as np
+from scipy.spatial import Voronoi
+vor = Voronoi(np.c_[x, y])
+def shape_index(i):              # drop cells near the edge of the field
+    reg = vor.regions[vor.point_region[i]]
+    if not reg or -1 in reg: return np.nan
+    P = vor.vertices[reg]
+    area = 0.5 * abs(np.dot(P[:, 0], np.roll(P[:, 1], 1)) - np.dot(P[:, 1], np.roll(P[:, 0], 1)))
+    perim = np.hypot(*(P - np.roll(P, 1, axis=0)).T).sum()
+    return perim / np.sqrt(area)
+pairs = {tuple(sorted(p)) for p in vor.ridge_points}   # neighbours</pre>
+        </details>
+      </section>
+
+      <!-- 8 -->
       <section class="step" id="step-series" aria-labelledby="h-series">
-        <div class="step-title"><span class="num">7</span><h2 id="h-series">Waking up a jammed tissue: a motility sweep</h2></div>
+        <div class="step-title"><span class="num">8</span><h2 id="h-series">Waking up a jammed tissue: a motility sweep</h2></div>
         <div class="step-body">
           <div class="text">
             <p class="only-1">Repeat the measurement as the cells crawl harder, with and without the alignment. Without it, slow cells stay jammed and fast ones flow, each in its own direction. With it, the sheet flocks: slow cells move as one rigid block, fast ones flow while they travel together. This is how Malinverno et al. (2017) found that a jammed epithelium can be woken up: the protein RAB5A made the cells crawl harder and the sheet flow and flock.</p>
-            <p class="lvl-2">The sweep runs six crawling speeds <i>v</i><sub>0</sub> from 3 to 30 &micro;m/h, without alignment and with <i>J</i> = 2 per hour, a new movie each, and plots the displacement relative to the sheet after 2 hours and the order &psi;, with the values of the simulation.</p>
+            <p class="lvl-2">The sweep runs six crawling speeds <i>v</i><sub>0</sub> from 3 to 30 &micro;m/h, without alignment and with <i>J</i> = 2 per hour, a new movie each, and plots the displacement relative to the sheet after 2 hours, the order &psi; and the share of neighbours a cell keeps over 4 hours (step 7), with the values of the simulation.</p>
           </div>
           <div class="toolbar" id="try-sweep"><button type="button" id="btn-series">Run the motility sweep</button><span class="readout" id="series-msg" aria-live="polite"></span></div>
           <p class="readout" id="series-state"></p>
@@ -526,6 +580,10 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
             <figure class="viz">
               <figcaption>Order of the sheet, against how hard the cells crawl</figcaption>
               <div class="chart short"><canvas id="chart-order" aria-label="Order of the sheet against the crawling speed"></canvas></div>
+            </figure>
+            <figure class="viz">
+              <figcaption>Share of its neighbours a cell keeps over 4 hours, from the network of nuclei</figcaption>
+              <div class="chart short"><canvas id="chart-sweep-kept" aria-label="Share of neighbours kept in 4 hours against the crawling speed"></canvas></div>
               <ul class="reasons" id="sweep-notes"></ul>
             </figure>
             <details class="numbers" id="series-numbers"><summary>The numbers behind these charts</summary><div></div></details>
@@ -545,7 +603,7 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
   <section class="wrap matters" aria-labelledby="h-matters">
     <p class="eyebrow">In a real experiment</p>
     <h2 id="h-matters">What matters</h2>
-    <p class="prose">Each card sets the bench to a typical case and shows where to look; some also run the sweep of step 7. Use "Back to the standard sample" to start again.</p>
+    <p class="prose">Each card sets the bench to a typical case and shows where to look; some also run the sweep of step 8. Use "Back to the standard sample" to start again.</p>
     <div class="cards" id="cards"></div>
   </section>
 
@@ -584,6 +642,8 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
       <li>C. Malinverno, S. Corallino, F. Giavazzi, M. Bergert, Q. Li, M. Leoni, A. Disanza, E. Frittoli, A. Oldani, E. Martini, T. Lendenmann, G. Deflorian, G. V. Beznoussenko, D. Poulikakos, K. H. Ong, M. Uroz, X. Trepat, D. Parazzoli, P. Maiuri, W. Yu, A. Ferrari, R. Cerbino and G. Scita, <a href="https://doi.org/10.1038/nmat4848">Endocytic reawakening of motility in jammed epithelia</a>, Nat. Mater. 16, 587 (2017). RAB5A wakes up a jammed epithelial sheet into flowing, flocking streams.</li>
       <li>V. A. Martinez, R. Besseling, O. A. Croze, J. Tailleur, M. Reufer, J. Schwarz-Linek, L. G. Wilson, M. A. Bees and W. C. K. Poon, <a href="https://doi.org/10.1016/j.bpj.2012.08.045">Differential dynamic microscopy: a high-throughput method for characterizing the motility of microorganisms</a>, Biophys. J. 103, 1637 (2012); R. Colin, R. Zhang and L. G. Wilson, <a href="https://doi.org/10.1098/rsif.2014.0486">Fast, high-throughput measurement of collective behaviour in a bacterial population</a>, J. R. Soc. Interface 11, 20140486 (2014). DDM of motile cells, and the phase of the widest patterns for a collective drift.</li>
       <li>B. Szab&oacute;, G. J. Sz&ouml;ll&ouml;si, B. G&ouml;nci, Zs. Jur&aacute;nyi, D. Selmeczi and T. Vicsek, <a href="https://doi.org/10.1103/PhysRevE.74.061908">Phase transition in the collective migration of tissue cells: experiment and model</a>, Phys. Rev. E 74, 061908 (2006); S. Henkes, Y. Fily and M. C. Marchetti, <a href="https://doi.org/10.1103/PhysRevE.84.040301">Active jamming: self-propelled soft particles at high density</a>, Phys. Rev. E 84, 040301 (2011). Models of crowded crawling cells.</li>
+      <li>D. Bi, J. H. Lopez, J. M. Schwarz and M. L. Manning, <a href="https://doi.org/10.1038/nphys3471">A density-independent rigidity transition in biological tissues</a>, Nat. Phys. 11, 1074 (2015); D. Bi, X. Yang, M. C. Marchetti and M. L. Manning, <a href="https://doi.org/10.1103/PhysRevX.6.021011">Motility-driven glass and jamming transitions in biological tissues</a>, Phys. Rev. X 6, 021011 (2016). The shape index 3.81, in the vertex and the self-propelled Voronoi models.</li>
+      <li>J.-A. Park, J. H. Kim, D. Bi, J. A. Mitchel, N. T. Qazvini, K. Tantisira, C. Y. Park, M. McGill, S.-H. Kim, B. Gweon, J. Notbohm, R. Steward Jr, S. Burger, S. H. Randell, A. T. Kho, D. T. Tambe, C. Hardin, S. A. Shore, E. Israel, D. A. Weitz, D. J. Tschumperlin, E. P. Henske, S. T. Weiss, M. L. Manning, J. P. Butler, J. M. Drazen and J. J. Fredberg, <a href="https://doi.org/10.1038/nmat4357">Unjamming and cell shape in the asthmatic airway epithelium</a>, Nat. Mater. 14, 1040 (2015). Cell shape as a sign of unjamming in a real epithelium.</li>
     </ul>
     <ul class="lvl-3">
       <li><a href="../exercises/#tissues">Exercises with model answers for this page</a>: questions to predict, compute and discuss, printable, for a class or on your own.</li>
@@ -732,10 +792,11 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
     const per = Math.max(1, Math.round(dtF / h)), hh = dtF / per;
     const R = Math.ceil(3 * rn / a), inv = 1 / (2 * rn * rn), norm = ph * a * a / (2 * Math.PI * rn * rn);
     const truthX = [], truthY = [], order = [], speed = [];
+    const posX = new Float32Array(T * N), posY = new Float32Array(T * N);   // true positions in the field, frame by frame (for the network of nuclei)
     const rr = makeRng((cfg.seed >>> 0) + 7919);
     for (let t = 0; t < T; t++) {
       if (t > 0) for (let k = 0; k < per; k++) { const hs = h; void hs; stepOnce(); }
-      truthX.push(Float64Array.from(UX)); truthY.push(Float64Array.from(UY));
+      truthX.push(Float64Array.from(UX)); truthY.push(Float64Array.from(UY)); posX.set(X, t * N); posY.set(Y, t * N);
       let ox = 0, oy = 0, vs = 0; for (let i = 0; i < N; i++) { const s = Math.hypot(VX[i], VY[i]); if (s > 0) { ox += VX[i] / s; oy += VY[i] / s; } vs += s; }
       order.push(Math.hypot(ox, oy) / N); speed.push(vs / N);
       img.fill(bg);
@@ -768,6 +829,7 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
       truth: { n_cells: N, cell_um: sig, v0_um_h: v0, J_h: J, Dr_h: Dr, muk_h: muk, packing: N * meanA / (L * L),
         msd: { lag_h: lagsT.map(function (k) { return k * dtF; }), um2: msd }, drift_um_h: [cmx / tSpan, cmy / tSpan],
         order: order.reduce(function (q, v) { return q + v; }, 0) / T, speed_um_h: speed.reduce(function (q, v) { return q + v; }, 0) / T,
+        positions: { x: posX, y: posY },
         snapshot: { x: Array.from(X), y: Array.from(Y), vx: Array.from(VX), vy: Array.from(VY), d: Array.from(S) } }
     };
   }
@@ -2178,9 +2240,253 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
 })(this);
 
 </script>
+<script id="tvoronoi-src">
+/* The network of nuclei: find the nuclei in every frame, follow them from frame to frame, and draw the Voronoi network
+ * they generate (each point of the dish goes to the nearest nucleus). A Voronoi cell is a rough stand-in for the cell
+ * outline, the one used by the self-propelled Voronoi model (Bi, Yang, Marchetti and Manning, Phys. Rev. X 6, 021011,
+ * 2016); real outlines need a membrane stain.
+ *
+ * Steps:
+ *   1. nuclei: the frame smoothed once with a 3 x 3 binomial kernel; a nucleus is a pixel brighter than every other pixel
+ *      within a window of about a third of a cell spacing and above the background plus a quarter of the bright pixels
+ *      (median and 99th percentile of the frame); its position to a fraction of a pixel from a parabola through the
+ *      logarithm of the three pixels across it, in x and in y (exact for a Gaussian spot);
+ *   2. tracks: a nucleus in one frame and one in the next are the same when each is the other's nearest, closer than
+ *      half a cell spacing;
+ *   3. Voronoi cells: each cell cut out of a square by the perpendicular bisectors towards its neighbours (nearest first),
+ *      stopping when the next one is more than twice as far as the farthest corner. In the image a cell is kept only when
+ *      every nucleus that could cut it lies inside the field (the corners of the cell less than half way to the edge,
+ *      minus a pixel); the truth uses the periodic box of the simulation and keeps every cell;
+ *   4. shape index p = perimeter / sqrt(area) (a regular hexagon 3.72, a square 4, a pentagon 3.81; in the vertex and
+ *      Voronoi models of tissues p = 3.81 is where the model sheet goes from solid to fluid: Bi et al., Nat. Phys. 11, 1074,
+ *      2015; Park et al., Nat. Mater. 14, 1040, 2015), number of sides, fraction of hexagons;
+ *   5. neighbours: two cells are neighbours when they share an edge longer than a tenth of the spacing; a neighbour is
+ *      kept after a delay when the two still share an edge of any length (the two thresholds stop short edges that flicker
+ *      in the noise from counting as exchanges). Over 8 starting frames, for every cell followed in both frames, the
+ *      fraction of its neighbours (those still followed) that are kept;
+ *   6. displacements from the tracks, relative to the mean of the nuclei followed over the same delay (for comparison
+ *      with DDM).
+ */
+(function (root) {
+  "use strict";
+  function need(c, m) { if (!c) throw new Error("Network of nuclei: " + m); }
+
+  // ---- 1. nuclei in one frame (positions in um, image coordinates: pixel i spans [i a, (i + 1) a]) ------------------
+  function detect(frame, n, a, spacing) {
+    const P = n * n, s1 = new Float64Array(P), sm = new Float64Array(P);
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const r = y * n; s1[r + x] = (2 * frame[r + x] + frame[r + Math.max(0, x - 1)] + frame[r + Math.min(n - 1, x + 1)]) / 4; }
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) sm[y * n + x] = (2 * s1[y * n + x] + s1[Math.max(0, y - 1) * n + x] + s1[Math.min(n - 1, y + 1) * n + x]) / 4;
+    const srt = Float64Array.from(sm).sort(), med = srt[Math.floor(P / 2)], p99 = srt[Math.floor(0.99 * P)];
+    const thr = med + 0.25 * (p99 - med), w = Math.max(1, Math.round(spacing / 3 / a));
+    const X = [], Y = [];
+    const lg = function (v) { return Math.log(Math.max(v - med, 1e-3)); };
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      const c = sm[y * n + x]; if (c <= thr) continue;
+      let peak = true;
+      for (let dy = -w; dy <= w && peak; dy++) { const yy = y + dy; if (yy < 0 || yy >= n) continue; for (let dx = -w; dx <= w; dx++) {
+        const xx = x + dx; if (xx < 0 || xx >= n || (dx === 0 && dy === 0)) continue;
+        const v = sm[yy * n + xx]; if (v > c || (v === c && (dy < 0 || (dy === 0 && dx < 0)))) { peak = false; break; }
+      } }
+      if (!peak) continue;
+      let ox = 0, oy = 0;
+      if (x > 0 && x < n - 1) { const l = lg(sm[y * n + x - 1]), m = lg(c), r = lg(sm[y * n + x + 1]), d = l - 2 * m + r; if (d < 0) ox = Math.max(-0.5, Math.min(0.5, 0.5 * (l - r) / d)); }
+      if (y > 0 && y < n - 1) { const l = lg(sm[(y - 1) * n + x]), m = lg(c), r = lg(sm[(y + 1) * n + x]), d = l - 2 * m + r; if (d < 0) oy = Math.max(-0.5, Math.min(0.5, 0.5 * (l - r) / d)); }
+      X.push((x + 0.5 + ox) * a); Y.push((y + 0.5 + oy) * a);
+    }
+    return { x: Float64Array.from(X), y: Float64Array.from(Y) };
+  }
+
+  // a grid of buckets for neighbour searches (periodic or not)
+  function grid(x, y, L, h, periodic) {
+    const nb = Math.max(1, Math.floor(L / h)), cs = L / nb, head = new Int32Array(nb * nb).fill(-1), next = new Int32Array(x.length);
+    const cell = function (v) { let c = Math.floor(v / cs); if (periodic) c = ((c % nb) + nb) % nb; return Math.max(0, Math.min(nb - 1, c)); };
+    for (let i = 0; i < x.length; i++) { const c = cell(y[i]) * nb + cell(x[i]); next[i] = head[c]; head[c] = i; }
+    // every point within range r of (px, py): calls f(j, dx, dy)
+    const around = function (px, py, r, f) {
+      const k = Math.ceil(r / cs), cx = Math.floor(px / cs), cy = Math.floor(py / cs);
+      const kk = periodic ? Math.min(k, Math.floor((nb - 1) / 2)) : k;
+      for (let gy = cy - kk; gy <= cy + kk; gy++) for (let gx = cx - kk; gx <= cx + kk; gx++) {
+        let ux = gx, uy = gy;
+        if (periodic) { ux = ((gx % nb) + nb) % nb; uy = ((gy % nb) + nb) % nb; } else if (gx < 0 || gy < 0 || gx >= nb || gy >= nb) continue;
+        for (let j = head[uy * nb + ux]; j >= 0; j = next[j]) {
+          let dx = x[j] - px, dy = y[j] - py; if (periodic) { dx -= L * Math.round(dx / L); dy -= L * Math.round(dy / L); }
+          if (dx * dx + dy * dy <= r * r) f(j, dx, dy);
+        }
+      }
+    };
+    return around;
+  }
+
+  // ---- 3-5. Voronoi cells of a set of points ------------------------------------------------------------------------
+  // returns, for each point: ok (cell complete), area, perim, sides, nb (neighbours sharing a long edge), any (all
+  // neighbours sharing an edge), poly (corners, relative to the point) when keepPoly
+  function voronoi(x, y, L, spacing, periodic, keepPoly) {
+    const N = x.length, rc = 3 * spacing, around = grid(x, y, L, rc, periodic), minEdge = 0.1 * spacing, edgeMargin = periodic ? 0 : L / 400;
+    const out = new Array(N);
+    for (let i = 0; i < N; i++) {
+      const cand = [];
+      around(x[i], y[i], rc, function (j, dx, dy) { if (j !== i) cand.push([dx * dx + dy * dy, dx, dy, j]); });
+      cand.sort(function (p, q) { return p[0] - q[0]; });
+      let px = [-rc, rc, rc, -rc], py = [-rc, -rc, rc, rc], lab = [-1, -1, -1, -1];
+      let rmax = rc * Math.SQRT2, complete = false;
+      for (let c = 0; c < cand.length; c++) {
+        const d2 = cand[c][0];
+        if (Math.sqrt(d2) > 2 * rmax) { complete = true; break; }
+        const nx = cand[c][1], ny = cand[c][2], lim = d2 / 2, j = cand[c][3];
+        const qx = [], qy = [], ql = [], m = px.length;
+        for (let k = 0; k < m; k++) {
+          const k2 = (k + 1) % m, sa = nx * px[k] + ny * py[k] - lim, sb = nx * px[k2] + ny * py[k2] - lim;
+          if (sa <= 0) { qx.push(px[k]); qy.push(py[k]); ql.push(lab[k]); if (sb > 0) { const u = sa / (sa - sb); qx.push(px[k] + u * (px[k2] - px[k])); qy.push(py[k] + u * (py[k2] - py[k])); ql.push(j); } }
+          else if (sb <= 0) { const u = sa / (sa - sb); qx.push(px[k] + u * (px[k2] - px[k])); qy.push(py[k] + u * (py[k2] - py[k])); ql.push(lab[k]); }
+        }
+        if (qx.length === m && ql.every(function (v, k) { return v === lab[k]; })) continue;
+        px = qx; py = qy; lab = ql;
+        rmax = 0; for (let k = 0; k < px.length; k++) rmax = Math.max(rmax, Math.hypot(px[k], py[k]));
+      }
+      if (!complete && 2 * rmax <= rc) complete = true;
+      let ok = complete && lab.indexOf(-1) < 0;
+      if (ok && !periodic) ok = x[i] - 2 * rmax > edgeMargin && y[i] - 2 * rmax > edgeMargin && L - x[i] - 2 * rmax > edgeMargin && L - y[i] - 2 * rmax > edgeMargin;
+      if (!ok) { out[i] = { ok: false }; continue; }
+      let A = 0, Pm = 0; const nb = [], any = [];
+      for (let k = 0; k < px.length; k++) {
+        const k2 = (k + 1) % px.length, e = Math.hypot(px[k2] - px[k], py[k2] - py[k]);
+        A += px[k] * py[k2] - px[k2] * py[k]; Pm += e;
+        if (any.indexOf(lab[k]) < 0) any.push(lab[k]);
+        if (e > minEdge && nb.indexOf(lab[k]) < 0) nb.push(lab[k]);
+      }
+      A = Math.abs(A) / 2;
+      const o = { ok: true, area: A, perim: Pm, p: Pm / Math.sqrt(A), sides: nb.length, nb: nb, any: any };
+      if (keepPoly) { o.px = px.map(function (v) { return v + x[i]; }); o.py = py.map(function (v) { return v + y[i]; }); }
+      out[i] = o;
+    }
+    return out;
+  }
+
+  // ---- 2. tracks: mutual nearest neighbours between consecutive frames ----------------------------------------------
+  function link(det, L, dmax) {
+    const T = det.length, id = []; let nextId = 0;
+    id.push(Int32Array.from(det[0].x, function () { return nextId++; }));
+    for (let t = 0; t + 1 < T; t++) {
+      const A = det[t], B = det[t + 1], nA = A.x.length, nB = B.x.length;
+      const aroundB = grid(B.x, B.y, L, dmax, false), aroundA = grid(A.x, A.y, L, dmax, false);
+      const bestB = new Int32Array(nA).fill(-1), bestA = new Int32Array(nB).fill(-1);
+      for (let i = 0; i < nA; i++) { let bd = Infinity; aroundB(A.x[i], A.y[i], dmax, function (j, dx, dy) { const d = dx * dx + dy * dy; if (d < bd) { bd = d; bestB[i] = j; } }); }
+      for (let j = 0; j < nB; j++) { let bd = Infinity; aroundA(B.x[j], B.y[j], dmax, function (i, dx, dy) { const d = dx * dx + dy * dy; if (d < bd) { bd = d; bestA[j] = i; } }); }
+      const ids = new Int32Array(nB);
+      for (let j = 0; j < nB; j++) { const i = bestA[j]; ids[j] = (i >= 0 && bestB[i] === j) ? id[t][i] : nextId++; }
+      id.push(ids);
+    }
+    return id;
+  }
+
+  // ---- 4-6 over a movie ----------------------------------------------------------------------------------------------
+  // pts(t) -> {x, y, id}: points of frame t with identities; periodic: the truth
+  function network(pts, T, L, spacing, frameH, periodic) {
+    const lagsF = [1, 2, 3, 6, 12, 24, 48, 96, 192].filter(function (k) { return k < T; });
+    const maxLag = lagsF[lagsF.length - 1], nStart = 8;
+    const starts = []; for (let s = 0; s < nStart; s++) starts.push(Math.round(s * (T - 1 - maxLag) / Math.max(1, nStart - 1)));
+    const cache = {};
+    const cellsAt = function (t) {
+      if (cache[t]) return cache[t];
+      const q = pts(t), v = voronoi(q.x, q.y, L, spacing, periodic, false), byId = new Map();
+      for (let i = 0; i < q.x.length; i++) byId.set(q.id[i], i);
+      return (cache[t] = { q: q, v: v, byId: byId });
+    };
+    // shape and sides over frames spread through the movie
+    const pBins = 40, pLo = 3.5, pHi = 4.5, pHist = new Float64Array(pBins), sHist = new Float64Array(11);
+    let pSum = 0, pSq = 0, nC = 0, nHex = 0, nOk = 0, nAll = 0;
+    const statFrames = []; for (let t = 0; t < T; t += Math.max(1, Math.floor(T / 16))) statFrames.push(t);
+    statFrames.forEach(function (t) {
+      const c = cellsAt(t); nAll += c.q.x.length;
+      c.v.forEach(function (o) {
+        if (!o.ok) return; nOk++;
+        pSum += o.p; pSq += o.p * o.p; nC++;
+        const b = Math.floor((o.p - pLo) / (pHi - pLo) * pBins); if (b >= 0 && b < pBins) pHist[b]++;
+        sHist[Math.min(10, o.sides)]++; if (o.sides === 6) nHex++;
+      });
+    });
+    // neighbours kept, and displacements relative to the followed nuclei
+    const kept = lagsF.map(function (k) {
+      let num = 0, den = 0, cells = 0;
+      starts.forEach(function (t0) {
+        const A = cellsAt(t0), B = cellsAt(t0 + k);
+        A.v.forEach(function (o, i) {
+          if (!o.ok) return; const jB = B.byId.get(A.q.id[i]); if (jB === undefined || !B.v[jB].ok) return;
+          const anyB = B.v[jB].any; let n0 = 0, n1 = 0;
+          o.nb.forEach(function (m) { const mB = B.byId.get(A.q.id[m]); if (mB === undefined) return; n0++; if (anyB.indexOf(mB) >= 0) n1++; });
+          if (n0) { num += n1; den += n0; cells++; }
+        });
+      });
+      return { lag_h: k * frameH, kept: cells >= 100 ? num / den : null, cells: cells };   // fewer cells: the sheet has carried most of them out of the field
+    });
+    const msd = [];
+    for (let k = 1; k < T; k = Math.max(k + 1, Math.round(k * 1.25))) {
+      let s = 0, c = 0;
+      for (let t = 0; t + k < T; t += Math.max(1, Math.floor((T - k) / 32))) {
+        const A = pts(t), B = pts(t + k), map = new Map(); for (let j = 0; j < B.x.length; j++) map.set(B.id[j], j);
+        const dx = [], dy = [];
+        for (let i = 0; i < A.x.length; i++) { const j = map.get(A.id[i]); if (j === undefined) continue; let ex = B.x[j] - A.x[i], ey = B.y[j] - A.y[i]; if (periodic) { ex -= L * Math.round(ex / L); ey -= L * Math.round(ey / L); } dx.push(ex); dy.push(ey); }
+        if (dx.length < 20) continue;
+        const mx = dx.reduce(function (p, v) { return p + v; }, 0) / dx.length, my = dy.reduce(function (p, v) { return p + v; }, 0) / dy.length;
+        for (let i = 0; i < dx.length; i++) { s += (dx[i] - mx) * (dx[i] - mx) + (dy[i] - my) * (dy[i] - my); c++; }
+      }
+      if (c < 200) break;   // too few nuclei followed this long
+      msd.push([k * frameH, s / c]);
+    }
+    const pm = nC ? pSum / nC : null;
+    return { p_mean: pm, p_sd: nC > 1 ? Math.sqrt(Math.max(0, pSq / nC - pm * pm)) : null, p_hist: { lo: pLo, hi: pHi, counts: Array.from(pHist) },
+      sides_hist: Array.from(sHist), hex_frac: nC ? nHex / nC : null, cells_measured: nC, frames_measured: statFrames.length, kept_frac: nAll ? nOk / nAll : null,
+      kept: kept, msd: { lag_h: msd.map(function (v) { return v[0]; }), um2: msd.map(function (v) { return v[1]; }) } };
+  }
+
+  // opts: spacing_um (the cell size), show_frame (frame drawn on the page, default 0)
+  function* analyse(movie, opts) {
+    opts = opts || {};
+    need(movie && movie.frames && movie.n, "no movie");
+    const n = movie.n, T = movie.T, a = movie.pixel_um, L = movie.L_um, P = n * n, spacing = opts.spacing_um || 15, fh = movie.frame_h;
+    const det = [];
+    for (let t = 0; t < T; t++) { det.push(detect(movie.frames.subarray(t * P, (t + 1) * P), n, a, spacing)); if (t % 16 === 15) yield { stage: "Finding the nuclei", frac: 0.45 * (t + 1) / T }; }
+    const ids = link(det, L, 0.5 * spacing);
+    yield { stage: "Following the nuclei", frac: 0.5 };
+    const meas = network(function (t) { return { x: det[t].x, y: det[t].y, id: ids[t] }; }, T, L, spacing, fh, false);
+    yield { stage: "Drawing the network", frac: 0.75 };
+    // track lengths: how many frames a nucleus is followed for, on average
+    const span = new Map(); for (let t = 0; t < T; t++) ids[t].forEach(function (v) { span.set(v, (span.get(v) || 0) + 1); });
+    let sl = 0; span.forEach(function (v) { sl += v; });
+    meas.n_detected = det.reduce(function (p, d) { return p + d.x.length; }, 0) / T;
+    meas.track_frames = sl / span.size;
+    // the frame drawn on the page: nuclei and complete cells
+    const sf = Math.max(0, Math.min(T - 1, opts.show_frame || 0)), vs = voronoi(det[sf].x, det[sf].y, L, spacing, false, true);
+    meas.frame = { t: sf, x: Array.from(det[sf].x), y: Array.from(det[sf].y),
+      cells: vs.map(function (o, i) { return o.ok ? { i: i, px: o.px, py: o.py, sides: o.sides, p: o.p } : null; }).filter(Boolean) };
+    let truth = null;
+    const tp = movie.truth && movie.truth.positions;
+    if (tp) {
+      const Nt = tp.x.length / T, idT = Int32Array.from({ length: Nt }, function (_, i) { return i; });
+      truth = network(function (t) { return { x: tp.x.subarray(t * Nt, (t + 1) * Nt), y: tp.y.subarray(t * Nt, (t + 1) * Nt), id: idT }; }, T, L, spacing, fh, true);
+      // how well the nuclei were found: each true nucleus of the drawn frame against the nearest found one
+      const X = tp.x.subarray(sf * Nt, (sf + 1) * Nt), Y = tp.y.subarray(sf * Nt, (sf + 1) * Nt), around = grid(det[sf].x, det[sf].y, L, spacing, false);
+      let found = 0, e2 = 0, inner = 0;
+      for (let i = 0; i < Nt; i++) {
+        if (X[i] < spacing / 2 || Y[i] < spacing / 2 || X[i] > L - spacing / 2 || Y[i] > L - spacing / 2) continue;
+        inner++; let bd = Infinity; around(X[i], Y[i], spacing / 2, function (j, dx, dy) { bd = Math.min(bd, dx * dx + dy * dy); });
+        if (bd < Infinity) { found++; e2 += bd; }
+      }
+      truth.found_frac = inner ? found / inner : null; truth.loc_err_um = found ? Math.sqrt(e2 / found) : null; truth.n_cells = Nt;
+    }
+    yield { stage: "Drawing the network", frac: 1 };
+    return { measured: meas, truth: truth, spacing_um: spacing, L_um: L };
+  }
+
+  const api = { analyse: analyse, detect: detect, voronoi: voronoi, link: link };
+  if (typeof module !== "undefined" && module.exports) module.exports = api; else root.TISSUE_VORONOI = api;
+})(typeof self !== "undefined" ? self : this);
+
+</script>
 <script type="text/plain" id="worker-src">
-/* Background worker of the moving-tissues page: simulate the movie and analyse it (TISSUE_ENGINE), keep the movie for
-   re-analysis; the motility sweep runs a new movie at each setting and keeps only the diffusion coefficients. */
+/* Background worker of the moving-tissues page: simulate the movie, find the network of nuclei (TISSUE_VORONOI) and
+   analyse it with DDM (TISSUE_ENGINE), keep the movie for re-analysis; the motility sweep runs a new movie at each
+   setting and keeps only the summaries. */
 (function () {
   "use strict";
   let movie = null;
@@ -2193,6 +2499,8 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
     return r.value;
   }
   function pubSummary(r) { return { msd: r.msd, taus_s: r.taus_s, state: r.state, psi: r.psi, V_um_h: r.V_um_h }; }
+  function netSummary(n) { const s = function (x) { return x ? { p_mean: x.p_mean, hex_frac: x.hex_frac, kept: x.kept } : null; }; return { measured: s(n.measured), truth: s(n.truth) }; }
+  function lean(truth) { const t = Object.assign({}, truth); delete t.positions; return t; }
   self.onmessage = function (ev) {
     const m = ev.data;
     try {
@@ -2200,9 +2508,10 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
         const pts = [];
         m.list.forEach(function (g, i) {
           const a = i / m.list.length, b = (i + 1) / m.list.length, pre = "Run " + (i + 1) + " of " + m.list.length + ": ";
-          const mv = drive(TISSUE_MOVIE.simulate(m.cfgs[i]), m.token, a, a + 0.85 * (b - a), pre);
+          const mv = drive(TISSUE_MOVIE.simulate(m.cfgs[i]), m.token, a, a + 0.75 * (b - a), pre);
+          const net = drive(TISSUE_VORONOI.analyse(mv, { spacing_um: m.cfgs[i].cell_um }), m.token, a + 0.75 * (b - a), a + 0.85 * (b - a), pre);
           const r = drive(TISSUE_ENGINE.analyse(mv, m.opts), m.token, a + 0.85 * (b - a), m.opts.compare_published ? a + 0.93 * (b - a) : b, pre);
-          const p = { set: g, msd: r.msd, taus_s: r.taus_s, msd_beyond: r.msd_beyond, msd_min_um2: r.msd_min_um2, psi: r.psi, V_um_h: r.V_um_h, state: r.state, truth: { msd: mv.truth.msd, order: mv.truth.order, drift_um_h: mv.truth.drift_um_h } };
+          const p = { set: g, msd: r.msd, taus_s: r.taus_s, msd_beyond: r.msd_beyond, msd_min_um2: r.msd_min_um2, psi: r.psi, V_um_h: r.V_um_h, state: r.state, net: netSummary(net), truth: { msd: mv.truth.msd, order: mv.truth.order, drift_um_h: mv.truth.drift_um_h } };
           if (m.opts.compare_published) { try { p.published = pubSummary(drive(TISSUE_ENGINE.analyse(mv, Object.assign({}, m.opts, { published_only: true })), m.token, a + 0.93 * (b - a), b, pre)); } catch (e) { p.published = { failed: e.message }; } }
           pts.push(p);
         });
@@ -2212,9 +2521,10 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
       let out = null;
       if (m.type === "simulate" || !movie) {
         movie = null;     // let the old movie go before the new one is made
-        movie = drive(TISSUE_MOVIE.simulate(m.cfg), m.token, 0, 0.85);
+        movie = drive(TISSUE_MOVIE.simulate(m.cfg), m.token, 0, 0.75);
+        const net = drive(TISSUE_VORONOI.analyse(movie, { spacing_um: m.cfg.cell_um }), m.token, 0.75, 0.85);
         out = { n: movie.n, T: movie.T, frames: movie.frames.slice(0), pixel_um: movie.pixel_um, L_um: movie.L_um, frame_rate_hz: movie.frame_rate_hz, frame_h: movie.frame_h,
-          q_opt_per_um: movie.q_opt_per_um, q_signal_max_per_um: movie.q_signal_max_per_um, info: movie.info, truth: movie.truth };
+          q_opt_per_um: movie.q_opt_per_um, q_signal_max_per_um: movie.q_signal_max_per_um, info: movie.info, truth: lean(movie.truth), net: net };
       }
       const res = drive(TISSUE_ENGINE.analyse(movie, m.opts), m.token, 0.85, m.opts.compare_published ? 0.93 : 1);
       if (m.opts.compare_published) { try { res.published = pubSummary(drive(TISSUE_ENGINE.analyse(movie, Object.assign({}, m.opts, { published_only: true })), m.token, 0.93, 1)); } catch (e) { res.published = { failed: e.message }; } }
@@ -2321,7 +2631,8 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
   function nFrames() { return Math.min(state.n_frames, maxFrames(simPx())); }
   function nCells() { const L = simPx() * pixelUm(); return Math.round(state.packing * L * L / (Math.PI / 4 * state.cell_um * state.cell_um * 1.0225)); }
   function movieSeconds() { const n = simPx(); return 1.2 + 2.5 * nCells() / 600 * (nFrames() * state.frame_min / 60 + 6) / 27 * Math.max(1, state.v0_um_h / 15) + 3 * n * n * nFrames() / 8.4e6; }
-  function simSeconds() { return movieSeconds() * (level === "addict" ? 1.2 : 1); }
+  function netSeconds() { return 1.5 * nCells() / 600 * nFrames() / 256; }
+  function simSeconds() { return movieSeconds() * (level === "addict" ? 1.2 : 1) + netSeconds(); }
   function seriesSeconds() { return SWEEP.length * simSeconds(); }
   const MAX_SECONDS = 180, MAX_SERIES_SECONDS = 900;
   function simConfig(over) {
@@ -2495,7 +2806,7 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
   // ---- running (in a background worker when the browser allows it) --------------------
   const cache = { movie: null, res: null, cfg: null, opts: null, series: null };
   let timer = null, worker = null, runToken = 0, workerOK = true, seriesQueued = false, inflight = null, pending = {};
-  function workerSource() { return ["tmovie-src", "engine-src", "tengine-src"].map(function (id) { return document.getElementById(id).textContent; }).join("\n") + "\n" + document.getElementById("worker-src").textContent; }
+  function workerSource() { return ["tmovie-src", "engine-src", "tengine-src", "tvoronoi-src"].map(function (id) { return document.getElementById(id).textContent; }).join("\n") + "\n" + document.getElementById("worker-src").textContent; }
   function makeWorker() { try { return new Worker(URL.createObjectURL(new Blob([workerSource()], { type: "text/javascript" }))); } catch (e) { workerOK = false; return null; } }
   function schedule() { clearTimeout(timer); timer = setTimeout(function () { start("simulate"); }, 150); }
   function scheduleAnalysis() { clearTimeout(timer); timer = setTimeout(function () { start(cache.movie ? "analyse" : "simulate"); }, 150); }
@@ -2555,7 +2866,11 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
   let movieHere = null;
   function pubSummary(r) { return { msd: r.msd, taus_s: r.taus_s, state: r.state, psi: r.psi, V_um_h: r.V_um_h }; }
   async function runHere(kind, token, cfg, opts) {
-    if (kind === "simulate" || !movieHere) { const mv = await drive(TISSUE_MOVIE.simulate(cfg), token, 0, 0.85); if (!mv) return; movieHere = mv; }
+    if (kind === "simulate" || !movieHere) {
+      const mv = await drive(TISSUE_MOVIE.simulate(cfg), token, 0, 0.75); if (!mv) return;
+      const net = await drive(TISSUE_VORONOI.analyse(mv, { spacing_um: cfg.cell_um }), token, 0.75, 0.85); if (!net) return;
+      mv.net = net; movieHere = mv;
+    }
     const res = await drive(TISSUE_ENGINE.analyse(movieHere, opts), token, 0.85, 1); if (!res) return;
     if (opts.compare_published) { const rp = await drive(TISSUE_ENGINE.analyse(movieHere, Object.assign({}, opts, { published_only: true })), token, 0.95, 1); res.published = rp ? pubSummary(rp) : { failed: "stopped" }; }
     inflight = null;
@@ -2565,9 +2880,11 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
     const pts = [];
     for (let i = 0; i < list.length; i++) {
       const pre = "Run " + (i + 1) + " of " + list.length + ": ";
-      const mv = await drive(TISSUE_MOVIE.simulate(cfgs[i]), token, i / list.length, (i + 0.85) / list.length, pre); if (!mv) return;
+      const mv = await drive(TISSUE_MOVIE.simulate(cfgs[i]), token, i / list.length, (i + 0.75) / list.length, pre); if (!mv) return;
+      const net = await drive(TISSUE_VORONOI.analyse(mv, { spacing_um: cfgs[i].cell_um }), token, (i + 0.75) / list.length, (i + 0.85) / list.length, pre); if (!net) return;
       const r = await drive(TISSUE_ENGINE.analyse(mv, p.opts), token, (i + 0.85) / list.length, (i + 1) / list.length, pre); if (!r) return;
-      pts.push({ set: list[i], msd: r.msd, taus_s: r.taus_s, msd_beyond: r.msd_beyond, msd_min_um2: r.msd_min_um2, psi: r.psi, V_um_h: r.V_um_h, state: r.state, truth: { msd: mv.truth.msd, order: mv.truth.order, drift_um_h: mv.truth.drift_um_h } });
+      const ns = function (x) { return x ? { p_mean: x.p_mean, hex_frac: x.hex_frac, kept: x.kept } : null; };
+      pts.push({ set: list[i], msd: r.msd, taus_s: r.taus_s, msd_beyond: r.msd_beyond, msd_min_um2: r.msd_min_um2, psi: r.psi, V_um_h: r.V_um_h, state: r.state, net: { measured: ns(net.measured), truth: ns(net.truth) }, truth: { msd: mv.truth.msd, order: mv.truth.order, drift_um_h: mv.truth.drift_um_h } });
     }
     inflight = null; finishSeries(pts, p);
   }
@@ -2579,6 +2896,7 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
       // the delay slider at about one hour; the lower map zoomed on the patterns used
       const ta = res.taus_s; let li = 0; for (let k = 0; k < ta.length; k++) if (Math.abs(Math.log(ta[k])) < Math.abs(Math.log(ta[li]))) li = k;
       $("lag").max = ta.length - 1; $("lag").value = li;
+      $("net-frame").max = movie.T - 1; $("net-frame").value = 0;
       const qz = res.band.q_hi || 1;
       cache.zoomK = Math.max(8, Math.min(movie.n / 2 - 1, Math.round(qz * movie.L_um / (2 * Math.PI)) + 2));
     }
@@ -2880,7 +3198,119 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
     fillNumbers("amp-numbers", ["q (" + MU + "m" + MINUS1 + ")", "A", "B", "Used"], pts.map(function (p) { return [p.q, p.A > 0 ? p.A : null, p.B > 0 ? p.B : null, p.used ? "yes" : "no"]; }));
   }
 
-  // ---- step 7: the motility sweep -----------------------------------------------------------------
+  // ---- step 7: the network of nuclei ------------------------------------------------------------
+  const T_KEPT = 4;   // hours: the delay at which the sweep reads the neighbours kept
+  // fraction of neighbours kept after h hours, interpolated in log time between the delays measured
+  function keptAt(list, h) {
+    if (!list) return null;
+    const pts = list.filter(function (k) { return k.kept !== null; });
+    for (let i = 0; i < pts.length; i++) {
+      if (Math.abs(pts[i].lag_h - h) < 1e-9) return pts[i].kept;
+      if (i > 0 && pts[i - 1].lag_h < h && pts[i].lag_h > h) { const w = Math.log(h / pts[i - 1].lag_h) / Math.log(pts[i].lag_h / pts[i - 1].lag_h); return pts[i - 1].kept + w * (pts[i].kept - pts[i - 1].kept); }
+    }
+    return null;
+  }
+  function msdAt(m, h) { if (!m || !m.lag_h.length) return null; let b = 0; m.lag_h.forEach(function (t, i) { if (Math.abs(Math.log(t / h)) < Math.abs(Math.log(m.lag_h[b] / h))) b = i; }); return Math.abs(Math.log(m.lag_h[b] / h)) < 0.3 ? m.um2[b] : null; }
+  function lastKept(list) { const p = (list || []).filter(function (k) { return k.kept !== null; }); return p.length ? p[p.length - 1] : null; }
+  function netBrief() {
+    const nt = cache && cache.movie && cache.movie.net; if (!nt) return null;
+    const m = nt.measured, t = nt.truth || {}, r3 = function (v) { return v === null || v === undefined ? null : +v.toPrecision(3); };
+    return { nuclei_per_frame: r3(m.n_detected), cells_simulated: t.n_cells || null, found_frac: r3(t.found_frac), position_error_um: r3(t.loc_err_um), frames_followed: r3(m.track_frames),
+      shape_index: r3(m.p_mean), shape_index_simulated: r3(t.p_mean), hexagons: r3(m.hex_frac), hexagons_simulated: r3(t.hex_frac),
+      kept_1h: r3(keptAt(m.kept, 1)), kept_1h_simulated: r3(keptAt(t.kept, 1)), kept_4h: r3(keptAt(m.kept, T_KEPT)), kept_4h_simulated: r3(keptAt(t.kept, T_KEPT)),
+      msd_1h_tracks_um2: r3(msdAt(m.msd, 1)), msd_1h_simulated_um2: r3(msdAt(t.msd, 1)) };
+  }
+  // the network of one frame, found on the page (a few milliseconds)
+  let netFrame = { movie: null, t: -1, cells: null };
+  function networkOf(t) {
+    const mv = cache.movie;
+    if (netFrame.movie === mv && netFrame.t === t) return netFrame;
+    const P = mv.n * mv.n, d = TISSUE_VORONOI.detect(mv.frames.subarray(t * P, (t + 1) * P), mv.n, mv.pixel_um, state.cell_um);
+    const v = TISSUE_VORONOI.voronoi(d.x, d.y, mv.L_um, state.cell_um, false, true);
+    netFrame = { movie: mv, t: t, x: d.x, y: d.y, cells: v };
+    return netFrame;
+  }
+  function sidesColor(k) { return k <= 4 ? C.warn : k === 5 ? C.accent : k === 6 ? null : k === 7 ? C["accent-2"] : C.bad; }
+  function drawNet() {
+    const cv = $("net"); if (!cv || !cache.movie) return;
+    const mv = cache.movie, t = Math.min(mv.T - 1, parseInt($("net-frame").value, 10) || 0), nw = networkOf(t), byShape = $("net-colour").value === "shape";
+    const c = prepCanvas(cv), ctx = c.ctx, W = c.W, H = c.H, S = Math.min(W, H), x0 = (W - S) / 2, y0 = (H - S) / 2, k = S / mv.L_um;
+    ctx.clearRect(0, 0, W, H);
+    const off = document.createElement("canvas"); drawFrame(off, mv, t);
+    ctx.imageSmoothingEnabled = false; ctx.drawImage(off, x0, y0, S, S);
+    ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, S, S); ctx.clip();
+    let nOk = 0;
+    nw.cells.forEach(function (o) {
+      if (!o.ok) return; nOk++;
+      ctx.beginPath(); o.px.forEach(function (x, j) { const X = x0 + x * k, Y = y0 + o.py[j] * k; if (j) ctx.lineTo(X, Y); else ctx.moveTo(X, Y); }); ctx.closePath();
+      const col = byShape ? qColor((o.p - 3.65) / 0.4) : sidesColor(o.sides);
+      if (col) { ctx.globalAlpha = 0.45; ctx.fillStyle = col; ctx.fill(); ctx.globalAlpha = 1; }
+      ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 1; ctx.stroke();
+    });
+    ctx.fillStyle = "rgba(255,255,255,0.9)";
+    for (let i = 0; i < nw.x.length; i++) { ctx.beginPath(); ctx.arc(x0 + nw.x[i] * k, y0 + nw.y[i] * k, 1.6, 0, 2 * Math.PI); ctx.fill(); }
+    ctx.restore();
+    ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.strokeRect(x0, y0, S, S);
+    const out = "t = " + fmtH(t * mv.frame_h) + ", frame " + (t + 1) + " of " + mv.T;
+    $("net-frame-out").textContent = out; $("net-frame").setAttribute("aria-valuetext", out);
+    const sw = function (col, txt) { return '<span><i style="background:' + col + ';border-radius:2px"></i>' + txt + '</span>'; };
+    $("net-legend").innerHTML = (byShape
+      ? sw(qColor(0), "shape index 3.65 or less") + sw(qColor(0.4), "3.81") + sw(qColor(1), "4.05 or more (elongated or ragged)")
+      : sw(C.warn, "4 sides or fewer") + sw(C.accent, "5 sides") + '<span>6 sides: no colour</span>' + sw(C["accent-2"], "7 sides") + sw(C.bad, "8 or more")) +
+      '<span>White dots: the nuclei found; only cells whose outline is complete inside the field are drawn (' + nOk + ' of ' + nw.x.length + ')</span>';
+  }
+  function drawKept() {
+    const nt = cache.movie && cache.movie.net; if (!nt) return;
+    const m = nt.measured.kept, tr = nt.truth ? nt.truth.kept : null, lags = m.map(function (k) { return k.lag_h; });
+    let lo = 1; [m, tr || []].forEach(function (l) { l.forEach(function (k) { if (k.kept !== null) lo = Math.min(lo, k.kept); }); });
+    const y0 = Math.max(0, Math.floor((lo - 0.05) * 10) / 10);
+    const a = axes($("chart-kept"), { xlog: true, ylog: false, x0: lags[0] / 1.3, x1: lags[lags.length - 1] * 1.3, y0: y0, y1: 1 + 0.03 * (1 - y0), xlabel: "Delay (hours)", ylabel: "Neighbours kept" }), ctx = a.ctx;
+    if (tr) poly(ctx, tr.map(function (k) { return k.kept !== null ? [a.fx(k.lag_h), a.fy(k.kept)] : null; }), C["accent-2"], 1.8);
+    m.forEach(function (k) { if (k.kept !== null) dot(ctx, a.fx(k.lag_h), a.fy(k.kept), 3, C.accent, null); });
+    a.done();
+    $("kept-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>Found from the movie</span><span><i style="background:' + C["accent-2"] + '"></i>As simulated (every cell, true positions)</span>';
+    fillNumbers("kept-numbers", ["Delay (h)", "Neighbours kept, from the movie", "simulated", "Cells counted"], m.map(function (k, i) { return [k.lag_h, k.kept, tr ? tr[i].kept : null, k.cells]; }));
+  }
+  function drawShape() {
+    const nt = cache.movie && cache.movie.net; if (!nt) return;
+    const m = nt.measured, tr = nt.truth, H = m.p_hist, nb = H.counts.length, w = (H.hi - H.lo) / nb;
+    const dens = function (h) { const s = h.counts.reduce(function (p, v) { return p + v; }, 0) || 1; return h.counts.map(function (v) { return v / s / w; }); };
+    const dm = dens(H), dt = tr ? dens(tr.p_hist) : null, ymax = Math.max.apply(null, dm.concat(dt || [])) * 1.1 || 1;
+    const a = axes($("chart-shape"), { xlog: false, ylog: false, x0: H.lo, x1: H.hi, y0: 0, y1: ymax, xlabel: "Shape index p = perimeter / " + "\u221a" + "area", ylabel: "Share of cells (per unit of p)" }), ctx = a.ctx;
+    ctx.fillStyle = C.accent; ctx.globalAlpha = 0.45;
+    dm.forEach(function (v, i) { const X0 = a.fx(H.lo + i * w), X1 = a.fx(H.lo + (i + 1) * w); ctx.fillRect(X0 + 0.5, a.fy(v), X1 - X0 - 1, a.fy(0) - a.fy(v)); });
+    ctx.globalAlpha = 1;
+    if (dt) poly(ctx, dt.map(function (v, i) { return [a.fx(H.lo + (i + 0.5) * w), a.fy(v)]; }), C["accent-2"], 1.8);
+    [[3.722, "hexagon"], [3.812, "3.81"]].forEach(function (r) { ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(a.fx(r[0]), a.m.t); ctx.lineTo(a.fx(r[0]), a.m.t + a.ph); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = C.muted; ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillText(r[1], a.fx(r[0]) + 3, a.m.t + 2); });
+    a.done();
+    $("shape-legend").innerHTML = '<span><i style="background:' + C.accent + ';border-radius:2px"></i>Found from the movie, mean ' + fmtSig(m.p_mean, 3) + '</span><span><i style="background:' + C["accent-2"] + '"></i>As simulated, mean ' + (tr ? fmtSig(tr.p_mean, 3) : "-") + '</span><span>Dashed: a regular hexagon (3.72), and 3.81, where vertex and Voronoi models of tissues go from solid to fluid</span>';
+    fillNumbers("shape-numbers", ["p (bin centre)", "Found from the movie", "Simulated"], dm.map(function (v, i) { return [H.lo + (i + 0.5) * w, v, dt ? dt[i] : null]; }));
+  }
+  function renderNetwork() {
+    const nt = cache.movie && cache.movie.net, el = $("net-result"); if (!el) return;
+    if (!nt) { el.innerHTML = ""; return; }
+    drawNet(); drawKept(); drawShape();
+    const m = nt.measured, t = nt.truth, pc = function (v) { return v === null ? "-" : fmtSig(100 * v, 3) + " %"; };
+    const k1 = keptAt(m.kept, 1), k1t = t ? keptAt(t.kept, 1) : null, kl = lastKept(m.kept), klt = t && kl ? t.kept.find(function (k) { return k.lag_h === kl.lag_h; }) : null;
+    let h = '<div class="eyebrow">The network of nuclei</div>';
+    let s = "In an hour a cell keeps " + pc(k1) + " of its neighbours" + (kl && kl.lag_h > 1.5 ? ", in " + fmtH(kl.lag_h) + " " + pc(kl.kept) : "") + ". ";
+    s += k1 !== null && k1 > 0.97 && (!kl || kl.kept > 0.9) ? "Each cell stays with the same neighbours: the sheet is solid. " : "Cells swap neighbours: the sheet flows. ";
+    if (t) s += "As simulated: " + pc(k1t) + (klt ? ", " + pc(klt.kept) : "") + ".";
+    h += '<p class="small" style="margin:0">' + s + '</p>';
+    const ok = k1 !== null && k1t !== null && Math.abs(k1 - k1t) < 0.03;
+    h += '<span class="chip ' + (ok ? "good" : "bad") + '">' + (ok ? "Neighbours as simulated" : "Simulated: " + pc(k1t)) + '</span>';
+    if (level !== "curious") {
+      const md = msdAt(m.msd, 1), mt = t ? msdAt(t.msd, 1) : null, dd = cache.res ? (function () { const r = cache.res; let b = null; r.taus_s.forEach(function (x, i) { if (r.msd[i] > 0 && (b === null || Math.abs(Math.log(x)) < Math.abs(Math.log(r.taus_s[b])))) b = i; }); return b !== null && Math.abs(Math.log(r.taus_s[b])) < 0.3 ? r.msd[b] : null; })() : null;
+      h += '<details class="more"><summary>Details</summary><dl>';
+      h += '<dt>Nuclei</dt><dd>' + fmtSig(m.n_detected, 3) + ' found per frame' + (t ? ' (' + t.n_cells + ' cells simulated; ' + pc(t.found_frac) + ' of the true nuclei found, within ' + fmtSig(t.loc_err_um, 2) + ' ' + MU + 'm rms)' : '') + '; each followed for ' + fmtSig(m.track_frames, 3) + ' frames on average</dd>';
+      h += '<dt>Cells</dt><dd>' + pc(m.kept_frac) + ' of the nuclei have a complete Voronoi cell inside the field; mean shape index ' + fmtSig(m.p_mean, 3) + ' +- ' + fmtSig(m.p_sd, 2) + ' (simulated ' + (t ? fmtSig(t.p_mean, 3) : "-") + '), ' + pc(m.hex_frac) + ' hexagons (simulated ' + (t ? pc(t.hex_frac) : "-") + ')</dd>';
+      h += '<dt>Displacement in 1 h</dt><dd>from the tracks, relative to the nuclei followed: ' + (md !== null ? fmtSig(md, 2) : "-") + ' ' + MU + 'm' + SQ + '; DDM, step 6: ' + (dd !== null ? fmtSig(dd, 2) : "-") + '; simulated: ' + (mt !== null ? fmtSig(mt, 2) : "-") + '</dd>';
+      h += '</dl></details>';
+    }
+    el.innerHTML = h;
+  }
+
+  // ---- step 8: the motility sweep -----------------------------------------------------------------
   const T2 = 2;   // hours: the delay at which the sweep reads the displacement
   function at2(p) { let best = null; p.taus_s.forEach(function (t, i) { if (p.msd[i] > 0 && (best === null || Math.abs(Math.log(t / T2)) < Math.abs(Math.log(p.taus_s[best] / T2)))) best = i; }); return best !== null && Math.abs(Math.log(p.taus_s[best] / T2)) < 0.25 ? p.msd[best] : null; }
   function true2(p) { const m = p.truth.msd; let i = 0; while (i < m.lag_h.length - 1 && m.lag_h[i + 1] < T2) i++; return m.um2[Math.min(i + 1, m.um2.length - 1)]; }
@@ -2919,12 +3349,27 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
       ps.forEach(function (p) { if (p.psi !== null) dot(cb, b.fx(p.set.v0_um_h), b.fy(p.psi), 3.2, col, null); });
     });
     b.done();
+    const ck = $("chart-sweep-kept");
+    if (ck) {
+      const kv = pts.map(function (p) { return p.net && p.net.measured ? keptAt(p.net.measured.kept, T_KEPT) : null; }).concat(pts.map(function (p) { return p.net && p.net.truth ? keptAt(p.net.truth.kept, T_KEPT) : null; })).filter(function (v) { return v !== null; });
+      const k0 = Math.max(0, Math.floor((Math.min.apply(null, kv.concat([0.9])) - 0.05) * 10) / 10);
+      const e = axes(ck, { xlog: true, ylog: false, x0: 2.5, x1: 40, y0: k0, y1: 1 + 0.03 * (1 - k0), xlabel: "How hard the cells crawl, v0 (" + MU + "m/h)", ylabel: "Neighbours kept in " + T_KEPT + " h" }), ce = e.ctx;
+      SWEEP_J.forEach(function (J, k) {
+        const col = J === 0 ? C.accent : C["accent-2"], ps = pts.filter(function (p) { return p.set.J_h === J; });
+        poly(ce, ps.map(function (p) { const v = p.net && p.net.truth ? keptAt(p.net.truth.kept, T_KEPT) : null; return v !== null ? [e.fx(p.set.v0_um_h), e.fy(v)] : null; }), col, 1.6, [], 0.8);
+        ps.forEach(function (p) { const v = p.net && p.net.measured ? keptAt(p.net.measured.kept, T_KEPT) : null; if (v !== null) dot(ce, e.fx(p.set.v0_um_h * (1 + (k ? 0.02 : -0.02))), e.fy(v), 3.2, col, null); });
+      });
+      e.done();
+    }
     $("sweep-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>No alignment</span><span><i style="background:' + C["accent-2"] + '"></i>Alignment, J = 2 per hour</span><span>Dots: measured; lines: as simulated; arrows: beyond what the patterns used can follow; dotted: a tenth of a cell area, the line between jammed and fluid</span>';
-    fillNumbers("series-numbers", ["v0 (" + MU + "m/h)", "Alignment (1/h)", "<\u0394r" + SQ + "> in 2 h, measured", "simulated", "Order, measured", "simulated", "State found"], pts.map(function (p) { return [p.set.v0_um_h, p.set.J_h, at2(p) || (p.msd_beyond ? "more" : null), true2(p), p.psi, p.truth.order, p.state]; }));
+    const nk = function (p, w) { return p.net && p.net[w] ? keptAt(p.net[w].kept, T_KEPT) : null; }, np = function (p, w) { return p.net && p.net[w] ? p.net[w].p_mean : null; };
+    fillNumbers("series-numbers", ["v0 (" + MU + "m/h)", "Alignment (1/h)", "<\u0394r" + SQ + "> in 2 h, measured", "simulated", "Order, measured", "simulated", "State found", "Neighbours kept in " + T_KEPT + " h, measured", "simulated", "Shape index, measured", "simulated"], pts.map(function (p) { return [p.set.v0_um_h, p.set.J_h, at2(p) || (p.msd_beyond ? "more" : null), true2(p), p.psi, p.truth.order, p.state, nk(p, "measured"), nk(p, "truth"), np(p, "measured"), np(p, "truth")]; }));
     const ul = $("sweep-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
     const st = function (J) { return pts.filter(function (p) { return p.set.J_h === J; }).map(function (p) { return fmtSig(p.set.v0_um_h, 2) + ": " + p.state; }).join(", "); };
     add("States found without alignment: " + st(0) + ". With alignment: " + st(2) + ".");
+    const far = pts.filter(function (p) { return !at2(p) && p.msd_beyond && nk(p, "measured") !== null; });
+    if (far.length) add("Where the displacement is beyond what the patterns can follow (arrows), the network of nuclei still reads how fast cells swap neighbours: " + far.map(function (p) { return fmtSig(p.set.v0_um_h, 2) + (p.set.J_h ? " aligned" : "") + ": " + fmtSig(100 * nk(p, "measured"), 2) + " %"; }).join(", ") + " kept in " + T_KEPT + " h.");
   }
 
   // ---- result -------------------------------------------------------------------------------
@@ -2977,7 +3422,8 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
     const res = cache.res, s = seriesValid() ? cache.series : null;
     const obj = { microscope: "Nikon Ti2-E, 10x, fluorescence", detector: "Hamamatsu ORCA-Flash4.0 V3, binned " + state.binning + " x " + state.binning, simulation: cache.cfg, analysis: cache.opts,
       result: { state: res.state, V_um_h: res.V_um_h.map(function (v) { return +v.toPrecision(3); }), psi: res.psi !== null ? +res.psi.toPrecision(3) : null, delays_h: res.taus_s.map(function (v) { return +v.toPrecision(3); }), msd_um2: res.msd.map(function (v) { return v ? +v.toPrecision(3) : null; }) },
-      sweep: s ? s.points.map(function (p) { return { v0_um_h: p.set.v0_um_h, J_h: p.set.J_h, state: p.state, psi: p.psi !== null ? +p.psi.toPrecision(3) : null }; }) : null };
+      network: netBrief(),
+      sweep: s ? s.points.map(function (p) { const k4 = p.net && p.net.measured ? keptAt(p.net.measured.kept, T_KEPT) : null; return { v0_um_h: p.set.v0_um_h, J_h: p.set.J_h, state: p.state, psi: p.psi !== null ? +p.psi.toPrecision(3) : null, neighbours_kept_4h: k4 !== null ? +k4.toPrecision(3) : null }; }) : null };
     $("settings-json").textContent = JSON.stringify(obj, null, 1).replace(/\[\s+([-\d.e+,\s\[\]nul]+?)\s+\]/g, function (m, a) { return "[" + a.replace(/\s+/g, " ") + "]"; });
     focusableScrollers();
   }
@@ -2985,7 +3431,7 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
   function renderAll() {
     if (!cache.res) return;
     readColors(); grey = greyRange(cache.movie); diffScale = null;
-    setQSpan(); renderLag(); renderText(); drawCell(); drawMovieFrames(); drawMap(); drawStripes(); drawCurves(); drawMsd(); drawPath(); drawSeries(); drawAmp(); renderResult(); renderSettings();
+    setQSpan(); renderLag(); renderText(); drawCell(); drawMovieFrames(); drawMap(); drawStripes(); drawCurves(); drawMsd(); drawPath(); drawAmp(); renderResult(); renderNetwork(); drawSeries(); renderSettings();
   }
 
   // ---- "what matters" cards ---------------------------------------------------------------
@@ -3097,11 +3543,13 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
     try { navigator.clipboard.writeText(txt).then(function () { $("btn-copy").textContent = "Copied"; }, fallback); } catch (e) { fallback(); }
   });
   let rz = null;
-  const redraw = function () { clearTimeout(rz); rz = setTimeout(function () { readColors(); if (cache.res) { drawCell(); drawCurves(); drawMsd(); drawPath(); drawSeries(); drawAmp(); drawMapOverlay(); } }, 80); };
+  const redraw = function () { clearTimeout(rz); rz = setTimeout(function () { readColors(); if (cache.res) { drawCell(); drawCurves(); drawMsd(); drawPath(); drawSeries(); drawAmp(); drawMapOverlay(); drawNet(); drawKept(); drawShape(); } }, 80); };
   new ResizeObserver(redraw).observe(document.querySelector(".steps"));
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
   new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   $("btn-series").addEventListener("click", function () { startSeries(); });
+  $("net-frame").addEventListener("input", function () { if (cache.movie) drawNet(); });
+  $("net-colour").addEventListener("change", function () { if (cache.movie) drawNet(); });
 
   const PAGE_NAME = "tissues";
   function setupHash() {
@@ -3144,7 +3592,7 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
     controls: function () { return CONTROLS.filter(function (c) { return c.kind !== "qrange" && (!c.when || c.when()); }).map(function (c) { return { key: c.key, kind: c.kind, lvl: c.lvl, min: c.min, max: c.max, options: c.kind === "select" ? c.options.map(function (o) { return o[0]; }) : null }; }); },
     truth: function () { return cache && cache.movie ? cache.movie.truth : null; },
     cfg: function () { return cache && cache.cfg ? JSON.parse(JSON.stringify(cache.cfg)) : null; },
-    result: function () { const r = cache && cache.res; if (!r) return null; const s = seriesValid() ? cache.series : null; return { state: r.state, true_state: trueState(), V: r.V_um_h, psi: r.psi, msd: r.msd, taus: r.taus_s, verdict: verdict().text, published: r.published || null, series: s ? s.points.map(function (p) { return { set: p.set, state: p.state, psi: p.psi }; }) : null }; }
+    result: function () { const r = cache && cache.res; if (!r) return null; const s = seriesValid() ? cache.series : null; return { state: r.state, true_state: trueState(), V: r.V_um_h, psi: r.psi, msd: r.msd, taus: r.taus_s, verdict: verdict().text, published: r.published || null, network: netBrief(), series: s ? s.points.map(function (p) { return { set: p.set, state: p.state, psi: p.psi }; }) : null }; }
   };
 })();
 
