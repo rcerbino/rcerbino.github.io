@@ -245,8 +245,19 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
   interactions (said on the page; tried and dropped: a theory density field, and a grid flow solver, branch ddm-flow-wip); `truth.interact` holds the simulation's own S(q). Method: Lu et al.,
   Phys. Rev. Lett. 108, 218103 (2012). Check: `node test-crowd.js` (about a minute).
 
+- "Proteins" /ddm/proteins/ (`static/ddm/proteins/index.html`): size and interactions of proteins in bright field. `protein.src.html`,
+  `app-protein.js`, `protein.js` (pair potential: hard sphere of R_h, screened charge Z with the salt, short-range attraction eps;
+  B2/A2, k_D = 2 A2 M - 6.55 v_h, D0, S(0) and D_c to first order in c), `field-movie.js` (the movie as a density field, not single
+  proteins: cosine modes between the walls, each a random process with variance N S(0) and rate D_c (q^2 + k^2), exact averaging over
+  the exposure), `protein-engine.js` (at each q: d = A g + B, B from the camera, g with the depth of field and the exposure; D the
+  weighted mean of ln D; a series gives D0, k_D, R_h and A2 from two weighted lines, the amplitudes refitted at the D of the line) and
+  `worker-protein.js` (the bench: four movies analysed together; the series: five concentrations, each with its own seeds). Presets in
+  `PROTEINS` in `app-protein.js`: an antibody (attraction set for k_D near -5 mL/g at 115 mM, Laber et al. 2022), albumin (radius and k_D as
+  in Guidolin et al., Macromolecules 56, 8290, 2023), lysozyme and an illustrative sticky antibody. Standard bench: ORCA binned 2 x 2,
+  condenser NA 0.1. Check: `node test-protein.js` (about two minutes).
+
 All application pages have a fourth reader level, "Addict" (`#addict`): one switch for each step the
-analysis adds to the published method (`x_*` settings in `app.js`, `app-swim.js`, `app-drift.js`, `app-rheo.js` and `app-crowd.js`, mapped to engine options;
+analysis adds to the published method (`x_*` settings in `app.js`, `app-swim.js`, `app-drift.js`, `app-rheo.js`, `app-crowd.js` and `app-protein.js`, mapped to engine options;
 `opts.published_only` switches them all off), and a "published method only" row computed on the same movie.
 Each such step is described in the methods text and listed under "What this page adds to the published
 methods" (no tags in the text). A new step that is not in the cited papers gets both a list entry and a switch.
@@ -257,9 +268,10 @@ shareable. "Download the movie" writes the analysed frames as a 32-bit TIFF (`ti
 
 After any change to the sources: run `python3 ddm/build.py`, then `python3 build.py --check`, and commit
 both. Checks: `cd ddm && node test-optics.js data/mie_ref.json && node test-engine.js && node test-movie.js`
-(the last takes several minutes), for the swimmers `node test-swim.js && node test-active.js`, for the drift page `node test-drift.js`, for the rheology page `node test-rheo.js`, and for the crowded page `node test-crowd.js`.
+(the last takes several minutes), for the swimmers `node test-swim.js && node test-active.js`, for the drift page `node test-drift.js`, for the rheology page `node test-rheo.js`, for the crowded page `node test-crowd.js`, and for the proteins page `node test-protein.js`.
+Notebooks for readers are in `static/ddm/notebooks/` (`ddm-sizing.ipynb` with fastDDM, `ddm-rheology.ipynb` with numpy and scipy for log-spaced frames). Each was run on the page's standard movie (downloaded TIFF and frame times); rerun them after a change to the analysis or to the export, and update the numbers quoted in them and on the pages.
 `python3 ddm/build.py --preview` writes stand-alone copies (`ddm-landing.html`, `ddm-hands-on.html`,
-`ddm-swimmers.html`, `ddm-drift.html`, `ddm-rheology.html`, `ddm-crowded.html`, linked to each other, Google Fonts) for previews outside the site; do not commit them.
+`ddm-swimmers.html`, `ddm-drift.html`, `ddm-rheology.html`, `ddm-crowded.html`, `ddm-proteins.html`, linked to each other, Google Fonts) for previews outside the site; do not commit them.
 The page text follows the writing style above; it must stay ASCII (the build refuses other characters).
 
 ## Analytics

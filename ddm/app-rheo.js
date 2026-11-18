@@ -317,13 +317,13 @@
   const CONTROLS = [
     { key: "particle", group: "Sample", lvl: 2, label: "Material of the beads", kind: "select", options: function () { return SHAPE_MATERIALS.sphere.map(function (k) { return [k, MATERIALS[k]]; }); } },
     { key: "n_custom", group: "Sample", lvl: 1, label: "Particle refractive index", kind: "lin", min: 1.3, max: 2.6, step: 0.01, fmt: function (v) { return v.toFixed(2); }, when: function () { return state.particle === "custom"; } },
-    { key: "diameter_um", group: "Sample", lvl: 1, label: "Diameter of the beads", kind: "log", min: 0.1, max: 3, fmt: fmtSize, hint: function () { return (level === "curious" ? "Smaller beads move further, but show less. " : "In the solvent alone they would diffuse with D = " + fmtSig(dSE(), 3) + " " + MU + "m\u00b2/s. ") + cageHint(); } },
+    { key: "diameter_um", group: "Sample", lvl: 1, label: "Diameter of the beads", kind: "log", entry: { unit: MU + "m", scale: 1, step: 0.01, digits: 3 }, min: 0.1, max: 3, fmt: fmtSize, hint: function () { return (level === "curious" ? "Smaller beads move further, but show less. " : "In the solvent alone they would diffuse with D = " + fmtSig(dSE(), 3) + " " + MU + "m\u00b2/s. ") + cageHint(); } },
     { key: "phi", group: "Sample", lvl: 2, label: "Concentration of beads (volume fraction)", kind: "log", min: 1e-6, max: 1e-2, fmt: fmtPhi, hint: function () { return particleCount() + " particles in the simulated volume." + (phiCapped ? " Lowered to fit what the browser can follow (" + MAX_PARTICLES + " particles even in the smallest simulated field)." : "") + (phiRaised ? " Raised so that a few particles are in the simulated field." : ""); } },
     { key: "liquid", group: "Sample", lvl: 2, label: "Solvent", kind: "select", options: Object.keys(LIQUIDS).map(function (k) { return [k, LIQUIDS[k]]; }) },
     { key: "glycerol_w", group: "Sample", lvl: 2, label: "Glycerol (by mass)", kind: "lin", min: 0, max: 0.95, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, when: function () { return state.liquid === "glycerol"; }, hint: function () { return "Viscosity " + fmtPas(solventPa_s()) + " at " + Math.round(state.T_C) + " " + DEG + "C."; } },
     { key: "n_liquid", group: "Sample", lvl: 3, label: "Liquid refractive index", kind: "lin", min: 1.30, max: 1.60, step: 0.005, fmt: function (v) { return v.toFixed(3); }, when: function () { return state.liquid === "custom"; } },
     { key: "visc_mPa_s", group: "Sample", lvl: 3, label: "Liquid viscosity", kind: "log", min: 0.3, max: 1000, fmt: function (v) { return fmtSig(v, 2) + " mPa s"; }, when: function () { return state.liquid === "custom"; } },
-    { key: "T_C", group: "Sample", lvl: 2, label: "Temperature", kind: "lin", min: 5, max: 60, step: 1, fmt: function (v) { return v.toFixed(0) + " " + DEG + "C"; } },
+    { key: "T_C", group: "Sample", lvl: 2, label: "Temperature", kind: "lin", min: 5, max: 60, step: 1, entry: { unit: DEG + "C", scale: 1, step: 1, digits: 0 }, fmt: function (v) { return v.toFixed(0) + " " + DEG + "C"; } },
     { key: "cell_um", group: "Sample", lvl: 2, label: "Chamber thickness", kind: "log", min: 1, max: 100, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m"; }, hint: function () { return particleCount() > 30000 ? "Too many particles for the browser (" + particleCount() + "): lower the concentration or simulate a smaller part of the image." : state.mode === "dic" && state.cell_um >= 200 ? "DIC is simulated in cells up to 200 " + MU + "m." : state.cell_um > 60 ? "Thick cells take longer to simulate (up to about 20 s): far from focus each particle's image changes with depth in many ways." : ""; } },
     { key: "focus_frac", group: "Sample", lvl: 2, label: "Focus height in the chamber", kind: "lin", min: 0, max: 1, step: 0.05, fmt: function (v) { return fmtSig(v * state.cell_um, 2) + " " + MU + "m above the bottom"; } },
 
@@ -496,14 +496,22 @@
       const id = "c-" + c.key;
       let hintEl = null;
       if (c.kind === "log" || c.kind === "lin") {
-        wrap.innerHTML = '<div class="row"><label for="' + id + '"></label><output for="' + id + '"></output></div><input type="range" id="' + id + '">';
+        // a number box replaces the read-out where an exact value matters (c.entry: unit, scale from the stored value, step)
+        const E = c.entry;
+        wrap.innerHTML = '<div class="row"><label for="' + id + '"></label>' + (E ? '<span class="numentry"><input type="number" inputmode="decimal"> ' + E.unit + '</span>' : '<output for="' + id + '"></output>') + '</div><input type="range" id="' + id + '">';
         wrap.querySelector("label").textContent = typeof c.label === "function" ? c.label() : c.label;
-        const inp = wrap.querySelector("input"), out = wrap.querySelector("output");
+        const inp = wrap.querySelector('input[type="range"]'), out = wrap.querySelector("output"), num = wrap.querySelector('input[type="number"]');
         if (c.kind === "log") { inp.min = 0; inp.max = 1000; inp.step = 1; } else { inp.min = c.min; inp.max = c.max; inp.step = c.step; }
         const read = function () { return c.kind === "log" ? c.min * Math.pow(c.max / c.min, inp.value / 1000) : parseFloat(inp.value); };
-        inp.addEventListener("input", function () { out.textContent = c.fmt(read()); inp.setAttribute("aria-valuetext", out.textContent); });
+        const show = function (v) { const t = c.fmt(v); if (out) out.textContent = t; else num.value = +(v * E.scale).toFixed(E.digits); inp.setAttribute("aria-valuetext", t); };
+        if (num) {
+          num.min = c.min * E.scale; num.max = c.max * E.scale; num.step = E.step;
+          num.setAttribute("aria-label", (typeof c.label === "function" ? c.label() : c.label) + " (" + E.unit + ")");
+          num.addEventListener("change", function () { const v = parseFloat(num.value) / E.scale; if (!isFinite(v)) { show(state[c.key]); return; } state[c.key] = Math.min(c.max, Math.max(c.min, v)); ctlEls[c.key].set(state[c.key]); onChange(c.key); });
+        }
+        inp.addEventListener("input", function () { show(read()); });
         inp.addEventListener("change", function () { state[c.key] = read(); onChange(c.key); });
-        ctlEls[c.key] = { wrap: wrap, set: function (v) { inp.value = c.kind === "log" ? 1000 * Math.log(v / c.min) / Math.log(c.max / c.min) : v; out.textContent = c.fmt(v); inp.setAttribute("aria-valuetext", out.textContent); } };
+        ctlEls[c.key] = { wrap: wrap, set: function (v) { inp.value = c.kind === "log" ? 1000 * Math.log(v / c.min) / Math.log(c.max / c.min) : v; show(v); } };
       } else if (c.kind === "select" || c.kind === "objective") {
         wrap.innerHTML = '<label for="' + id + '"></label><select id="' + id + '"></select>';
         wrap.querySelector("label").textContent = typeof c.label === "function" ? c.label() : c.label;
@@ -1185,6 +1193,7 @@
       cmpTxt = "Dashed: the earlier run (" + compare.label + "); thick line: now (" + VE[state.mat].short + "), both at a stripe spacing of " + fmtSig(2 * Math.PI / q, 2) + " " + MU + "m." + (mo && mn ? " After " + fmtDur(tEnd) + ", " + left(mo) + " of the pattern was left before, " + left(mn) + " now." : "");
     }
     a.done();
+    fillNumbers("curves-numbers", ["Delay (s)"].concat(pick.map(function (k) { return "q = " + fmtSig(res.q_per_um[res.bins[k]], 3); })), taus.map(function (t, li) { return [t].concat(pick.map(function (k) { return res.f[k][li]; })); }));
     const leg = $("curves-legend"); leg.innerHTML = "";
     if (cmpTxt) { const s = document.createElement("span"); s.className = "compare"; s.textContent = cmpTxt; leg.appendChild(s); }
     pick.forEach(function (k) { const q = res.q_per_um[res.bins[k]], s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(q)) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / q, 2) + " " + MU + "m" : "q = " + q.toFixed(2) + " " + MU + "m\u207b\u00b9"); leg.appendChild(s); });
@@ -1210,6 +1219,7 @@
       dot(ctx, X, a.fy(v), 2.8, C.ink, null);
     });
     a.done();
+    fillNumbers("msd-numbers", ["Delay (s)", "Measured (" + MU + "m\u00b2)", "Simulated beads (" + MU + "m\u00b2)"], taus.map(function (t, li) { return [t, m.m_um2[li] > 0 ? m.m_um2[li] : null, trueMsd(t)]; }));
     const ul = $("msd-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
     add(level === "curious" ? "Coloured dots: from each stripe spacing alone, in the colours of step 5. Large dots and line: all of them together." : "Coloured dots: the displacement that gives the measured f at each q alone (colours of step 5; with the depth of field, see the math), where f is clearly below 1 and above 0.15. Large dots and line: combined over q, with its uncertainty (jackknife over ten parts of the movie), and the smooth curve used below.");
@@ -1352,6 +1362,7 @@
         w_rad_s: r.w_rad_s.map(function (w) { return +w.toPrecision(3); }), G_storage_Pa: r.Gp_Pa.map(function (g) { return +g.toPrecision(3); }), G_loss_Pa: r.Gpp_Pa.map(function (g) { return +g.toPrecision(3); }) } };
     obj.simulation = Object.assign({}, cache.cfg, { visco: { material: state.mat, G_inf_Pa: cache.cfg.visco.G_inf_Pa, modes: cache.cfg.visco.modes.map(function (m) { return [+m[0].toPrecision(3), +m[1].toPrecision(3)]; }) } });
     $("settings-json").textContent = JSON.stringify(obj, null, 1).replace(/\[\s+([-\d.e+,\s\[\]]+?)\s+\]/g, function (m, a) { return "[" + a.replace(/\s+/g, " ") + "]"; });
+    focusableScrollers();
   }
   function renderLag() { const res = cache.res, li = lagIndex(); $("lag").max = res.lags.length - 1; $("lag-out").textContent = fmtDur(res.taus_s[li]) + (res.pairs ? " (" + res.lags[li] + (res.lags[li] === 1 ? " frame interval, " : " frame intervals, ") + res.pairs[li].length / 2 + " pairs of frames)" : " (" + res.lags[li] + (res.lags[li] === 1 ? " frame)" : " frames)")); $("lag").setAttribute("aria-valuetext", fmtDur(res.taus_s[li])); }
   function renderAll() {
@@ -1468,6 +1479,14 @@
     if (!el) { el = document.createElement("div"); el.id = "sr-live"; el.className = "sr-only"; el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
     el.textContent = ""; setTimeout(function () { el.textContent = t; }, 50);
   }
+
+  // code and equations wider than the page scroll sideways: they take the keyboard focus so they can be scrolled without a mouse
+  function focusableScrollers() { document.querySelectorAll("pre, .eq").forEach(function (el) { if (el.scrollWidth > el.clientWidth + 1) { el.tabIndex = 0; if (!el.getAttribute("aria-label")) el.setAttribute("aria-label", el.tagName === "PRE" ? "Code" : "Equation"); } else el.removeAttribute("tabindex"); }); }
+  document.addEventListener("toggle", function () { focusableScrollers(); }, true);
+  window.addEventListener("resize", function () { focusableScrollers(); });
+  window.addEventListener("load", function () { focusableScrollers(); });
+  // charts drawn on canvases are announced as pictures, with their description
+  document.querySelectorAll("canvas[aria-label]").forEach(function (c) { if (!c.getAttribute("role")) c.setAttribute("role", "img"); });
 
   // ---- wiring -------------------------------------------------------------------------------
   buildControls(); buildCards(); buildPredictions();

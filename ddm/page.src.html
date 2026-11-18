@@ -156,6 +156,7 @@ details.more dl { margin-top: 0.4rem; }
 .cblock[data-block="sample"] { --c: var(--blk-sample); }
 .cblock[data-block="microscope"] { --c: var(--blk-microscope); }
 .cblock[data-block="camera"] { --c: var(--blk-camera); }
+.cblock[data-block="camera"] > summary h3, .cblock[data-block="camera"] .csub h4 { color: color-mix(in srgb, var(--c) 40%, var(--ink)); }   /* the yellow needs more ink to be readable */
 .cblock[data-block="analysis"] { --c: var(--blk-analysis); }
 .cblock > summary { cursor: pointer; list-style: none; display: grid; gap: 0.15rem; }
 .cblock > summary::-webkit-details-marker { display: none; }
@@ -173,6 +174,8 @@ details.more dl { margin-top: 0.4rem; }
 .ctl output { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; white-space: nowrap; }
 .ctl input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
 .ctl select, .ctl input[type="number"] { font: inherit; padding: 0.3rem 0.4rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink); width: 100%; }
+.ctl .numentry { display: inline-flex; align-items: baseline; gap: 0.3rem; white-space: nowrap; color: var(--accent); font-weight: 600; }
+.ctl .numentry input[type="number"] { width: 5.5rem; padding: 0.15rem 0.3rem; text-align: right; font-variant-numeric: tabular-nums; }
 .ctl .hint { font-size: 0.78rem; color: var(--muted); line-height: 1.35; }
 .qrange { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
 .btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -296,7 +299,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap intro">
     <div>
       <p class="eyebrow">Differential dynamic microscopy</p>
-      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><span aria-current="page">Sizing particles</span><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a><a href="../crowded/">Crowded particles</a></nav>
+      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><span aria-current="page">Sizing particles</span><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a><a href="../crowded/">Crowded particles</a><a href="../proteins/">Proteins</a></nav>
       <h1>Sizing particles from how they move</h1>
       <p class="lede">Particles in a liquid jiggle because the molecules around them keep kicking them, and small particles jiggle faster than large ones. Differential dynamic microscopy (DDM) measures this motion from an ordinary microscope movie without following any single particle, so it works even when the particles are too small, too faint or too crowded to be followed one by one. From how fast they wander follows their size: the same principle as dynamic light scattering (DLS), but with a microscope, many scattering angles at once, and in samples where DLS struggles (turbid or fluorescent ones, or a drop too small for a cuvette). Particle sizing is one use of DDM among many (see "Beyond sizing" below). Here a simulated microscope lets you run the whole analysis yourself, from the raw movie to a particle size.</p>
       <fieldset class="levels">
@@ -461,6 +464,7 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
             <div class="chart"><canvas id="chart-curves" aria-label="Curves for several wave vectors"></canvas></div>
             <div class="legend" id="curves-legend"></div>
           </figure>
+          <details class="numbers" id="curves-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <div class="predict" data-predict="size" data-right="right">
             <div class="q">Predict first: the particles become twice as large. Do the curves move to the left or to the right?</div>
             <div class="btns"><button type="button" data-guess="left">Left, faster</button><button type="button" data-guess="right">Right, slower</button></div>
@@ -523,6 +527,7 @@ fit_res, model_res = fit_multik(aa, model, k_ref, use_err=True,
             <figcaption>Apparent size at each <i>q</i>: what Stokes-Einstein gives from that pattern alone (dots, with their uncertainty; squares: cumulant fits). For identical particles the dots scatter around a flat line. With a spread of sizes they change with <i>q</i>, because each size shows with a different weight at each <i>q</i> (dashed red line: what the simulated particles give); at small <i>q</i> particles leaving the focal plane can pull them down. The black line is the measured size. This is the microscope's counterpart of measuring DLS at several angles.</figcaption>
             <div class="chart short"><canvas id="chart-size" aria-label="Apparent size against wave vector"></canvas></div>
           </figure>
+          <details class="numbers lvl-2" id="size-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <figure class="viz lvl-3">
             <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>). <i>A</i> falls at high <i>q</i> because the optics blur fine patterns; where it sinks into <i>B</i> the rates can no longer be read.</figcaption>
             <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>

@@ -154,6 +154,7 @@ details.more dl { margin-top: 0.4rem; }
 .cblock[data-block="sample"] { --c: var(--blk-sample); }
 .cblock[data-block="microscope"] { --c: var(--blk-microscope); }
 .cblock[data-block="camera"] { --c: var(--blk-camera); }
+.cblock[data-block="camera"] > summary h3, .cblock[data-block="camera"] .csub h4 { color: color-mix(in srgb, var(--c) 40%, var(--ink)); }   /* the yellow needs more ink to be readable */
 .cblock[data-block="analysis"] { --c: var(--blk-analysis); }
 .cblock > summary { cursor: pointer; list-style: none; display: grid; gap: 0.15rem; }
 .cblock > summary::-webkit-details-marker { display: none; }
@@ -171,6 +172,8 @@ details.more dl { margin-top: 0.4rem; }
 .ctl output { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; white-space: nowrap; }
 .ctl input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
 .ctl select, .ctl input[type="number"] { font: inherit; padding: 0.3rem 0.4rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink); width: 100%; }
+.ctl .numentry { display: inline-flex; align-items: baseline; gap: 0.3rem; white-space: nowrap; color: var(--accent); font-weight: 600; }
+.ctl .numentry input[type="number"] { width: 5.5rem; padding: 0.15rem 0.3rem; text-align: right; font-variant-numeric: tabular-nums; }
 .ctl .hint { font-size: 0.78rem; color: var(--muted); line-height: 1.35; }
 .qrange { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
 .btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -302,7 +305,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap intro">
     <div>
       <p class="eyebrow">Differential dynamic microscopy</p>
-      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a><span aria-current="page">Crowded particles</span></nav>
+      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a><span aria-current="page">Crowded particles</span><a href="../proteins/">Proteins</a></nav>
       <h1>How does a crowd of particles move?</h1>
       <p class="lede">Fill a liquid with particles and each one ends up in a cage of neighbours: the crowd takes on a typical spacing, and it moves differently from particles on their own. Differential dynamic microscopy (DDM) reads both the order and the motion from one microscope movie (Lu et al. 2012); here you can check what it finds on a simulated crowd.</p>
       <p class="start-here"><a href="#try-dyed">Try this first</a>: what changes when only a few particles are dyed? Predict, then watch the page check it.</p>
@@ -509,6 +512,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             <div class="chart"><canvas id="chart-curves" aria-label="How much of each pattern is left against the delay"></canvas></div>
             <div class="legend" id="curves-legend"></div>
           </figure>
+          <details class="numbers" id="curves-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <div class="predict" data-predict="crowd" data-right="slower">
             <div class="q">Predict first: the volume fraction goes from <span data-pv="phi">30</span> % to 45 %. Does the pattern at the spacing of neighbours fade faster or more slowly?</div>
             <div class="btns"><button type="button" data-guess="faster">Faster</button><button type="button" data-guess="slower">More slowly</button><button type="button" data-guess="same">The same</button></div>

@@ -287,7 +287,7 @@
     { key: "shape", group: "Sample", lvl: 1, label: "Shape", kind: "select", options: function () { return Object.keys(SHAPES).filter(function (k) { return state.mode !== "dic" || k === "sphere"; }).map(function (k) { return [k, SHAPES[k]]; }); }, hint: function () { return state.mode === "dic" ? "DIC is simulated for spheres only." : shapeHint(); } },
     { key: "particle", group: "Sample", lvl: 1, label: "Material", kind: "select", options: function () { return SHAPE_MATERIALS[state.shape].map(function (k) { return [k, MATERIALS[k]]; }); } },
     { key: "n_custom", group: "Sample", lvl: 1, label: function () { return state.shape === "bisphere" ? "Ordinary refractive index (n_o)" : "Particle refractive index"; }, kind: "lin", min: 1.3, max: 2.6, step: 0.01, fmt: function (v) { return v.toFixed(2); }, when: function () { return state.particle === "custom"; } },
-    { key: "diameter_um", group: "Sample", lvl: 1, label: function () { return SIZE_LABEL[state.shape]; }, kind: "log", min: 0.03, max: 5, fmt: fmtSize },
+    { key: "diameter_um", group: "Sample", lvl: 1, label: function () { return SIZE_LABEL[state.shape]; }, kind: "log", entry: { unit: MU + "m", scale: 1, step: 0.01, digits: 3 }, min: 0.03, max: 5, fmt: fmtSize },
     { key: "aspect", group: "Sample", lvl: 1, label: function () { return ASPECT_LABEL[state.shape] || "Aspect ratio"; }, kind: "log", min: 1.2, max: 20, fmt: function (v) { return fmtSig(Math.max(state.shape === "rod" ? 2 : 1, v), 2); }, when: BODY, hint: function () { return state.shape === "rod" && state.aspect < 2 ? "Rods are simulated from aspect ratio 2 (the friction formulas hold from there)." : ""; } },
     { key: "dn", group: "Sample", lvl: 2, label: "Birefringence (n_e - n_o)", kind: "lin", min: -0.2, max: 0.2, step: 0.01, fmt: function (v) { return (v >= 0 ? "+" : "") + v.toFixed(2); }, when: function () { return state.shape === "bisphere" && TRANS(); }, hint: function () { return state.particle === "mfa" ? "Hyflon MFA: partly crystalline, so weakly birefringent; no published value found, 0.02 is an assumption (crystalline PTFE colloids show about 0.04). The sign does not change the dynamics." : "Optic axis fixed in the particle. A uniform axis is assumed; liquid-crystal droplets have a director field that lowers the effective value."; } },
     { key: "dn_body", group: "Sample", lvl: 3, label: "Birefringence of the material (n_e - n_o)", kind: "lin", min: -0.2, max: 0.2, step: 0.01, fmt: function (v) { return (v >= 0 ? "+" : "") + v.toFixed(2); }, when: function () { return BODY() && TRANS(); }, hint: "Optic axis along the symmetry axis. The shape adds its own (form) birefringence even at zero." },
@@ -298,7 +298,7 @@
     { key: "glycerol_w", group: "Sample", lvl: 2, label: "Glycerol (by mass)", kind: "lin", min: 0, max: 0.95, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, when: function () { return state.liquid === "glycerol"; } },
     { key: "n_liquid", group: "Sample", lvl: 3, label: "Liquid refractive index", kind: "lin", min: 1.30, max: 1.60, step: 0.005, fmt: function (v) { return v.toFixed(3); }, when: function () { return state.liquid === "custom"; } },
     { key: "visc_mPa_s", group: "Sample", lvl: 3, label: "Liquid viscosity", kind: "log", min: 0.3, max: 1000, fmt: function (v) { return fmtSig(v, 2) + " mPa s"; }, when: function () { return state.liquid === "custom"; } },
-    { key: "T_C", group: "Sample", lvl: 2, label: "Temperature", kind: "lin", min: 5, max: 60, step: 1, fmt: function (v) { return v.toFixed(0) + " " + DEG + "C"; } },
+    { key: "T_C", group: "Sample", lvl: 2, label: "Temperature", kind: "lin", min: 5, max: 60, step: 1, entry: { unit: DEG + "C", scale: 1, step: 1, digits: 0 }, fmt: function (v) { return v.toFixed(0) + " " + DEG + "C"; } },
     { key: "cell_um", group: "Sample", lvl: 2, label: "Chamber thickness", kind: "log", min: 1, max: 500, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m"; }, hint: function () { return particleCount() > 30000 ? "Too many particles for the browser (" + particleCount() + "): lower the concentration or simulate a smaller part of the image." : state.mode === "dic" && state.cell_um >= 200 ? "DIC is simulated in cells up to 200 " + MU + "m." : state.cell_um > 60 ? "Thick cells take longer to simulate (up to about 20 s): far from focus each particle's image changes with depth in many ways." : ""; } },
     { key: "focus_frac", group: "Sample", lvl: 2, label: "Focus height in the chamber", kind: "lin", min: 0, max: 1, step: 0.05, fmt: function (v) { return fmtSig(v * state.cell_um, 2) + " " + MU + "m above the bottom"; } },
     { key: "settle", group: "Sample", lvl: 2, label: "Gravity and walls", kind: "select", options: [["off", "Off: free diffusion in the whole chamber"], ["on", "On: particles settle and slow down near the glass"]], hint: settleHint },
@@ -493,14 +493,22 @@
       const id = "c-" + c.key;
       let hintEl = null;
       if (c.kind === "log" || c.kind === "lin") {
-        wrap.innerHTML = '<div class="row"><label for="' + id + '"></label><output for="' + id + '"></output></div><input type="range" id="' + id + '">';
+        // a number box replaces the read-out where an exact value matters (c.entry: unit, scale from the stored value, step)
+        const E = c.entry;
+        wrap.innerHTML = '<div class="row"><label for="' + id + '"></label>' + (E ? '<span class="numentry"><input type="number" inputmode="decimal"> ' + E.unit + '</span>' : '<output for="' + id + '"></output>') + '</div><input type="range" id="' + id + '">';
         wrap.querySelector("label").textContent = typeof c.label === "function" ? c.label() : c.label;
-        const inp = wrap.querySelector("input"), out = wrap.querySelector("output");
+        const inp = wrap.querySelector('input[type="range"]'), out = wrap.querySelector("output"), num = wrap.querySelector('input[type="number"]');
         if (c.kind === "log") { inp.min = 0; inp.max = 1000; inp.step = 1; } else { inp.min = c.min; inp.max = c.max; inp.step = c.step; }
         const read = function () { return c.kind === "log" ? c.min * Math.pow(c.max / c.min, inp.value / 1000) : parseFloat(inp.value); };
-        inp.addEventListener("input", function () { out.textContent = c.fmt(read()); inp.setAttribute("aria-valuetext", out.textContent); });
+        const show = function (v) { const t = c.fmt(v); if (out) out.textContent = t; else num.value = +(v * E.scale).toFixed(E.digits); inp.setAttribute("aria-valuetext", t); };
+        if (num) {
+          num.min = c.min * E.scale; num.max = c.max * E.scale; num.step = E.step;
+          num.setAttribute("aria-label", (typeof c.label === "function" ? c.label() : c.label) + " (" + E.unit + ")");
+          num.addEventListener("change", function () { const v = parseFloat(num.value) / E.scale; if (!isFinite(v)) { show(state[c.key]); return; } state[c.key] = Math.min(c.max, Math.max(c.min, v)); ctlEls[c.key].set(state[c.key]); onChange(c.key); });
+        }
+        inp.addEventListener("input", function () { show(read()); });
         inp.addEventListener("change", function () { state[c.key] = read(); onChange(c.key); });
-        ctlEls[c.key] = { wrap: wrap, set: function (v) { inp.value = c.kind === "log" ? 1000 * Math.log(v / c.min) / Math.log(c.max / c.min) : v; out.textContent = c.fmt(v); inp.setAttribute("aria-valuetext", out.textContent); } };
+        ctlEls[c.key] = { wrap: wrap, set: function (v) { inp.value = c.kind === "log" ? 1000 * Math.log(v / c.min) / Math.log(c.max / c.min) : v; show(v); } };
       } else if (c.kind === "select" || c.kind === "objective") {
         wrap.innerHTML = '<label for="' + id + '"></label><select id="' + id + '"></select>';
         wrap.querySelector("label").textContent = typeof c.label === "function" ? c.label() : c.label;
@@ -1204,6 +1212,7 @@
     }
     pick.forEach(function (f) { const s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(f.q_per_um)) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / f.q_per_um, 2) + " " + MU + "m" : "q = " + f.q_per_um.toFixed(2)) + (f === selF ? " (picked)" : ""); leg.appendChild(s); });
     if (level !== "curious") { const s = document.createElement("span"); s.textContent = "q in " + MU + "m\u207b\u00b9"; leg.appendChild(s); }
+    fillNumbers("curves-numbers", ["Delay (s)"].concat(pick.map(function (f) { return "q = " + fmtSig(f.q_per_um, 3); })), taus.map(function (t, li) { return [t].concat(pick.map(function (f) { return (res.dq[li][f.bin] - f.B) / f.A; })); }));
   }
   function drawRates() {
     const res = cache.res, w = res.window;
@@ -1265,6 +1274,7 @@
     const vals = pts.map(sz), cu = res.cumulants && res.cumulants.per_q ? res.cumulants.per_q : [];
     cu.forEach(function (e) { vals.push(1000 * sizeFromD(e.gamma_hz / (e.q_per_um * e.q_per_um))); });
     const trueAt = function (q) { return 1000 * sizeFromD(seenAt(tr, q).D * fw); };
+    fillNumbers("size-numbers", ["q (" + MU + "m\u207b\u00b9)", "Apparent size (nm)", "What the simulated particles give (nm)"], pts.map(function (f) { return [f.q_per_um, sz(f), trueAt(f.q_per_um)]; }));
     pts.forEach(function (f) { vals.push(trueAt(f.q_per_um)); });
     vals.sort(function (a, b) { return a - b; });
     const lo = vals[Math.floor(0.05 * (vals.length - 1))], hi = vals[Math.ceil(0.95 * (vals.length - 1))], pad = Math.max(0.15 * (hi - lo), 0.1 * hi);
@@ -1564,6 +1574,7 @@
       result: r.D ? { D_um2_s: +r.D.D_um2_s.toPrecision(4), diameter_nm: Math.round(r.diameter_um * 1000), rel_err: +r.diameter_rel_err.toFixed(3), points: r.D.n_points } : null,
       rotation: r.rot ? (r.rot.D_r_s ? { D_r_per_s: +r.rot.D_r_s.toPrecision(4), rel_err: +r.rot.rel_err.toFixed(3), points: r.rot.n_points } : { none: r.rot.reason }) : undefined };
     $("settings-json").textContent = JSON.stringify(obj, null, 1);
+    focusableScrollers();
   }
   // a test report in the style of ISO 22412 clause 11, for this simulated run
   function renderReport() {
@@ -1739,6 +1750,14 @@
     if (!el) { el = document.createElement("div"); el.id = "sr-live"; el.className = "sr-only"; el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
     el.textContent = ""; setTimeout(function () { el.textContent = t; }, 50);
   }
+
+  // code and equations wider than the page scroll sideways: they take the keyboard focus so they can be scrolled without a mouse
+  function focusableScrollers() { document.querySelectorAll("pre, .eq").forEach(function (el) { if (el.scrollWidth > el.clientWidth + 1) { el.tabIndex = 0; if (!el.getAttribute("aria-label")) el.setAttribute("aria-label", el.tagName === "PRE" ? "Code" : "Equation"); } else el.removeAttribute("tabindex"); }); }
+  document.addEventListener("toggle", function () { focusableScrollers(); }, true);
+  window.addEventListener("resize", function () { focusableScrollers(); });
+  window.addEventListener("load", function () { focusableScrollers(); });
+  // charts drawn on canvases are announced as pictures, with their description
+  document.querySelectorAll("canvas[aria-label]").forEach(function (c) { if (!c.getAttribute("role")) c.setAttribute("role", "img"); });
 
   // ---- wiring -------------------------------------------------------------------------------
   buildControls(); buildCards(); buildPredictions();

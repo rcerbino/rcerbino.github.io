@@ -159,6 +159,7 @@ details.more dl { margin-top: 0.4rem; }
 .cblock[data-block="sample"] { --c: var(--blk-sample); }
 .cblock[data-block="microscope"] { --c: var(--blk-microscope); }
 .cblock[data-block="camera"] { --c: var(--blk-camera); }
+.cblock[data-block="camera"] > summary h3, .cblock[data-block="camera"] .csub h4 { color: color-mix(in srgb, var(--c) 40%, var(--ink)); }   /* the yellow needs more ink to be readable */
 .cblock[data-block="analysis"] { --c: var(--blk-analysis); }
 .cblock > summary { cursor: pointer; list-style: none; display: grid; gap: 0.15rem; }
 .cblock > summary::-webkit-details-marker { display: none; }
@@ -176,6 +177,8 @@ details.more dl { margin-top: 0.4rem; }
 .ctl output { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; white-space: nowrap; }
 .ctl input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
 .ctl select, .ctl input[type="number"] { font: inherit; padding: 0.3rem 0.4rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink); width: 100%; }
+.ctl .numentry { display: inline-flex; align-items: baseline; gap: 0.3rem; white-space: nowrap; color: var(--accent); font-weight: 600; }
+.ctl .numentry input[type="number"] { width: 5.5rem; padding: 0.15rem 0.3rem; text-align: right; font-variant-numeric: tabular-nums; }
 .ctl .hint { font-size: 0.78rem; color: var(--muted); line-height: 1.35; }
 .qrange { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
 .btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -297,7 +300,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap intro">
     <div>
       <p class="eyebrow">Differential dynamic microscopy</p>
-      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><a href="../swimmers/">Swimming cells</a><span aria-current="page">Drifting particles</span><a href="../rheology/">Liquid or solid</a><a href="../crowded/">Crowded particles</a></nav>
+      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><a href="../swimmers/">Swimming cells</a><span aria-current="page">Drifting particles</span><a href="../rheology/">Liquid or solid</a><a href="../crowded/">Crowded particles</a><a href="../proteins/">Proteins</a></nav>
       <h1>Particles carried by a flow, by gravity or by heat</h1>
       <p class="lede">Particles in a liquid jiggle at random, but they can also be carried in one direction: by a flow of the liquid, by gravity when they are denser than the liquid, or by a temperature gradient, which pushes most colloids towards the cold side (thermophoresis). Differential dynamic microscopy (DDM) sees both motions in the same movie. The random part makes each stripe pattern fade; the drift makes it travel, so patterns along the drift fade and oscillate at the same time. Here a simulated microscope lets you measure the speed and the direction of the drift, and find out how slow a drift a movie can still show.</p>
       <fieldset class="levels">
@@ -5057,13 +5060,13 @@ dqt.set_frame_rate(frame_rate)     # frames per second
   const CONTROLS = [
     { key: "particle", group: "Sample", lvl: 1, label: "Material of the spheres", kind: "select", options: function () { return SHAPE_MATERIALS.sphere.map(function (k) { return [k, MATERIALS[k]]; }); } },
     { key: "n_custom", group: "Sample", lvl: 1, label: "Particle refractive index", kind: "lin", min: 1.3, max: 2.6, step: 0.01, fmt: function (v) { return v.toFixed(2); }, when: function () { return state.particle === "custom"; } },
-    { key: "diameter_um", group: "Sample", lvl: 1, label: "Diameter", kind: "log", min: 0.03, max: 5, fmt: fmtSize, hint: function () { return level === "curious" ? "" : "Stokes-Einstein: D = " + fmtSig(dSE(), 3) + " " + MU + "m\u00b2/s."; } },
+    { key: "diameter_um", group: "Sample", lvl: 1, label: "Diameter", kind: "log", entry: { unit: MU + "m", scale: 1, step: 0.01, digits: 3 }, min: 0.03, max: 5, fmt: fmtSize, hint: function () { return level === "curious" ? "" : "Stokes-Einstein: D = " + fmtSig(dSE(), 3) + " " + MU + "m\u00b2/s."; } },
     { key: "phi", group: "Sample", lvl: 2, label: "Concentration (volume fraction)", kind: "log", min: 1e-6, max: 1e-2, fmt: fmtPhi, hint: function () { return particleCount() + " particles in the simulated volume." + (phiCapped ? " Lowered to fit what the browser can follow (" + MAX_PARTICLES + " particles even in the smallest simulated field)." : "") + (phiRaised ? " Raised so that a few particles are in the simulated field." : ""); } },
     { key: "liquid", group: "Sample", lvl: 2, label: "Liquid", kind: "select", options: Object.keys(LIQUIDS).map(function (k) { return [k, LIQUIDS[k]]; }) },
     { key: "glycerol_w", group: "Sample", lvl: 2, label: "Glycerol (by mass)", kind: "lin", min: 0, max: 0.95, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, when: function () { return state.liquid === "glycerol"; } },
     { key: "n_liquid", group: "Sample", lvl: 3, label: "Liquid refractive index", kind: "lin", min: 1.30, max: 1.60, step: 0.005, fmt: function (v) { return v.toFixed(3); }, when: function () { return state.liquid === "custom"; } },
     { key: "visc_mPa_s", group: "Sample", lvl: 3, label: "Liquid viscosity", kind: "log", min: 0.3, max: 1000, fmt: function (v) { return fmtSig(v, 2) + " mPa s"; }, when: function () { return state.liquid === "custom"; } },
-    { key: "T_C", group: "Sample", lvl: 2, label: "Temperature", kind: "lin", min: 5, max: 60, step: 1, fmt: function (v) { return v.toFixed(0) + " " + DEG + "C"; } },
+    { key: "T_C", group: "Sample", lvl: 2, label: "Temperature", kind: "lin", min: 5, max: 60, step: 1, entry: { unit: DEG + "C", scale: 1, step: 1, digits: 0 }, fmt: function (v) { return v.toFixed(0) + " " + DEG + "C"; } },
     { key: "cell_um", group: "Sample", lvl: 2, label: "Chamber thickness", kind: "log", min: 1, max: 100, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m"; }, hint: function () { return particleCount() > 30000 ? "Too many particles for the browser (" + particleCount() + "): lower the concentration or simulate a smaller part of the image." : state.mode === "dic" && state.cell_um >= 200 ? "DIC is simulated in cells up to 200 " + MU + "m." : state.cell_um > 60 ? "Thick cells take longer to simulate (up to about 20 s): far from focus each particle's image changes with depth in many ways." : ""; } },
     { key: "focus_frac", group: "Sample", lvl: 2, label: "Focus height in the chamber", kind: "lin", min: 0, max: 1, step: 0.05, fmt: function (v) { return fmtSig(v * state.cell_um, 2) + " " + MU + "m above the bottom"; } },
     { key: "rho_custom", group: "Sample", lvl: 3, label: "Particle density", kind: "lin", min: 0.8, max: 4, step: 0.01, fmt: function (v) { return v.toFixed(2) + " g/cm" + SUP3; }, when: function () { return state.particle === "custom"; } },
@@ -5241,14 +5244,22 @@ dqt.set_frame_rate(frame_rate)     # frames per second
       const id = "c-" + c.key;
       let hintEl = null;
       if (c.kind === "log" || c.kind === "lin") {
-        wrap.innerHTML = '<div class="row"><label for="' + id + '"></label><output for="' + id + '"></output></div><input type="range" id="' + id + '">';
+        // a number box replaces the read-out where an exact value matters (c.entry: unit, scale from the stored value, step)
+        const E = c.entry;
+        wrap.innerHTML = '<div class="row"><label for="' + id + '"></label>' + (E ? '<span class="numentry"><input type="number" inputmode="decimal"> ' + E.unit + '</span>' : '<output for="' + id + '"></output>') + '</div><input type="range" id="' + id + '">';
         wrap.querySelector("label").textContent = typeof c.label === "function" ? c.label() : c.label;
-        const inp = wrap.querySelector("input"), out = wrap.querySelector("output");
+        const inp = wrap.querySelector('input[type="range"]'), out = wrap.querySelector("output"), num = wrap.querySelector('input[type="number"]');
         if (c.kind === "log") { inp.min = 0; inp.max = 1000; inp.step = 1; } else { inp.min = c.min; inp.max = c.max; inp.step = c.step; }
         const read = function () { return c.kind === "log" ? c.min * Math.pow(c.max / c.min, inp.value / 1000) : parseFloat(inp.value); };
-        inp.addEventListener("input", function () { out.textContent = c.fmt(read()); inp.setAttribute("aria-valuetext", out.textContent); });
+        const show = function (v) { const t = c.fmt(v); if (out) out.textContent = t; else num.value = +(v * E.scale).toFixed(E.digits); inp.setAttribute("aria-valuetext", t); };
+        if (num) {
+          num.min = c.min * E.scale; num.max = c.max * E.scale; num.step = E.step;
+          num.setAttribute("aria-label", (typeof c.label === "function" ? c.label() : c.label) + " (" + E.unit + ")");
+          num.addEventListener("change", function () { const v = parseFloat(num.value) / E.scale; if (!isFinite(v)) { show(state[c.key]); return; } state[c.key] = Math.min(c.max, Math.max(c.min, v)); ctlEls[c.key].set(state[c.key]); onChange(c.key); });
+        }
+        inp.addEventListener("input", function () { show(read()); });
         inp.addEventListener("change", function () { state[c.key] = read(); onChange(c.key); });
-        ctlEls[c.key] = { wrap: wrap, set: function (v) { inp.value = c.kind === "log" ? 1000 * Math.log(v / c.min) / Math.log(c.max / c.min) : v; out.textContent = c.fmt(v); inp.setAttribute("aria-valuetext", out.textContent); } };
+        ctlEls[c.key] = { wrap: wrap, set: function (v) { inp.value = c.kind === "log" ? 1000 * Math.log(v / c.min) / Math.log(c.max / c.min) : v; show(v); } };
       } else if (c.kind === "select" || c.kind === "objective") {
         wrap.innerHTML = '<label for="' + id + '"></label><select id="' + id + '"></select>';
         wrap.querySelector("label").textContent = typeof c.label === "function" ? c.label() : c.label;
@@ -6115,6 +6126,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     const obj = { microscope: "Nikon Ti2-E", objective: objective().n, contrast: state.mode, detector: SCANNING() ? "Nikon AX R, " + SCANNERS[state.scanner].label : cam().label, simulation: cache.cfg, analysis: cache.opts,
       result: { v_um_s: +r.v_um_s.toPrecision(4), v_err_um_s: r.v_err_um_s ? +r.v_err_um_s.toPrecision(2) : null, direction_deg: +r.v_dir_deg.toFixed(1), detected: r.detected, D_um2_s: +r.D_um2_s.toPrecision(4), diameter_nm: Math.round(r.diameter_um * 1000), visibility: { q_star_per_um: +r.visibility.q_star.toPrecision(3), peclet: +r.visibility.peclet.toPrecision(3), n_q: r.visibility.n_q } } };
     $("settings-json").textContent = JSON.stringify(obj, null, 1);
+    focusableScrollers();
   }
   function renderLag() { const res = cache.res, li = lagIndex(); $("lag").max = res.lags.length - 1; $("lag-out").textContent = fmtDur(res.taus_s[li]) + (res.pairs ? " (" + res.lags[li] + (res.lags[li] === 1 ? " frame interval, " : " frame intervals, ") + res.pairs[li].length / 2 + " pairs of frames)" : " (" + res.lags[li] + (res.lags[li] === 1 ? " frame)" : " frames)")); $("lag").setAttribute("aria-valuetext", fmtDur(res.taus_s[li])); }
   function renderAll() {
@@ -6238,6 +6250,14 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     if (!el) { el = document.createElement("div"); el.id = "sr-live"; el.className = "sr-only"; el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
     el.textContent = ""; setTimeout(function () { el.textContent = t; }, 50);
   }
+
+  // code and equations wider than the page scroll sideways: they take the keyboard focus so they can be scrolled without a mouse
+  function focusableScrollers() { document.querySelectorAll("pre, .eq").forEach(function (el) { if (el.scrollWidth > el.clientWidth + 1) { el.tabIndex = 0; if (!el.getAttribute("aria-label")) el.setAttribute("aria-label", el.tagName === "PRE" ? "Code" : "Equation"); } else el.removeAttribute("tabindex"); }); }
+  document.addEventListener("toggle", function () { focusableScrollers(); }, true);
+  window.addEventListener("resize", function () { focusableScrollers(); });
+  window.addEventListener("load", function () { focusableScrollers(); });
+  // charts drawn on canvases are announced as pictures, with their description
+  document.querySelectorAll("canvas[aria-label]").forEach(function (c) { if (!c.getAttribute("role")) c.setAttribute("role", "img"); });
 
   // ---- wiring -------------------------------------------------------------------------------
   // the phase, shown: one stripe pattern carried to the right and one to the left, with a dial for each
