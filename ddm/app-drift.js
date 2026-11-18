@@ -847,7 +847,7 @@
         (k.timing === "global" ? "Global shutter: all rows are exposed together. " : "Rolling shutter: " + (k.timing === "rolling_center" ? "rows are read from the centre outwards" : "rows are read from the top down") + ", the last " + fmtSig(1000 * (k.timing === "rolling_center" ? state.roi / 2 : state.roi) * k.rowTime(state.cam_mode), 3) + " ms after the first. ") +
         (diag > FIELD_NUMBER_MM ? "The sensor diagonal (" + fmtSig(diag, 3) + " mm) is larger than the 25 mm field, so its corners stay dark. " : "");
     }
-    if (simPx() < outPx()) txt += " Your browser simulates the central " + simPx() + " x " + simPx() + " pixels; the full image would reach down to q = " + fmtSig(qloROI, 2) + " " + MU + "m<sup>-1</sup> instead of " + fmtSig(qloSim, 2) + ".";
+    if (simPx() < outPx()) txt += " Your browser simulates the central " + simPx() + " x " + simPx() + " pixels; the full image would also show " + (level === "curious" ? "stripes up to " + fmtSig(2 * Math.PI / qloROI, 2) + " " + MU + "m wide instead of " + fmtSig(2 * Math.PI / qloSim, 2) + "." : "wider stripes, down to q = 2&pi; / spacing = " + fmtSig(qloROI, 2) + " " + MU + "m<sup>-1</sup> instead of " + fmtSig(qloSim, 2) + ".");
     $("fov-specs").innerHTML = txt;
   }
 
@@ -1224,7 +1224,7 @@
     $("along-cap").textContent = byDrift ? "Along the drift" : "Patterns that vary from left to right (q along x)";
     $("across-cap").textContent = byDrift ? "Across the drift" : "Patterns that vary from top to bottom (q along y)";
     const note = $("curves-note"); note.hidden = byDrift && res.visibility.swing;
-    if (byDrift && !res.visibility.swing) note.textContent = "The drift is measured (step 6), but it is too slow to carry any pattern by a whole stripe before diffusion renews it: the curves along it look like those across it, and the maps of step 4 show no fringes. It shows only in small shifts of the phase, averaged over all patterns and the whole movie.";
+    if (byDrift && !res.visibility.swing) note.textContent = "The drift is measured (step 6), but it is too slow to shift any pattern by about a sixth of a stripe (one radian of its cycle) before diffusion renews it: the curves along it look like those across it, and the maps of step 4 show no fringes. It shows only in small shifts of the phase, averaged over all patterns and the whole movie.";
     if (!byDrift) note.textContent = "No drift is seen in the image plane, so no direction of the image is special: the two sets of curves below are simply the patterns along x and along y, and they fade alike, without swinging. " +
       (!ev.plane && ev.speed > 0 ? "A drift along the optical axis cannot make a pattern of the image travel. Its only traces are a little extra fading, as the particles' images change with their height, and, once they have piled up against the glass, their slower diffusion there."
         : ev.plane && ev.speed > 0 ? "The drift set is too slow to move any pattern before diffusion renews it (see step 6)." : "");
@@ -1261,7 +1261,8 @@
     if (level === "curious") add("Dots: how fast each pattern fades, on the black line of slope 2." + (res.detected ? " Squares: how fast it swings along the drift, on the blue line of slope 1." : ""));
     else add("Dots: how fast each pattern fades (\u0393), on the black line D q\u00b2 of slope 2." + (res.detected ? " Squares: how fast it swings along the drift (\u03c9), on the blue line v q of slope 1." : ""));
     if (level !== "curious") add("Dashed red: what the simulated particles should give (D q\u00b2 and, dotted, v q for the drift set).");
-    if (res.detected) add(res.visibility.swing ? "Where the blue line is below the black one, diffusion renews the pattern before the drift carries it by a whole stripe: those patterns do not swing, but their phase still shifts a little, and the measurement uses that too." : "No pattern swings here: diffusion renews each one before the drift carries it by a whole stripe. The drift is measured from the small shifts of the phase of all patterns, averaged over the movie.");
+    if (res.detected) add(res.visibility.swing ? "Where the blue line is below the black one, diffusion renews the pattern before the drift shifts it by about a sixth of a stripe (one radian of its cycle): those patterns do not swing, but their phase still shifts a little, and the measurement uses that too." : "No pattern swings here: diffusion renews each one before the drift shifts it by about a sixth of a stripe (one radian of its cycle). The drift is measured from the small shifts of the phase of all patterns, averaged over the movie.");
+    fillNumbers("chart-numbers", ["q (" + MU + "m\u207b\u00b9)", "Fading rate (1/s)", "Swing rate along the drift (rad/s)", "Used"], pts.map(function (e) { return [e.q_per_um, e.gamma_hz, e.omega_rad_s > 0 ? e.omega_rad_s : null, e.ok ? "yes" : "no"]; }));
   }
   // speed seen along each direction of q: v cos(theta - theta_v)
   function drawSectorV() {
@@ -1480,13 +1481,31 @@
   // the predictions apply to a flow: shown only then (and "double" only while doubling stays on the slider); answered
   // boxes are reset when the reader changes the settings
   let predicting = false, slowRes0 = null;   // the result on screen when the slow-drift question was answered
-  function syncPredictions() {
+  const NOT_FLOW = { text: "This question is about particles carried by a flow, and the bench now shows another cause.", set: {} };
+  const PREDICT_BASE = {
+    reverse: function () { return state.cause !== "flow" ? NOT_FLOW : null; },
+    double: function () { return state.cause !== "flow" ? NOT_FLOW : state.flow_v > 10 ? { text: "This question needs a flow that can still double (at most 20 " + MU + "m/s).", set: {} } : null; }
+  };
+  const PREDICT_VALUES = {};
+  // an exercise that does not fit the sample on the bench says so and offers to go back to its starting sample,
+  // instead of describing a different experiment; numbers in an open question follow the bench
+  function syncPredictionBases() {
     document.querySelectorAll(".predict").forEach(function (box) {
-      const kind = box.getAttribute("data-predict");
-      if (kind === "slow") { box.hidden = false; return; }   // about any sample: what a movie can and cannot rule out
-      box.hidden = state.cause !== "flow" || (kind === "double" && state.flow_v > 10 && !box.classList.contains("answered"));
+      const kind = box.getAttribute("data-predict"), f = PREDICT_BASE[kind], b = f ? f() : null, open = !box.classList.contains("answered");
+      let el = box.querySelector(".base");
+      if (!el && f) {
+        el = document.createElement("div"); el.className = "base"; el.innerHTML = '<span></span> <button type="button">Go back to the standard sample</button>';
+        box.insertBefore(el, box.querySelector(".btns"));
+        el.querySelector("button").addEventListener("click", function () { const s = PREDICT_BASE[kind](); if (s) applyPreset(s.set); });
+      }
+      if (el) { el.hidden = !(b && open); if (b) el.querySelector("span").textContent = b.text; }
+      if (open) {
+        box.querySelectorAll("button[data-guess]").forEach(function (x) { x.disabled = !!b; });
+        if (!b) box.querySelectorAll("[data-pv]").forEach(function (s) { const g = PREDICT_VALUES[s.getAttribute("data-pv")]; if (g) s.textContent = g(); });
+      }
     });
   }
+  function syncPredictions() { syncPredictionBases(); }
   function resetPredictions() {
     document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelector(".a").hidden = true; bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); });
   }
@@ -1498,7 +1517,7 @@
           box.classList.add("answered");
           box.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = true; b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
           box.querySelector(".verdict").textContent = btn.getAttribute("data-guess") === box.getAttribute("data-right") ? "Well guessed." : "Not quite.";
-          box.querySelector(".a").hidden = false;
+          box.querySelector(".a").hidden = false; announce(box.querySelector(".a").textContent);
           const kind = box.getAttribute("data-predict");
           if (kind === "reverse") state.flow_deg = (state.flow_deg + 180) % 360;
           if (kind === "double") state.flow_v = Math.min(20, 2 * state.flow_v);
@@ -1509,10 +1528,57 @@
     });
   }
 
+  // the numbers behind a chart, as a table (for screen readers, and for anyone who wants the values)
+  function fillNumbers(id, head, rows) {
+    const el = $(id); if (!el) return;
+    const v = function (x) { return x === null || x === undefined || (typeof x === "number" && !isFinite(x)) ? "-" : typeof x === "number" ? fmtSig(x, 3) : x; };
+    let h = '<div class="tscroll"><table class="sizing"><thead><tr>' + head.map(function (x) { return '<th scope="col">' + x + '</th>'; }).join("") + '</tr></thead><tbody>';
+    rows.forEach(function (r) { h += '<tr>' + r.map(function (x, i) { return i === 0 ? '<th scope="row">' + v(x) + '</th>' : '<td>' + v(x) + '</td>'; }).join("") + '</tr>'; });
+    el.querySelector("div").innerHTML = h + '</tbody></table></div>';
+  }
+  // exercise feedback, read out by screen readers
+  function announce(t) {
+    let el = $("sr-live");
+    if (!el) { el = document.createElement("div"); el.id = "sr-live"; el.className = "sr-only"; el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
+    el.textContent = ""; setTimeout(function () { el.textContent = t; }, 50);
+  }
+
   // ---- wiring -------------------------------------------------------------------------------
-  buildControls(); buildCards(); buildPredictions();
+  // the phase, shown: one stripe pattern carried to the right and one to the left, with a dial for each
+  function phaseDemo() {
+    const cv = $("phase-demo"); if (!cv) return;
+    let t0 = null, raf = null, visible = false;
+    const draw = function (t) {
+      const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
+      if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+      const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+      if (!C.ink) readColors();
+      const rowH = (H - 18) / 2, dialR = Math.min(rowH * 0.36, 28), sw = W - 2 * dialR - 110, period = Math.max(40, sw / 4);
+      const shift = (reduceMotion ? 0.35 : (t / 4000) % 1) * period;
+      [1, -1].forEach(function (dir, row) {
+        const y0 = 6 + row * (rowH + 6), x0 = 6, x = dir * shift;
+        const ink = hexToRgb(C.ink.length ? C.ink : "#222"), pap = hexToRgb(C.paper.length ? C.paper : "#fff");
+        for (let px = 0; px < sw; px += 2) {
+          const v = 0.5 + 0.5 * Math.cos(2 * Math.PI * (px - x) / period);
+          ctx.fillStyle = "rgb(" + [0, 1, 2].map(function (k) { return Math.round(pap[k] + (ink[k] - pap[k]) * (1 - v) * 0.85); }).join(",") + ")";
+          ctx.fillRect(x0 + px, y0, 2, rowH);
+        }
+        ctx.strokeStyle = C.accent; ctx.setLineDash([3, 3]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x0 + period, y0); ctx.lineTo(x0 + period, y0 + rowH); ctx.stroke(); ctx.setLineDash([]);
+        const cx = x0 + sw + 20 + dialR, cy = y0 + rowH / 2, ph = 2 * Math.PI * x / period;
+        ctx.strokeStyle = C.muted; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, cy, dialR, 0, 2 * Math.PI); ctx.stroke();
+        ctx.strokeStyle = C.accent; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + dialR * Math.sin(ph), cy - dialR * Math.cos(ph)); ctx.stroke();
+        ctx.fillStyle = C.ink; ctx.font = "12px " + getComputedStyle(document.body).fontFamily; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+        ctx.fillText(dir > 0 ? "to the right" : "to the left", cx + dialR + 8, cy);
+      });
+    };
+    const loop = function (t) { if (t0 === null) t0 = t; draw(t - t0); raf = visible && !reduceMotion ? requestAnimationFrame(loop) : null; };
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; if (visible && raf === null) raf = requestAnimationFrame(loop); }).observe(cv);
+    else { visible = true; raf = requestAnimationFrame(loop); }
+    window.addEventListener("resize", function () { draw(0); });
+  }
+  buildControls(); buildCards(); buildPredictions(); phaseDemo();
   document.querySelectorAll('input[name="level"]').forEach(function (r) { r.addEventListener("change", function () { if (r.checked) setLevel(r.value, true); }); });
-  document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }); });
+  document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); const first = document.querySelector(".step"); if (first) first.scrollIntoView({ block: "start" }); else window.scrollTo(0, 0); }); });
   $("btn-reset").addEventListener("click", function () { const keep = LEVEL_RANK[level] >= 3 ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
   $("btn-seed").addEventListener("click", function () { state.seed = (state.seed * 1103515245 + 12345) % 2147483647; schedule(); });
   $("btn-play").addEventListener("click", function () { playing = !playing; $("btn-play").textContent = playing ? "Pause" : "Play"; });

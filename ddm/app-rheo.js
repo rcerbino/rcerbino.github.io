@@ -804,7 +804,7 @@
         (k.timing === "global" ? "Global shutter: all rows are exposed together. " : "Rolling shutter: " + (k.timing === "rolling_center" ? "rows are read from the centre outwards" : "rows are read from the top down") + ", the last " + fmtSig(1000 * (k.timing === "rolling_center" ? state.roi / 2 : state.roi) * k.rowTime(state.cam_mode), 3) + " ms after the first. ") +
         (diag > FIELD_NUMBER_MM ? "The sensor diagonal (" + fmtSig(diag, 3) + " mm) is larger than the 25 mm field, so its corners stay dark. " : "");
     }
-    if (simPx() < outPx()) txt += " Your browser simulates the central " + simPx() + " x " + simPx() + " pixels; the full image would reach down to q = " + fmtSig(qloROI, 2) + " " + MU + "m<sup>-1</sup> instead of " + fmtSig(qloSim, 2) + ".";
+    if (simPx() < outPx()) txt += " Your browser simulates the central " + simPx() + " x " + simPx() + " pixels; the full image would also show " + (level === "curious" ? "stripes up to " + fmtSig(2 * Math.PI / qloROI, 2) + " " + MU + "m wide instead of " + fmtSig(2 * Math.PI / qloSim, 2) + "." : "wider stripes, down to q = 2&pi; / spacing = " + fmtSig(qloROI, 2) + " " + MU + "m<sup>-1</sup> instead of " + fmtSig(qloSim, 2) + ".");
     $("fov-specs").innerHTML = txt;
   }
 
@@ -1017,7 +1017,7 @@
     ctx.putImageData(img, 0, 0);
     drawMapOverlay(); drawFmap();
     const qz = cache.zoomK * 2 * Math.PI / cache.movie.L_um;
-    $("zoom-note").textContent = "The centre of the map above, lightly smoothed (grey: the cross along the axes, left out because the edges of the image add artefacts there), q up to " + fmtSig(qz, 2) + " " + MU + "m\u207b\u00b9 (stripes wider than " + fmtSig(2 * Math.PI / qz, 2) + " " + MU + "m), at the same delay.";
+    $("zoom-note").textContent = "The centre of the map above, lightly smoothed (grey: the cross along the axes, left out because the edges of the image add artefacts there), " + (level === "curious" ? "stripes wider than " + fmtSig(2 * Math.PI / qz, 2) + " " + MU + "m" : "q up to " + fmtSig(qz, 2) + " " + MU + "m\u207b\u00b9 (stripes wider than " + fmtSig(2 * Math.PI / qz, 2) + " " + MU + "m)") + ", at the same delay.";
   }
   function drawMapOverlay() {
     const ov = $("map-ov"), n = cache.movie.n, S = ov.width, s = S / n;
@@ -1242,8 +1242,9 @@
     a.done();
     const ul = $("mod-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
-    add(level === "curious" ? "Blue dots: how elastic the material is (G', the storage modulus). Red squares: how viscous (G'', the loss modulus). Dashed lines: what a rheometer would measure on the material simulated." : "Blue dots: G', red squares: G'', from the beads (bars: jackknife over ten parts of the movie). Dashed: the moduli of the material simulated, as a rheometer would give them. A modulus less than a tenth of the other is left out of the comparison in the result: no method resolves it next to the larger one.");
+    add(level === "curious" ? "Blue dots: how elastic the material is (G', the storage modulus). Red squares: how viscous (G'', the loss modulus). Dashed lines: what a rheometer would measure on the material simulated." : "Blue dots: G', red squares: G'', from the beads (bars: jackknife over ten parts of the movie). Dashed: the moduli of the material simulated, as a rheometer would give them. A modulus less than a tenth of the other is left out of the comparison in the result: this analysis does not consider it reliable next to the larger one.");
     if (LEVEL_RANK[level] >= 3) add("Dotted: Mason's local power-law formulas on the same mean squared displacement.");
+    fillNumbers("chart-numbers", ["Angular frequency (rad/s)", "G' measured (Pa)", "G'' measured (Pa)", "G' simulated (Pa)", "G'' simulated (Pa)"], res.w_rad_s.map(function (w, k) { const g = VISCO.gstar(mat, es, w); return [w, res.Gp_Pa[k], res.Gpp_Pa[k], g[0], g[1]]; }));
   }
 
   // ---- result -------------------------------------------------------------------------------
@@ -1300,8 +1301,8 @@
     if (res.plateau_Pa) nums.push("elastic plateau " + fmtPa(res.plateau_Pa) + " at " + fmtDur(tEnd) + (pTrue ? " (true " + fmtPa(pTrue) + (facts.Ginf > 0 && Math.abs(pTrue / facts.Ginf - 1) > 0.05 ? ", still relaxing towards " + fmtPa(facts.Ginf) : "") + ")" : ""));
     nums.push("measured from " + fmtW(res.w_rad_s[0]) + " to " + fmtW(res.w_rad_s[res.w_rad_s.length - 1]));
     h += '<p class="small" style="margin:0">' + nums.join("; ") + '.</p>';
-    // the rule behind the chip; at the other levels it is under Details
-    if (level === "curious") h += '<p class="small" style="margin:0">How the comparison works: at each frequency the moduli from the beads are set against those of the material simulated. Within about 20 % on average they match, within a factor 1.6 they are off, beyond that far. Where one modulus is less than a tenth of the other, it is left out: no method resolves it next to the larger one.</p>';
+    // the rule behind the chip, at every level
+    h += '<p class="small" style="margin:0">How the comparison works: at each frequency the moduli from the beads are set against those of the material simulated (what a rheometer would measure on it). Within about 20 % on average they match, within a factor 1.6 they are off, beyond that far; if only one modulus is off, the chip says which. Where one modulus is less than a tenth of the other, this analysis does not compare it: from the beads alone its value is not reliable next to the larger one.</p>';
     if (res.plateau_Pa || res.alpha_end < 0.35) h += '<p class="small" style="margin:0">' + (level === "curious" ? "In a solid the beads keep the same places for the whole movie, so one field of view is one sample of the material: from one field to the next the result can change by 5-10 %. Real measurements average a few fields of view." : "A solid holds its beads in one arrangement for the whole movie, so this field of view is a single sample of it: the frozen speckle of the beads' resting places makes the displacement, and the moduli, differ by 5-10 % from one field to the next in our tests (six fields of the soft gel), more than the uncertainty shown, which comes from parts of the same movie. Average a few fields of view (New random sample, at the Researcher level, shows another).") + '</p>';
     if (level !== "curious") {
       const row = function (cls, name, cross, eta, plat, off, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + cross + '</td><td>' + eta + '</td><td>' + plat + '</td><td>' + off + '</td></tr>'; };
@@ -1320,7 +1321,6 @@
       t += '</tbody></table></div>';
       h += t;
       h += '<details class="more"><summary>Details</summary><dl>';
-      h += '<dt>Agreement</dt><dd>The chip compares the moduli from the beads with those of the material simulated (what a rheometer would measure on it), frequency by frequency: on average within about 20 % it matches, within a factor 1.6 it is off, beyond that far; if one modulus is off by more than a factor 1.6, it says which. Where a modulus is less than a tenth of the other, it is not compared at that frequency: no method resolves it next to the larger one</dd>';
       h += '<dt>Patterns used</dt><dd>q from ' + fmtSig(res.window.q_min_used, 2) + ' to ' + fmtSig(res.window.q_max_used, 2) + ' ' + MU + 'm\u207b\u00b9 (' + res.bins.length + ' q); at each delay those where f is clearly below 1 and above 0.15, at least three</dd>';
       h += '<dt>Delays and displacements</dt><dd>' + fmtTime(res.window.t_lo_s) + ' to ' + fmtDur(res.window.t_hi_s) + '; &lang;&Delta;r&sup2;&rang; from ' + fmtSig(res.window.msd_lo_um2, 2) + ' to ' + fmtSig(res.window.msd_hi_um2, 2) + ' ' + MU + 'm&sup2; (the smallest a bead moved, the largest)</dd>';
       h += '<dt>Amplitude and noise</dt><dd>' + (state.x_amp === "off" ? "A = 2 var - B" : "A = 2 &lang;|F|&sup2;&rang; - B (the mean power)") + '; ' + (res.B_camera ? 'B = ' + fmtSig(res.B_camera, 3) + ' from the mean count and the read noise, the same at every q' : 'B at each q from the first delays') + '</dd>';
@@ -1406,7 +1406,30 @@
     constrain(); syncControls(); drawFov(); schedule();
   }
   let predicting = false;
-  function syncPredictions() { /* both questions apply to any material */ }
+  const PREDICT_BASE = {
+    gel: function () { return state.mat === "gel" || state.mat === "critical" || (state.mat === "custom" && state.mat_Ginf > 0) ? { text: "This question starts from a material that flows; " + VE[state.mat].short + " does not.", set: {} } : null; },
+    bigger: function () { return state.diameter_um > 1.5 ? { text: "This question needs beads that can still double in size (at most 3 " + MU + "m).", set: {} } : null; }
+  };
+  const PREDICT_VALUES = {};
+  // an exercise that does not fit the sample on the bench says so and offers to go back to its starting sample,
+  // instead of describing a different experiment; numbers in an open question follow the bench
+  function syncPredictionBases() {
+    document.querySelectorAll(".predict").forEach(function (box) {
+      const kind = box.getAttribute("data-predict"), f = PREDICT_BASE[kind], b = f ? f() : null, open = !box.classList.contains("answered");
+      let el = box.querySelector(".base");
+      if (!el && f) {
+        el = document.createElement("div"); el.className = "base"; el.innerHTML = '<span></span> <button type="button">Go back to the standard sample</button>';
+        box.insertBefore(el, box.querySelector(".btns"));
+        el.querySelector("button").addEventListener("click", function () { const s = PREDICT_BASE[kind](); if (s) applyPreset(s.set); });
+      }
+      if (el) { el.hidden = !(b && open); if (b) el.querySelector("span").textContent = b.text; }
+      if (open) {
+        box.querySelectorAll("button[data-guess]").forEach(function (x) { x.disabled = !!b; });
+        if (!b) box.querySelectorAll("[data-pv]").forEach(function (s) { const g = PREDICT_VALUES[s.getAttribute("data-pv")]; if (g) s.textContent = g(); });
+      }
+    });
+  }
+  function syncPredictions() { syncPredictionBases(); }
   function resetPredictions() {
     document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelector(".a").hidden = true; bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); });
   }
@@ -1418,7 +1441,7 @@
           box.classList.add("answered");
           box.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = true; b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
           box.querySelector(".verdict").textContent = btn.getAttribute("data-guess") === box.getAttribute("data-right") ? "Well guessed." : "Not quite.";
-          box.querySelector(".a").hidden = false;
+          box.querySelector(".a").hidden = false; announce(box.querySelector(".a").textContent);
           const kind = box.getAttribute("data-predict");
           compare = null;
           if (kind === "gel" && state.mat !== "gel") { takeSnapshot(); state.mat = "gel"; lastMat = "gel"; }
@@ -1431,10 +1454,25 @@
     });
   }
 
+  // the numbers behind a chart, as a table (for screen readers, and for anyone who wants the values)
+  function fillNumbers(id, head, rows) {
+    const el = $(id); if (!el) return;
+    const v = function (x) { return x === null || x === undefined || (typeof x === "number" && !isFinite(x)) ? "-" : typeof x === "number" ? fmtSig(x, 3) : x; };
+    let h = '<div class="tscroll"><table class="sizing"><thead><tr>' + head.map(function (x) { return '<th scope="col">' + x + '</th>'; }).join("") + '</tr></thead><tbody>';
+    rows.forEach(function (r) { h += '<tr>' + r.map(function (x, i) { return i === 0 ? '<th scope="row">' + v(x) + '</th>' : '<td>' + v(x) + '</td>'; }).join("") + '</tr>'; });
+    el.querySelector("div").innerHTML = h + '</tbody></table></div>';
+  }
+  // exercise feedback, read out by screen readers
+  function announce(t) {
+    let el = $("sr-live");
+    if (!el) { el = document.createElement("div"); el.id = "sr-live"; el.className = "sr-only"; el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
+    el.textContent = ""; setTimeout(function () { el.textContent = t; }, 50);
+  }
+
   // ---- wiring -------------------------------------------------------------------------------
   buildControls(); buildCards(); buildPredictions();
   document.querySelectorAll('input[name="level"]').forEach(function (r) { r.addEventListener("change", function () { if (r.checked) setLevel(r.value, true); }); });
-  document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }); });
+  document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); const first = document.querySelector(".step"); if (first) first.scrollIntoView({ block: "start" }); else window.scrollTo(0, 0); }); });
   $("btn-reset").addEventListener("click", function () { compare = null; const keep = LEVEL_RANK[level] >= 3 ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
   $("btn-seed").addEventListener("click", function () { state.seed = (state.seed * 1103515245 + 12345) % 2147483647; schedule(); });
   $("btn-play").addEventListener("click", function () { playing = !playing; $("btn-play").textContent = playing ? "Pause" : "Play"; });

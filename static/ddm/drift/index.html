@@ -222,6 +222,7 @@ figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(
 .toolbar input[type="range"] { flex: 1 1 10rem; accent-color: var(--accent); }
 .toolbar.pickbar { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 0.8rem; margin-top: 0.5rem; }
 .toolbar.pickbar input[type="range"] { width: 100%; min-width: 0; }
+@media (pointer: coarse) { input[type="range"] { min-height: 2.5rem; } }   /* a larger touch area; the track stays thin */
 .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
 .seg button { border: 0; border-radius: 0; padding: 0.3rem 0.7rem; background: var(--panel); }
 .seg button[aria-pressed="true"] { background: var(--tint); color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
@@ -241,6 +242,16 @@ pre.code { font-family: var(--mono); font-size: 0.8rem; background: var(--paper)
 .predict .q { font-weight: 600; }
 .predict .a { color: var(--ink); }
 .predict .verdict { font-weight: 600; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.numbers { font-family: var(--sans); font-size: 0.88rem; }
+.numbers summary { cursor: pointer; color: var(--muted); }
+.takeaway { font-family: var(--sans); font-size: 0.92rem; border-left: 3px solid var(--accent); padding: 0.1rem 0 0.1rem 0.8rem; max-width: var(--measure); margin: 0; }
+.transfer { font-family: var(--sans); font-size: 0.92rem; border: 1px solid var(--rule); border-radius: 6px; padding: 0.6rem 0.9rem; max-width: var(--measure); }
+.transfer summary, .inputs summary { cursor: pointer; }
+.inputs { font-family: var(--sans); font-size: 0.92rem; max-width: var(--measure); }
+.inputs p { margin: 0.5rem 0 0; }
+.transfer p { margin: 0.5rem 0 0; }
+.predict .base { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; color: var(--muted); }
 .predict button:disabled { cursor: default; opacity: 0.55; }
 .predict button[aria-pressed="true"] { opacity: 1; border-color: var(--accent); font-weight: 600; }
 
@@ -346,6 +357,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <div class="pstrip" id="particle-strip"></div>
           <figcaption id="particle-text"></figcaption>
         </figure>
+        <p class="takeaway"><b>What this step gives:</b> the finest stripes the movie can hold, and how strongly each particle shows in them: the objective and the light decide both.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: how each image is computed</summary>
           <p>As on the <a href="../sizing/">sizing page</a>: the light scattered by each sphere (Mie theory) interferes with the transmitted light through the condenser and objective apertures (bright field, phase contrast, dark field, DIC), or the dyed sphere is convolved with the point spread function (fluorescence and confocal). Each frame is the sum of the images of all particles at their positions, with the detector's pixel size, quantum efficiency, shot noise, read noise and full well.</p>
@@ -368,6 +380,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
             <p class="readout lvl-2" id="movie-specs"></p>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> a stack of frames and the time of each. The time between frames and the length of the movie set the fastest and the slowest changes that can be measured.</p>
         <details class="math" data-open-at="researcher">
           <summary>In fastDDM</summary>
           <p>The structure function below is the same as fastDDM's. With your own movie you would start from the image files:</p>
@@ -389,6 +402,7 @@ img_seq = fd.read_images(file_names)</pre>
             <p id="diff-note"></p>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what moved; what stayed put is gone. The longer the delay, the more has changed.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: the difference image</summary>
           <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
@@ -414,8 +428,15 @@ img_seq = fd.read_images(file_names)</pre>
           </figure>
           <div class="text">
             <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie. The centre of the map holds wide stripes, the edge fine ones.</p>
+            <p class="only-1">The charts further down label each pattern by <i>q</i>, a number that grows as the stripes get finer: <i>q</i> = 2&pi; divided by the stripe spacing, in inverse micrometres. Stripes 1 &micro;m apart have <i>q</i> of about 6.</p>
             <p>Without a drift the map is round: the particles wander equally in all directions. A drift makes the patterns along it travel. After the delay, a pattern that moved by exactly one stripe looks as before and almost cancels in the difference; one that moved by half a stripe is reversed and shows twice as strongly. So the map is crossed by dark and bright fringes at right angles to the drift, closer together for a faster drift or a longer delay. Move the delay slider and watch them close in.</p>
-            <p>The second map shows the same as a share: red where the pattern is still there, the colour of the page where it has faded, blue where it came back reversed. Only a drift can turn a pattern around.</p>
+            <p>The second map shows how much of each pattern is left after the delay: red where it is still all there, the colour of the page where it has faded, blue where it came back reversed, a value below zero. Among the causes on this page only a drift can turn a pattern around: carried by half a stripe, a pattern swaps bright and dark, and any shift beyond a quarter of a stripe makes the value negative. (Cells swimming in all directions can do it too, on the swimmers page.)</p>
+            <p>Each pattern has a direction: across its stripes, from one bright stripe to the next (the direction of <i>q</i>). A pattern along the drift has stripes that the drift crosses at right angles, so it is carried away; a pattern across the drift has stripes parallel to it, which the drift only slides along without changing them.</p>
+            <p class="only-1">How strong a pattern is cannot tell which way it was carried: a shift to the right and one to the left change it equally. Where the pattern sits within its cycle can, as the animation below shows. That position is called the phase: it advances when the pattern moves one way and goes back when it moves the other. Step 6 reads the drift, and its direction, from the phase of all the patterns.</p>
+            <figure class="viz phase-demo">
+              <div class="chart short"><canvas id="phase-demo" aria-label="Animation: the same stripe pattern carried to the right (top) and to the left (bottom). The dial next to each shows its phase, which turns one way in the top row and the other way in the bottom row."></canvas></div>
+              <figcaption>The same pattern carried to the right (top) and to the left (bottom). The dotted line stays put; the dial shows where a bright stripe is within its cycle, the phase. Its strength is the same in both rows; its phase turns opposite ways.</figcaption>
+            </figure>
             <p class="lvl-2">The dashed circle on the strength map marks the finest pattern the objective can resolve.</p>
             <p class="lvl-2">The difference image cannot tell a drift to the right from one to the left: the fringes are the same for both. The phase of each pattern can. Comparing the Fourier transform of a frame with that of a later frame, each pattern has moved along by a phase, and the phase map (colour wheel) shows it: the colours run along the drift and turn faster for finer stripes. Reverse the flow and the colours run the other way. Faint colours: patterns already faded.</p>
           </div>
@@ -425,6 +446,7 @@ img_seq = fd.read_images(file_names)</pre>
           <div class="btns"><button type="button" data-guess="yes">Yes</button><button type="button" data-guess="no">No</button></div>
           <div class="a" hidden><span class="verdict"></span> No. The difference only keeps how far each pattern travelled, not which way, so the fringes stay where they are. The phase map (Student level) turns its colours around. The bench now runs with a flow in the opposite direction.</div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing (each q, one ring of the map) and each delay, how much the movie has changed. A point near the centre of the map is a wide pattern, a point far out a fine one.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: structure function and cross spectrum with a drift</summary>
           <p>A particle carried by a drift <b>v</b> while it diffuses multiplies the Fourier transform of the image by e<sup>&minus;<i>i</i><b>q</b>&middot;<b>v</b>&Delta;<i>t</i></sup> as well as letting it fade. For independent particles</p>
@@ -445,7 +467,8 @@ dqt.set_frame_rate(frame_rate)     # frames per second
         <div class="step-body">
           <div class="text">
             <p>For each stripe spacing, follow how much of the pattern is left as the delay grows (curves drawn for four of the wider spacings). Patterns across the drift (stripes parallel to it) are not moved by it: they only fade, as without a drift. Patterns along the drift fade at the same rate but also travel, so the curves swing below zero and back before they die out. Fine stripes swing sooner, because the drift needs less time to carry them by one spacing; but they also fade sooner, and may be gone before they swing. Patterns almost across the drift are carried a little too, so with a fast drift even their curves dip below zero at long delays.</p>
-            <p class="lvl-2">The curves are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i> averaged over the directions of <b>q</b> within 15&deg; of the drift (left) or of the direction across it (right). The lines are the model e<sup>&minus;<i>Dq</i><sup>2</sup>&Delta;<i>t</i></sup> cos(<b>q</b>&middot;<b>v</b>&Delta;<i>t</i>), with the <i>D</i> and <i>v</i> of the result, averaged over the same directions: across the drift <b>q</b>&middot;<b>v</b> is small but not zero, so at long delays even those curves dip below zero when the drift is fast.</p>
+            <p class="only-1">The points are measured: how different two frames a delay apart look, with the camera noise taken away and divided by the full change, then turned around so that 1 means the whole pattern is still there and 0 that it is gone. The lines are drawn with the diffusion and the drift found in step 6, so they show that those two numbers describe the points; the comparison with the simulated drift in step 6 shows whether they are right.</p>
+            <p class="lvl-2">The curves are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i> averaged over the directions of <b>q</b> within 15&deg; of the drift (left) or of the direction across it (right). The lines are the model e<sup>&minus;<i>Dq</i><sup>2</sup>&Delta;<i>t</i></sup> cos(<b>q</b>&middot;<b>v</b>&Delta;<i>t</i>), with the <i>D</i> and <i>v</i> of the result, averaged over the same directions: across the drift <b>q</b>&middot;<b>v</b> is small but not zero, so at long delays even those curves dip below zero when the drift is fast. <b>The order of the analysis.</b> <i>d</i> is measured first; <i>B</i> comes from the camera and <i>A</i> from a fit of each curve; the points follow. <i>D</i> and <b>v</b> come from step 6, so the lines test only that they describe the points; the comparison with the simulated drift tests the result.</p>
           </div>
           <p class="small" id="curves-note" hidden></p>
           <div class="pair stack">
@@ -461,6 +484,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
             </figure>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> curves along and across the drift. A swing below zero along it is the drift showing in the structure function itself; without a swing it is still in the phase.</p>
       </section>
 
       <!-- 6 -->
@@ -469,13 +493,14 @@ dqt.set_frame_rate(frame_rate)     # frames per second
         <div class="step-body">
           <div class="text">
             <p>Each pattern gives two numbers: how fast it fades, and how fast it swings along the drift. Fading comes from the random motion: halving the stripe spacing makes it four times faster, a line of slope 2 on these logarithmic axes. Swinging comes from the drift: halving the spacing makes it only twice as fast, a line of slope 1. The height of the first line gives the diffusion coefficient, and from it the size; the height of the second gives the speed.</p>
-            <p>The two lines cross where the drift and diffusion act equally fast (for fast drifts, beyond the right edge of the plot). To their left the drift moves each pattern by a whole stripe before diffusion renews it, so the curves swing. To their right diffusion wins and no curve swings, but the drift is still there: each pattern is carried a little before it fades, and the page measures this small shift from the phase of the pattern, averaged over all patterns and the whole movie. As with tracking, a slow drift then only takes a longer movie (four times longer halves the noise) or a wider field. The result says how slow a drift this movie can show.</p>
+            <p>The two lines cross where the drift and diffusion act equally fast (for fast drifts, beyond the right edge of the plot). Where they cross, the drift shifts each pattern by one radian of its cycle, about a sixth of a stripe, in the time diffusion takes to renew it. To their left the shift is larger, and once it passes a quarter of a stripe before the pattern fades, the curves swing below zero. To their right diffusion wins and no curve swings, but the drift is still there: each pattern is carried a little before it fades, and the page measures this small shift from the phase of the pattern, averaged over all patterns and the whole movie. As with tracking, a slow drift then only takes a longer movie (four times longer halves the noise) or a wider field. The result says how slow a drift this movie can show.</p>
             <p class="lvl-2">Below the plot, the result gives the speed, its direction and the diffusion coefficient, and what they say about the cause: the density of the particles for sedimentation, the thermal diffusion coefficient and the Soret coefficient for thermophoresis.</p>
           </div>
           <figure class="viz">
             <div class="chart"><canvas id="chart-rates" aria-label="Rates of fading and of swinging against wave vector"></canvas></div>
             <ul class="reasons" id="reasons"></ul>
           </figure>
+          <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <div class="step-body">
             <div class="result" id="result" aria-live="polite"></div>
             <div class="predict" data-predict="slow" data-right="limit">
@@ -494,6 +519,9 @@ dqt.set_frame_rate(frame_rate)     # frames per second
             </div>
           </div>
         </div>
+        <details class="inputs"><summary>What the analysis is told, and what it finds</summary><p><b>Told (inputs):</b> the pixel size and the time between frames; the read noise and the gain of the camera, for <i>B</i>; the optics of the microscope, for the depth-of-field correction.</p><p><b>Found from the movie:</b> the diffusion coefficient and the drift velocity, its size and direction. Naming the cause, and comparing the speed with a flow, a sedimentation speed or a Soret coefficient, uses what is known about the particles and the liquid.</p><p>In this simulation the analysis uses the same model of the optics that made the movie, so agreement here shows that the analysis recovers what was simulated under those assumptions; with a real microscope the optics are another input that can be wrong.</p></details>
+        <p class="takeaway"><b>What this step gives:</b> the drift velocity and the diffusion, measured from how the patterns fade and shift. Which cause carried the particles, a flow, gravity or a temperature gradient, is an interpretation, made with what is known about the particles and the liquid.</p>
+        <details class="transfer"><summary><b>A question to think about:</b> Two samples give the same strength map, but in one the flow goes left and in the other right. Which measurement tells them apart?</summary><p>The strength map only shows how much each pattern changed, which is the same for opposite flows. The phase is not: a pattern carried to the left shifts its phase one way, carried to the right the other way. The page reads the direction from the phase of all patterns (step 6); at the Student level the second map of step 4 shows it.</p></details>
         <details class="math" data-open-at="researcher">
           <summary>The math: fading, swinging, and when a drift can be seen</summary>
           <div class="eq">&Gamma;(<i>q</i>) = <i>D q</i><sup>2</sup>, &nbsp;&nbsp; &omega;(<i>q</i>) = <i>q v</i> (along <b>v</b>) &nbsp;&nbsp;&rArr;&nbsp;&nbsp; <i>d</i><sub>h</sub> = <i>k</i><sub>B</sub><i>T</i> / (3&pi;<i>&eta;D</i>)</div>
@@ -544,7 +572,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
       <li><a href="https://rcerbino.github.io/research/">Research</a>: what the SoMeX group measures with DDM.</li>
       <li>Switch to <a href="#student" data-level-link="student">Student</a> above for the equations behind each step.</li>
     </ul>
-    <ul class="lvl-2">
+    <ul>
       <li>R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope</a>, Phys. Rev. Lett. 100, 188102 (2008). The paper that introduced the method.</li>
       <li>E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a>, J. Chem. Phys. 163, 161501 (2025). A practical guide with the notation used here.</li>
       <li>J. A. Richards, V. A. Martinez and J. Arlt, <a href="https://doi.org/10.1039/D0SM02255A">Particle sizing for flowing colloidal suspensions using flow-differential dynamic microscopy</a>, Soft Matter 17, 3945 (2021). The mean flow from the phase (phiDM), then particle sizing while they flow, with the effect of the flow profile.</li>
@@ -552,6 +580,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
       <li>Thermophoresis of colloids: L. Helden, R. Eichhorn and C. Bechinger, <a href="https://doi.org/10.1039/C4SM02833C">Direct measurement of thermophoretic forces</a>, Soft Matter 11, 2379 (2015), the force on single micrometre beads held near a wall; S. Duhr and D. Braun, <a href="https://doi.org/10.1103/PhysRevLett.96.168301">Thermophoretic depletion follows Boltzmann distribution</a>, Phys. Rev. Lett. 96, 168301 (2006); S. Iacopini, R. Rusconi and R. Piazza, <a href="https://doi.org/10.1140/epje/e2006-00012-9">The "macromolecular tourist": universal temperature dependence of thermal diffusion in aqueous colloidal suspensions</a>, Eur. Phys. J. E 19, 59 (2006); M. Braibanti, D. Vigolo and R. Piazza, <a href="https://doi.org/10.1103/PhysRevLett.100.108303">Does thermophoretic mobility depend on particle size?</a>, Phys. Rev. Lett. 100, 108303 (2008). The values used on this page.</li>
     </ul>
     <ul class="lvl-3">
+      <li>fastDDM tutorial notebook on real movies: <a href="https://github.com/somexlab/fastddm-tutorials/tree/main/Tutorial_1-Particle_sizing">particle sizing (tutorial 1), the starting point for any DDM analysis</a>; <a href="https://github.com/somexlab/fastddm-tutorials">all tutorials</a>.</li>
       <li><a href="https://github.com/somexlab/fastddm">fastDDM</a> (Python, CPU and GPU, GPL 3.0): <code>pip install fastddm</code>. <a href="https://fastddm.readthedocs.io/">Documentation</a>.</li>
       <li>For collaborations or questions about applying DDM to your samples, see <a href="https://rcerbino.github.io/contact/">Contact</a>.</li>
     </ul>
@@ -3440,7 +3469,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
                 gamma_lo_hz: gamma_lo_hz, gamma_hi_hz: gamma_hi_hz },
       B_floor: B_floor, B_est: B_est, A_est: A_est, fit_model: opts.fit_model,
       D: D, slope: slope,
-      diameter_um: D === null ? null : diameterFromD_um(D.D_um2_s, movie.T_C, movie.viscosity_Pa_s),
+      diameter_um: D === null ? null : diameterFromD_um(D.D_um2_s, movie.T_C, opts.viscosity_Pa_s > 0 ? opts.viscosity_Pa_s : movie.viscosity_Pa_s),   // the viscosity the analysis is told
       diameter_rel_err: D === null ? null : (jk ? Math.max(D.rel_err, jk.rel_err) : blocks ? Math.max(D.rel_err, blocks.rel_err_full) : D.rel_err),
       diameter_rel_err_points: D === null ? null : D.rel_err,
       beta_mean: stretched && used.length ? used.reduce(function (s, f) { return s + f.beta; }, 0) / used.length : null,
@@ -5514,7 +5543,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
         (k.timing === "global" ? "Global shutter: all rows are exposed together. " : "Rolling shutter: " + (k.timing === "rolling_center" ? "rows are read from the centre outwards" : "rows are read from the top down") + ", the last " + fmtSig(1000 * (k.timing === "rolling_center" ? state.roi / 2 : state.roi) * k.rowTime(state.cam_mode), 3) + " ms after the first. ") +
         (diag > FIELD_NUMBER_MM ? "The sensor diagonal (" + fmtSig(diag, 3) + " mm) is larger than the 25 mm field, so its corners stay dark. " : "");
     }
-    if (simPx() < outPx()) txt += " Your browser simulates the central " + simPx() + " x " + simPx() + " pixels; the full image would reach down to q = " + fmtSig(qloROI, 2) + " " + MU + "m<sup>-1</sup> instead of " + fmtSig(qloSim, 2) + ".";
+    if (simPx() < outPx()) txt += " Your browser simulates the central " + simPx() + " x " + simPx() + " pixels; the full image would also show " + (level === "curious" ? "stripes up to " + fmtSig(2 * Math.PI / qloROI, 2) + " " + MU + "m wide instead of " + fmtSig(2 * Math.PI / qloSim, 2) + "." : "wider stripes, down to q = 2&pi; / spacing = " + fmtSig(qloROI, 2) + " " + MU + "m<sup>-1</sup> instead of " + fmtSig(qloSim, 2) + ".");
     $("fov-specs").innerHTML = txt;
   }
 
@@ -5891,7 +5920,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     $("along-cap").textContent = byDrift ? "Along the drift" : "Patterns that vary from left to right (q along x)";
     $("across-cap").textContent = byDrift ? "Across the drift" : "Patterns that vary from top to bottom (q along y)";
     const note = $("curves-note"); note.hidden = byDrift && res.visibility.swing;
-    if (byDrift && !res.visibility.swing) note.textContent = "The drift is measured (step 6), but it is too slow to carry any pattern by a whole stripe before diffusion renews it: the curves along it look like those across it, and the maps of step 4 show no fringes. It shows only in small shifts of the phase, averaged over all patterns and the whole movie.";
+    if (byDrift && !res.visibility.swing) note.textContent = "The drift is measured (step 6), but it is too slow to shift any pattern by about a sixth of a stripe (one radian of its cycle) before diffusion renews it: the curves along it look like those across it, and the maps of step 4 show no fringes. It shows only in small shifts of the phase, averaged over all patterns and the whole movie.";
     if (!byDrift) note.textContent = "No drift is seen in the image plane, so no direction of the image is special: the two sets of curves below are simply the patterns along x and along y, and they fade alike, without swinging. " +
       (!ev.plane && ev.speed > 0 ? "A drift along the optical axis cannot make a pattern of the image travel. Its only traces are a little extra fading, as the particles' images change with their height, and, once they have piled up against the glass, their slower diffusion there."
         : ev.plane && ev.speed > 0 ? "The drift set is too slow to move any pattern before diffusion renews it (see step 6)." : "");
@@ -5928,7 +5957,8 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     if (level === "curious") add("Dots: how fast each pattern fades, on the black line of slope 2." + (res.detected ? " Squares: how fast it swings along the drift, on the blue line of slope 1." : ""));
     else add("Dots: how fast each pattern fades (\u0393), on the black line D q\u00b2 of slope 2." + (res.detected ? " Squares: how fast it swings along the drift (\u03c9), on the blue line v q of slope 1." : ""));
     if (level !== "curious") add("Dashed red: what the simulated particles should give (D q\u00b2 and, dotted, v q for the drift set).");
-    if (res.detected) add(res.visibility.swing ? "Where the blue line is below the black one, diffusion renews the pattern before the drift carries it by a whole stripe: those patterns do not swing, but their phase still shifts a little, and the measurement uses that too." : "No pattern swings here: diffusion renews each one before the drift carries it by a whole stripe. The drift is measured from the small shifts of the phase of all patterns, averaged over the movie.");
+    if (res.detected) add(res.visibility.swing ? "Where the blue line is below the black one, diffusion renews the pattern before the drift shifts it by about a sixth of a stripe (one radian of its cycle): those patterns do not swing, but their phase still shifts a little, and the measurement uses that too." : "No pattern swings here: diffusion renews each one before the drift shifts it by about a sixth of a stripe (one radian of its cycle). The drift is measured from the small shifts of the phase of all patterns, averaged over the movie.");
+    fillNumbers("chart-numbers", ["q (" + MU + "m\u207b\u00b9)", "Fading rate (1/s)", "Swing rate along the drift (rad/s)", "Used"], pts.map(function (e) { return [e.q_per_um, e.gamma_hz, e.omega_rad_s > 0 ? e.omega_rad_s : null, e.ok ? "yes" : "no"]; }));
   }
   // speed seen along each direction of q: v cos(theta - theta_v)
   function drawSectorV() {
@@ -6147,13 +6177,31 @@ dqt.set_frame_rate(frame_rate)     # frames per second
   // the predictions apply to a flow: shown only then (and "double" only while doubling stays on the slider); answered
   // boxes are reset when the reader changes the settings
   let predicting = false, slowRes0 = null;   // the result on screen when the slow-drift question was answered
-  function syncPredictions() {
+  const NOT_FLOW = { text: "This question is about particles carried by a flow, and the bench now shows another cause.", set: {} };
+  const PREDICT_BASE = {
+    reverse: function () { return state.cause !== "flow" ? NOT_FLOW : null; },
+    double: function () { return state.cause !== "flow" ? NOT_FLOW : state.flow_v > 10 ? { text: "This question needs a flow that can still double (at most 20 " + MU + "m/s).", set: {} } : null; }
+  };
+  const PREDICT_VALUES = {};
+  // an exercise that does not fit the sample on the bench says so and offers to go back to its starting sample,
+  // instead of describing a different experiment; numbers in an open question follow the bench
+  function syncPredictionBases() {
     document.querySelectorAll(".predict").forEach(function (box) {
-      const kind = box.getAttribute("data-predict");
-      if (kind === "slow") { box.hidden = false; return; }   // about any sample: what a movie can and cannot rule out
-      box.hidden = state.cause !== "flow" || (kind === "double" && state.flow_v > 10 && !box.classList.contains("answered"));
+      const kind = box.getAttribute("data-predict"), f = PREDICT_BASE[kind], b = f ? f() : null, open = !box.classList.contains("answered");
+      let el = box.querySelector(".base");
+      if (!el && f) {
+        el = document.createElement("div"); el.className = "base"; el.innerHTML = '<span></span> <button type="button">Go back to the standard sample</button>';
+        box.insertBefore(el, box.querySelector(".btns"));
+        el.querySelector("button").addEventListener("click", function () { const s = PREDICT_BASE[kind](); if (s) applyPreset(s.set); });
+      }
+      if (el) { el.hidden = !(b && open); if (b) el.querySelector("span").textContent = b.text; }
+      if (open) {
+        box.querySelectorAll("button[data-guess]").forEach(function (x) { x.disabled = !!b; });
+        if (!b) box.querySelectorAll("[data-pv]").forEach(function (s) { const g = PREDICT_VALUES[s.getAttribute("data-pv")]; if (g) s.textContent = g(); });
+      }
     });
   }
+  function syncPredictions() { syncPredictionBases(); }
   function resetPredictions() {
     document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelector(".a").hidden = true; bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); });
   }
@@ -6165,7 +6213,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
           box.classList.add("answered");
           box.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = true; b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
           box.querySelector(".verdict").textContent = btn.getAttribute("data-guess") === box.getAttribute("data-right") ? "Well guessed." : "Not quite.";
-          box.querySelector(".a").hidden = false;
+          box.querySelector(".a").hidden = false; announce(box.querySelector(".a").textContent);
           const kind = box.getAttribute("data-predict");
           if (kind === "reverse") state.flow_deg = (state.flow_deg + 180) % 360;
           if (kind === "double") state.flow_v = Math.min(20, 2 * state.flow_v);
@@ -6176,10 +6224,57 @@ dqt.set_frame_rate(frame_rate)     # frames per second
     });
   }
 
+  // the numbers behind a chart, as a table (for screen readers, and for anyone who wants the values)
+  function fillNumbers(id, head, rows) {
+    const el = $(id); if (!el) return;
+    const v = function (x) { return x === null || x === undefined || (typeof x === "number" && !isFinite(x)) ? "-" : typeof x === "number" ? fmtSig(x, 3) : x; };
+    let h = '<div class="tscroll"><table class="sizing"><thead><tr>' + head.map(function (x) { return '<th scope="col">' + x + '</th>'; }).join("") + '</tr></thead><tbody>';
+    rows.forEach(function (r) { h += '<tr>' + r.map(function (x, i) { return i === 0 ? '<th scope="row">' + v(x) + '</th>' : '<td>' + v(x) + '</td>'; }).join("") + '</tr>'; });
+    el.querySelector("div").innerHTML = h + '</tbody></table></div>';
+  }
+  // exercise feedback, read out by screen readers
+  function announce(t) {
+    let el = $("sr-live");
+    if (!el) { el = document.createElement("div"); el.id = "sr-live"; el.className = "sr-only"; el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
+    el.textContent = ""; setTimeout(function () { el.textContent = t; }, 50);
+  }
+
   // ---- wiring -------------------------------------------------------------------------------
-  buildControls(); buildCards(); buildPredictions();
+  // the phase, shown: one stripe pattern carried to the right and one to the left, with a dial for each
+  function phaseDemo() {
+    const cv = $("phase-demo"); if (!cv) return;
+    let t0 = null, raf = null, visible = false;
+    const draw = function (t) {
+      const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
+      if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+      const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+      if (!C.ink) readColors();
+      const rowH = (H - 18) / 2, dialR = Math.min(rowH * 0.36, 28), sw = W - 2 * dialR - 110, period = Math.max(40, sw / 4);
+      const shift = (reduceMotion ? 0.35 : (t / 4000) % 1) * period;
+      [1, -1].forEach(function (dir, row) {
+        const y0 = 6 + row * (rowH + 6), x0 = 6, x = dir * shift;
+        const ink = hexToRgb(C.ink.length ? C.ink : "#222"), pap = hexToRgb(C.paper.length ? C.paper : "#fff");
+        for (let px = 0; px < sw; px += 2) {
+          const v = 0.5 + 0.5 * Math.cos(2 * Math.PI * (px - x) / period);
+          ctx.fillStyle = "rgb(" + [0, 1, 2].map(function (k) { return Math.round(pap[k] + (ink[k] - pap[k]) * (1 - v) * 0.85); }).join(",") + ")";
+          ctx.fillRect(x0 + px, y0, 2, rowH);
+        }
+        ctx.strokeStyle = C.accent; ctx.setLineDash([3, 3]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x0 + period, y0); ctx.lineTo(x0 + period, y0 + rowH); ctx.stroke(); ctx.setLineDash([]);
+        const cx = x0 + sw + 20 + dialR, cy = y0 + rowH / 2, ph = 2 * Math.PI * x / period;
+        ctx.strokeStyle = C.muted; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, cy, dialR, 0, 2 * Math.PI); ctx.stroke();
+        ctx.strokeStyle = C.accent; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + dialR * Math.sin(ph), cy - dialR * Math.cos(ph)); ctx.stroke();
+        ctx.fillStyle = C.ink; ctx.font = "12px " + getComputedStyle(document.body).fontFamily; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+        ctx.fillText(dir > 0 ? "to the right" : "to the left", cx + dialR + 8, cy);
+      });
+    };
+    const loop = function (t) { if (t0 === null) t0 = t; draw(t - t0); raf = visible && !reduceMotion ? requestAnimationFrame(loop) : null; };
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; if (visible && raf === null) raf = requestAnimationFrame(loop); }).observe(cv);
+    else { visible = true; raf = requestAnimationFrame(loop); }
+    window.addEventListener("resize", function () { draw(0); });
+  }
+  buildControls(); buildCards(); buildPredictions(); phaseDemo();
   document.querySelectorAll('input[name="level"]').forEach(function (r) { r.addEventListener("change", function () { if (r.checked) setLevel(r.value, true); }); });
-  document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }); });
+  document.querySelectorAll("[data-level-link]").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); setLevel(a.getAttribute("data-level-link"), true); const first = document.querySelector(".step"); if (first) first.scrollIntoView({ block: "start" }); else window.scrollTo(0, 0); }); });
   $("btn-reset").addEventListener("click", function () { const keep = LEVEL_RANK[level] >= 3 ? state.seed : BASE.seed, sp = state.sim_px; state = Object.assign({}, BASE); state.seed = keep; state.sim_px = sp; document.querySelectorAll(".predict .a").forEach(function (a) { a.hidden = true; }); document.querySelectorAll(".predict").forEach(function (bx) { bx.classList.remove("answered"); bx.querySelectorAll("button[data-guess]").forEach(function (b) { b.disabled = false; b.removeAttribute("aria-pressed"); }); }); constrain(); syncControls(); drawFov(); schedule(); });
   $("btn-seed").addEventListener("click", function () { state.seed = (state.seed * 1103515245 + 12345) % 2147483647; schedule(); });
   $("btn-play").addEventListener("click", function () { playing = !playing; $("btn-play").textContent = playing ? "Pause" : "Play"; });

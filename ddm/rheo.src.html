@@ -218,6 +218,7 @@ figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(
 .toolbar input[type="range"] { flex: 1 1 10rem; accent-color: var(--accent); }
 .toolbar.pickbar { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 0.8rem; margin-top: 0.5rem; }
 .toolbar.pickbar input[type="range"] { width: 100%; min-width: 0; }
+@media (pointer: coarse) { input[type="range"] { min-height: 2.5rem; } }   /* a larger touch area; the track stays thin */
 .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
 .seg button { border: 0; border-radius: 0; padding: 0.3rem 0.7rem; background: var(--panel); }
 .seg button[aria-pressed="true"] { background: var(--tint); color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
@@ -240,6 +241,16 @@ pre.code { font-family: var(--mono); font-size: 0.8rem; background: var(--paper)
 .predict .q { font-weight: 600; }
 .predict .a { color: var(--ink); }
 .predict .verdict { font-weight: 600; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.numbers { font-family: var(--sans); font-size: 0.88rem; }
+.numbers summary { cursor: pointer; color: var(--muted); }
+.takeaway { font-family: var(--sans); font-size: 0.92rem; border-left: 3px solid var(--accent); padding: 0.1rem 0 0.1rem 0.8rem; max-width: var(--measure); margin: 0; }
+.transfer { font-family: var(--sans); font-size: 0.92rem; border: 1px solid var(--rule); border-radius: 6px; padding: 0.6rem 0.9rem; max-width: var(--measure); }
+.transfer summary, .inputs summary { cursor: pointer; }
+.inputs { font-family: var(--sans); font-size: 0.92rem; max-width: var(--measure); }
+.inputs p { margin: 0.5rem 0 0; }
+.transfer p { margin: 0.5rem 0 0; }
+.predict .base { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; color: var(--muted); }
 .predict button:disabled { cursor: default; opacity: 0.55; }
 .predict button[aria-pressed="true"] { opacity: 1; border-color: var(--accent); font-weight: 600; }
 
@@ -352,6 +363,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <div class="pstrip" id="particle-strip"></div>
           <figcaption id="particle-text"></figcaption>
         </figure>
+        <p class="takeaway"><b>What this step gives:</b> the finest stripes the movie can hold, and how strongly each particle shows in them: the objective and the light decide both.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: how each image is computed, and how the beads move</summary>
           <p>As on the <a href="../sizing/">sizing page</a>: the light scattered by each bead (Mie theory) interferes with the transmitted light through the condenser and objective apertures, or the dyed bead is convolved with the point spread function (fluorescence and confocal). Each frame is the sum of the images of all beads at their positions, with the detector's pixel size, quantum efficiency, shot noise, read noise and full well. The material itself does not show.</p>
@@ -376,6 +388,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
             <p class="readout lvl-2" id="movie-specs"></p>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> a stack of frames and the time of each. The time between frames and the length of the movie set the fastest and the slowest changes that can be measured.</p>
         <details class="math" data-open-at="researcher">
           <summary>In fastDDM</summary>
           <p>The structure function below is the same as fastDDM's. With your own movie you would start from the image files:</p>
@@ -397,6 +410,7 @@ img_seq = fd.read_images(file_names)</pre>
             <p id="diff-note"></p>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what moved; what stayed put is gone. The longer the delay, the more has changed.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: the difference image</summary>
           <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
@@ -421,17 +435,60 @@ img_seq = fd.read_images(file_names)</pre>
           </figure>
           <div class="text">
             <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie. The centre of the map holds wide stripes, the edge fine ones. The beads move the same way in every direction, so the map is round.</p>
+            <p class="only-1">The charts further down label each pattern by <i>q</i>, a number that grows as the stripes get finer: <i>q</i> = 2&pi; divided by the stripe spacing, in inverse micrometres. Stripes 1 &micro;m apart have <i>q</i> of about 6.</p>
             <p>A bead that moves by a fraction of a stripe spacing already changes that pattern; to renew a wide pattern it must go much further. So fine stripes are a magnifying glass for small motions, wide stripes for large ones, and together they cover displacements from nanometres to micrometres.</p>
             <p>The second map shows how much of each pattern is left after the delay: red where it is still all there, the colour of the page where it has faded. In a gel the wide patterns stay red at every delay.</p>
             <p class="lvl-2" id="kopt-note">The dashed circle on the strength map marks the finest pattern the objective can resolve.</p>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing (each q, one ring of the map) and each delay, how much the movie has changed. A point near the centre of the map is a wide pattern, a point far out a fine one.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: structure function of tracer beads</summary>
           <p>For beads that do not interact, with Gaussian displacements,</p>
           <div class="eq"><i>d</i>(<i>q</i>, &Delta;<i>t</i>) = &lang; |<i>F</i>[&Delta;<i>I</i>](<b>q</b>; <i>t</i>, &Delta;<i>t</i>)|<sup>2</sup> &rang; = <i>A</i>(<i>q</i>) [1 &minus; <i>f</i>(<i>q</i>, &Delta;<i>t</i>)] + <i>B</i>, &nbsp;&nbsp; <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = exp[&minus;<i>q</i><sup>2</sup> &lang;&Delta;<i>r</i><sup>2</sup>(&Delta;<i>t</i>)&rang; / 4]</div>
           <p>with &lang;&Delta;<i>r</i><sup>2</sup>&rang; the mean squared displacement in the image plane. For free diffusion &lang;&Delta;<i>r</i><sup>2</sup>&rang; = 4<i>D</i>&Delta;<i>t</i> and <i>f</i> = e<sup>&minus;<i>Dq</i><sup>2</sup>&Delta;<i>t</i></sup>, as on the sizing page. Map axes: <i>q<sub>x</sub></i> to the right, <i>q<sub>y</sub></i> up.</p>
-          <div class="lvl-3"><pre class="code">dqt = fd.ddm(img_seq, lags)      # lags: the log-spaced delays
+          <p class="lvl-3">fastDDM's <code>fd.ddm(img_seq, lags)</code> works on evenly spaced frames: its lags count frames. With log-spaced frames (the standard here; "Download the movie" and "Frame times" give both files), the frames are paired by their times instead. This routine does it as the page does; on an exported movie it gives the same delays and <i>d</i>(<i>q</i>, &Delta;<i>t</i>), apart from a few pairs that fall exactly on the edge between two groups of delays:</p>
+          <div class="lvl-3"><pre class="code">import numpy as np, tifffile
+
+frames = tifffile.imread("movie.tif").astype(np.float64)       # T x n x n, from "Download the movie"
+t = np.loadtxt("movie-times.csv", delimiter=",", skiprows=1)[:, 1]   # time of each frame (s), from "Frame times"
+pixel_um = 0.1625                                              # pixel size in the sample (um): see the movie, step 2
+
+T, n, _ = frames.shape
+F = np.fft.fft2(frames)                                        # one transform per frame
+dt = np.diff(t).min()                                          # shortest interval between frames
+
+# every pair of frames up to half the movie apart, grouped by its delay: one group per whole number of
+# shortest intervals up to 10, then 12 groups per decade; at most about T pairs per group, spread over the movie
+i, j = np.triu_indices(T, 1)
+gap = t[j] - t[i]
+keep = gap &lt;= (t[-1] - t[0]) / 2 * (1 + 1e-12)
+i, j, gap = i[keep], j[keep], gap[keep]
+u = np.round(gap / dt, 6)                                      # delay in shortest intervals (rounded: no float noise at the group edges)
+group = np.where(u &lt; 10.5, np.round(u) - 1, 10 + np.floor(12 * np.log10(u / 10.5))).astype(int)
+taus, d2d = [], []
+for g in np.unique(group):
+    sel = np.flatnonzero(group == g)
+    sel = sel[:: int(np.ceil(len(sel) / T))]
+    if len(sel) &lt; 4:
+        continue
+    acc = np.zeros((n, n))
+    for a, b in zip(i[sel], j[sel]):
+        acc += np.abs(F[b] - F[a]) ** 2
+    taus.append(gap[sel].mean())                               # the delay of this group (s)
+    d2d.append(acc / len(sel) / n**2)                          # d(q, dt) on the Fourier map
+taus = np.array(taus)
+
+# azimuthal average: rings of whole wave numbers, central cross left out (as fastDDM's central_cross_mask)
+k = np.fft.fftfreq(n) * n
+kx, ky = np.meshgrid(k, k)
+ring = np.rint(np.hypot(kx, ky)).astype(int)
+ring[(kx == 0) | (ky == 0) | (ring &gt; n // 2)] = 0
+count = np.bincount(ring.ravel(), minlength=n // 2 + 1)
+dq = np.array([np.bincount(ring.ravel(), m.ravel(), n // 2 + 1) / np.maximum(count, 1) for m in d2d])[:, 1:]
+q = 2 * np.pi * np.arange(1, n // 2 + 1) / (n * pixel_um)     # um^-1</pre></div>
+          <p class="lvl-3">With evenly spaced frames (log-spaced frames switched off), fastDDM does the same:</p>
+          <div class="lvl-3"><pre class="code">dqt = fd.ddm(img_seq, range(1, len(img_seq) // 2))   # lags in frames
 dqt.pixel_size = pixel_size      # um
 aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
         </details>
@@ -442,8 +499,9 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
         <div class="step-title"><span class="num">5</span><h2 id="h-curves">Watch each pattern change</h2></div>
         <div class="step-body">
           <div class="text">
-            <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. Fine stripes (red) change first, because a bead only has to move a little to shift them; wide ones (blue) change later. In a liquid every curve falls to zero in the end. In a gel the beads cannot leave their cages, so the curves level off well above zero: they never forget their pattern, and the wider the stripes the higher the level.</p>
-            <p class="lvl-2">The points are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i>. The lines are exp[&minus;<i>q</i><sup>2</sup> &lang;&Delta;<i>r</i><sup>2</sup>&rang; / 4] with the mean squared displacement of step 6 (leaving out the small effect of the depth of field), the same for every <i>q</i>: if the beads' displacements are Gaussian, one displacement explains all the curves.</p>
+            <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. Fine stripes (red) change first, because a bead only has to move a little to shift them; wide ones (blue) change later. In a liquid every curve falls to zero in the end: given time, the beads wander off and every pattern is renewed.</p>
+            <p class="only-1">The points are measured: how different two frames a delay apart look, with the camera noise taken away and divided by the full change, then turned around so that 1 means the whole pattern is still there and 0 that it is gone. The lines are drawn from how far the beads move, found in step 6 from these same points, so they show that one displacement describes all the curves; the comparison with the simulated material in step 6 shows whether it is right.</p>
+            <p class="lvl-2">The points are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i>. The lines are exp[&minus;<i>q</i><sup>2</sup> &lang;&Delta;<i>r</i><sup>2</sup>&rang; / 4] with the mean squared displacement of step 6 (leaving out the small effect of the depth of field), the same for every <i>q</i>: if the beads' displacements are Gaussian, one displacement explains all the curves. <b>The order of the analysis.</b> <i>d</i> is measured first; <i>B</i> comes from the camera and <i>A</i> from the mean power of each pattern; the points follow. The displacement comes from these points in step 6, so the lines test only that one displacement describes all of them; the comparison with the simulated material tests the result.</p>
           </div>
           <figure class="viz" id="try-gel">
             <div class="chart"><canvas id="chart-curves" aria-label="How much of each pattern is left against the delay"></canvas></div>
@@ -452,9 +510,10 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
           <div class="predict" data-predict="gel" data-right="no">
             <div class="q">Can these beads escape? Predict first: the sample becomes a soft gel, in which each bead sits in a cage. Do the curves still fall to zero at long delays?</div>
             <div class="btns"><button type="button" data-guess="yes">Yes, the beads escape</button><button type="button" data-guess="no">No, they stay caged</button></div>
-            <div class="a" hidden><span class="verdict"></span> No. Each bead only rattles in its cage, so part of every pattern never changes: the curves level off above zero, higher for wider stripes, which a small rattle hardly moves. The height of the plateau gives how far the beads rattle, and from it the elastic modulus of the gel. The bench now runs with a soft gel so you can check: this chart keeps one curve of the earlier run, dashed, next to the new one at the same stripe spacing, and step 6 keeps the earlier displacement.</div>
+            <div class="a" hidden><span class="verdict"></span> No. Each bead only rattles in its cage, so part of every pattern never changes: the curves level off above zero, higher for wider stripes, which a small rattle hardly moves. The height of the plateau gives how far the beads rattle, and from it the elastic modulus of the gel. The bench now runs with a soft gel so you can check: this chart keeps one curve of the earlier run, dashed, next to the new one at the same stripe spacing, and step 6 keeps the earlier displacement. Look for where the thick line levels off while the dashed one falls to zero.</div>
           </div>
         </div>
+        <p class="takeaway"><b>What this step gives:</b> how much of each pattern is left over time. Curves that level off above zero mean beads that stay caged.</p>
       </section>
 
       <!-- 6 -->
@@ -462,7 +521,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
         <div class="step-title"><span class="num">6</span><h2 id="h-rates">From the curves to the moduli</h2></div>
         <div class="step-body">
           <div class="text">
-            <p>Each curve of step 5 gives, at each delay, how far the beads have moved on average: the mean squared displacement. Fine stripes give the small displacements of short delays, wide stripes the large ones of long delays, and where they overlap they agree. Free diffusion makes the displacement grow in proportion to the delay (a slope of 1 on these axes); beads held in cages make it level off (a slope of 0).</p>
+            <p>Each curve of step 5 gives, at each delay, how far the beads have moved: the mean squared displacement, the average of the squared distances they travel, in square micrometres (its square root is a typical distance). Fine stripes give the small displacements of short delays, wide stripes the large ones of long delays, and where they overlap they agree. Free diffusion makes the displacement grow in proportion to the delay (a slope of 1 on these axes); beads held in cages make it level off (a slope of 0).</p>
             <p class="only-1">A rule that goes back to Einstein turns the displacement into the moduli: the stiffer the material, the less the beads move, and the faster it relaxes, the sooner they escape. A delay &Delta;<i>t</i> stands for a frequency of about 1/&Delta;<i>t</i>.</p>
             <p class="lvl-2">The generalised Stokes-Einstein relation turns the displacement into the moduli: the stiffer the material, the less the beads move, and the faster it relaxes, the sooner they escape. A delay &Delta;<i>t</i> stands for a frequency of about 1/&Delta;<i>t</i>.</p>
           </div>
@@ -476,6 +535,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             <div class="chart"><canvas id="chart-moduli" aria-label="Storage and loss moduli against frequency"></canvas></div>
             <ul class="reasons" id="mod-notes"></ul>
           </figure>
+          <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <div class="step-body">
             <div class="result" id="result" aria-live="polite"></div>
             <div class="predict" data-predict="bigger" data-right="no">
@@ -485,11 +545,15 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             </div>
           </div>
         </div>
+        <details class="inputs"><summary>What the analysis is told, and what it finds</summary><p><b>Told (inputs):</b> the bead radius and the temperature; the pixel size and the times of the frames; the read noise and the gain of the camera, for <i>B</i>; the optics of the microscope, for the depth-of-field correction.</p><p><b>Found from the movie:</b> how much of each pattern is left over time and the mean squared displacement of the beads. The moduli follow from it with the bead radius and the temperature it was told.</p><p>In this simulation the analysis uses the same model of the optics that made the movie, so agreement here shows that the analysis recovers what was simulated under those assumptions; with a real microscope the optics are another input that can be wrong.</p></details>
+        <p class="takeaway"><b>What this step gives:</b> the mean squared displacement of the beads, measured. The moduli are an interpretation: they come from the generalised Stokes-Einstein relation, with the bead size and the temperature the analysis is told.</p>
+        <details class="transfer"><summary><b>A question to think about:</b> You double the bead size and the mean squared displacement halves. Which quantity should come out the same, and why?</summary><p>The moduli G' and G''. They belong to the material, and the generalised Stokes-Einstein relation multiplies the displacement by the bead radius, which undoes the change. If they did not come out the same, the beads would be probing something else than the bulk material: a layer depleted of polymer around them, or a mesh as large as they are.</p></details>
         <details class="math" data-open-at="researcher">
           <summary>The math: from f to the moduli</summary>
+          <p><b>Notation.</b> &lang;&Delta;<i>r</i><sup>2</sup>&rang;, the mean squared displacement, measured in the image plane (two directions); for motion in three dimensions it is 1.5 times larger, &lang;&Delta;<i>r</i><sup>2</sup>&rang;<sub>3D</sub>. <i>J</i>(<i>t</i>), the creep compliance: how much the material deforms under a steady stress, per unit of stress (1/Pa); <i>J</i>&#770;(&omega;) its one-sided Fourier transform. <i>a</i>, the bead radius. &omega;, the angular frequency in rad/s; the ordinary frequency is &omega; / 2&pi;, in Hz. In Mason's formulas &Gamma; is the gamma function (not a rate, as on the other pages) and &alpha; the local slope of &lang;&Delta;<i>r</i><sup>2</sup>&rang; on logarithmic axes.</p>
           <div class="eq">&lang;&Delta;<i>r</i><sup>2</sup>(&Delta;<i>t</i>)&rang; = &minus;(4 / <i>q</i><sup>2</sup>) ln <i>f</i>(<i>q</i>, &Delta;<i>t</i>), &nbsp;&nbsp; <i>J</i>(<i>t</i>) = &pi;<i>a</i> &lang;&Delta;<i>r</i><sup>2</sup>(<i>t</i>)&rang;<sub>3D</sub> / <i>k</i><sub>B</sub><i>T</i>, &nbsp;&nbsp; &lang;&Delta;<i>r</i><sup>2</sup>&rang;<sub>3D</sub> = 1.5 &lang;&Delta;<i>r</i><sup>2</sup>&rang;</div>
-          <p><b>Amplitude and noise.</b> <i>A</i>(<i>q</i>) = 2&lang;|<i>F</i>(<i>q</i>)|<sup>2</sup>&rang; &minus; <i>B</i>, from the mean power of each pattern, which holds the whole amplitude even when part of the pattern never changes during the movie; <i>B</i> = 2 (excess-noise factor &times; mean count + read noise<sup>2</sup>), the camera noise, the same at every <i>q</i>. <b>Displacement.</b> At each <i>q</i> and delay, &lang;&Delta;<i>r</i><sup>2</sup>&rang; is the value that gives the measured <i>f</i>, with the depth of field: beads moving up or down change their image too, which adds a factor <i>C<sub>q</sub></i>(&lang;&Delta;<i>z</i><sup>2</sup>&rang;) through the optics of step 1, with &lang;&Delta;<i>z</i><sup>2</sup>&rang; = &lang;&Delta;<i>r</i><sup>2</sup>&rang;/2. Only points where <i>f</i> is clearly below 1 (by three times its noise, and by at least 1 %) and above 0.15 are used, from the fourth <i>q</i> bin up; the <i>q</i> are combined with weights from the noise of ln &lang;&Delta;<i>r</i><sup>2</sup>&rang;, at least three per delay. The noise of <i>f</i> and the uncertainty of the result come from a jackknife over ten parts of the movie.</p>
-          <p><b>Moduli.</b> <i>G</i>*(&omega;) = 1 / [<i>i</i>&omega; <i>J</i>&#770;(&omega;)]. The measured <i>J</i>(<i>t</i>) is fitted with springs and dashpots side by side (Kelvin-Voigt elements, retardation times four per decade) and a free flow <i>t</i>/<i>&eta;</i>, all with positive weights; the moduli of that sum follow exactly. A direct transform of the measured points (Evans et al. 2009) rang with their noise. For comparison (Researcher level) Mason's local power-law formulas, |<i>G</i>*(&omega;)| = <i>k</i><sub>B</sub><i>T</i> / [&pi;<i>a</i>&lang;&Delta;<i>r</i><sup>2</sup>(1/&omega;)&rang;<sub>3D</sub> &Gamma;(1 + &alpha;)], <i>G</i>' = |<i>G</i>*| cos(&pi;&alpha;/2), <i>G</i>'' = |<i>G</i>*| sin(&pi;&alpha;/2), with &alpha; the local slope of &lang;&Delta;<i>r</i><sup>2</sup>&rang; on logarithmic axes.</p>
+          <p><b>Amplitude and noise.</b> <i>A</i>(<i>q</i>) = 2&lang;|<i>F</i>(<i>q</i>)|<sup>2</sup>&rang; &minus; <i>B</i>, from the mean power of each pattern, which holds the whole amplitude even when part of the pattern never changes during the movie; <i>B</i> = 2 (excess-noise factor &times; mean count + read noise<sup>2</sup>), the camera noise, the same at every <i>q</i>. The mean power counts everything in the image that stays put during the movie: in a gel the frozen positions of the beads, which belong in <i>A</i>, but also dust and uneven light, which do not. The difference images of step 3 are blind to those; the amplitude is not. The simulated movies have neither. In a real experiment, subtract the power of a movie taken the same way without beads, or, for a material that flows, use twice the variance over time of each pattern, which leaves out what never changes. <b>Displacement.</b> At each <i>q</i> and delay, &lang;&Delta;<i>r</i><sup>2</sup>&rang; is the value that gives the measured <i>f</i>, with the depth of field: beads moving up or down change their image too, which adds a factor <i>C<sub>q</sub></i>(&lang;&Delta;<i>z</i><sup>2</sup>&rang;) through the optics of step 1, with &lang;&Delta;<i>z</i><sup>2</sup>&rang; = &lang;&Delta;<i>r</i><sup>2</sup>&rang;/2. Only points where <i>f</i> is clearly below 1 (by three times its noise, and by at least 1 %) and above 0.15 are used, from the fourth <i>q</i> bin up; the <i>q</i> are combined with weights from the noise of ln &lang;&Delta;<i>r</i><sup>2</sup>&rang;, at least three per delay. The noise of <i>f</i> and the uncertainty of the result come from a jackknife over ten parts of the movie.</p>
+          <p><b>Moduli.</b> <i>G</i>*(&omega;) = 1 / [<i>i</i>&omega; <i>J</i>&#770;(&omega;)]. The measured <i>J</i>(<i>t</i>) is fitted with springs and dashpots side by side (Kelvin-Voigt elements, retardation times four per decade) and a free flow <i>t</i>/<i>&eta;</i>, all with positive weights; the moduli of that sum follow exactly. A direct transform of the measured points (<a href="https://doi.org/10.1103/PhysRevE.80.012501">Evans et al. 2009</a>) rang with their noise. For comparison (Researcher level) Mason's local power-law formulas, |<i>G</i>*(&omega;)| = <i>k</i><sub>B</sub><i>T</i> / [&pi;<i>a</i>&lang;&Delta;<i>r</i><sup>2</sup>(1/&omega;)&rang;<sub>3D</sub> &Gamma;(1 + &alpha;)], <i>G</i>' = |<i>G</i>*| cos(&pi;&alpha;/2), <i>G</i>'' = |<i>G</i>*| sin(&pi;&alpha;/2), with &alpha; the local slope of &lang;&Delta;<i>r</i><sup>2</sup>&rang; on logarithmic axes.</p>
         </details>
         <details class="lvl-3 math" open>
           <summary>Settings used for this run</summary>
@@ -533,15 +597,17 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
       <li><a href="https://rcerbino.github.io/research/">Research</a>: what the SoMeX group measures with DDM.</li>
       <li>Switch to <a href="#student" data-level-link="student">Student</a> above for the equations behind each step.</li>
     </ul>
-    <ul class="lvl-2">
+    <ul>
       <li>P. Edera, D. Bergamini, V. Trappe, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1103/PhysRevMaterials.1.073804">Differential dynamic microscopy microrheology of soft materials: a tracking-free determination of the frequency-dependent loss and storage moduli</a>, Phys. Rev. Materials 1, 073804 (2017). The method used here, tested on water-glycerol mixtures and on a polymer solution against a rheometer and diffusing-wave spectroscopy.</li>
       <li>A. V. Bayles, T. M. Squires and M. E. Helgeson, <a href="https://doi.org/10.1007/s00397-017-1047-7">Probe microrheology without particle tracking by differential dynamic microscopy</a>, Rheol. Acta 56, 863 (2017). The same idea, on sucrose solutions, wormlike micelles and polyacrylamide gels.</li>
       <li>T. G. Mason, <a href="https://doi.org/10.1007/s003970000094">Estimating the viscoelastic moduli of complex fluids using the generalized Stokes-Einstein equation</a>, Rheol. Acta 39, 371 (2000). The local power-law formulas.</li>
+      <li>R. M. L. Evans, M. Tassieri, D. Auhl and T. A. Waigh, <a href="https://doi.org/10.1103/PhysRevE.80.012501">Direct conversion of rheological compliance measurements into storage and loss moduli</a>, Phys. Rev. E 80, 012501 (2009). The direct transform of J(t), tried here and dropped: it rang with the noise of the measured points.</li>
       <li>H. H. Winter and F. Chambon, <a href="https://doi.org/10.1122/1.549853">Analysis of linear viscoelasticity of a crosslinking polymer at the gel point</a>, J. Rheol. 30, 367 (1986). The critical gel: G' and G'' parallel power laws.</li>
       <li>K. R. Lennon, M. Geri, G. H. McKinley and J. W. Swan, <a href="https://doi.org/10.1122/8.0000104">Medium amplitude parallel superposition (MAPS) rheology. Part 2: Experimental protocols and data analysis</a>, J. Rheol. 64, 1263 (2020). The concentrated wormlike micelles of the card "Too stiff for these beads".</li>
       <li>R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope</a>, Phys. Rev. Lett. 100, 188102 (2008); E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a>, J. Chem. Phys. 163, 161501 (2025).</li>
     </ul>
     <ul class="lvl-3">
+      <li>fastDDM tutorial notebook on real movies: <a href="https://github.com/somexlab/fastddm-tutorials/tree/main/Tutorial_9-Microrheology">microrheology of a polymer solution (tutorial 9)</a>; <a href="https://github.com/somexlab/fastddm-tutorials">all tutorials</a>.</li>
       <li><a href="https://github.com/somexlab/fastddm">fastDDM</a> (Python, CPU and GPU, GPL 3.0): <code>pip install fastddm</code>. <a href="https://fastddm.readthedocs.io/">Documentation</a>.</li>
       <li>For collaborations or questions about applying DDM to your samples, see <a href="https://rcerbino.github.io/contact/">Contact</a>.</li>
     </ul>
