@@ -1086,35 +1086,39 @@
     if (fit.lineD) seg(function (c) { return lineD(fit.lineD, c); }, C.ink, [7, 4], 1.4);
     pts.forEach(function (p) { if (!(p.D > 0)) return; const X = a.fx(p.c); ctx.strokeStyle = C.ink; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X, a.fy(p.D * (1 - p.D_rel_err))); ctx.lineTo(X, a.fy(p.D * (1 + p.D_rel_err))); ctx.stroke(); dot(ctx, X, a.fy(p.D), 3, C.ink, null); });
     a.done();
-    // concentration over amplitude, relative to its value at c = 0
+    // the amplitude against the concentration, as in Guidolin et al. (2023), eq. 5: <A> = k c / (1 + c / c0), c0 = 1 / (2 A2 M).
+    // Shown divided by k (from the fit), so that proteins that do not interact would lie on the line y = c. The fit is the
+    // weighted straight line through c / A = (1 + c / c0) / k, the same model.
     const a0 = fit.lineA ? fit.lineA.a : null;
-    // the simulated line on the same scale: the true amplitudes give c / A_true = a_t (1 + 2 A2 M c)
+    // the simulated curve on the same scale: the true amplitudes give c / A_true = a_t (1 + 2 A2 M c)
     let at = 0, nt = 0; pts.forEach(function (p) { if (p.A_true > 0) { at += (p.c / p.A_true) / trueRel(p.c, r); nt++; } }); at = nt ? at / nt : null;
     const norm = a0 || at || 1;
-    lo = Infinity; hi = -Infinity;
-    const rel = pts.filter(function (p) { return p.A > 0; }).map(function (p) { return { c: p.c, y: p.c / p.A / norm, e: p.c / p.A / norm * p.A_rel_err }; });
-    rel.forEach(function (p) { consider(p.y - p.e); consider(p.y + p.e); });
-    const tline = function (c) { return (at ? at / norm : 1) * trueRel(c, r); };
-    [0, cmax].forEach(function (c) { consider(tline(c)); if (fit.lineA) consider((fit.lineA.a + fit.lineA.b * c) / norm); if (compare) consider(1 + compare.A * Math.min(c, compare.cmax)); });
-    const padA = 0.15 * (hi - lo || 1);
-    const b = axes($("chart-sa"), { xlog: false, ylog: false, x0: 0, x1: cmax, y0: lo - padA, y1: hi + padA, xlabel: "Concentration (mg/mL)", ylabel: level === "curious" ? "Concentration / signal (relative)" : "c / A (relative)" }), cb = b.ctx;
-    const segB = function (f, col, dash, wd, alpha, end) { const ce = end || cmax; cb.strokeStyle = col; cb.lineWidth = wd; cb.setLineDash(dash); cb.globalAlpha = alpha || 1; cb.beginPath(); cb.moveTo(b.fx(0), b.fy(f(0))); cb.lineTo(b.fx(ce), b.fy(f(ce))); cb.stroke(); cb.setLineDash([]); cb.globalAlpha = 1; };
-    if (compare) segB(function (c) { return 1 + compare.A * c; }, C.ink, [2, 4], 2, 0.65, compare.cmax);
-    segB(tline, C["accent-2"], [], 1.8);
-    if (fit.lineA) segB(function (c) { return (fit.lineA.a + fit.lineA.b * c) / norm; }, C.ink, [7, 4], 1.4);
+    lo = 0; hi = -Infinity;
+    const rel = pts.filter(function (p) { return p.A > 0; }).map(function (p) { return { c: p.c, y: p.A * norm, e: p.A * norm * p.A_rel_err }; });
+    rel.forEach(function (p) { consider(p.y + p.e); });
+    const tcurve = function (c) { return (at ? norm / at : 1) * c / trueRel(c, r); };
+    const fcurve = function (c) { return c / (1 + fit.lineA.b / fit.lineA.a * c); };
+    const ccurve = function (c) { return c / (1 + compare.A * c); };
+    [cmax / 2, cmax].forEach(function (c) { consider(c); consider(tcurve(c)); if (fit.lineA) consider(fcurve(c)); if (compare) consider(ccurve(Math.min(c, compare.cmax))); });
+    const b = axes($("chart-sa"), { xlog: false, ylog: false, x0: 0, x1: cmax, y0: 0, y1: hi * 1.1, xlabel: "Concentration (mg/mL)", ylabel: level === "curious" ? "Signal (relative)" : "<A> / k (mg/mL)" }), cb = b.ctx;
+    const curveB = function (f, col, dash, wd, alpha, end) { const ce = end || cmax; cb.strokeStyle = col; cb.lineWidth = wd; cb.setLineDash(dash); cb.globalAlpha = alpha || 1; cb.beginPath(); for (let i = 0; i <= 60; i++) { const c = ce * i / 60, X = b.fx(c), Y = b.fy(f(c)); if (i === 0) cb.moveTo(X, Y); else cb.lineTo(X, Y); } cb.stroke(); cb.setLineDash([]); cb.globalAlpha = 1; };
+    curveB(function (c) { return c; }, C.muted, [3, 3], 1.2);
+    if (compare) curveB(ccurve, C.ink, [2, 4], 2, 0.65, compare.cmax);
+    curveB(tcurve, C["accent-2"], [], 1.8);
+    if (fit.lineA) curveB(fcurve, C.ink, [7, 4], 1.4);
     rel.forEach(function (p) { const X = b.fx(p.c); cb.strokeStyle = C.ink; cb.lineWidth = 1; cb.beginPath(); cb.moveTo(X, b.fy(p.y - p.e)); cb.lineTo(X, b.fy(p.y + p.e)); cb.stroke(); dot(cb, X, b.fy(p.y), 3, C.ink, null); });
     b.done();
-    fillNumbers("series-numbers", ["c (mg/mL)", "D_c measured (" + MU + "m\u00b2/s)", "Uncertainty (%)", "D_c simulated", "c / A measured (relative)", "Uncertainty (%)", "c / A simulated (relative)"],
-      pts.map(function (p) { return [p.c, p.D, 100 * p.D_rel_err, r.Dc(p.c), p.A > 0 ? p.c / p.A / norm : null, p.A > 0 ? 100 * p.A_rel_err : null, tline(p.c)]; }));
+    fillNumbers("series-numbers", ["c (mg/mL)", "D_c measured (" + MU + "m\u00b2/s)", "Uncertainty (%)", "D_c simulated", "&lt;A&gt; / k measured (mg/mL)", "Uncertainty (%)", "&lt;A&gt; / k simulated (mg/mL)"],
+      pts.map(function (p) { return [p.c, p.D, 100 * p.D_rel_err, r.Dc(p.c), p.A > 0 ? p.A * norm : null, p.A > 0 ? 100 * p.A_rel_err : null, tcurve(p.c)]; }));
     const notes = function (id, list) { const ul = $(id); ul.innerHTML = ""; list.forEach(function (t) { if (!t) return; const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); }); };
     const cmp = compare ? "Dotted line: the earlier " + (compare.measured ? "series" : "sample as simulated") + " (" + compare.label + ")." : null;
     if (level === "curious") {
       notes("sd-notes", [cmp, "Dots: how fast the proteins spread at each concentration (bars: uncertainty). Dashed: the straight line through them; where it meets the left edge is one protein on its own. Red: the simulation."]);
-      notes("sa-notes", [cmp, "Dots: the concentration divided by how strong the patterns are, against its value with no proteins. Dashed: the straight line through them. Red: the simulation."]);
+      notes("sa-notes", [cmp, "Dots: how strong the patterns are at each concentration. Grey: what proteins that do not interact would give, growing in step with the concentration. Below it, the proteins keep evenly spread; above it, they cluster a little. Dashed: the fit. Red: the simulation."]);
       return;
     }
     notes("sd-notes", [cmp, "Dots: D_c at each concentration, from step 6 (bars: jackknife). Dashed: weighted line D_c = D0 (1 + k_D c). Red: as simulated, k_D = " + fmtSig(r.kD_mL_g, 3) + " mL/g." + (fit.lineD ? " Fit: D0 = " + fmtSig(fit.D0, 3) + " +- " + fmtSig(fit.D0_err, 2) + " " + MU + "m\u00b2/s, k_D = " + fmtSig(fit.kD_mL_g, 3) + " +- " + fmtSig(fit.kD_err, 2) + " mL/g." : "")]);
-    notes("sa-notes", [cmp, "Dots: c / A, with A the amplitude averaged over q = " + fmtSig(cache.res.amp_q[0], 2) + "-" + fmtSig(cache.res.amp_q[1], 2) + " " + MU + "m\u207b\u00b9" + (cache.opts && cache.opts.fix_D !== false ? " and fitted again at the D_c of the line" : "") + ", divided by the intercept of the line. Since A is proportional to c S(0), c / A = (1 + 2 A2 M c) / K. Red: as simulated, A2 = " + fmtA2(r.A2_mol_mL_g2) + " mol mL/g\u00b2." + (fit.lineA ? " Fit: A2 = " + fmtA2(fit.A2) + " +- " + fmtA2(fit.A2_err) + "." : "")]);
+    notes("sa-notes", [cmp, "Dots: <A>, the amplitude averaged over q = " + fmtSig(cache.res.amp_q[0], 2) + "-" + fmtSig(cache.res.amp_q[1], 2) + " " + MU + "m\u207b\u00b9" + (cache.opts && cache.opts.fix_D !== false ? " and fitted again at the D_c of the line" : "") + ", divided by k. Grey: <A> = k c, proteins that do not interact. Dashed: <A> = k c / (1 + c / c0) with c0 = 1 / (2 A2 M), as in Guidolin et al. (2023); A2 is their B2, in mol mL/g\u00b2. Red: as simulated, A2 = " + fmtA2(r.A2_mol_mL_g2) + "." + (fit.lineA ? " Fit: A2 = " + fmtA2(fit.A2) + " +- " + fmtA2(fit.A2_err) + " mol mL/g\u00b2" + (fit.lineA.b > 0 ? ", c0 = " + fmtSig(fit.lineA.a / fit.lineA.b, 2) + " mg/mL" : "") + "." : "")]);
   }
   function ampPoints() { const r = cache.res; return r.rows.map(function (x) { return { q: x.q_per_um, A: x.A, B: r.B_camera, used: x.used }; }); }
   // signal A(q) and camera noise B(q) at each q, as on the sizing page (Researcher level): where A sinks into B, the
@@ -1182,7 +1186,7 @@
       const f3 = function (x) { return x === null || x === undefined || !isFinite(x) ? "-" : fmtSig(x, 3); };
       const pm = function (x, e) { return x === null || x === undefined || !isFinite(x) ? "-" : fmtSig(x, 3) + (e > 0 ? " +- " + fmtSig(e, 2) : ""); };
       const row = function (cls, name, d, ra, kd, a2, rh, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + d + '</td><td>' + ra + '</td><td>' + kd + '</td><td>' + a2 + '</td><td>' + rh + '</td></tr>'; };
-      let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">D at ' + fmtSig(conc, 3) + ' mg/mL (' + MU + 'm\u00b2/s)</th><th scope="col">Apparent radius (nm)</th><th scope="col">k_D (mL/g)</th><th scope="col">A2 (1e-4 mol mL/g\u00b2)</th><th scope="col">R_h from D0 (nm)</th></tr></thead><tbody>';
+      let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">D at ' + fmtSig(conc, 3) + ' mg/mL (' + MU + 'm\u00b2/s)</th><th scope="col">Apparent radius (nm)</th><th scope="col">k_D (mL/g)</th><th scope="col">A2, static (1e-4 mol mL/g\u00b2)</th><th scope="col">R_h from D0 (nm)</th></tr></thead><tbody>';
       t += row("main", "This page", pm(D, D * res.D_rel_err), f3(Ra), f ? pm(f.kD_mL_g, f.kD_err) : "-", f && f.A2 !== undefined ? pm(f.A2 * 1e4, f.A2_err * 1e4) : "-", f && f.Rh_nm ? f3(f.Rh_nm) : "-", "the headline; series values once step 7 has run");
       if (level === "addict" && res.published) {
         const pb = res.published, fp = s ? s.published : null;
@@ -1236,7 +1240,7 @@
       shows: [{ label: "2 mg/mL", set: { conc: 2 }, go: "step-rates" }, { label: "8 mg/mL", set: {}, go: "step-rates" }, { label: "The series", set: {}, go: "step-series", series: true }] },
     { lvl: 1, title: "Salt switches the interactions", text: "At 15 mM salt the antibodies, all positively charged, repel each other over a few nanometres (the Debye length is 2.5 nm): k_D is about +14 mL/g, and A2 is larger than for hard spheres of their size. At 115 mM the salt screens the charge within 0.9 nm, and in the diffusion slope the drag of neighbours and the short-range attraction outweigh what is left of the repulsion: k_D falls to about -5 mL/g. A2 stays positive, though below the value for hard spheres: on balance the antibodies still keep apart, mostly by their size. A negative k_D alone does not mean that proteins attract. In our tests the series gave k_D = 10 +- 4 mL/g at 15 mM (up to 15 mg/mL) and -4.6 +- 0.6 at 115 mM (up to 30 mg/mL): the higher concentrations give a stronger signal and a longer lever.",
       shows: [{ label: "15 mM salt", set: {}, go: "step-series", series: true }, { label: "115 mM salt", set: { salt_mM: 115, c_max: 30 }, go: "step-series", series: true }] },
-    { lvl: 1, title: "Albumin, as in our 2023 paper", text: "Bovine serum albumin in phosphate-buffered saline, as in our 2023 paper: its negative charge is mostly screened, so it behaves nearly as a hard sphere with a little extra repulsion. The model gives k_D = 4.5 mL/g, against 4 +- 1 measured by DDM in the paper. Albumin is less than half as heavy as an antibody, so its signal per mg/mL is weaker: in our tests the series gave k_D = 2 +- 2 mL/g and R_h = 3.3 nm (set in the simulation: 3.4).",
+    { lvl: 1, title: "Albumin, as in our 2023 paper", text: "Bovine serum albumin in phosphate-buffered saline, as in our 2023 paper: its negative charge is mostly screened, so it behaves nearly as a hard sphere with a little extra repulsion. The model gives k_D = 4.5 mL/g, against 4 +- 1 measured by DDM in the paper. In the paper the amplitudes also gave a static second virial coefficient, B2 = (3 +- 1)e-4 mol mL/g\u00b2 (the A2 of this page), larger than most published values; the model here uses 1.1e-4, the value that goes with the k_D. Albumin is less than half as heavy as an antibody, so its signal per mg/mL is weaker: in our tests the series gave k_D = 2 +- 2 mL/g, A2 = (1.2 +- 0.1)e-4 and R_h = 3.3 nm (set in the simulation: 3.4).",
       shows: [{ label: "Albumin in saline", set: { protein: "bsa" }, go: "step-series", series: true }] },
     { lvl: 1, title: "A sticky antibody", text: "An antibody with a stronger short-range attraction, at 115 mM salt: A2 is below zero, so the proteins cluster a little, and k_D is about -21 mL/g. At 18 mg/mL the crowd spreads 37 % more slowly than one antibody alone, and read at that concentration alone it would look 8.5 nm in radius instead of 5.3. A strong effect is easy to measure: in our tests the series gave k_D = -20.6 +- 0.9 mL/g and A2 = -1.1e-5 +- 0.3e-5 mol mL/g\u00b2 (simulated -1.4e-5).",
       shows: [{ label: "Sticky antibody", set: { protein: "sticky" }, go: "step-series", series: true }] },
