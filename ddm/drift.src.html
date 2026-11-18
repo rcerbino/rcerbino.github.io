@@ -435,7 +435,7 @@ img_seq = fd.read_images(file_names)</pre>
             <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie. The centre of the map holds wide stripes, the edge fine ones.</p>
             <p class="only-1">The charts further down label each pattern by <i>q</i>, a number that grows as the stripes get finer: <i>q</i> = 2&pi; divided by the stripe spacing, in inverse micrometres. Stripes 1 &micro;m apart have <i>q</i> of about 6.</p>
             <p>Without a drift the map is round: the particles wander equally in all directions. A drift makes the patterns along it travel. After the delay, a pattern that moved by exactly one stripe looks as before and almost cancels in the difference; one that moved by half a stripe is reversed and shows twice as strongly. So the map is crossed by dark and bright fringes at right angles to the drift, closer together for a faster drift or a longer delay. Move the delay slider and watch them close in.</p>
-            <p>The second map shows how much of each pattern is left after the delay: red where it is still all there, the colour of the page where it has faded, blue where it came back reversed, a value below zero. Among the causes on this page only a drift can turn a pattern around: carried by half a stripe, a pattern swaps bright and dark, and any shift beyond a quarter of a stripe makes the value negative. (Cells swimming in all directions can do it too, on the swimmers page.)</p>
+            <p>The second map shows how much of each pattern is left after the delay: red where it is still all there, the colour of the page where it has faded, blue where it came back reversed, a value below zero. Among the causes on this page only a drift can turn a pattern around: carried by half a stripe, a pattern swaps bright and dark: the value first turns negative after a shift of a quarter of a stripe, stays negative up to three quarters, and turns positive again as the shift nears a whole stripe, while diffusion weakens it all along. (Cells swimming in all directions can do it too, on the swimmers page.)</p>
             <p>Each pattern has a direction: across its stripes, from one bright stripe to the next (the direction of <i>q</i>). A pattern along the drift has stripes that the drift crosses at right angles, so it is carried away; a pattern across the drift has stripes parallel to it, which the drift only slides along without changing them.</p>
             <p class="only-1">How strong a pattern is cannot tell which way it was carried: a shift to the right and one to the left change it equally. Where the pattern sits within its cycle can, as the animation below shows. That position is called the phase: it advances when the pattern moves one way and goes back when it moves the other. Step 6 reads the drift, and its direction, from the phase of all the patterns.</p>
             <figure class="viz phase-demo">
@@ -489,7 +489,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
             </figure>
           </div>
         </div>
-        <p class="takeaway"><b>What this step gives:</b> curves along and across the drift. A swing below zero along it is the drift showing in the structure function itself; without a swing it is still in the phase.</p>
+        <p class="takeaway"><b>What this step gives:</b> curves along and across the direction of motion (along x and y of the image when no drift is found). A swing below zero is a drift showing in the structure function itself; without a swing a drift can still be in the phase.</p>
       </section>
 
       <!-- 6 -->
@@ -506,7 +506,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
           </figure>
           <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <figure class="viz">
-            <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>) of the patterns used. <i>A</i> falls at high <i>q</i> because the optics blur fine patterns; where it sinks into <i>B</i> neither the fading nor the swinging of the patterns can be read.</figcaption>
+            <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>) of the patterns used. <i>A</i> falls at high <i>q</i> because the optics blur fine patterns. As the signal becomes small next to the camera noise, more averaging is needed: a pattern is usable as long as its amplitude and its changes can be estimated reliably, and the checks of this step decide which are kept. A signal below the noise is not unusable as such: on the <a href="../proteins/#step-rates">proteins page</a> it is far below it and still gives the diffusion coefficient.</figcaption>
             <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
             <div class="legend" id="amp-legend"></div>
           </figure>

@@ -346,7 +346,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
     </aside>
 
     <div class="steps">
-      <nav class="step-index" aria-label="Steps on this page"><ol><li><a href="#step-setup" data-title="Set up the microscope" aria-label="Step 1: Set up the microscope">1</a></li><li><a href="#step-movie" data-title="Record a movie" aria-label="Step 2: Record a movie">2</a></li><li><a href="#step-diff" data-title="Subtract two frames" aria-label="Step 3: Subtract two frames">3</a></li><li><a href="#step-map" data-title="Split it into stripe patterns" aria-label="Step 4: Split it into stripe patterns">4</a></li><li><a href="#step-curves" data-title="Watch each pattern change" aria-label="Step 5: Watch each pattern change">5</a></li><li><a href="#step-rates" data-title="From the curves to the moduli" aria-label="Step 6: From the curves to the moduli">6</a></li></ol><span class="now" aria-hidden="true"></span></nav>
+      <nav class="step-index" aria-label="Steps on this page"><ol><li><a href="#step-setup" data-title="Set up the microscope" aria-label="Step 1: Set up the microscope">1</a></li><li><a href="#step-movie" data-title="Record a movie" aria-label="Step 2: Record a movie">2</a></li><li><a href="#step-diff" data-title="Subtract two frames" aria-label="Step 3: Subtract two frames">3</a></li><li><a href="#step-map" data-title="Split it into stripe patterns" aria-label="Step 4: Split it into stripe patterns">4</a></li><li><a href="#step-curves" data-title="Watch each pattern change" aria-label="Step 5: Watch each pattern change">5</a></li><li><a href="#step-rates" data-title="From the curves to the moduli" aria-label="Step 6: From the curves to the moduli">6</a></li></ol><span class="now" aria-hidden="true"></span><a class="gl" href="#glossary">Glossary</a></nav>
 
       <!-- 1 -->
       <section class="step" id="step-setup" aria-labelledby="h-setup">
@@ -505,6 +505,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. Fine stripes (red) change first, because a bead only has to move a little to shift them; wide ones (blue) change later. In a liquid every curve falls to zero in the end: given time, the beads wander off and every pattern is renewed.</p>
             <p class="only-1">The points are measured: how different two frames a delay apart look, with the camera noise taken away and divided by the full change, then turned around so that 1 means the whole pattern is still there and 0 that it is gone. The lines are drawn from how far the beads move, found in step 6 from these same points, so they show that one displacement describes all the curves; the comparison with the simulated material in step 6 shows whether it is right.</p>
             <p class="lvl-2">The points are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i>. The lines are exp[&minus;<i>q</i><sup>2</sup> &lang;&Delta;<i>r</i><sup>2</sup>&rang; / 4] with the mean squared displacement of step 6 (leaving out the small effect of the depth of field), the same for every <i>q</i>: if the beads' displacements are Gaussian, one displacement explains all the curves. <b>The order of the analysis.</b> <i>d</i> is measured first; <i>B</i> comes from the camera and <i>A</i> from the mean power of each pattern; the points follow. The displacement comes from these points in step 6, so the lines test only that one displacement describes all of them; the comparison with the simulated material tests the result.</p>
+            <p>Things that never move vanish from the differences of step 3, but not from the full strength of each pattern, which the page needs in order to tell how much has changed. In a real sample dust or uneven light would bias that strength; a movie of the background, taken the same way, corrects for it.</p>
           </div>
           <figure class="viz" id="try-gel">
             <div class="chart"><canvas id="chart-curves" aria-label="How much of each pattern is left against the delay"></canvas></div>
@@ -517,7 +518,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             <div class="a" hidden><span class="verdict"></span> No. Each bead only rattles in its cage, so part of every pattern never changes: the curves level off above zero, higher for wider stripes, which a small rattle hardly moves. The height of the plateau gives how far the beads rattle, and from it the elastic modulus of the gel. The bench now runs with a soft gel so you can check: this chart keeps one curve of the earlier run, dashed, next to the new one at the same stripe spacing, and step 6 keeps the earlier displacement. Look for where the thick line levels off while the dashed one falls to zero.</div>
           </div>
         </div>
-        <p class="takeaway"><b>What this step gives:</b> how much of each pattern is left over time. Curves that level off above zero mean beads that stay caged.</p>
+        <p class="takeaway"><b>What this step gives:</b> how much of each pattern is left over time. Curves that level off above zero mean beads that stay caged over the time measured; whether they would ever escape, a movie of finite length cannot tell.</p>
       </section>
 
       <!-- 6 -->
@@ -526,8 +527,8 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
         <div class="step-body">
           <div class="text">
             <p>Each curve of step 5 gives, at each delay, how far the beads have moved: the mean squared displacement, the average of the squared distances they travel, in square micrometres (its square root is a typical distance). Fine stripes give the small displacements of short delays, wide stripes the large ones of long delays, and where they overlap they agree. Free diffusion makes the displacement grow in proportion to the delay (a slope of 1 on these axes); beads held in cages make it level off (a slope of 0).</p>
-            <p class="only-1">A rule that goes back to Einstein turns the displacement into the moduli: the stiffer the material, the less the beads move, and the faster it relaxes, the sooner they escape. A delay &Delta;<i>t</i> stands for a frequency of about 1/&Delta;<i>t</i>.</p>
-            <p class="lvl-2">The generalised Stokes-Einstein relation turns the displacement into the moduli: the stiffer the material, the less the beads move, and the faster it relaxes, the sooner they escape. A delay &Delta;<i>t</i> stands for a frequency of about 1/&Delta;<i>t</i>.</p>
+            <p class="only-1">A rule that goes back to Einstein turns the displacement into the moduli: the stiffer the material, the less the beads move, and the faster it relaxes, the sooner they escape. A delay &Delta;<i>t</i> stands for an angular frequency &omega; of about 1/&Delta;<i>t</i>, in rad/s (the frequency in hertz is &omega;/2&pi;).</p>
+            <p class="lvl-2">The generalised Stokes-Einstein relation turns the displacement into the moduli: the stiffer the material, the less the beads move, and the faster it relaxes, the sooner they escape. A delay &Delta;<i>t</i> stands for an angular frequency &omega; of about 1/&Delta;<i>t</i>, in rad/s (the frequency in hertz is &omega;/2&pi;).</p>
           </div>
           <figure class="viz">
             <figcaption>How far the beads get</figcaption>
@@ -542,7 +543,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
           </figure>
           <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <figure class="viz">
-            <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>). <i>A</i> falls at high <i>q</i> because the optics blur fine patterns; where it sinks into <i>B</i> the displacement of the beads can no longer be read.</figcaption>
+            <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>). <i>A</i> falls at high <i>q</i> because the optics blur fine patterns. As the signal becomes small next to the camera noise, more averaging is needed: a pattern is usable as long as its amplitude and its changes can be estimated reliably, and the checks of this step decide which are kept. A signal below the noise is not unusable as such: on the <a href="../proteins/#step-rates">proteins page</a> it is far below it and still gives the diffusion coefficient.</figcaption>
             <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
             <div class="legend" id="amp-legend"></div>
           </figure>
@@ -594,6 +595,11 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     </ul>
   </section>
 
+  <section class="wrap further" id="glossary" aria-labelledby="h-glossary">
+    <h2 id="h-glossary">Glossary</h2>
+    <dl class="glossary"><dt>Numerical aperture (NA)</dt><dd>How wide a cone of light the objective collects, or the condenser sends: n sin(half-angle). A larger NA resolves finer details and keeps a thinner layer in focus.</dd><dt>Wave vector q</dt><dd>Describes a stripe pattern of the image: q = 2&pi; divided by the stripe spacing, in &micro;m<sup>-1</sup>. Not the wave number of the light, k = 2&pi;n/&lambda;.</dd><dt>Structure function d(q, &Delta;t)</dt><dd>The average strength of pattern q in the difference of two frames taken &Delta;t apart.</dd><dt>Amplitude A and noise B</dt><dd>A(q): how much pattern q changes once the sample has fully renewed it. B: what the camera noise adds, at every delay.</dd><dt>Intermediate scattering function f(q, &Delta;t)</dt><dd>How much of pattern q is still there after a delay &Delta;t: 1, all of it; 0, gone.</dd><dt>Hydrodynamic radius</dt><dd>The radius of a sphere that would diffuse as the particle or protein does (Stokes-Einstein relation).</dd><dt>Self and collective diffusion</dt><dd>Self: how one particle wanders among the others. Collective: how ripples in the number of particles even out.</dd><dt>Mean squared displacement</dt><dd>The average of the squared distance the particles travel in a given time.</dd><dt>Storage and loss moduli G', G''</dt><dd>How elastic and how viscous a material is, at an angular frequency &omega; (rad/s; the frequency in hertz is &omega;/2&pi;).</dd><dt>Molar mass M</dt><dd>The mass of one mole of a protein, in g/mol; a protein of 148 kDa has M = 148 000 g/mol.</dd><dt>Second virial coefficient</dt><dd>How two molecules interact, on balance: B<sub>2</sub> per pair of molecules (a volume), A<sub>2</sub> = B<sub>2</sub>N<sub>A</sub>/M<sup>2</sup> per gram (mol mL/g<sup>2</sup>), with N<sub>A</sub> Avogadro's number. Positive: they keep apart; negative: they attract.</dd><dt>Diffusion interaction parameter k<sub>D</sub></dt><dd>How fast collective diffusion changes with the concentration: D = D<sub>0</sub>(1 + k<sub>D</sub>c). It holds the interactions and the drag of neighbours through the liquid.</dd></dl>
+  </section>
+
   <section class="wrap further" aria-labelledby="h-about">
     <h2 id="h-about">About this tool</h2>
     <p class="prose">This page is a simple tool, generated with Claude Opus 5.5, that simulates a realistic microscopy experiment in which DDM is used to measure the moduli of a soft material from the motion of tracer beads. The microscope, light sources, cameras, spinning disk and point scanner are modelled mostly on the instruments of our SoMeX lab. The beads are spheres that do not interact with each other, in a material that is the same everywhere and whose moduli are set exactly; the concentrated micelles come from the measurements cited on the page, the other materials have values chosen for the page. The aim is not to produce research-quality data, but to give anyone thinking of using DDM an idea of what microrheology can measure, and of what limits it.</p>
@@ -631,14 +637,19 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
 .step-index a { display: inline-flex; align-items: center; justify-content: center; min-width: 1.9rem; height: 1.9rem; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink); text-decoration: none; font-variant-numeric: tabular-nums; }
 .step-index a:hover { border-color: var(--accent); }
 .step-index a[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.step-index a.gl { min-width: 0; height: auto; border: 0; padding: 0 0.25rem; color: var(--accent); text-decoration: underline; }
 .step-index .now { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 12rem; }
 .step { scroll-margin-top: 3.5rem; }
+.glossary { display: grid; grid-template-columns: minmax(10rem, 16rem) 1fr; gap: 0.4rem 1.25rem; margin: 0; max-width: 60rem; }
+.glossary dt { font-weight: 600; }
+.glossary dd { margin: 0; }
+@media (max-width: 40rem) { .glossary { grid-template-columns: 1fr; } .glossary dd { margin-bottom: 0.5rem; } }
 @media (max-width: 40rem) { .step-index .now { display: none; } .step-index a { min-width: 1.75rem; height: 1.75rem; } }
 </style>
 <script>
 (function () {
   var nav = document.querySelector(".step-index"); if (!nav) return;
-  var links = Array.prototype.slice.call(nav.querySelectorAll("a")), now = nav.querySelector(".now");
+  var links = Array.prototype.slice.call(nav.querySelectorAll("ol a")), now = nav.querySelector(".now");
   var steps = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
   function mark() {
     var k = 0, y = nav.getBoundingClientRect().bottom + 40;
@@ -6007,7 +6018,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
   }
   // what the beads say about the material, in a few words
   function kindOf(r) {
-    if (r.plateau_Pa) return { word: "A solid", text: "at long times the beads stay in their cages: G' levels off" };
+    if (r.plateau_Pa) return { word: "Solid-like", text: "over the movie the beads stay in their cages and G' levels off: consistent with a solid, if the beads do not stick to the material and it is the same everywhere (true in this simulation). A liquid that relaxes more slowly than the movie lasts would look the same" };
     if (r.eta_long_Pa_s && r.crossings.some(function (c) { return c.elastic_above; })) return { word: "A viscoelastic liquid", text: "elastic at high frequencies, it flows at long times: the beads first rattle in cages, then diffuse freely" };
     if (r.eta_long_Pa_s) return { word: "A liquid", text: "at long times the beads diffuse freely: the material flows" };
     return { word: "In between", text: "the beads neither diffuse freely nor stay put within the movie" };
@@ -6107,6 +6118,8 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
       shows: [{ label: "Before", set: { mat: "pregel" }, go: "step-rates" }, { label: "At the gel point", set: { mat: "critical" }, go: "step-rates" }, { label: "After", set: { mat: "gel" }, go: "step-rates" }] },
     { lvl: 1, title: "Too stiff for these beads", text: "Concentrated wormlike micelles (Lennon et al. 2020) have a plateau of 40 Pa: in it a 500 nm bead rattles by only about 10 nm, far below what these patterns can see. DDM sees nothing until a few seconds, when the micelles let the beads flow: it gets the viscosity, but not the elastic part. Beads of 200 nm move further and open the window a little earlier (up to about 0.7 rad/s), still short of where G' and G'' cross (1.6 rad/s). Rheometers, or light scattering through the whole sample (DWS), reach stiffer materials.",
       shows: [{ label: "500 nm beads", set: { mat: "stiff" }, go: "step-rates" }, { label: "200 nm beads", set: { mat: "stiff", diameter_um: 0.2 }, go: "step-rates" }] },
+    { lvl: 2, title: "A slow liquid or a gel?", text: "A movie shows the beads only for as long as it lasts. Compare a soft gel with a liquid of the same stiffness whose relaxation takes 100 s, twice the length of the movie: in both the beads look caged for most of it. The analysis calls the gel solid-like, as its G' levels off by the end of the movie, and the slow liquid in between, as its beads have begun to move at the longest delays. A liquid relaxing over hours would look just like the gel. That the gel is a true solid the page knows only because it simulated one: in an experiment a longer movie, or what is known about the sample, has to decide.",
+      shows: [{ label: "Soft gel", set: { mat: "gel" }, go: "step-rates" }, { label: "Slow liquid (100 s)", set: { mat: "custom", mat_G: 0.05, mat_tau: 100, mat_Ginf: 0 }, go: "step-rates" }] },
     { lvl: 2, title: "The size of the beads", text: "In the same material, beads half as large have twice the mean squared displacement in the same time (they get about 1.4 times as far), which suits DDM, but they show less, and the signal can sink into the camera noise. The moduli do not change: they belong to the material. In real samples the beads must also be larger than the mesh of the material, or they slip through it and feel the solvent instead.",
       shows: [{ label: "200 nm", set: { diameter_um: 0.2 }, go: "step-rates" }, { label: "1 " + MU + "m", set: { diameter_um: 1 }, go: "step-rates" }] },
     { lvl: 2, title: "Fast and slow in one movie", text: "Microrheology wants many decades of frequency: frames close together for the fast relaxations and a long movie for the slow ones. Evenly spaced, 512 frames at 500 per second last one second and miss everything slower. Log-spaced frames, in repeating cycles like a multi-tau correlator, stretch the same frames over about 100 s. Edera et al. (2017) recorded two movies instead, at 777 and 10 frames per second.",

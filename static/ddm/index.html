@@ -325,15 +325,33 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
     };
   }
 
-  /* proteins far too small to see: their density ripples, each wave fading at a rate that grows with its fineness
-     (a few random Fourier modes, each a random process); bright field, contrast stretched */
-  function makeRipples(W, H, n) {
-    const m = []; for (let i = 0; i < n; i++) { const kx = Math.round((Math.random() - 0.5) * 16), ky = Math.round((Math.random() - 0.5) * 10); if (kx === 0 && ky === 0) continue; m.push({ kx: 2 * Math.PI * kx / W, ky: 2 * Math.PI * ky / H, re: gauss(), im: gauss() }); }
-    const img = new Float32Array(W * H), D = 6;
+  /* proteins far too small to see: what the camera records is their number density, each ripple of it seen through
+     the optics of bright field (a ring of wave vectors) and fading by diffusion, the fine ripples fast and the wide ones
+     slowly. Built in Fourier space on a 128 x 128 grid: every mode a random process with rate D k^2; contrast stretched */
+  function makeRipples(W, H) {
+    const N = 128, k0 = 13, D = 1.6e-4, modes = [];
+    for (let ky = -N / 2 + 1; ky < N / 2; ky++) for (let kx = 0; kx < N / 2; kx++) {
+      if (kx === 0 && ky <= 0) continue;
+      const k = Math.hypot(kx, ky); if (k < 2 || k > 44) continue;
+      const u = k / k0, w = u * u * Math.exp(1 - u * u);          // the bright-field transfer: a broad ring
+      modes.push({ i: ((ky + N) % N) * N + kx, j: ((-ky + N) % N) * N + ((N - kx) % N), w: w, g: Math.min(0.6, D * k * k), re: gauss(), im: gauss() });
+    }
+    const re = new Float64Array(N * N), im = new Float64Array(N * N), r = new Float64Array(N), i_ = new Float64Array(N), img = new Float32Array(W * H);
     return {
-      step: function () { m.forEach(function (o) { const g = Math.min(0.5, D * (o.kx * o.kx + o.ky * o.ky)), s = Math.sqrt(1 - (1 - g) * (1 - g)); o.re = (1 - g) * o.re + s * gauss(); o.im = (1 - g) * o.im + s * gauss(); }); },
+      step: function () { modes.forEach(function (o) { const a = 1 - o.g, s = Math.sqrt(1 - a * a); o.re = a * o.re + s * gauss(); o.im = a * o.im + s * gauss(); }); },
       render: function () {
-        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { let v = 0; for (let i = 0; i < m.length; i++) { const o = m[i], ph = o.kx * x + o.ky * y; v += o.re * Math.cos(ph) - o.im * Math.sin(ph); } img[y * W + x] = 0.012 * v + 0.025 * gauss(); }
+        re.fill(0); im.fill(0);
+        modes.forEach(function (o) { re[o.i] += o.w * o.re; im[o.i] += o.w * o.im; re[o.j] += o.w * o.re; im[o.j] -= o.w * o.im; });
+        for (let y = 0; y < N; y++) { for (let x = 0; x < N; x++) { r[x] = re[y * N + x]; i_[x] = im[y * N + x]; } fft1(r, i_, N); for (let x = 0; x < N; x++) { re[y * N + x] = r[x]; im[y * N + x] = i_[x]; } }
+        for (let x = 0; x < N; x++) { for (let y = 0; y < N; y++) { r[y] = re[y * N + x]; i_[y] = im[y * N + x]; } fft1(r, i_, N); for (let y = 0; y < N; y++) re[y * N + x] = r[y]; }
+        let ss = 0; for (let p = 0; p < N * N; p++) ss += re[p] * re[p];
+        const sd = Math.sqrt(ss / (N * N)) || 1;
+        // the field on the canvas, smoothly resampled, plus a little shot noise
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+          const fx = x * (N - 1) / (W - 1), fy = y * (N - 1) / (W - 1), x0 = Math.floor(fx), y0 = Math.floor(fy), ax = fx - x0, ay = fy - y0, x1 = Math.min(N - 1, x0 + 1), y1 = Math.min(N - 1, y0 + 1);
+          const v = (1 - ay) * ((1 - ax) * re[y0 * N + x0] + ax * re[y0 * N + x1]) + ay * ((1 - ax) * re[y1 * N + x0] + ax * re[y1 * N + x1]);
+          img[y * W + x] = 0.075 * v / sd + 0.03 * gauss();
+        }
         return img;
       }
     };
@@ -341,7 +359,11 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
 
   /* a crowd of dyed spheres that push each other apart (soft discs for the sketch); confocal: bright spots on black */
   function makeCrowd(W, H, n, rad, step) {
-    const p = []; for (let i = 0; i < n; i++) p.push([Math.random() * W, Math.random() * H]);
+    // start from an even, slightly jittered triangular arrangement at the density asked, so that no holes are left from
+    // a random start (the sketch's particles move too slowly to fill them)
+    const p = [], a = Math.sqrt(2 * W * H / (Math.sqrt(3) * n)), ny = Math.max(1, Math.round(H / (a * Math.sqrt(3) / 2))), nx = Math.max(1, Math.round(W / a));
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) p.push([wrap((i + (j % 2) * 0.5) * W / nx + 1.5 * gauss(), W), wrap((j + 0.5) * H / ny + 1.5 * gauss(), H)]);
+    n = p.length;
     const R = Math.ceil(rad * 2.5), img = new Float32Array(W * H), d0 = 2.9 * rad;
     const push = function () {
       for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
@@ -351,7 +373,7 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
       }
       for (const q of p) { q[0] = wrap(q[0], W); q[1] = wrap(q[1], H); }
     };
-    for (let k = 0; k < 60; k++) push();
+    for (let k = 0; k < 60; k++) { for (const q of p) { q[0] += step * gauss(); q[1] += step * gauss(); } push(); }
     return {
       img: img,
       step: function () { for (const q of p) { q[0] += step * gauss(); q[1] += step * gauss(); } push(); },
@@ -444,10 +466,10 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
 
   const crh = document.getElementById("cv-rheo"), ctxR = crh.getContext("2d"), caged = makeBeads(crh.width, crh.height, 80, 2.0, 0.35, 0, 0.25);
   scene(crh, caged.step, function () { grayTo(ctxR, caged.render(), crh.width, crh.height, 0.74, 0.9); });
-  const ccr = document.getElementById("cv-crowd"), ctxC = ccr.getContext("2d"), crowd = makeCrowd(ccr.width, ccr.height, 230, 3.2, 0.35);
+  const ccr = document.getElementById("cv-crowd"), ctxC = ccr.getContext("2d"), crowd = makeCrowd(ccr.width, ccr.height, 275, 3.2, 0.35);
   scene(ccr, crowd.step, function () { grayTo(ctxC, crowd.render(), ccr.width, ccr.height, 0.06, 0.8); });
-  const cpr = document.getElementById("cv-prot"), ctxP = cpr.getContext("2d"), ripples = makeRipples(cpr.width, cpr.height, 70);
-  scene(cpr, ripples.step, function () { grayTo(ctxP, ripples.render(), cpr.width, cpr.height, 0.62, 1); });
+  const cpr = document.getElementById("cv-prot"), ctxP = cpr.getContext("2d"), ripples = makeRipples(cpr.width, cpr.height);
+  scene(cpr, ripples.step, function () { grayTo(ctxP, ripples.render(), cpr.width, cpr.height, 0.6, 1); });
   const cdr = document.getElementById("cv-drift"), ctxD = cdr.getContext("2d"), drifting = makeBeads(cdr.width, cdr.height, 80, 2.0, 0.45, 0.35);
   scene(cdr, drifting.step, function () { grayTo(ctxD, drifting.render(), cdr.width, cdr.height, 0.74, 0.9); });
 

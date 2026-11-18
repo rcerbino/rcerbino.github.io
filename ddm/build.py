@@ -89,15 +89,20 @@ STEP_INDEX_STYLE = """<style>
 .step-index a { display: inline-flex; align-items: center; justify-content: center; min-width: 1.9rem; height: 1.9rem; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink); text-decoration: none; font-variant-numeric: tabular-nums; }
 .step-index a:hover { border-color: var(--accent); }
 .step-index a[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.step-index a.gl { min-width: 0; height: auto; border: 0; padding: 0 0.25rem; color: var(--accent); text-decoration: underline; }
 .step-index .now { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 12rem; }
 .step { scroll-margin-top: 3.5rem; }
+.glossary { display: grid; grid-template-columns: minmax(10rem, 16rem) 1fr; gap: 0.4rem 1.25rem; margin: 0; max-width: 60rem; }
+.glossary dt { font-weight: 600; }
+.glossary dd { margin: 0; }
+@media (max-width: 40rem) { .glossary { grid-template-columns: 1fr; } .glossary dd { margin-bottom: 0.5rem; } }
 @media (max-width: 40rem) { .step-index .now { display: none; } .step-index a { min-width: 1.75rem; height: 1.75rem; } }
 </style>
 """
 STEP_INDEX_SCRIPT = """<script>
 (function () {
   var nav = document.querySelector(".step-index"); if (!nav) return;
-  var links = Array.prototype.slice.call(nav.querySelectorAll("a")), now = nav.querySelector(".now");
+  var links = Array.prototype.slice.call(nav.querySelectorAll("ol a")), now = nav.querySelector(".now");
   var steps = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
   function mark() {
     var k = 0, y = nav.getBoundingClientRect().bottom + 40;
@@ -111,13 +116,40 @@ STEP_INDEX_SCRIPT = """<script>
 """
 
 
+# a short glossary at the end of each application page, shared by all of them
+GLOSSARY = [
+    ("Numerical aperture (NA)", "How wide a cone of light the objective collects, or the condenser sends: n sin(half-angle). A larger NA resolves finer details and keeps a thinner layer in focus."),
+    ("Wave vector q", "Describes a stripe pattern of the image: q = 2&pi; divided by the stripe spacing, in &micro;m<sup>-1</sup>. Not the wave number of the light, k = 2&pi;n/&lambda;."),
+    ("Structure function d(q, &Delta;t)", "The average strength of pattern q in the difference of two frames taken &Delta;t apart."),
+    ("Amplitude A and noise B", "A(q): how much pattern q changes once the sample has fully renewed it. B: what the camera noise adds, at every delay."),
+    ("Intermediate scattering function f(q, &Delta;t)", "How much of pattern q is still there after a delay &Delta;t: 1, all of it; 0, gone."),
+    ("Hydrodynamic radius", "The radius of a sphere that would diffuse as the particle or protein does (Stokes-Einstein relation)."),
+    ("Self and collective diffusion", "Self: how one particle wanders among the others. Collective: how ripples in the number of particles even out."),
+    ("Mean squared displacement", "The average of the squared distance the particles travel in a given time."),
+    ("Storage and loss moduli G', G''", "How elastic and how viscous a material is, at an angular frequency &omega; (rad/s; the frequency in hertz is &omega;/2&pi;)."),
+    ("Molar mass M", "The mass of one mole of a protein, in g/mol; a protein of 148 kDa has M = 148 000 g/mol."),
+    ("Second virial coefficient", "How two molecules interact, on balance: B<sub>2</sub> per pair of molecules (a volume), A<sub>2</sub> = B<sub>2</sub>N<sub>A</sub>/M<sup>2</sup> per gram (mol mL/g<sup>2</sup>), with N<sub>A</sub> Avogadro's number. Positive: they keep apart; negative: they attract."),
+    ("Diffusion interaction parameter k<sub>D</sub>", "How fast collective diffusion changes with the concentration: D = D<sub>0</sub>(1 + k<sub>D</sub>c). It holds the interactions and the drag of neighbours through the liquid."),
+]
+
+
+def add_glossary(out):
+    anchor = '<section class="wrap further" aria-labelledby="h-about">'
+    if anchor not in out:
+        return out
+    items = "".join("<dt>%s</dt><dd>%s</dd>" % (t, d) for t, d in GLOSSARY)
+    sec = ('<section class="wrap further" id="glossary" aria-labelledby="h-glossary">\n    <h2 id="h-glossary">Glossary</h2>\n'
+           '    <dl class="glossary">' + items + '</dl>\n  </section>\n\n  ')
+    return out.replace(anchor, sec + anchor, 1)
+
+
 def add_step_index(out):
     if '<div class="steps">' not in out:
         return out
     steps = re.findall(r'<section class="step" id="([^"]+)"[^>]*>\s*<div class="step-title"><span class="num">(\d+)</span><h2 id="[^"]*">(.*?)</h2>', out)
     assert len(steps) >= 5, "step titles not found"
     items = "".join('<li><a href="#%s" data-title="%s" aria-label="Step %s: %s">%s</a></li>' % (sid, re.sub("<[^>]+>", "", t), n, re.sub("<[^>]+>", "", t), n) for sid, n, t in steps)
-    nav = '<nav class="step-index" aria-label="Steps on this page"><ol>' + items + '</ol><span class="now" aria-hidden="true"></span></nav>\n'
+    nav = '<nav class="step-index" aria-label="Steps on this page"><ol>' + items + '</ol><span class="now" aria-hidden="true"></span><a class="gl" href="#glossary">Glossary</a></nav>\n'
     out = out.replace('<div class="steps">', '<div class="steps">\n      ' + nav, 1)
     out = out.replace("</main>", "</main>\n" + STEP_INDEX_STYLE + STEP_INDEX_SCRIPT, 1)
     return out
@@ -135,7 +167,7 @@ def assemble(page="sizing"):
         out = out.replace(k, t)
     # the source is a fragment: give it a document type (standards mode), a character set and a viewport
     # for phones, which the site pages get from templates/base.html
-    out = add_step_index(out)
+    out = add_glossary(add_step_index(out))
     out = DOC_START + out
     bad = [c for c in out if ord(c) > 127]
     assert not bad, "non-ASCII characters: %r" % sorted(set(bad))

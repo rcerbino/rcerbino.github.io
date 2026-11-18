@@ -109,7 +109,7 @@
   // attraction. Presets: numbers from the literature where they exist; the attraction is set to match a reported k_D.
   const PROTEINS = {
     mab: { label: "An antibody (IgG, 148 kDa)", M_kDa: 148, Rh_nm: 5.3, Z: 12, eps_kT: 2.7, salt_mM: 15, conc: 8, c_max: 15,
-      note: "A monoclonal antibody a little below its isoelectric point, so it carries a positive charge (12 charges, illustrative). The short-range attraction is set so that k_D comes out near -5 mL/g at 115 mM salt, close to a value reported by Laber et al. (2022)." },
+      note: "A monoclonal antibody at a pH a little below its isoelectric point (the pH at which a protein carries no net charge), so it carries a positive charge (12 charges, illustrative). The short-range attraction is set so that k_D comes out near -5 mL/g at 115 mM salt, close to a value reported by Laber et al. (2022)." },
     bsa: { label: "Albumin (BSA, 66 kDa)", M_kDa: 66.4, Rh_nm: 3.4, Z: -13, eps_kT: 0, salt_mM: 160, conc: 15, c_max: 30,
       note: "Bovine serum albumin in phosphate-buffered saline at pH 7.4, negatively charged. Radius as measured by DDM in our 2023 paper (Guidolin et al.), where k_D came out 4 +- 1 mL/g; with this charge the model gives 4.5." },
     lyso: { label: "Lysozyme (14 kDa)", M_kDa: 14.3, Rh_nm: 1.9, Z: 8, eps_kT: 3.8, salt_mM: 160, conc: 30, c_max: 40,
@@ -736,7 +736,7 @@
     } else {
       const k = cam(), diag = Math.hypot(k.cols, k.rows) * k.px / 1000;
       txt = "Pixel <b>" + fmtSig(pixelUm(), 3) + " " + MU + "m</b> at the sample (" + k.px + " " + MU + "m x " + state.binning + " / " + mag + "x). Fastest frame rate for this region: <b>" + fmtNum(maxFps()) + " frames/s</b> (" + k.ifaces[state.iface] + "). " +
-        (k.timing === "global" ? "Global shutter: all rows are exposed together. " : "Rolling shutter: " + (k.timing === "rolling_center" ? "rows are read from the centre outwards" : "rows are read from the top down") + ", the last " + fmtSig(1000 * (k.timing === "rolling_center" ? state.roi / 2 : state.roi) * k.rowTime(state.cam_mode), 3) + " ms after the first. ") +
+        (k.timing === "global" ? "Global shutter: all rows are exposed together. " : "This camera has a rolling shutter (" + (k.timing === "rolling_center" ? "rows read from the centre outwards" : "rows read from the top down") + ", the last " + fmtSig(1000 * (k.timing === "rolling_center" ? state.roi / 2 : state.roi) * k.rowTime(state.cam_mode), 3) + " ms after the first), but the movies of this page are simulated with all rows exposed together: the row delay is left out. ") +
         (diag > FIELD_NUMBER_MM ? "The sensor diagonal (" + fmtSig(diag, 3) + " mm) is larger than the 25 mm field, so its corners stay dark. " : "");
     }
     if (simPx() < outPx()) txt += " Your browser simulates the central " + simPx() + " x " + simPx() + " pixels; the full image would also show " + (level === "curious" ? "stripes up to " + fmtSig(2 * Math.PI / qloROI, 2) + " " + MU + "m wide instead of " + fmtSig(2 * Math.PI / qloSim, 2) + "." : "wider stripes, down to q = 2&pi; / spacing = " + fmtSig(qloROI, 2) + " " + MU + "m<sup>-1</sup> instead of " + fmtSig(qloSim, 2) + ".");
