@@ -382,7 +382,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <figure class="viz">
             <div class="imgbox"><canvas id="movie" width="128" height="128" aria-label="Microscope movie"></canvas><div class="scale" id="movie-scale"><i></i><span></span></div></div>
             <div class="toolbar"><button type="button" id="btn-play">Pause</button><span class="readout" id="movie-time"></span></div>
-            <div class="toolbar lvl-2"><button type="button" id="btn-tiff">Download the movie (TIFF)</button><button type="button" id="btn-times" hidden>Frame times (CSV)</button><span class="readout">32-bit, photoelectrons per pixel; opens in ImageJ, Fiji and fastDDM.</span></div>
+            <div class="toolbar lvl-2"><button type="button" id="btn-tiff">Download the movie (TIFF)</button><button type="button" id="btn-times" hidden>Frame times (CSV)</button><button type="button" id="btn-ref">Download the reference movie (TIFF)</button><button type="button" id="btn-facts">Numbers for the notebook (JSON)</button><span class="readout">32-bit, photoelectrons per pixel; opens in ImageJ, Fiji and fastDDM.</span></div>
           </figure>
           <div class="text">
             <p id="movie-text"></p>
@@ -621,6 +621,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
       <li>R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope</a>, Phys. Rev. Lett. 100, 188102 (2008); E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a>, J. Chem. Phys. 163, 161501 (2025).</li>
     </ul>
     <ul class="lvl-3">
+      <li><a href="../notebooks/ddm-crowded.ipynb">A complete notebook for this page</a>: from the two downloaded movies and the numbers file (step 2) to S(q) and D(q), with numpy, every input and step written out. On the standard movie it finds the peak of S(q), 1.46 at q = 6.3 1/&micro;m, as the page does, and D(q)/D0 within about 10 % of the page; it leaves out the jackknife.</li>
       <li>fastDDM tutorial notebook on real movies: <a href="https://github.com/somexlab/fastddm-tutorials/tree/main/Tutorial_7-Intermolecular_interactions">interactions between proteins from how their diffusion changes with concentration (tutorial 7)</a>; <a href="https://github.com/somexlab/fastddm-tutorials">all tutorials</a>.</li>
       <li><a href="https://github.com/somexlab/fastddm">fastDDM</a> (Python, CPU and GPU, GPL 3.0): <code>pip install fastddm</code>. <a href="https://fastddm.readthedocs.io/">Documentation</a>.</li>
       <li>For collaborations or questions about applying DDM to your samples, see <a href="https://rcerbino.github.io/contact/">Contact</a>.</li>

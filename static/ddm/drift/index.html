@@ -341,7 +341,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
     </aside>
 
     <div class="steps">
-      <nav class="step-index" aria-label="Steps on this page"><ol><li><a href="#step-setup" data-title="Set up the microscope" aria-label="Step 1: Set up the microscope">1</a></li><li><a href="#step-movie" data-title="Record a movie" aria-label="Step 2: Record a movie">2</a></li><li><a href="#step-diff" data-title="Subtract two frames" aria-label="Step 3: Subtract two frames">3</a></li><li><a href="#step-map" data-title="Split it into stripe patterns" aria-label="Step 4: Split it into stripe patterns">4</a></li><li><a href="#step-curves" data-title="Watch each pattern change, along and across the drift" aria-label="Step 5: Watch each pattern change, along and across the drift">5</a></li><li><a href="#step-rates" data-title="From the curves to the drift" aria-label="Step 6: From the curves to the drift">6</a></li></ol><span class="now" aria-hidden="true"></span><a class="gl" href="#glossary">Glossary</a></nav>
+      <nav class="step-index" aria-label="Steps on this page"><ol><li><a href="#step-setup" data-title="Set up the microscope" aria-label="Step 1: Set up the microscope">1</a></li><li><a href="#step-movie" data-title="Record a movie" aria-label="Step 2: Record a movie">2</a></li><li><a href="#step-diff" data-title="Subtract two frames" aria-label="Step 3: Subtract two frames">3</a></li><li><a href="#step-map" data-title="Split it into stripe patterns" aria-label="Step 4: Split it into stripe patterns">4</a></li><li><a href="#step-curves" data-title="Watch each pattern change, in two directions" aria-label="Step 5: Watch each pattern change, in two directions">5</a></li><li><a href="#step-rates" data-title="From the curves to the drift" aria-label="Step 6: From the curves to the drift">6</a></li></ol><span class="now" aria-hidden="true"></span><a class="gl" href="#glossary">Glossary</a></nav>
 
       <!-- 1 -->
       <section class="step" id="step-setup" aria-labelledby="h-setup">
@@ -468,7 +468,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
 
       <!-- 5 -->
       <section class="step" id="step-curves" aria-labelledby="h-curves">
-        <div class="step-title"><span class="num">5</span><h2 id="h-curves">Watch each pattern change, along and across the drift</h2></div>
+        <div class="step-title"><span class="num">5</span><h2 id="h-curves">Watch each pattern change, in two directions</h2></div>
         <div class="step-body">
           <div class="text">
             <p>For each stripe spacing, follow how much of the pattern is left as the delay grows (curves drawn for four of the wider spacings). Patterns across the drift (stripes parallel to it) are not moved by it: they only fade, as without a drift. Patterns along the drift fade at the same rate but also travel, so the curves swing below zero and back before they die out. Fine stripes swing sooner, because the drift needs less time to carry them by one spacing; but they also fade sooner, and may be gone before they swing. Patterns almost across the drift are carried a little too, so with a fast drift even their curves dip below zero at long delays.</p>
