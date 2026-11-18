@@ -549,12 +549,12 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             <ul class="reasons" id="dq-notes"></ul>
           </figure>
           <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
-          <figure class="viz lvl-3">
+          <figure class="viz">
             <figcaption>Signal <i>A</i>(<i>q</i>) of this movie and camera noise <i>B</i>(<i>q</i>). <i>A</i> holds both the image of each particle and the order of the crowd (S(q)); where it sinks into <i>B</i> the patterns are left out.</figcaption>
             <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
             <div class="legend" id="amp-legend"></div>
           </figure>
-          <details class="numbers lvl-3" id="amp-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <details class="numbers" id="amp-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <div class="step-body">
             <div class="result" id="result" aria-live="polite"></div>
           </div>
@@ -5730,8 +5730,19 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
   function ampPoints() { const r = cache.res, out = []; for (let b = 1; b < r.q_per_um.length; b++) if (r.A[b] > 0 || r.bins.indexOf(b) >= 0) out.push({ q: r.q_per_um[b], A: r.A[b], B: r.B[b], used: r.bins.indexOf(b) >= 0 }); return out; }
   // signal A(q) and camera noise B(q) at each q, as on the sizing page (Researcher level): where A sinks into B, the
   // patterns carry no usable signal and are left out
+  // one line in the result box: how the signal compares with the camera noise over the patterns used
+  function ampLine() {
+    if (!cache.res) return "";
+    const pts = ampPoints().filter(function (p) { return p.used && p.A > 0 && p.B > 0; });
+    if (pts.length < 2) return "";
+    const r = pts.map(function (p) { return p.A / p.B; }).sort(function (a, b) { return a - b; }), As = pts.map(function (p) { return p.A; }), Bs = pts.map(function (p) { return p.B; });
+    const bLo = Math.min.apply(null, Bs), bHi = Math.max.apply(null, Bs);
+    const fx = function (v) { return v >= 1e5 ? v.toExponential(1) : fmtSig(v, 2); };
+    return '<p class="small amp-line" style="margin:0.5rem 0 0"><b>Signal and camera noise:</b> over the ' + pts.length + ' patterns used, the signal A is ' + fmtSig(r[0], 2) + ' to ' + fmtSig(r[r.length - 1], 2) + ' times the camera noise B' +
+      (level === "curious" ? '' : ' (A from ' + fx(Math.min.apply(null, As)) + ' to ' + fx(Math.max.apply(null, As)) + ', B ' + (bHi / bLo < 1.05 ? '= ' + fx(bLo) : 'from ' + fx(bLo) + ' to ' + fx(bHi)) + ')') + '; the chart of A and B is in this step.</p>';
+  }
   function drawAmp() {
-    if (LEVEL_RANK[level] < 3 || !cache.res) return;
+    if (!cache.res) return;
     const res = cache.res, pts = ampPoints().filter(function (p) { return p.q > 0 && (p.A > 0 || p.B > 0); });
     const vals = []; pts.forEach(function (p) { if (p.A > 0) vals.push(p.A); if (p.B > 0) vals.push(p.B); });
     if (vals.length < 2) return;
@@ -5805,7 +5816,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
       h += '<dt>Simulation</dt><dd>Brownian dynamics, time step ' + fmtTime(tr.step_s) + ' (free steps of 3 % of the diameter, overlaps pushed apart), D0 = ' + fmtSig(tr.D0_um2_s, 3) + ' ' + MU + 'm\u00b2/s, Brownian time ' + fmtTime(tr.tau_B_s) + '; no hydrodynamic interactions; ' + tr.n_labelled + ' of ' + mv.info.n_particles + ' particles dyed</dd>';
       h += '</dl></details>';
     }
-    $("result").innerHTML = h;
+    $("result").innerHTML = h + ampLine();
     $("hero-result").innerHTML = '<span>Volume fraction</span><span class="n">' + Math.round(100 * tr.phi) + ' %</span><span>Measured by DDM</span><span class="n">' + k.word.charAt(0).toLowerCase() + k.word.slice(1) + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
     $("hero-cap").textContent = "Simulated " + MODE_SHORT[state.mode] + " movie, " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
   }

@@ -528,7 +528,7 @@ fit_res, model_res = fit_multik(aa, model, k_ref, use_err=True,
             <div class="chart short"><canvas id="chart-size" aria-label="Apparent size against wave vector"></canvas></div>
           </figure>
           <details class="numbers lvl-2" id="size-numbers"><summary>The numbers behind this chart</summary><div></div></details>
-          <figure class="viz lvl-3">
+          <figure class="viz">
             <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>). <i>A</i> falls at high <i>q</i> because the optics blur fine patterns; where it sinks into <i>B</i> the rates can no longer be read.</figcaption>
             <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
             <div class="legend" id="amp-legend"></div>
@@ -5547,8 +5547,20 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
   // estimates from the data (lines: B from the zero-delay intercept, A = 2 var - B). The axis range
   // comes from the measurable window, so runaway fits outside it (curves that never level off) cannot
   // squash the plot; such points are drawn at the edge.
+  function ampPoints() { const r = cache.res; return (r.fits || []).map(function (f) { return { q: f.q_per_um, A: f.A, B: f.B > 0 ? f.B : (r.B_est ? r.B_est[f.bin] : null), used: !!f.ok && f.reason === null }; }).sort(function (a, b) { return a.q - b.q; }); }
+  // one line in the result box: how the signal compares with the camera noise over the patterns used
+  function ampLine() {
+    if (!cache.res) return "";
+    const pts = ampPoints().filter(function (p) { return p.used && p.A > 0 && p.B > 0; });
+    if (pts.length < 2) return "";
+    const r = pts.map(function (p) { return p.A / p.B; }).sort(function (a, b) { return a - b; }), As = pts.map(function (p) { return p.A; }), Bs = pts.map(function (p) { return p.B; });
+    const bLo = Math.min.apply(null, Bs), bHi = Math.max.apply(null, Bs);
+    const fx = function (v) { return v >= 1e5 ? v.toExponential(1) : fmtSig(v, 2); };
+    return '<p class="small amp-line" style="margin:0.5rem 0 0"><b>Signal and camera noise:</b> over the ' + pts.length + ' patterns used, the signal A is ' + fmtSig(r[0], 2) + ' to ' + fmtSig(r[r.length - 1], 2) + ' times the camera noise B' +
+      (level === "curious" ? '' : ' (A from ' + fx(Math.min.apply(null, As)) + ' to ' + fx(Math.max.apply(null, As)) + ', B ' + (bHi / bLo < 1.05 ? '= ' + fx(bLo) : 'from ' + fx(bLo) + ' to ' + fx(bHi)) + ')') + '; the chart of A and B is in this step.</p>';
+  }
   function drawAmp() {
-    if (LEVEL_RANK[level] < 3) return;
+    if (!cache.res) return;
     const res = cache.res, w = res.window;
     const inWin = function (q) { return q >= 2 * w.q_lo_per_um && q <= w.q_hi_per_um; };
     const vals = [];
@@ -5660,7 +5672,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     } else h += '<dt>Particles</dt><dd>' + SHAPES[state.shape].toLowerCase() + ', ' + fmtSize(tr.diameter_um) + (BODY() ? ', aspect ratio ' + fmtSig(cache.cfg.aspect, 2) : '') + '</dd>';
     if (LEVEL_RANK[level] >= 3 && r && r.gain !== undefined) h += '<dt>Second mode</dt><dd>removes ' + Math.round(100 * r.gain) + ' % of the one-mode misfit; ' + Math.round(100 * (r.fast_share || 0)) + ' % of the signal' + (r.D_r_s ? '; rate from the ' + (r.from || 'joint fit') + (r.joint_rate_s && r.from !== 'joint fit' ? ' (joint fit: ' + fmtRate(r.joint_rate_s) + ')' : '') : '') + '</dd>';
     h += '</dl>';
-    $("result").innerHTML = h;
+    $("result").innerHTML = h + ampLine();
     $("hero-result").innerHTML = '<span>True turning rate</span><span class="n">' + fmtRate(6 * tr.D_r_s) + '</span><span>Measured by DDM</span><span class="n">' + (r && r.D_r_s ? fmtRate(6 * r.D_r_s) : "not seen") + '</span><span class="chip ' + rv.cls + '">' + rv.text + '</span>';
     $("hero-cap").textContent = "Simulated " + MODE_SHORT[state.mode] + " movie" + (cache.cfg.polarization ? " between polarizers" : "") + ", " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
   }
@@ -5771,7 +5783,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     }
     const ax = axialNote(res, v);
     if (ax) h += '<p class="small" style="margin:0">' + ax + '</p>';
-    $("result").innerHTML = h;
+    $("result").innerHTML = h + ampLine();
     const br = $("btn-repeat"); if (br) br.addEventListener("click", startRepeat);
     $("hero-result").innerHTML = res.diameter_um === null
       ? '<span>Particles of ' + fmtSize(tr.diameter_um) + '. With these settings DDM cannot size them.</span><span class="chip bad">Not measurable</span>'

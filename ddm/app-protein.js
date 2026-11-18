@@ -1119,8 +1119,19 @@
   function ampPoints() { const r = cache.res; return r.rows.map(function (x) { return { q: x.q_per_um, A: x.A, B: r.B_camera, used: x.used }; }); }
   // signal A(q) and camera noise B(q) at each q, as on the sizing page (Researcher level): where A sinks into B, the
   // patterns carry no usable signal and are left out
+  // one line in the result box: how the signal compares with the camera noise over the patterns used
+  function ampLine() {
+    if (!cache.res) return "";
+    const pts = ampPoints().filter(function (p) { return p.used && p.A > 0 && p.B > 0; });
+    if (pts.length < 2) return "";
+    const r = pts.map(function (p) { return p.A / p.B; }).sort(function (a, b) { return a - b; }), As = pts.map(function (p) { return p.A; }), Bs = pts.map(function (p) { return p.B; });
+    const bLo = Math.min.apply(null, Bs), bHi = Math.max.apply(null, Bs);
+    const fx = function (v) { return v >= 1e5 ? v.toExponential(1) : fmtSig(v, 2); };
+    return '<p class="small amp-line" style="margin:0.5rem 0 0"><b>Signal and camera noise:</b> over the ' + pts.length + ' patterns used, the signal A is ' + fmtSig(r[0], 2) + ' to ' + fmtSig(r[r.length - 1], 2) + ' times the camera noise B' +
+      (level === "curious" ? '' : ' (A from ' + fx(Math.min.apply(null, As)) + ' to ' + fx(Math.max.apply(null, As)) + ', B ' + (bHi / bLo < 1.05 ? '= ' + fx(bLo) : 'from ' + fx(bLo) + ' to ' + fx(bHi)) + ')') + '; the chart of A and B is in this step.</p>';
+  }
   function drawAmp() {
-    if (LEVEL_RANK[level] < 3 || !cache.res) return;
+    if (!cache.res) return;
     const res = cache.res, pts = ampPoints().filter(function (p) { return p.q > 0 && (p.A > 0 || p.B > 0); });
     const vals = []; pts.forEach(function (p) { if (p.A > 0) vals.push(p.A); if (p.B > 0) vals.push(p.B); });
     if (vals.length < 2) return;
@@ -1189,7 +1200,7 @@
       h += '<dt>Simulation</dt><dd>a density field: ' + fmtCount(mv.truth.n_proteins) + ' proteins in a chamber ' + fmtSig(cache.cfg.cell_um, 3) + ' ' + MU + 'm deep, S(0) = ' + fmtSig(mv.truth.S0, 3) + ', D_c = ' + fmtSig(mv.truth.Dc_um2_s, 3) + ' ' + MU + 'm\u00b2/s</dd>';
       h += '</dl></details>';
     }
-    $("result").innerHTML = h;
+    $("result").innerHTML = h + ampLine();
     $("hero-result").innerHTML = '<span>' + (level === "curious" ? "Radius in the simulation" : "R_h, simulated") + '</span><span class="n">' + fmtSig(r.Rh_nm, 3) + ' nm</span><span>Measured by DDM at ' + fmtSig(conc, 3) + ' mg/mL</span><span class="n">' + (D > 0 ? fmtSig(Ra, 3) + ' nm' : "-") + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
     $("hero-cap").textContent = "Simulated bright-field movie of " + PROTEINS[state.protein].label.replace(/ \(.*$/, "").toLowerCase() + " at " + fmtSig(conc, 3) + " mg/mL, " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
   }

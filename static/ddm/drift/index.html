@@ -505,12 +505,12 @@ dqt.set_frame_rate(frame_rate)     # frames per second
             <ul class="reasons" id="reasons"></ul>
           </figure>
           <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
-          <figure class="viz lvl-3">
+          <figure class="viz">
             <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>) of the patterns used. <i>A</i> falls at high <i>q</i> because the optics blur fine patterns; where it sinks into <i>B</i> neither the fading nor the swinging of the patterns can be read.</figcaption>
             <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
             <div class="legend" id="amp-legend"></div>
           </figure>
-          <details class="numbers lvl-3" id="amp-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <details class="numbers" id="amp-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <div class="step-body">
             <div class="result" id="result" aria-live="polite"></div>
             <div class="predict" data-predict="slow" data-right="limit">
@@ -6023,8 +6023,19 @@ dqt.set_frame_rate(frame_rate)     # frames per second
   function ampPoints() { const r = cache.res; return (r.bins || []).map(function (e) { return { q: r.q_per_um[e.b], A: e.A, B: e.B, used: true }; }).sort(function (a, b) { return a.q - b.q; }); }
   // signal A(q) and camera noise B(q) at each q, as on the sizing page (Researcher level): where A sinks into B, the
   // patterns carry no usable signal and are left out
+  // one line in the result box: how the signal compares with the camera noise over the patterns used
+  function ampLine() {
+    if (!cache.res) return "";
+    const pts = ampPoints().filter(function (p) { return p.used && p.A > 0 && p.B > 0; });
+    if (pts.length < 2) return "";
+    const r = pts.map(function (p) { return p.A / p.B; }).sort(function (a, b) { return a - b; }), As = pts.map(function (p) { return p.A; }), Bs = pts.map(function (p) { return p.B; });
+    const bLo = Math.min.apply(null, Bs), bHi = Math.max.apply(null, Bs);
+    const fx = function (v) { return v >= 1e5 ? v.toExponential(1) : fmtSig(v, 2); };
+    return '<p class="small amp-line" style="margin:0.5rem 0 0"><b>Signal and camera noise:</b> over the ' + pts.length + ' patterns used, the signal A is ' + fmtSig(r[0], 2) + ' to ' + fmtSig(r[r.length - 1], 2) + ' times the camera noise B' +
+      (level === "curious" ? '' : ' (A from ' + fx(Math.min.apply(null, As)) + ' to ' + fx(Math.max.apply(null, As)) + ', B ' + (bHi / bLo < 1.05 ? '= ' + fx(bLo) : 'from ' + fx(bLo) + ' to ' + fx(bHi)) + ')') + '; the chart of A and B is in this step.</p>';
+  }
   function drawAmp() {
-    if (LEVEL_RANK[level] < 3 || !cache.res) return;
+    if (!cache.res) return;
     const res = cache.res, pts = ampPoints().filter(function (p) { return p.q > 0 && (p.A > 0 || p.B > 0); });
     const vals = []; pts.forEach(function (p) { if (p.A > 0) vals.push(p.A); if (p.B > 0) vals.push(p.B); });
     if (vals.length < 2) return;
@@ -6158,7 +6169,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
       if (res.velocity_from === "phase") h += '<dt>Pixels used for the velocity</dt><dd>' + res.v_jack.n_pixels + ' (pixel and delay pairs where the pattern is still clearly there)</dd>';
       h += '</dl></details>';
     }
-    $("result").innerHTML = h;
+    $("result").innerHTML = h + ampLine();
     $("hero-result").innerHTML = '<span>Drift set</span><span class="n">' + (!(ev.speed > 0) ? "none" : !ev.plane ? "along the axis" : ev.lo !== undefined ? fmtV(ev.lo) + " to " + fmtV(ev.hi) : fmtV(ev.speed)) + '</span><span>Measured by DDM</span><span class="n">' + (res.detected ? fmtV(res.v_um_s) : "none seen") + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
     $("hero-cap").textContent = "Simulated " + MODE_SHORT[state.mode] + " movie, " + objective().m + "x / NA " + objective().na + ", field " + fmtSig(mv.L_um, 2) + " " + MU + "m.";
   }
