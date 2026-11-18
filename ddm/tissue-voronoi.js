@@ -29,25 +29,28 @@
   function need(c, m) { if (!c) throw new Error("Network of nuclei: " + m); }
 
   // ---- 1. nuclei in one frame (positions in um, image coordinates: pixel i spans [i a, (i + 1) a]) ------------------
-  function detect(frame, n, a, spacing) {
+  // periodic: the frame wraps around (as the simulated one does), for drawing the network as the image would hold it
+  function detect(frame, n, a, spacing, periodic) {
     const P = n * n, s1 = new Float64Array(P), sm = new Float64Array(P);
-    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const r = y * n; s1[r + x] = (2 * frame[r + x] + frame[r + Math.max(0, x - 1)] + frame[r + Math.min(n - 1, x + 1)]) / 4; }
-    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) sm[y * n + x] = (2 * s1[y * n + x] + s1[Math.max(0, y - 1) * n + x] + s1[Math.min(n - 1, y + 1) * n + x]) / 4;
+    const ix = periodic ? function (v) { return ((v % n) + n) % n; } : function (v) { return v < 0 ? 0 : v > n - 1 ? n - 1 : v; };
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const r = y * n; s1[r + x] = (2 * frame[r + x] + frame[r + ix(x - 1)] + frame[r + ix(x + 1)]) / 4; }
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) sm[y * n + x] = (2 * s1[y * n + x] + s1[ix(y - 1) * n + x] + s1[ix(y + 1) * n + x]) / 4;
     const srt = Float64Array.from(sm).sort(), med = srt[Math.floor(P / 2)], p99 = srt[Math.floor(0.99 * P)];
     const thr = med + 0.25 * (p99 - med), w = Math.max(1, Math.round(spacing / 3 / a));
     const X = [], Y = [];
     const lg = function (v) { return Math.log(Math.max(v - med, 1e-3)); };
+    const inside = function (v) { return periodic || (v >= 0 && v < n); };
     for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
       const c = sm[y * n + x]; if (c <= thr) continue;
       let peak = true;
-      for (let dy = -w; dy <= w && peak; dy++) { const yy = y + dy; if (yy < 0 || yy >= n) continue; for (let dx = -w; dx <= w; dx++) {
-        const xx = x + dx; if (xx < 0 || xx >= n || (dx === 0 && dy === 0)) continue;
-        const v = sm[yy * n + xx]; if (v > c || (v === c && (dy < 0 || (dy === 0 && dx < 0)))) { peak = false; break; }
+      for (let dy = -w; dy <= w && peak; dy++) { const yy = y + dy; if (!inside(yy)) continue; for (let dx = -w; dx <= w; dx++) {
+        const xx = x + dx; if (!inside(xx) || (dx === 0 && dy === 0)) continue;
+        const v = sm[ix(yy) * n + ix(xx)]; if (v > c || (v === c && (dy < 0 || (dy === 0 && dx < 0)))) { peak = false; break; }
       } }
       if (!peak) continue;
       let ox = 0, oy = 0;
-      if (x > 0 && x < n - 1) { const l = lg(sm[y * n + x - 1]), m = lg(c), r = lg(sm[y * n + x + 1]), d = l - 2 * m + r; if (d < 0) ox = Math.max(-0.5, Math.min(0.5, 0.5 * (l - r) / d)); }
-      if (y > 0 && y < n - 1) { const l = lg(sm[(y - 1) * n + x]), m = lg(c), r = lg(sm[(y + 1) * n + x]), d = l - 2 * m + r; if (d < 0) oy = Math.max(-0.5, Math.min(0.5, 0.5 * (l - r) / d)); }
+      if (periodic || (x > 0 && x < n - 1)) { const l = lg(sm[y * n + ix(x - 1)]), m = lg(c), r = lg(sm[y * n + ix(x + 1)]), d = l - 2 * m + r; if (d < 0) ox = Math.max(-0.5, Math.min(0.5, 0.5 * (l - r) / d)); }
+      if (periodic || (y > 0 && y < n - 1)) { const l = lg(sm[ix(y - 1) * n + x]), m = lg(c), r = lg(sm[ix(y + 1) * n + x]), d = l - 2 * m + r; if (d < 0) oy = Math.max(-0.5, Math.min(0.5, 0.5 * (l - r) / d)); }
       X.push((x + 0.5 + ox) * a); Y.push((y + 0.5 + oy) * a);
     }
     return { x: Float64Array.from(X), y: Float64Array.from(Y) };
@@ -103,7 +106,7 @@
       if (!complete && 2 * rmax <= rc) complete = true;
       let ok = complete && lab.indexOf(-1) < 0;
       if (ok && !periodic) ok = x[i] - 2 * rmax > edgeMargin && y[i] - 2 * rmax > edgeMargin && L - x[i] - 2 * rmax > edgeMargin && L - y[i] - 2 * rmax > edgeMargin;
-      if (!ok) { out[i] = { ok: false }; continue; }
+      if (!ok) { out[i] = keepPoly === "all" ? { ok: false, px: px.map(function (v) { return v + x[i]; }), py: py.map(function (v) { return v + y[i]; }), lab: lab } : { ok: false }; continue; }
       let A = 0, Pm = 0; const nb = [], any = [];
       for (let k = 0; k < px.length; k++) {
         const k2 = (k + 1) % px.length, e = Math.hypot(px[k2] - px[k], py[k2] - py[k]);
@@ -113,7 +116,7 @@
       }
       A = Math.abs(A) / 2;
       const o = { ok: true, area: A, perim: Pm, p: Pm / Math.sqrt(A), sides: nb.length, nb: nb, any: any };
-      if (keepPoly) { o.px = px.map(function (v) { return v + x[i]; }); o.py = py.map(function (v) { return v + y[i]; }); }
+      if (keepPoly) { o.px = px.map(function (v) { return v + x[i]; }); o.py = py.map(function (v) { return v + y[i]; }); o.lab = lab; }
       out[i] = o;
     }
     return out;
@@ -235,6 +238,73 @@
     return { measured: meas, truth: truth, spacing_um: spacing, L_um: L };
   }
 
-  const api = { analyse: analyse, detect: detect, voronoi: voronoi, link: link };
+  // ---- the movie analysed by DDM: the nuclei, the cell edges, or both -------------------------------------------------
+  // The edges are the Voronoi network of the nuclei found in each frame, drawn as a stain of the cell edges would show it.
+  // The simulated image wraps around (a nucleus leaving on one side comes back on the other), so the nuclei are found and
+  // the network drawn the same way (periodic Voronoi network, edges wrapped); otherwise the frame of the field would add
+  // patterns that never move, and the sheet would seem to move less. Edges:
+  // lines of rms width 1.5 um, as much light per cell as a nucleus (photons over 1.67 cell sizes of
+  // edge, about half the perimeter of a cell), the same background, shot noise and read noise of the camera. "both" adds the
+  // light of the edges to the frames of the nuclei, as two stains seen together.
+  // A stained cell edge seen from above through a 10x objective is a blurred line: the lateral membranes are not quite
+  // vertical, and light from above and below the focus adds. 1.5 um rms also keeps the line wider than half a pixel, so
+  // that sampling it at the pixel centres does not lock part of its light to the pixels (that would hide the motion of the
+  // sheet: the network of a packed sheet has almost no wide patterns of its own).
+  const EDGE_RMS_UM = 1.5;
+  // a nucleus found twice (within a third of a spacing) counted once
+  function dedupe(x, y, L, spacing) {
+    const around = grid(x, y, L, spacing, true), keep = [], r = 0.35 * spacing;
+    for (let i = 0; i < x.length; i++) { let dup = false; around(x[i], y[i], r, function (j) { if (j < i) dup = true; }); if (!dup) keep.push(i); }
+    return { x: Float64Array.from(keep, function (i) { return x[i]; }), y: Float64Array.from(keep, function (i) { return y[i]; }) };
+  }
+  // standard normal cumulative (Abramowitz and Stegun 7.1.26, error below 2e-7)
+  function Phi(z) { const x = Math.abs(z) / Math.SQRT2, t = 1 / (1 + 0.3275911 * x), e = 1 - t * (0.254829592 + t * (-0.284496736 + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429)))) * Math.exp(-x * x); return z >= 0 ? 0.5 * (1 + e) : 0.5 * (1 - e); }
+  // each edge a line of Gaussian profile across, with soft ends along (so that three edges add up smoothly at a corner)
+  function edgeImage(x0, y0, n, a, L, spacing, lambda, out) {
+    const d = dedupe(x0, y0, L, spacing), x = d.x, y = d.y;
+    const cells = voronoi(x, y, L, spacing, true, "all"), w = EDGE_RMS_UM, R = 3.5 * w, inv = 1 / (2 * w * w), amp = lambda * a * a / (Math.sqrt(2 * Math.PI) * w);
+    for (let i = 0; i < cells.length; i++) {
+      const o = cells[i]; if (!o.px) continue;
+      const m = o.px.length;
+      for (let k = 0; k < m; k++) {
+        const j = o.lab[k]; if (j < 0 || j < i) continue;     // each edge once, and only between two nuclei
+        const x1 = o.px[k], y1 = o.py[k], x2 = o.px[(k + 1) % m], y2 = o.py[(k + 1) % m], len = Math.hypot(x2 - x1, y2 - y1);
+        if (len < 1e-9) continue;
+        const tx = (x2 - x1) / len, ty = (y2 - y1) / len;
+        const p0 = Math.floor((Math.min(x1, x2) - R) / a), p1 = Math.floor((Math.max(x1, x2) + R) / a);
+        const q0 = Math.floor((Math.min(y1, y2) - R) / a), q1 = Math.floor((Math.max(y1, y2) + R) / a);
+        for (let py = q0; py <= q1; py++) for (let px = p0; px <= p1; px++) {
+          const cx = (px + 0.5) * a - x1, cy = (py + 0.5) * a - y1, dd = -ty * cx + tx * cy, ss = tx * cx + ty * cy;
+          if (Math.abs(dd) > R || ss < -R || ss > len + R) continue;
+          out[(((py % n) + n) % n) * n + ((px % n) + n) % n] += amp * Math.exp(-dd * dd * inv) * (Phi((len - ss) / w) - Phi(-ss / w));
+        }
+      }
+    }
+  }
+  // movie: the movie of the nuclei; mode "edges" or "both"; cfg: photons, background, cell_um (as given to the
+  // simulation), seed
+  function* channelMovie(movie, mode, cfg) {
+    need(mode === "edges" || mode === "both", "unknown images: " + mode);
+    const n = movie.n, T = movie.T, P = n * n, a = movie.pixel_um, L = movie.L_um, rd = movie.info.read_noise_e;
+    const lambda = cfg.photons / (1.67 * cfg.cell_um), bg = cfg.background;
+    const MV = (typeof module !== "undefined" && module.exports) ? require("./tissue-movie.js") : root.TISSUE_MOVIE;
+    let s = ((cfg.seed >>> 0) + (mode === "edges" ? 104723 : 130363)) >>> 0 || 1;
+    const u = function () { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return (s + 0.5) / 4294967296; };
+    let spare = null;
+    const g = function () { if (spare !== null) { const v = spare; spare = null; return v; } let p, q, r; do { p = 2 * u() - 1; q = 2 * u() - 1; r = p * p + q * q; } while (r >= 1 || r === 0); const f = Math.sqrt(-2 * Math.log(r) / r); spare = q * f; return p * f; };
+    const frames = new Float32Array(T * P), fft = new Float64Array(2 * T * P), img = new Float64Array(P);
+    for (let t = 0; t < T; t++) {
+      const d = detect(movie.frames.subarray(t * P, (t + 1) * P), n, a, cfg.cell_um, true);
+      img.fill(0); edgeImage(d.x, d.y, n, a, L, cfg.cell_um, lambda, img);
+      const o = t * P;
+      if (mode === "edges") for (let p = 0; p < P; p++) { const m = img[p] + bg; frames[o + p] = Math.max(0, m + Math.sqrt(m) * g()) + rd * g(); }
+      else for (let p = 0; p < P; p++) { const m = img[p]; frames[o + p] = movie.frames[o + p] + Math.max(0, m + Math.sqrt(m) * g()); }
+      MV.fft2(frames.subarray(o, o + P), n, fft, 2 * o);
+      if (t % 16 === 15) yield { stage: mode === "edges" ? "Drawing the cell edges" : "Adding the cell edges", frac: (t + 1) / T };
+    }
+    return Object.assign({}, movie, { frames: frames, fft: fft, channel: mode });
+  }
+
+  const api = { analyse: analyse, detect: detect, voronoi: voronoi, link: link, channelMovie: channelMovie, edgeImage: edgeImage };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.TISSUE_VORONOI = api;
 })(typeof self !== "undefined" ? self : this);

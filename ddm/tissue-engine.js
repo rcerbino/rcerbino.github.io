@@ -9,7 +9,7 @@
  *      motion of the cells relative to the sheet (opts.comoving false or opts.published_only: lab frame only);
  *   4. the mean squared displacement from f = 1 - (d - B) / A at each q of a band, inverted as a Gaussian,
  *      <dr^2> = -4 ln f / q^2 (Giavazzi et al., Front. Phys. 6, 120, 2018), where 0.1 < f < 0.95, combined over q by the mean
- *      of ln; the band starts at the peak of A(q) (the spacing of neighbouring nuclei), where the nuclei add up like
+ *      of ln; the band starts at the peak of A(q) near the spacing of neighbours (among patterns 0.6 to 2 cells wide), where the nuclei add up like
  *      independent spots, and ends where the signal falls to three times the noise;
  *   5. order: psi = |V| / v, with v the mean speed of a cell from the lab-frame displacement over the shortest delay;
  *      the state: a flock when psi > 0.5, solid when the displacement relative to the sheet stays below a tenth of a cell
@@ -78,7 +78,11 @@
     const Scm = useCM ? yield* DDM.structure(comoving(movie, motion.R), {}) : Slab;
     // the band of q: from the peak of A (at least the third bin) to where A falls to ten times B, and below the q range asked
     const qlo = opts.q_min_per_um > 0 ? opts.q_min_per_um : 0, qhi = opts.q_max_per_um > 0 ? opts.q_max_per_um : Infinity;
-    let bPeak = 3; for (let b = 3; b <= nb; b++) if (A[b] > A[bPeak]) bPeak = b;
+    // the peak looked for among patterns 0.6 to 2 cell sizes wide: with nuclei and edges seen together the two cancel at the
+    // spacing of neighbours (the edges lie between the nuclei), and the strongest patterns can then be much wider
+    const sig = Math.sqrt(opts.cell_area_um2 || 225), qA = 2 * Math.PI / (2 * sig), qB = 2 * Math.PI / (0.6 * sig);
+    let bPeak = -1; for (let b = 3; b <= nb; b++) if (Slab.q_per_um[b] >= qA && Slab.q_per_um[b] <= qB && (bPeak < 0 || A[b] > A[bPeak])) bPeak = b;
+    if (bPeak < 0) { bPeak = 3; for (let b = 3; b <= nb; b++) if (A[b] > A[bPeak]) bPeak = b; }
     // the band starts a little above the peak, where the arrangement of neighbours no longer slows the patterns (S(q) near 1)
     const bStart = Math.min(nb - 2, Math.round(1.3 * bPeak));
     let bHi = bStart; while (bHi < nb && A[bHi + 1] > 3 * B && Slab.q_per_um[bHi + 1] < (movie.q_signal_max_per_um || Infinity)) bHi++;

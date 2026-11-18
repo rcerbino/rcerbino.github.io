@@ -23,7 +23,7 @@
   const BASE = {
     tstate: "jammed", v0_um_h: 6, J_h: 0, Dr_h: 0.5, cell_um: 15, packing: 1.0, muk_h: 20,
     binning: 4, sim_px: 128, frame_min: 5, n_frames: 256, photons: 20000,
-    q_min: null, q_max: null, seed: 3, x_comoving: "on"
+    q_min: null, q_max: null, seed: 3, x_comoving: "on", channel: "nuclei"
   };
   let state = Object.assign({}, BASE);
   const LEVEL_RANK = { curious: 1, student: 2, researcher: 3, addict: 4 };
@@ -40,7 +40,8 @@
   function nCells() { const L = simPx() * pixelUm(); return Math.round(state.packing * L * L / (Math.PI / 4 * state.cell_um * state.cell_um * 1.0225)); }
   function movieSeconds() { const n = simPx(); return 1.2 + 2.5 * nCells() / 600 * (nFrames() * state.frame_min / 60 + 6) / 27 * Math.max(1, state.v0_um_h / 15) + 3 * n * n * nFrames() / 8.4e6; }
   function netSeconds() { return 1.5 * nCells() / 600 * nFrames() / 256; }
-  function simSeconds() { return movieSeconds() * (level === "addict" ? 1.2 : 1) + netSeconds(); }
+  function viewSeconds() { return state.channel === "nuclei" ? 0 : 3.5 * nCells() / 600 * nFrames() / 256; }
+  function simSeconds() { return movieSeconds() * (level === "addict" ? 1.2 : 1) + netSeconds() + viewSeconds(); }
   function seriesSeconds() { return SWEEP.length * simSeconds(); }
   const MAX_SECONDS = 180, MAX_SERIES_SECONDS = 900;
   function simConfig(over) {
@@ -48,10 +49,17 @@
     return { seed: s.seed, n_px: simPx(), pixel_um: pixelUm(), n_frames: nFrames(), frame_min: s.frame_min, cell_um: s.cell_um, poly: 0.15, packing: s.packing,
       v0_um_h: s.v0_um_h, J_h: s.J_h, Dr_h: s.Dr_h, muk_h: s.muk_h, nucleus_um: 2.5, photons: s.photons, background: 50 * state.binning * state.binning / 16, read_noise_e: READ_NOISE * state.binning };
   }
-  function analysisOptions() { return { q_min_per_um: state.q_min, q_max_per_um: state.q_max, cell_area_um2: state.cell_um * state.cell_um, comoving: state.x_comoving !== "off", compare_published: level === "addict" }; }
+  function analysisOptions() { return { q_min_per_um: state.q_min, q_max_per_um: state.q_max, cell_area_um2: state.cell_um * state.cell_um, comoving: state.x_comoving !== "off", compare_published: level === "addict", channel: state.channel }; }
 
   // ---- controls -------------------------------------------------------------------------------------------
   function stateHint() { const s = STATES[state.tstate]; return s.note; }
+  // what DDM is run on: the movie of the nuclei, or images drawn from the nuclei found in each frame (step 7)
+  const CHANNELS = [
+    ["nuclei", "The nuclei, as filmed", "DDM runs on the movie of the nuclei."],
+    ["edges", "The cell edges: the network of the nuclei", "In each frame the page finds the nuclei, draws the Voronoi network they make (step 7) and films it as a stain of the cell edges would show it, with the same camera."],
+    ["both", "Nuclei and cell edges together", "The light of the cell edges added to the movie of the nuclei, as two stains seen together."]
+  ];
+  const CHAN_WORDS = { nuclei: "the nuclei", edges: "the cell edges", both: "nuclei and edges" };
   const CONTROLS = [
     { key: "tstate", lvl: 1, label: "The cells", kind: "select", options: Object.keys(STATES).map(function (k) { return [k, STATES[k].label]; }), hint: stateHint },
     { key: "v0_um_h", lvl: 1, label: "How hard the cells crawl", kind: "log", entry: { unit: MU + "m/h", scale: 1, step: 1, digits: 0 }, min: 1, max: 60, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m/h"; },
@@ -67,6 +75,7 @@
     { key: "binning", lvl: 2, label: "Binning (10x objective)", kind: "select", num: true, options: [[2, "2 x 2 (1.3 " + MU + "m pixels)"], [4, "4 x 4 (2.6 " + MU + "m pixels)"]], hint: function () { return "Field " + fmtSig(simPx() * pixelUm(), 3) + " " + MU + "m across."; } },
     { key: "photons", lvl: 3, label: "Light from each nucleus (photons per frame)", kind: "log", min: 500, max: 1e5, fmt: function (v) { return fmtSig(v, 2); } },
     { key: "sim_px", lvl: 3, label: "Simulated part of the image", kind: "select", num: true, options: [[64, "64 x 64 pixels (fast)"], [128, "128 x 128 pixels"], [256, "256 x 256 pixels (slow)"]], hint: function () { return "About " + fmtSig(movieSeconds(), 2) + " s per movie."; } },
+    { key: "channel", lvl: 1, label: "Images analysed", kind: "select", options: CHANNELS.map(function (c) { return [c[0], c[1]]; }), hint: function () { return CHANNELS.find(function (c) { return c[0] === state.channel; })[2]; } },
     { key: "qrange", lvl: 3, label: "Fit range in q (1/" + MU + "m)", kind: "qrange" }
   ];
   const ONOFF = function (off) { return [["on", "On"], ["off", "Off: " + off]]; };
@@ -75,9 +84,9 @@
   const LAYOUT = [
     ["Sample", [["The cells", ["tstate", "v0_um_h", "J_h", "Dr_h"]], ["The sheet", ["cell_um", "packing", "muk_h"]]]],
     ["Microscope and camera", [["10x objective, fluorescent nuclei", ["frame_min", "n_frames", "binning", "photons", "sim_px"]]]],
-    ["Analysis", [["", ["qrange"]], ["Addict: what this page adds", ["x_comoving"]]]]
+    ["Analysis", [["", ["channel", "qrange"]], ["Addict: what this page adds", ["x_comoving"]]]]
   ];
-  const SUMMARY = { "Sample": [["tstate"], ["v0_um_h", "crawling at "]], "Microscope and camera": [["frame_min", "a frame every "], ["n_frames", "", " frames"]], "Analysis": [] };
+  const SUMMARY = { "Sample": [["tstate"], ["v0_um_h", "crawling at "]], "Microscope and camera": [["frame_min", "a frame every "], ["n_frames", "", " frames"]], "Analysis": [["channel"]] };
   (function () {
     const byKey = {}; CONTROLS.forEach(function (c) { byKey[c.kind === "qrange" ? "qrange" : c.key] = c; });
     const out = [];
@@ -85,7 +94,7 @@
     const left = Object.keys(byKey); if (left.length) throw new Error("layout: controls not placed: " + left.join(", "));
     CONTROLS.length = 0; out.forEach(function (c) { CONTROLS.push(c); });
   })();
-  const ANALYSIS_KEYS = { q_min: 1, q_max: 1, x_comoving: 1 };
+  const ANALYSIS_KEYS = { q_min: 1, q_max: 1, x_comoving: 1, channel: 1 };
   const ctlEls = {}, blockEls = {}, subEls = [];
   function buildControls() {
     const host = $("ctl-groups"), subs = {};
@@ -229,7 +238,7 @@
     const m = ev.data; if (m.token !== runToken) return;
     if (m.type === "progress") progress(m.frac, m.stage);
     else if (m.type === "error") { inflight = null; seriesQueued = false; showError(m.message); }
-    else if (m.type === "done") { inflight = null; finish(m.movie || cache.movie, m.res, m.movie ? pending.cfg : cache.cfg, pending.opts); }
+    else if (m.type === "done") { inflight = null; finish(m.movie || cache.movie, m.res, m.movie ? pending.cfg : cache.cfg, pending.opts, m.view); }
     else if (m.type === "series") { inflight = null; finishSeries(m.points, pending); }
   }
   function ensureWorker(busy) {
@@ -271,18 +280,27 @@
       stepIt();
     });
   }
-  let movieHere = null;
+  let movieHere = null, viewsHere = {};
+  async function viewHere(mv, cfg, ch, store, token, a, b, pre) {
+    if (!ch || ch === "nuclei") return mv;
+    if (store && store[ch]) return store[ch];
+    const v = await drive(TISSUE_VORONOI.channelMovie(mv, ch, cfg), token, a, b, pre); if (!v) return null;
+    if (store) store[ch] = v;
+    return v;
+  }
   function pubSummary(r) { return { msd: r.msd, taus_s: r.taus_s, state: r.state, psi: r.psi, V_um_h: r.V_um_h }; }
   async function runHere(kind, token, cfg, opts) {
     if (kind === "simulate" || !movieHere) {
       const mv = await drive(TISSUE_MOVIE.simulate(cfg), token, 0, 0.75); if (!mv) return;
       const net = await drive(TISSUE_VORONOI.analyse(mv, { spacing_um: cfg.cell_um }), token, 0.75, 0.85); if (!net) return;
-      mv.net = net; movieHere = mv;
+      mv.net = net; movieHere = mv; viewsHere = {};
     }
-    const res = await drive(TISSUE_ENGINE.analyse(movieHere, opts), token, 0.85, 1); if (!res) return;
-    if (opts.compare_published) { const rp = await drive(TISSUE_ENGINE.analyse(movieHere, Object.assign({}, opts, { published_only: true })), token, 0.95, 1); res.published = rp ? pubSummary(rp) : { failed: "stopped" }; }
+    const ch = opts.channel || "nuclei", vw = await viewHere(movieHere, cfg, ch, viewsHere, token, 0.85, 0.9); if (!vw) return;
+    const res = await drive(TISSUE_ENGINE.analyse(vw, opts), token, 0.9, 1); if (!res) return;
+    if (opts.compare_published) { const rp = await drive(TISSUE_ENGINE.analyse(vw, Object.assign({}, opts, { published_only: true })), token, 0.95, 1); res.published = rp ? pubSummary(rp) : { failed: "stopped" }; }
+    res.channel = ch;
     inflight = null;
-    finish(movieHere, res, kind === "simulate" ? cfg : cache.cfg, opts);
+    finish(movieHere, res, kind === "simulate" ? cfg : cache.cfg, opts, ch === "nuclei" ? null : { channel: ch, frames: vw.frames });
   }
   async function seriesHere(token, list, cfgs, p) {
     const pts = [];
@@ -290,16 +308,19 @@
       const pre = "Run " + (i + 1) + " of " + list.length + ": ";
       const mv = await drive(TISSUE_MOVIE.simulate(cfgs[i]), token, i / list.length, (i + 0.75) / list.length, pre); if (!mv) return;
       const net = await drive(TISSUE_VORONOI.analyse(mv, { spacing_um: cfgs[i].cell_um }), token, (i + 0.75) / list.length, (i + 0.85) / list.length, pre); if (!net) return;
-      const r = await drive(TISSUE_ENGINE.analyse(mv, p.opts), token, (i + 0.85) / list.length, (i + 1) / list.length, pre); if (!r) return;
+      const vw = await viewHere(mv, cfgs[i], p.opts.channel, null, token, (i + 0.85) / list.length, (i + 0.9) / list.length, pre); if (!vw) return;
+      const r = await drive(TISSUE_ENGINE.analyse(vw, p.opts), token, (i + 0.9) / list.length, (i + 1) / list.length, pre); if (!r) return;
       const ns = function (x) { return x ? { p_mean: x.p_mean, hex_frac: x.hex_frac, kept: x.kept } : null; };
       pts.push({ set: list[i], msd: r.msd, taus_s: r.taus_s, msd_beyond: r.msd_beyond, msd_min_um2: r.msd_min_um2, psi: r.psi, V_um_h: r.V_um_h, state: r.state, net: { measured: ns(net.measured), truth: ns(net.truth) }, truth: { msd: mv.truth.msd, order: mv.truth.order, drift_um_h: mv.truth.drift_um_h } });
     }
     inflight = null; finishSeries(pts, p);
   }
-  function finish(movie, res, cfg, opts) {
+  function finish(movie, res, cfg, opts, view) {
     document.querySelector(".steps").classList.remove("stale");
     const fresh = movie !== cache.movie;
     cache.movie = movie; cache.res = res; cache.cfg = cfg; cache.opts = opts;
+    // the images analysed, for steps 2 and 3 and the download: the nuclei, or the images drawn from them
+    cache.shown = view ? Object.assign({}, movie, { frames: view.frames, channel: view.channel }) : movie;
     if (fresh) {
       // the delay slider at about one hour; the lower map zoomed on the patterns used
       const ta = res.taus_s; let li = 0; for (let k = 0; k < ta.length; k++) if (Math.abs(Math.log(ta[k])) < Math.abs(Math.log(ta[li]))) li = k;
@@ -355,7 +376,7 @@
   let frameIdx = 0, playing = true, lastTick = 0, accum = 0;
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduceMotion) playing = false;
-  let grey = null, diffScale = null;
+  let grey = null, greyNuc = null, diffScale = null;
   // ---- colours ---------------------------------------------------------------------
   let C = {};
   function readColors() { const cs = getComputedStyle(document.documentElement); ["ink", "muted", "rule", "accent", "accent-2", "tint", "paper", "panel", "good", "warn", "bad"].forEach(function (k) { C[k] = cs.getPropertyValue("--" + k).trim(); }); }
@@ -372,16 +393,16 @@
   function magma(t) { t = Math.max(0, Math.min(1, t)) * (MAGMA.length - 1); const i = Math.min(MAGMA.length - 2, Math.floor(t)); return lerp3(MAGMA[i], MAGMA[i + 1], t - i); }
 
   function greyRange(movie) { const n2 = movie.n * movie.n, vals = Array.from(movie.frames.subarray(0, n2)).sort(function (a, b) { return a - b; }); return [vals[Math.floor(0.001 * n2)], vals[Math.floor(0.999 * n2)]]; }
-  function drawFrame(canvas, movie, t) {
+  function drawFrame(canvas, movie, t, range) {
     const n = movie.n; if (canvas.width !== n) { canvas.width = n; canvas.height = n; }
-    const ctx = canvas.getContext("2d"), img = ctx.createImageData(n, n), d = img.data, off = t * n * n, lo = grey[0], span = grey[1] - grey[0] || 1;
+    const g = range || grey, ctx = canvas.getContext("2d"), img = ctx.createImageData(n, n), d = img.data, off = t * n * n, lo = g[0], span = g[1] - g[0] || 1;
     for (let p = 0; p < n * n; p++) { const v = Math.max(0, Math.min(255, 255 * (movie.frames[off + p] - lo) / span)); d[4 * p] = d[4 * p + 1] = d[4 * p + 2] = v; d[4 * p + 3] = 255; }
     ctx.putImageData(img, 0, 0);
   }
   function lagIndex() { return Math.min(parseInt($("lag").value, 10), cache.res.lags.length - 1); }
   function lagFrames() { return cache.res.lags[lagIndex()]; }
   function drawDiff(t) {
-    const movie = cache.movie, n = movie.n, m = lagFrames(), f1 = t % (movie.T - m), f2 = f1 + m, c = $("diff");
+    const movie = cache.shown, n = movie.n, m = lagFrames(), f1 = t % (movie.T - m), f2 = f1 + m, c = $("diff");
     if (c.width !== n) { c.width = n; c.height = n; }
     const ctx = c.getContext("2d"), img = ctx.createImageData(n, n), d = img.data, o1 = f1 * n * n, o2 = f2 * n * n;
     if (diffScale === null) { const M2 = cache.res.lags[cache.res.lags.length - 1]; let s = 0; for (let p = 0; p < n * n; p++) { const v = movie.frames[M2 * n * n + p] - movie.frames[p]; s += v * v; } diffScale = 3 * Math.sqrt(s / (n * n)) || 1; }
@@ -397,8 +418,8 @@
     requestAnimationFrame(tick);
   }
   function drawMovieFrames() {
-    drawFrame($("movie"), cache.movie, frameIdx);
-    drawFrame($("hero-canvas"), cache.movie, frameIdx);
+    drawFrame($("movie"), cache.shown, frameIdx);
+    drawFrame($("hero-canvas"), cache.shown, frameIdx);
     drawDiff(frameIdx);
     const h = cache.movie.frame_h;
     $("movie-time").textContent = "t = " + fmtH(frameIdx * h) + " of " + fmtH(cache.movie.T * h) + ", frame " + (frameIdx + 1) + " of " + cache.movie.T + ", played " + fmtNum(12 * h * 3600) + " times faster than real time";
@@ -644,7 +665,7 @@
     const mv = cache.movie, t = Math.min(mv.T - 1, parseInt($("net-frame").value, 10) || 0), nw = networkOf(t), byShape = $("net-colour").value === "shape";
     const c = prepCanvas(cv), ctx = c.ctx, W = c.W, H = c.H, S = Math.min(W, H), x0 = (W - S) / 2, y0 = (H - S) / 2, k = S / mv.L_um;
     ctx.clearRect(0, 0, W, H);
-    const off = document.createElement("canvas"); drawFrame(off, mv, t);
+    const off = document.createElement("canvas"); drawFrame(off, mv, t, greyNuc);
     ctx.imageSmoothingEnabled = false; ctx.drawImage(off, x0, y0, S, S);
     ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, S, S); ctx.clip();
     let nOk = 0;
@@ -804,7 +825,7 @@
       const at1 = function (taus, msd) { let b = null; taus.forEach(function (x, i) { if (msd[i] > 0 && (b === null || Math.abs(Math.log(x)) < Math.abs(Math.log(taus[b])))) b = i; }); return b !== null && Math.abs(Math.log(taus[b])) < 0.3 ? fmtSig(msd[b], 2) : "-"; };
       const row = function (cls, name, st, m1, vv, ps, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + st + '</td><td>' + m1 + '</td><td>' + vv + '</td><td>' + ps + '</td></tr>'; };
       let tb = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">State</th><th scope="col">&lt;&Delta;r&sup2;&gt; in 1 h (' + MU + 'm&sup2;)</th><th scope="col">Sheet velocity (' + MU + 'm/h)</th><th scope="col">Order</th></tr></thead><tbody>';
-      tb += row("main", "This page", res.state, at1(res.taus_s, res.msd), fmtSig(V, 2) + " +- " + fmtSig(res.V_err_um_h, 1), res.psi !== null ? fmtSig(res.psi, 2) : "-", res.comoving ? "relative to the sheet" : "as recorded");
+      tb += row("main", "This page", res.state, at1(res.taus_s, res.msd), fmtSig(V, 2) + " +- " + fmtSig(res.V_err_um_h, 1), res.psi !== null ? fmtSig(res.psi, 2) : "-", (res.comoving ? "relative to the sheet" : "as recorded") + (res.channel && res.channel !== "nuclei" ? ", on " + CHAN_WORDS[res.channel] : ""));
       if (level === "addict" && res.published) { const p = res.published; tb += p.failed ? row("pub", "Published method only", "-", "-", "-", "-", "could not run") : row("pub", "Published method only", p.state, at1(p.taus_s, p.msd), "-", "-", "in the frame of the microscope"); }
       tb += row("truth", "Simulation", trueState(), fmtSig(trueMsdAt(1), 2), fmtSig(Vt, 2), fmtSig(t.order, 2), "");
       h += tb + '</tbody></table></div>';
@@ -816,13 +837,15 @@
     }
     $("result").innerHTML = h + ampLine();
     $("hero-result").innerHTML = '<span>' + (level === "curious" ? "The sheet, as simulated" : "State, simulated") + '</span><span class="n">' + trueState() + '</span><span>Found by DDM</span><span class="n">' + res.state + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
-    $("hero-cap").textContent = "Simulated fluorescence time-lapse of the nuclei of a monolayer, " + fmtH(cache.movie.T * cache.movie.frame_h) + " played in about " + fmtSig(cache.movie.T / 12, 2) + " s, field " + fmtSig(cache.movie.L_um, 3) + " " + MU + "m.";
+    $("hero-cap").textContent = "Simulated fluorescence time-lapse of " + (cache.shown.channel === "edges" ? "the cell edges (drawn from the nuclei)" : cache.shown.channel === "both" ? "the nuclei and the cell edges" : "the nuclei") + " of a monolayer, " + fmtH(cache.movie.T * cache.movie.frame_h) + " played in about " + fmtSig(cache.movie.T / 12, 2) + " s, field " + fmtSig(cache.movie.L_um, 3) + " " + MU + "m.";
   }
   function renderText() {
     const m = cache.movie, st = STATES[state.tstate];
-    $("movie-text").textContent = "The movie shows the nuclei of " + m.truth.n_cells + " cells over " + fmtH(m.T * m.frame_h) + ", one frame every " + fmtSig(state.frame_min, 2) + " minutes. " + (st && st.v0_um_h !== undefined ? st.note : "The cells crawl at up to " + fmtSig(state.v0_um_h, 2) + " " + MU + "m/h" + (state.J_h > 0 ? " and steer towards where they are pushed." : ", each in its own direction."));
-    $("movie-specs").innerHTML = "10x objective, pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + m.T + " frames, " + fmtSig(state.frame_min, 2) + " min apart. Nuclei as spots of rms radius 2.5 " + MU + "m, " + fmtSig(state.photons, 2) + " photons each per frame; simulation step " + fmtSig(60 * m.info.step_h, 2) + " min.";
-    $("diff-note").textContent = "Move the delay slider: in a jammed sheet the difference stays faint for hours; in a fluid or flocking one it is full of pairs of spots within an hour.";
+    const ch = cache.shown.channel;
+    $("movie-text").textContent = (ch === "edges" ? "The movie shows the edges of " : ch === "both" ? "The movie shows the nuclei and the edges of " : "The movie shows the nuclei of ") + m.truth.n_cells + " cells over " + fmtH(m.T * m.frame_h) + ", one frame every " + fmtSig(state.frame_min, 2) + " minutes. " + (st && st.v0_um_h !== undefined ? st.note : "The cells crawl at up to " + fmtSig(state.v0_um_h, 2) + " " + MU + "m/h" + (state.J_h > 0 ? " and steer towards where they are pushed." : ", each in its own direction."));
+    $("movie-specs").innerHTML = "10x objective, pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + m.T + " frames, " + fmtSig(state.frame_min, 2) + " min apart. Nuclei as spots of rms radius 2.5 " + MU + "m, " + fmtSig(state.photons, 2) + " photons each per frame; simulation step " + fmtSig(60 * m.info.step_h, 2) + " min." +
+      (ch ? " The cell edges are not filmed but drawn: in each frame the nuclei are found and their Voronoi network (step 7) is drawn as lines of rms width 1.5 " + MU + "m, with as much light per cell as a nucleus, " + (ch === "both" ? "added to the frame of the nuclei" : "on the same background") + ", with the shot noise and read noise of the camera." : "");
+    $("diff-note").textContent = "Move the delay slider: in a jammed sheet the difference stays faint for hours; in a fluid or flocking one it is full of pairs of " + (ch === "edges" ? "dark and bright lines" : ch === "both" ? "dark and bright spots and lines" : "spots") + " within an hour.";
     const sb = $("movie-scale"), target = m.L_um / 4, nice = niceStep(target) > target ? niceStep(target) / 2 : niceStep(target);
     sb.querySelector("i").style.width = (100 * nice / m.L_um).toFixed(1) + "%"; sb.querySelector("span").textContent = fmtSig(nice, 2) + " " + MU + "m"; sb.style.width = "100%";
   }
@@ -838,7 +861,7 @@
   function renderLag() { const res = cache.res, li = lagIndex(); $("lag").max = res.lags.length - 1; const t = fmtH(res.taus_s[li]) + " (" + res.lags[li] + (res.lags[li] === 1 ? " frame)" : " frames)"); $("lag-out").textContent = t; $("lag").setAttribute("aria-valuetext", t); }
   function renderAll() {
     if (!cache.res) return;
-    readColors(); grey = greyRange(cache.movie); diffScale = null;
+    readColors(); grey = greyRange(cache.shown); greyNuc = greyRange(cache.movie); diffScale = null;
     setQSpan(); renderLag(); renderText(); drawCell(); drawMovieFrames(); drawMap(); drawStripes(); drawCurves(); drawMsd(); drawPath(); drawAmp(); renderResult(); renderNetwork(); drawSeries(); renderSettings();
   }
 
@@ -852,6 +875,8 @@
       shows: [{ label: "Flocking solid", set: { tstate: "flocksolid", v0_um_h: 8, J_h: 2 }, go: "step-rates" }] },
     { lvl: 2, title: "The patterns that tell", text: "The strongest patterns are those at the spacing of neighbouring nuclei, but there the arrangement of the cells slows the patterns down, as in a crowd of particles. The displacement is read a little above it, where each nucleus counts on its own, up to where the nuclei, blurred spots about 5 um across, fade into the noise. That band sets the reach: from a fraction of a micrometre to about 5 um. A higher magnification, or binning 2 x 2, moves the band to finer patterns and smaller displacements.".replace(/um/g, MU + "m"),
       shows: [{ label: "Binned 4 x 4", set: {}, go: "step-rates" }, { label: "Binned 2 x 2", set: { binning: 2 }, go: "step-rates" }] },
+    { lvl: 2, title: "Nuclei, edges or both", text: "DDM does not need nuclei. The page can also run on the cell edges, drawn in each frame from the network of the nuclei as a stain of the membranes would show them, or on both together. The edges give the same state and the same velocity of the sheet. In a jammed sheet they read the displacement a little higher at short delays, 0.77 um2 in an hour against 0.63 from the nuclei (0.53 simulated): a corner of the network is set by three nuclei and moves more than each of them. With both stains the strongest patterns nearly vanish: the edges lie between the nuclei, so at the spacing of neighbours the two patterns are out of step and cancel, and the signal there falls about 25 times.".replace(/um2/g, MU + "m" + SQ),
+      shows: [{ label: "Nuclei", set: {}, go: "step-rates" }, { label: "Edges", set: { channel: "edges" }, go: "step-rates" }, { label: "Both", set: { channel: "both" }, go: "step-rates" }] },
     { lvl: 2, title: "Time between frames", text: "Cells move slowly, so a frame every few minutes is enough, and a long movie matters more than a fast camera. A fluid sheet at 30 um/h needs frames a few minutes apart to catch the first steps; a jammed one shows its cage only over many hours.".replace(/um/g, MU + "m"),
       shows: [{ label: "1 min, fluid", set: { tstate: "fluid", v0_um_h: 30, frame_min: 1 }, go: "step-rates" }, { label: "15 min, jammed", set: { frame_min: 15 }, go: "step-rates" }] }
   ];
@@ -985,9 +1010,9 @@
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(function () { show(true); }, function () { show(false); }); else show(false);
   });
   window.addEventListener("hashchange", function () { const p = parseHash(location.hash); if (p.level && p.level !== level) setLevel(p.level, false); applySetup(p); });
-  function movieName() { const mv = cache.movie; return "ddm-" + PAGE_NAME + "-" + state.tstate + "-" + mv.n + "x" + mv.n + "x" + mv.T; }
+  function movieName() { const mv = cache.shown; return "ddm-" + PAGE_NAME + "-" + state.tstate + (mv.channel ? "-" + mv.channel : "") + "-" + mv.n + "x" + mv.n + "x" + mv.T; }
   $("btn-tiff").addEventListener("click", function () {
-    const mv = cache.movie; if (!mv || !mv.frames) return;
+    const mv = cache.shown; if (!mv || !mv.frames) return;
     DDM_TIFF.save(movieName() + ".tif", DDM_TIFF.tiff(mv.frames, mv.n, mv.T, mv.pixel_um, mv.frame_h * 3600, "info=Simulated on rcerbino.github.io/ddm, photoelectrons per pixel; one frame every " + state.frame_min + " min"), "image/tiff");
   });
 

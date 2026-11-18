@@ -138,6 +138,6 @@
         snapshot: { x: Array.from(X), y: Array.from(Y), vx: Array.from(VX), vy: Array.from(VY), d: Array.from(S) } }
     };
   }
-  const api = { simulate: simulate };
+  const api = { simulate: simulate, fft2: fft2 };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.TISSUE_MOVIE = api;
 })(this);

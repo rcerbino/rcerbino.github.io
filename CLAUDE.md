@@ -272,7 +272,12 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
   the field; the truth uses the periodic box and `truth.positions` from `tissue-movie.js`), and gives the shape index, sides and the
   neighbours kept after a delay (an edge longer than a tenth of a spacing to count, any edge to stay); the sweep also plots the
   neighbours kept in 4 h. In this model the mean shape index moves little (3.77 solid, 3.83 fluid): say so, do not present it as a
-  test of the vertex model. Method: Giavazzi et al., Front. Phys. 6, 120 (2018); model after Giavazzi et al., Soft Matter 14, 3471 (2018). Check:
+  test of the vertex model. "Images analysed" (`channel`: nuclei, edges, both): `TISSUE_VORONOI.channelMovie` finds the nuclei
+  again with the frame wrapping around, draws their periodic Voronoi network as lines of rms 1.5 um (wider than half a pixel:
+  thinner lines sampled at pixel centres lock light to the pixels and hide the sheet's motion) with a nucleus's light per cell
+  and camera noise, alone or added to the nuclei; the worker keeps each, and the page shows the images analysed in steps 2-3.
+  Nuclei and edges cancel at the spacing of neighbours, so `tissue-engine.js` looks for the peak of A among patterns 0.6 to 2
+  cells wide. Method: Giavazzi et al., Front. Phys. 6, 120 (2018); model after Giavazzi et al., Soft Matter 14, 3471 (2018). Check:
   `node test-tissue.js` (about two minutes).
 - Exercises /ddm/exercises/ (`static/ddm/exercises/index.html`, from `exercises.src.html`, no app): questions with model answers for
   every page, one section per page (anchor = page name), linked from each page's "Go further" and from the landing page. A new
