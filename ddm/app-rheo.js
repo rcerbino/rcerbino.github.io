@@ -1224,7 +1224,7 @@
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
     add(level === "curious" ? "Coloured dots: from each stripe spacing alone, in the colours of step 5. Large dots and line: all of them together." : "Coloured dots: the displacement that gives the measured f at each q alone (colours of step 5; with the depth of field, see the math), where f is clearly below 1 and above 0.15. Large dots and line: combined over q, with its uncertainty (jackknife over ten parts of the movie), and the smooth curve used below.");
     if (cmpOn) add("Dotted line: the earlier run (" + compare.label + "). Now (" + VE[state.mat].short + ") the line " + (res.plateau_Pa ? "levels off: the beads stay in their cages." : res.eta_long_Pa_s ? "reaches a slope of 1 in the end: the beads escape." : "keeps rising, more and more slowly.") );
-    if (level !== "curious") add("Dashed red: what the simulated beads do in this material (exact). A slope of 1 on these axes is free diffusion; a flat stretch, beads held in cages.");
+    if (level !== "curious") add("Dashed red: what the simulated beads do in this material (exact).");
   }
   // storage (G') and loss (G'') moduli against frequency, with the rheometer (the material simulated)
   function drawModuli() {
@@ -1252,11 +1252,34 @@
     a.done();
     const ul = $("mod-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
-    add(level === "curious" ? "Blue dots: how elastic the material is (G', the storage modulus). Red squares: how viscous (G'', the loss modulus). Dashed lines: what a rheometer would measure on the material simulated." : "Blue dots: G', red squares: G'', from the beads (bars: jackknife over ten parts of the movie). Dashed: the moduli of the material simulated, as a rheometer would give them. A modulus less than a tenth of the other is left out of the comparison in the result: this analysis does not consider it reliable next to the larger one.");
+    add(level === "curious" ? "Blue dots: how elastic the material is (G', the storage modulus). Red squares: how viscous (G'', the loss modulus). Dashed lines: what a rheometer would measure on the material simulated." : "Blue dots: G', red squares: G'', from the beads (bars: jackknife over ten parts of the movie). Dashed: the moduli of the material simulated, as a rheometer would give them.");
     if (LEVEL_RANK[level] >= 3) add("Dotted: Mason's local power-law formulas on the same mean squared displacement.");
     fillNumbers("chart-numbers", ["Angular frequency (rad/s)", "G' measured (Pa)", "G'' measured (Pa)", "G' simulated (Pa)", "G'' simulated (Pa)"], res.w_rad_s.map(function (w, k) { const g = VISCO.gstar(mat, es, w); return [w, res.Gp_Pa[k], res.Gpp_Pa[k], g[0], g[1]]; }));
   }
 
+  function ampPoints() { const r = cache.res, out = []; for (let b = 1; b < r.q_per_um.length; b++) if (r.A[b] > 0 || r.bins.indexOf(b) >= 0) out.push({ q: r.q_per_um[b], A: r.A[b], B: r.B[b], used: r.bins.indexOf(b) >= 0 }); return out; }
+  // signal A(q) and camera noise B(q) at each q, as on the sizing page (Researcher level): where A sinks into B, the
+  // patterns carry no usable signal and are left out
+  function drawAmp() {
+    if (LEVEL_RANK[level] < 3 || !cache.res) return;
+    const res = cache.res, pts = ampPoints().filter(function (p) { return p.q > 0 && (p.A > 0 || p.B > 0); });
+    const vals = []; pts.forEach(function (p) { if (p.A > 0) vals.push(p.A); if (p.B > 0) vals.push(p.B); });
+    if (vals.length < 2) return;
+    vals.sort(function (p, q) { return p - q; });
+    const y0 = vals[0] / 2.5, y1 = vals[vals.length - 1] * 2.5, qs = pts.map(function (p) { return p.q; });
+    const x0 = Math.min.apply(null, qs) * 0.8, x1 = Math.max.apply(null, qs) * 1.25;
+    const a = axes($("chart-amp"), { xlog: true, ylog: true, x0: x0, x1: x1, y0: y0, y1: y1, xlabel: "Wave vector q (" + MU + "m\u207b\u00b9)", ylabel: "A(q), B(q)" }), ctx = a.ctx;
+    const clampY = function (v) { return Math.min(y1 / 1.05, Math.max(y0 * 1.05, v)); };
+    ctx.strokeStyle = C.muted; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]); ctx.beginPath(); let on = false;
+    pts.forEach(function (p) { if (!(p.B > 0)) { on = false; return; } const X = a.fx(p.q), Y = a.fy(clampY(p.B)); if (!on) { ctx.moveTo(X, Y); on = true; } else ctx.lineTo(X, Y); });
+    ctx.stroke(); ctx.setLineDash([]);
+    pts.forEach(function (p) { if (p.A > 0) dot(ctx, a.fx(p.q), a.fy(clampY(p.A)), p.used ? 3 : 2.4, p.used ? C.accent : null, C.accent); });
+    const qo = res.window && res.window.q_opt_per_um;
+    if (qo > x0 && qo < x1) { ctx.setLineDash([5, 4]); ctx.strokeStyle = C.muted; ctx.lineWidth = 1; const xq = a.fx(qo); ctx.beginPath(); ctx.moveTo(xq, a.m.t); ctx.lineTo(xq, a.m.t + a.ph); ctx.stroke(); ctx.setLineDash([]); }
+    a.done();
+    $("amp-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>A: signal at each q (filled: used, hollow: left out)</span><span><i style="background:' + C.muted + '"></i>B: camera noise (dashed)</span><span>Vertical dashed line: the finest pattern the objective resolves</span>';
+    fillNumbers("amp-numbers", ["q (" + MU + "m\u207b\u00b9)", "A", "B", "Used"], pts.map(function (p) { return [p.q, p.A > 0 ? p.A : null, p.B > 0 ? p.B : null, p.used ? "yes" : "no"]; }));
+  }
   // ---- result -------------------------------------------------------------------------------
   const MODE_SHORT = { brightfield: "bright-field", phase: "phase-contrast", darkfield: "dark-field", dic: "DIC", fluorescence: "widefield fluorescence", spinning: "spinning-disk confocal (X-Light V3)", scanning: "point-scanning confocal (AX R)" };
   function spotWidth() { return 0.61 * centralWavelength() / Math.min(objective().na, nLiquid(centralWavelength())); }
@@ -1368,7 +1391,7 @@
   function renderAll() {
     if (!cache.res) return;
     readColors(); grey = greyRange(cache.movie); diffScale = null;
-    setQSpan(); renderLag(); renderText(); drawFov(); drawParticle(); drawMovieFrames(); drawMap(); drawStripes(); drawCurves(); drawMsd(); drawModuli(); renderResult(); renderSettings();
+    setQSpan(); renderLag(); renderText(); drawFov(); drawParticle(); drawMovieFrames(); drawMap(); drawStripes(); drawCurves(); drawMsd(); drawModuli(); drawAmp(); renderResult(); renderSettings();
   }
 
   // ---- "what matters" cards ---------------------------------------------------------------
@@ -1505,7 +1528,7 @@
     try { navigator.clipboard.writeText(txt).then(function () { $("btn-copy").textContent = "Copied"; }, fallback); } catch (e) { fallback(); }
   });
   let rz = null;
-  const redraw = function () { clearTimeout(rz); rz = setTimeout(function () { readColors(); drawFov(); if (cache.res) { drawCurves(); drawMsd(); drawModuli(); drawMapOverlay(); } }, 80); };
+  const redraw = function () { clearTimeout(rz); rz = setTimeout(function () { readColors(); drawFov(); if (cache.res) { drawCurves(); drawMsd(); drawModuli(); drawAmp(); drawMapOverlay(); } }, 80); };
   new ResizeObserver(redraw).observe(document.querySelector(".steps"));
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
   new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });

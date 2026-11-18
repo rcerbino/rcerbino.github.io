@@ -413,7 +413,7 @@ ref_seq = fd.read_images(reference_file_names)</pre>
             <p id="diff-note"></p>
           </div>
         </div>
-        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what moved; what stayed put is gone. Comparing several delays shows how the image changes over time: random motion usually makes the difference grow with the delay, while directed motion can also make it swing up and down.</p>
+        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what changed. Random motion usually makes the difference grow with the delay; directed motion can also make it swing up and down.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: the difference image</summary>
           <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
@@ -445,7 +445,7 @@ ref_seq = fd.read_images(reference_file_names)</pre>
             <p class="lvl-2" id="kopt-note">The dashed circle on the strength map marks the finest pattern the objective can resolve.</p>
           </div>
         </div>
-        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing (each q, one ring of the map) and each delay, how much the movie has changed. A point near the centre of the map is a wide pattern, a point far out a fine one.</p>
+        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing (each q, one ring of the map) and each delay, how much the movie has changed.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: structure function of a crowd</summary>
           <p>For <i>N</i> identical dyed particles,</p>
@@ -531,7 +531,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             <p class="lvl-2" id="sq-all-2">How strong each pattern is, against the same particles far apart, is the structure factor S(q): the order of the crowd. It peaks at the spacing of neighbours, about 2&pi; / q, and is low for wide patterns, because a crowd is hard to compress. The rate at which each pattern starts to fade, against one particle alone, gives the collective diffusion D(q): roughly D0 / S(q), slowest at the peak (de Gennes narrowing) and fastest for the widest patterns.</p>
             <p class="only-1" id="sq-few-1" hidden>Only a few particles are dyed, so the movie shows single particles among neighbours you cannot see. Pairs of dyed neighbours are rare, so how strong each pattern is hardly shows the order of the crowd: it stays near the value for particles far apart. The crowd is still there. How fast each pattern starts to fade now follows one particle at a time, and its invisible neighbours hold it back: it moves more slowly than alone.</p>
             <p class="lvl-2" id="sq-few-2" hidden>With a share x of the particles dyed, the structure factor the movie shows is 1 + x [S(q) - 1]: with few dyed it stays near 1, although the crowd is just as ordered. The patterns then follow single particles (self diffusion): at the shortest delays each moves as if alone, with D0, and over the delays used its cage slows it down.</p>
-            <p class="lvl-2">Both come out as ratios to the dilute reference movie (described under the movie, step 2): the optics, which make each particle's pattern weaker at fine stripes and add motion along the axis of the microscope, largely cancel out. Not entirely: each pattern of the image also collects density waves tilted along the axis, and the fit of the rates reaches beyond the first instants, so S(q) and D(q) keep small biases, noted under the charts.</p>
+            <p class="lvl-2">Both come out as ratios to the dilute reference movie (described under the movie, step 2): the optics, which make each particle's pattern weaker at fine stripes and add motion along the axis of the microscope, largely cancel out. Small biases remain; the notes under the charts say where.</p>
           </div>
           <figure class="viz" id="try-dyed">
             <figcaption id="sq-title">How the particles arrange: the structure factor</figcaption>
@@ -549,6 +549,12 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
             <ul class="reasons" id="dq-notes"></ul>
           </figure>
           <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <figure class="viz lvl-3">
+            <figcaption>Signal <i>A</i>(<i>q</i>) of this movie and camera noise <i>B</i>(<i>q</i>). <i>A</i> holds both the image of each particle and the order of the crowd (S(q)); where it sinks into <i>B</i> the patterns are left out.</figcaption>
+            <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
+            <div class="legend" id="amp-legend"></div>
+          </figure>
+          <details class="numbers lvl-3" id="amp-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <div class="step-body">
             <div class="result" id="result" aria-live="polite"></div>
           </div>

@@ -1318,8 +1318,8 @@
     if (h.no_swim) {
       lines.push("<b>One kind of motion: diffusion.</b> The curves fall on one curve against q\u00b2\u0394t (second chart), not against q\u0394t (first chart): every cell wanders at random" + (TURNS() ? " and turns" : "") + ", D = " + fmtSig(h.D_um2_s, 2) + " " + MU + "m\u00b2/s. Nothing swims." + (TURNS() ? " The widest patterns (blue) fade sooner than the others: for them it is the turning of the rods, not their wandering, that renews the pattern." : ""));
     } else {
-      lines.push("<b>Swimmers, " + Math.round(100 * h.alpha) + " % of the signal:</b> " + (state.swim_tumble > 0 ? "runs broken by tumbles" : state.swim_osc_amp > 0 ? "runs with a back-and-forth stroke" : "straight runs") + ". The fast first step of every curve falls on one curve against q\u0394t (first chart; thick line: the swimmer model), as it must for motion at constant speed: a pattern renews when a cell has swum across it. Mean speed " + fmtV(h.v_um_s) + (res.fast && level !== "curious" ? "; the swimmers' rate per q rises with slope " + res.fast.slope.toFixed(2) + " (rate chart)" : "") + ".");
-      lines.push("<b>The others, " + Math.round(100 * (1 - h.alpha)) + " %:</b> they only diffuse" + (TURNS() ? " and turn (turning rods also pull the curves a little below the dashed level)" : "") + ". The level between the two steps (dashed) is their share; their slow final step falls on one curve against q\u00b2\u0394t (second chart; thick line: D = " + fmtSig(h.D_um2_s, 2) + " " + MU + "m\u00b2/s)." + (still < 0.5 ? " In this movie they barely move (D q\u00b2\u0394t = " + fmtSig(still, 2) + " at the finest pattern and longest delay), so their step is cut short: their share is read from how far each curve still has to fall." : ""));
+      lines.push("<b>Swimmers, " + Math.round(100 * h.alpha) + " % of the signal:</b> " + (state.swim_tumble > 0 ? "runs broken by tumbles" : state.swim_osc_amp > 0 ? "runs with a back-and-forth stroke" : "straight runs") + "; their fast first step lines up against q\u0394t (first chart). Mean speed " + fmtV(h.v_um_s) + (res.fast && level !== "curious" ? "; the swimmers' rate per q rises with slope " + res.fast.slope.toFixed(2) + " (rate chart)" : "") + ".");
+      lines.push("<b>The others, " + Math.round(100 * (1 - h.alpha)) + " %:</b> they only diffuse" + (TURNS() ? " and turn (turning rods also pull the curves a little below the dashed level)" : "") + "; their slow final step lines up against q\u00b2\u0394t (second chart), with D = " + fmtSig(h.D_um2_s, 2) + " " + MU + "m\u00b2/s." + (still < 0.5 ? " In this movie they barely move (D q\u00b2\u0394t = " + fmtSig(still, 2) + " at the finest pattern and longest delay), so their step is cut short: their share is read from how far each curve still has to fall." : ""));
     }
     if (tr && tr.n_swimmers > 0 && h && !h.no_swim && Math.abs(h.alpha - st.share) > 0.08) lines.push("The measured share is off by " + Math.round(100 * Math.abs(h.alpha - st.share)) + " points from the truth: see the checks below.");
     el.innerHTML = html + lines.map(function (t) { return '<p class="small" style="margin:0">' + t + '</p>'; }).join("");
@@ -1360,10 +1360,10 @@
     const counts = {}; res.fits.forEach(function (f) { if (f.reason) counts[f.reason] = (counts[f.reason] || 0) + 1; });
     const ul = $("reasons"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
-    if (res.fast) add(level === "curious" ? "Dots: how fast the swimmers renew each pattern. Solid line: what the fitted swimmer model predicts. For swimmers the dots rise in step with the fineness of the pattern; for long cells a little more slowly at the finest patterns." : "Dots: rate of the swimmers' step at each q (one exponential exp(-(\u0393 \u0394t)^\u03b2) for the swimmers, with the share, D and turning of the others fixed from the swimmer fit). Solid line: the same rate from the fitted model (1/e of its swimmer part). For point-like swimmers it grows as q (slope 1); long cells grow more slowly at large q (here slope " + res.fast.slope.toFixed(2) + ").");
+    if (res.fast) add(level === "curious" ? "Dots: how fast the swimmers renew each pattern. Solid line: what the fitted swimmer model predicts. For swimmers the dots rise in step with the fineness of the pattern; for long cells a little more slowly at the finest patterns." : "Dots: rate of the swimmers' step at each q (one exponential exp(-(\u0393 \u0394t)^\u03b2) for the swimmers, with the share, D and turning of the others fixed from the swimmer fit). Solid line: the same rate from the fitted model (1/e of its swimmer part).");
     else add("Solid line: rate = v\u2080 q, fitted to the points" + (res.compressed ? " (v\u2080 = " + fmtSig(res.compressed.v0_um_s, 3) + " " + MU + "m/s" + (level !== "curious" ? ", slope " + res.compressed.slope.toFixed(2) + " on these axes" : "") + ")" : "") + ". One exponential per q: with no swimmers found, the rate of the whole curve.");
     if (level !== "curious") {
-      add("Dotted grey line: D q\u00b2 of the cells that do not swim, from the swimmer model. Swimming gives slope 1, diffusion slope 2.");
+      add("Dotted grey line: D q\u00b2 of the cells that do not swim, from the swimmer model.");
       add("Dashed red line: the same model at the true speeds of the simulated cells. It lies below q times the speed: in 3D a pattern has changed by 1 \u2212 1/e when q v \u0394t is about 2.2, because most cells swim at an angle to the stripes.");
     }
     add(res.used.length + " points used.");
@@ -1423,7 +1423,7 @@
   // comes from the measurable window, so runaway fits outside it (curves that never level off) cannot
   // squash the plot; such points are drawn at the edge.
   function drawAmp() {
-    if (level !== "researcher") return;
+    if (LEVEL_RANK[level] < 3) return;
     const res = cache.res, w = res.window;
     const inWin = function (q) { return q >= 2 * w.q_lo_per_um && q <= w.q_hi_per_um; };
     const vals = [];

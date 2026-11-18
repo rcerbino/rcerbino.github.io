@@ -1297,7 +1297,7 @@
   // comes from the measurable window, so runaway fits outside it (curves that never level off) cannot
   // squash the plot; such points are drawn at the edge.
   function drawAmp() {
-    if (level !== "researcher") return;
+    if (LEVEL_RANK[level] < 3) return;
     const res = cache.res, w = res.window;
     const inWin = function (q) { return q >= 2 * w.q_lo_per_um && q <= w.q_hi_per_um; };
     const vals = [];
