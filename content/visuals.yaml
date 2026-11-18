@@ -28,6 +28,9 @@ heads:
     src: img/lab/lab-bench.jpg
     position: 62% 40%
     caption: In the SoMeX lab.
+  Service:
+    speckle: true
+    caption: A simulated speckle pattern, the kind of signal Differential Dynamic Microscopy reads.
   Approach:
     src: img/lab/fluctuation-forces.jpg
     caption: From our work on forces created by fluctuations.

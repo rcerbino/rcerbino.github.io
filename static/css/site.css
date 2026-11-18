@@ -395,3 +395,11 @@ address { font-style: normal; }
 .talk.hidden { display: none; }
 .talk-strip figcaption .tdot { margin-left: 0.15rem; margin-right: 0.25rem; }
 .talk-list + .year { margin-top: 1.6rem; }
+
+/* Service: one colour per group, taken from the publication palette. */
+.tdot-thesis, .tseg-thesis { background: var(--t-article); fill: var(--t-article); }
+.tdot-people, .tseg-people { background: var(--t-review); fill: var(--t-review); }
+.tdot-jury, .tseg-jury { background: var(--t-chapter); fill: var(--t-chapter); }
+.tdot-institution, .tseg-institution { background: var(--t-preprint); fill: var(--t-preprint); }
+.service-list + h2, .service .timeline + h2 { margin-top: 2.2rem; }
+.service .quiet { max-width: 46rem; }
