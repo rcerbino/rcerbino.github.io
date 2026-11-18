@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DDM zum Ausprobieren</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<script>
+/* links shared before the DDM pages split (rcerbino.github.io/ddm/#student and the like) pointed at the sizing page:
+   send them on to it, with the same reader level or anchor */
+if (location.hash.length > 1) location.replace("../sizing/" + location.hash);
+</script>
+<style>
+  [hidden] { display: none !important; }
+/* Layout: the same page frame and palette as the DDM application pages; one card per application,
+   then the steps every application shares, drawn live from a small simulated movie. */
+:root {
+  --paper: #fafbfc;
+  --ink: #18202b;
+  --muted: #5a6472;
+  --rule: #dde2e8;
+  --accent: #2f45c5;
+  --accent-2: #b8233f;
+  --tint: #eef1fb;
+  --panel: #ffffff;
+  --warn: #8a5a00; --warn-bg: #fcefd6;
+  --serif: "Spectral", Georgia, "Times New Roman", serif;
+  --sans: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --measure: 40rem;
+  --wide: 76rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0d1119; --ink: #e4e8ee; --muted: #98a2b3; --rule: #283040;
+    --accent: #93a1ff; --accent-2: #ff7a90; --tint: #161c2a; --panel: #121826;
+    --warn: #f2b75c; --warn-bg: #3a2a10;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0d1119; --ink: #e4e8ee; --muted: #98a2b3; --rule: #283040;
+  --accent: #93a1ff; --accent-2: #ff7a90; --tint: #161c2a; --panel: #121826;
+  --warn: #f2b75c; --warn-bg: #3a2a10;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--serif); font-size: 1.125rem; line-height: 1.65;
+}
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+.wrap { max-width: var(--wide); margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+@media (min-width: 40rem) { .wrap { padding-left: max(2rem, env(safe-area-inset-left, 0px)); padding-right: max(2rem, env(safe-area-inset-right, 0px)); } }
+
+/* site header (as on rcerbino.github.io) */
+.site-header { border-bottom: 1px solid var(--rule); }
+.header-inner { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 2rem; padding-block: 1.1rem 1rem; }
+.site-name { font-size: 1.35rem; font-weight: 500; color: var(--ink); text-decoration: none; }
+.site-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.2rem 1.25rem; }
+.site-nav a { font-family: var(--sans); font-size: 0.95rem; color: var(--muted); text-decoration: none; padding: 0.2rem 0; border-bottom: 2px solid transparent; }
+.site-nav a:hover { color: var(--ink); }
+.site-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+h1, h2, h3 { font-weight: 500; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: clamp(2.1rem, 1.4rem + 2.6vw, 3.2rem); margin: 0 0 1rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; margin: 0 0 0.75rem; }
+p { margin: 0 0 1rem; }
+.lede { font-size: 1.25rem; line-height: 1.6; max-width: 44rem; }
+.prose { max-width: var(--measure); }
+.eyebrow { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 0.35rem; }
+
+/* opening */
+.intro { padding-block: 2.75rem 1.25rem; }
+.langs { font-family: var(--sans); font-size: 0.85rem; margin: 0 0 1rem; display: flex; gap: 0.9rem; }
+.langs [aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
+/* one card per application */
+.apps { padding-block: 1.5rem 2.5rem; }
+.app-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
+@media (min-width: 48rem) { .app-grid { grid-template-columns: repeat(2, 1fr); } }
+.app { position: relative; display: grid; grid-template-rows: auto auto 1fr; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
+.app:hover { border-color: var(--accent); box-shadow: 0 6px 24px -12px rgba(24, 32, 43, 0.35); transform: translateY(-2px); }
+.app:focus-within { border-color: var(--accent); }
+.app .media { position: relative; aspect-ratio: 16 / 10; background: #000; border-bottom: 1px solid var(--rule); }
+.app canvas { display: block; width: 100%; height: 100%; }
+.app .tag { position: absolute; left: 0.75rem; bottom: 0.6rem; font-family: var(--sans); font-size: 0.72rem; color: #fff; background: rgba(0, 0, 0, 0.55); padding: 0.1rem 0.45rem; border-radius: 4px; }
+.start-here { font-family: var(--sans); font-size: 0.95rem; margin: 0.9rem 0 0; }
+.app .head { padding: 1.1rem 1.25rem 0.8rem; }
+.app .head .eyebrow { margin-bottom: 0.2rem; }
+.app .head h2 { margin: 0; }
+.app .body { display: grid; align-content: start; gap: 0.15rem; padding: 1rem 1.25rem 1.25rem; }
+.app h2 { font-size: 1.7rem; margin: 0 0 0.35rem; }
+.app h2 a { color: var(--ink); text-decoration: none; }
+.app h2 a::after { content: ""; position: absolute; inset: 0; }   /* the whole card is the link */
+.app p { margin: 0 0 0.6rem; }
+.app .what { font-family: var(--sans); font-size: 0.86rem; color: var(--muted); line-height: 1.5; margin: 0 0 0.9rem; }
+.app .chips { list-style: none; margin: 0 0 1rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.app .chips li { font-family: var(--sans); font-size: 0.78rem; padding: 0.12rem 0.55rem; border-radius: 999px; background: var(--tint); color: var(--ink); }
+.app .go { font-family: var(--sans); font-size: 0.92rem; font-weight: 600; color: var(--accent); }
+
+/* the steps every application shares */
+.pipe { padding-block: 0 2.5rem; }
+.pipe::before, .about::before { content: ""; display: block; border-top: 1px solid var(--rule); margin-bottom: 2.25rem; }
+.pipe-row { display: grid; gap: 1rem 0.9rem; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); margin-top: 1.25rem; counter-reset: step; }
+.pipe-row figure { margin: 0; display: grid; gap: 0.5rem; align-content: start; counter-increment: step; }
+.pipe-row .pane { position: relative; aspect-ratio: 1; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: #000; }
+.pipe-row .pane svg.rings { position: absolute; inset: 0; }
+.pipe svg.rings circle { fill: none; stroke-width: 1.6; }
+.pipe svg.rings .halo { stroke: rgba(0, 0, 0, 0.6); stroke-width: 3.4; }
+.pipe svg.rings .r1 { stroke: #93a1ff; }   /* the dark-theme accents: the map is dark in both themes */
+.pipe svg.rings .r2 { stroke: #ff7a90; }
+.pipe-row .pane.light { background: var(--panel); }
+.pipe-row canvas, .pipe-row svg { display: block; width: 100%; height: 100%; }
+.pipe-row canvas.px { image-rendering: pixelated; }
+.pipe-row figcaption { font-family: var(--sans); font-size: 0.82rem; line-height: 1.45; color: var(--muted); }
+.pipe-row figcaption b { display: block; color: var(--ink); font-weight: 600; font-size: 0.9rem; }
+.pipe-row figcaption b::before { content: counter(step) ". "; color: var(--accent); }
+.pipe svg .ax { stroke: var(--rule); stroke-width: 1; fill: none; }
+.pipe svg .lab { fill: var(--muted); font-family: var(--sans); font-size: 7.5px; }
+.pipe svg .lab.k1 { fill: var(--accent); }
+.pipe svg .lab.sm { font-size: 6.5px; }
+.pipe svg .lab.k2 { fill: var(--accent-2); }
+.pipe svg .c1 { stroke: var(--accent); }
+.pipe svg .c2 { stroke: var(--accent-2); }
+.pipe svg .c3 { stroke: var(--muted); }
+.pipe svg .ln { fill: none; stroke-width: 2; }
+.pipe svg .dot { stroke: none; }
+.pipe svg .dot.c1 { fill: var(--accent); }
+.pipe svg .dot.c2 { fill: var(--accent-2); }
+.pipe svg .dot.c3 { fill: var(--muted); }
+.pipe svg .k { stroke: var(--ink); }
+.pipe svg .k.dash { stroke-dasharray: 4 3; }
+
+.about { padding-block: 0 2.5rem; }
+.next { padding-block: 0 2.5rem; }
+.next::before { content: ""; display: block; border-top: 1px solid var(--rule); margin-bottom: 2.25rem; }
+.next-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); margin-top: 1rem; }
+.next-grid > div { border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); padding: 1rem 1.2rem; }
+.next-grid h3 { font-size: 1.15rem; margin: 0 0 0.4rem; }
+.next-grid p { margin: 0; font-family: var(--sans); font-size: 0.9rem; line-height: 1.5; color: var(--muted); }
+footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; font-family: var(--sans); font-size: 0.85rem; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .app, .app:hover { transition: none; transform: none; } }
+</style>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="site-name" href="https://rcerbino.github.io/">Roberto Cerbino</a>
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="https://rcerbino.github.io/">Home</a></li>
+        <li><a href="https://rcerbino.github.io/about/">About</a></li>
+        <li><a href="https://rcerbino.github.io/research/">Research</a></li>
+        <li><a href="#" aria-current="page">DDM</a></li>
+        <li><a href="https://rcerbino.github.io/publications/">Publications</a></li>
+        <li><a href="https://rcerbino.github.io/talks/">Talks</a></li>
+        <li><a href="https://rcerbino.github.io/teaching/">Teaching</a></li>
+        <li><a href="https://rcerbino.github.io/contact/">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="wrap intro">
+    <nav class="langs" aria-label="Sprache"><a href="ddm-landing.html" hreflang="en" lang="en">English</a><a href="ddm-landing-it.html" hreflang="it" lang="it">Italiano</a><span aria-current="true" lang="de">Deutsch</span></nav>
+    <p class="eyebrow">Differentielle dynamische Mikroskopie</p>
+    <h1>DDM zum Ausprobieren</h1>
+    <p class="lede"><a href="https://en.wikipedia.org/wiki/Differential_dynamic_microscopy" hreflang="en">Differentielle dynamische Mikroskopie</a> (DDM), 2008 eingef&uuml;hrt (R. Cerbino und V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Phys. Rev. Lett. 100, 188102</a>), macht aus einem gew&ouml;hnlichen Mikroskopfilm ein Lichtstreuexperiment: Sie misst, wie schnell die Muster jeder Gr&ouml;&szlig;e im Bild verblassen, ohne einem einzelnen Teilchen oder einer einzelnen Zelle zu folgen. Daraus ergeben sich Gr&ouml;&szlig;en, Geschwindigkeiten und vieles mehr. Jede Seite unten simuliert ein Experiment in Ihrem Browser und f&uuml;hrt Sie durch die ganze Auswertung, vom Rohfilm bis zum Ergebnis. Die Seiten der Anwendungen sind auf Englisch.</p>
+    <p class="start-here">Neu hier? <a href="ddm-hands-on.html#try-double">Verdoppeln Sie die Gr&ouml;&szlig;e der Kugeln</a>: Sagen Sie voraus, wie sich die Kurven verschieben, und sehen Sie zu, wie die Seite es pr&uuml;ft. Sie unterrichten DDM? <a href="ddm-exercises.html">&Uuml;bungen mit Musterl&ouml;sungen</a> f&uuml;r jede Seite, zum Ausdrucken.</p>
+  </section>
+
+  <section class="wrap apps" aria-label="Anwendungen">
+    <div class="app-grid">
+      <article class="app">
+        <div class="head"><p class="eyebrow">Brownsche Bewegung</p>
+          <h2><a href="ddm-hands-on.html">Wie gro&szlig; sind sie?</a></h2></div>
+        <div class="media"><canvas id="cv-sizing" width="240" height="150" aria-label="Animation: Teilchen, die in einer Fl&uuml;ssigkeit zittern, wie in einem Hellfeldmikroskop"></canvas><span class="tag">Hellfeld, kolloidale Kugeln (Skizze)</span></div>
+        <div class="body">
+          <p>Bestimmen Sie die Gr&ouml;&szlig;e kolloidaler Teilchen daraus, wie schnell sie umherwandern, wie bei der dynamischen Lichtstreuung, aber mit einem Mikroskop und in Proben, bei denen die Lichtstreuung an ihre Grenzen st&ouml;&szlig;t.</p>
+          <p class="what">Kugeln, Ellipsoide und St&auml;bchen, von denen sich manche auch drehen; sieben Bildgebungsverfahren vom Hellfeld bis zur Konfokalmikroskopie; Kameras, Rauschen, Sch&auml;rfentiefe und was jedes davon am Ergebnis &auml;ndert.</p>
+          <ul class="chips"><li>Diffusion</li><li>Teilchengr&ouml;&szlig;e</li><li>Rotation</li></ul>
+          <span class="go" aria-hidden="true">Sizing particles &ouml;ffnen (auf Englisch)</span>
+        </div>
+      </article>
+      <article class="app">
+        <div class="head"><p class="eyebrow">Aktive Bewegung</p>
+          <h2><a href="ddm-swimmers.html">Wie schnell schwimmen sie?</a></h2></div>
+        <div class="media"><canvas id="cv-swim" width="240" height="150" aria-label="Animation: st&auml;bchenf&ouml;rmige Bakterien, manche schwimmend, manche still, wie in einem Phasenkontrastmikroskop"></canvas><span class="tag">Phasenkontrast, Bakterien (Skizze)</span></div>
+        <div class="body">
+          <p>Messen Sie, wie schnell Bakterien, Algen oder Spermien schwimmen, wie stark die Geschwindigkeiten streuen und welcher Anteil der Zellen schwimmt, aus einem Motilit&auml;tsfilm mit Tausenden von Zellen.</p>
+          <p class="what">E.-coli-St&auml;mme, Salmonella, B. subtilis, Chlamydomonas, Euglena und Bullenspermien, eingestellt wie in ver&ouml;ffentlichten Experimenten, oder Zellen nach eigenem Entwurf.</p>
+          <ul class="chips"><li>Schwimmgeschwindigkeit</li><li>Streuung der Geschwindigkeiten</li><li>Anteil der Schwimmer</li></ul>
+          <span class="go" aria-hidden="true">Swimming cells &ouml;ffnen (auf Englisch)</span>
+        </div>
+      </article>
+      <article class="app">
+        <div class="head"><p class="eyebrow">Drift</p>
+          <h2><a href="ddm-drift.html">Wohin bewegen sie sich?</a></h2></div>
+        <div class="media"><canvas id="cv-drift" width="240" height="150" aria-label="Animation: zitternde Teilchen, von einer Str&ouml;mung langsam nach rechts getragen, wie in einem Hellfeldmikroskop"></canvas><span class="tag">Hellfeld, Kugeln in einer Str&ouml;mung (Skizze)</span></div>
+        <div class="body">
+          <p>Messen Sie Geschwindigkeit und Richtung von Teilchen, die von einer Str&ouml;mung, der Schwerkraft oder einem Temperaturgradienten getragen werden, w&auml;hrend sie weiter zittern, und finden Sie heraus, wie langsam eine Drift sein darf, damit ein Film sie noch zeigt.</p>
+          <p class="what">Pfropfen- und Kanalstr&ouml;mungen; Sedimentation mit aufrechtem oder gekipptem Mikroskop; Thermophorese von Polystyrolkugeln mit Soret-Koeffizienten aus ver&ouml;ffentlichten Messungen.</p>
+          <ul class="chips"><li>Str&ouml;mung</li><li>Sedimentation</li><li>Thermophorese</li></ul>
+          <span class="go" aria-hidden="true">Drifting particles &ouml;ffnen (auf Englisch)</span>
+        </div>
+      </article>
+      <article class="app">
+        <div class="head"><p class="eyebrow">Viskoelastizit&auml;t</p>
+          <h2><a href="ddm-rheology.html">Fl&uuml;ssig oder fest?</a></h2></div>
+        <div class="media"><canvas id="cv-rheo" width="240" height="150" aria-label="Animation: Kugeln, die in einem weichen Gel auf der Stelle zittern, wie in einem Hellfeldmikroskop"></canvas><span class="tag">Hellfeld, Kugeln in einem Gel (Skizze)</span></div>
+        <div class="body">
+          <p>Messen Sie, wie elastisch und wie z&auml;h ein weiches Material ist, daraus, wie weit eingemischte Tracerkugeln kommen: Mikrorheologie mit einem Mikroskop, aus einem Tropfen Probe.</p>
+          <p class="what">Einfache Fl&uuml;ssigkeiten, wurmartige Mizellen, Polymerl&ouml;sungen und ein entstehendes Gel, mit genau bekannten Moduln; vom Film zu G' und G'' &uuml;ber mehrere Dekaden der Frequenz.</p>
+          <ul class="chips"><li>Mikrorheologie</li><li>G' und G''</li><li>Gelbildung</li></ul>
+          <span class="go" aria-hidden="true">Liquid or solid &ouml;ffnen (auf Englisch)</span>
+        </div>
+      </article>
+      <article class="app">
+        <div class="head"><p class="eyebrow">Wechselwirkungen</p>
+          <h2><a href="ddm-crowded.html">Wie ordnen sie sich im Gedr&auml;nge?</a></h2></div>
+        <div class="media"><canvas id="cv-crowd" width="240" height="150" aria-label="Animation: dicht gepackte gef&auml;rbte Teilchen, jedes zwischen seinen Nachbarn zitternd, wie in einem Konfokalmikroskop"></canvas><span class="tag">Konfokal, konzentrierte Kolloide (Skizze)</span></div>
+        <div class="body">
+          <p>Messen Sie, wie sich Teilchen anordnen, die einander wegdr&uuml;cken, und wie sich das Gedr&auml;nge bewegt, aus einem Konfokalfilm: Strukturfaktor und kollektive Diffusion, wie bei der Lichtstreuung.</p>
+          <p class="what">Harte und geladene Kugeln, von verd&uuml;nnt bis 45 % des Volumens, alle gef&auml;rbt oder nur wenige; in der Simulation dr&uuml;cken die Teilchen einander tats&auml;chlich weg, so wird, was DDM findet, mit dem verglichen, was sie wirklich tun.</p>
+          <ul class="chips"><li>Strukturfaktor</li><li>Kollektive Diffusion</li><li>Selbstdiffusion</li></ul>
+          <span class="go" aria-hidden="true">Crowded particles &ouml;ffnen (auf Englisch)</span>
+        </div>
+      </article>
+      <article class="app">
+        <div class="head"><p class="eyebrow">Proteine</p>
+          <h2><a href="ddm-proteins.html">Ziehen sie sich an oder sto&szlig;en sie sich ab?</a></h2></div>
+        <div class="media"><canvas id="cv-prot" width="240" height="150" aria-label="Animation: ein graues Feld mit schwachen, kommenden und gehenden Wellen, w&auml;hrend unsichtbar kleine Proteine in einem Hellfeldmikroskop diffundieren"></canvas><span class="tag">Hellfeld, eine Proteinl&ouml;sung (Skizze, Kontrast verst&auml;rkt)</span></div>
+        <div class="body">
+          <p>Messen Sie die Gr&ouml;&szlig;e von Proteinen, die viel zu klein sind, um sie zu sehen, und ob sie sich absto&szlig;en oder anziehen, aus Hellfeldfilmen bei einigen Konzentrationen: den Diffusions-Wechselwirkungsparameter k<sub>D</sub> und den zweiten Virialkoeffizienten B<sub>2</sub>.</p>
+          <p class="what">Ein Antik&ouml;rper bei wenig und bei viel Salz, Albumin, Lysozym und ein klebriger Antik&ouml;rper, oder ein eigenes Protein: Stellen Sie seine Ladung und das Salz ein und sehen Sie, wie beide Zahlen folgen.</p>
+          <ul class="chips"><li>Proteingr&ouml;&szlig;e</li><li>k<sub>D</sub></li><li>B<sub>2</sub></li></ul>
+          <span class="go" aria-hidden="true">Proteins &ouml;ffnen (auf Englisch)</span>
+        </div>
+      </article>
+      <article class="app">
+        <div class="head"><p class="eyebrow">Flie&szlig;grenze</p>
+          <h2><a href="ddm-shear.html">Wann beginnt es zu flie&szlig;en?</a></h2></div>
+        <div class="media"><canvas id="cv-shear" width="240" height="150" aria-label="Animation: Kugeln, die hin und her gleiten, &uuml;ber und unter dem Fokus st&auml;rker, w&auml;hrend ein weiches Material zwischen zwei Platten geschert wird"></canvas><span class="tag">Hellfeld, Kugeln in einem gescherten Gel (Skizze)</span></div>
+        <div class="body">
+          <p>Scheren Sie ein weiches Material hin und her und vergleichen Sie Bilder, die genau einen Zyklus auseinanderliegen: Was die Scherung r&uuml;ckg&auml;ngig macht, hebt sich auf, und die Umlagerungen, die sie zur&uuml;ckl&auml;sst, zeigen, wann ein weicher Festk&ouml;rper nachgibt und zu flie&szlig;en beginnt.</p>
+          <p class="what">Ein Mikrogel mit Flie&szlig;grenze, unter und &uuml;ber dieser Grenze, ein Gummi und eine z&auml;he Fl&uuml;ssigkeit; ein Amplitudendurchlauf von 5 % bis 150 %, wie in unseren Echo-DDM-Experimenten.</p>
+          <ul class="chips"><li>Oszillierende Scherung</li><li>Echo-DDM</li><li>Flie&szlig;grenze</li></ul>
+          <span class="go" aria-hidden="true">Sheared materials &ouml;ffnen (auf Englisch)</span>
+        </div>
+      </article>
+      <article class="app">
+        <div class="head"><p class="eyebrow">Kollektive Bewegung</p>
+          <h2><a href="ddm-tissues.html">Blockiert, flie&szlig;end oder im Schwarm?</a></h2></div>
+        <div class="media"><canvas id="cv-tissue" width="240" height="150" aria-label="Animation: fluoreszierende Zellkerne einer Zellschicht, dicht an dicht, die alle langsam in dieselbe Richtung driften"></canvas><span class="tag">Fluoreszenz, Zellkerne einer Zellschicht (Skizze)</span></div>
+        <div class="body">
+          <p>Erkennen Sie, ob eine Schicht von Epithelzellen wie ein Festk&ouml;rper feststeckt, wie eine Fl&uuml;ssigkeit flie&szlig;t oder sich als Schwarm bewegt, aus einer Zeitrafferaufnahme ihrer gef&auml;rbten Zellkerne, ohne einer einzelnen Zelle zu folgen.</p>
+          <p class="what">Kriechende Zellen, die einander schieben und sich gemeinsam ausrichten: blockierte und flie&szlig;ende Schichten, schw&auml;rmende Festk&ouml;rper und schw&auml;rmende Fl&uuml;ssigkeiten, wie in unseren Studien &uuml;ber wiedererweckte Epithelien.</p>
+          <ul class="chips"><li>Jamming</li><li>Schwarmbildung</li><li>Verschiebungen der Zellen</li></ul>
+          <span class="go" aria-hidden="true">Moving tissues &ouml;ffnen (auf Englisch)</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="wrap pipe" aria-labelledby="h-pipe">
+    <p class="eyebrow">Eine Methode, viele Fragen</p>
+    <h2 id="h-pipe">Was jede Seite macht</h2>
+    <p class="prose">Die Fragen unterscheiden sich, die Schritte nicht. Die ersten drei Felder laufen live auf einem kleinen simulierten Film zitternder Teilchen.</p>
+    <div class="pipe-row">
+      <figure><div class="pane"><canvas id="pp-frame" class="px" width="64" height="64" aria-label="Simuliertes Filmbild"></canvas></div>
+        <figcaption><b>Film</b>Ein gew&ouml;hnlicher Mikroskopfilm, viele Bilder hintereinander.</figcaption></figure>
+      <figure><div class="pane"><canvas id="pp-diff" class="px" width="64" height="64" aria-label="Differenz zweier Bilder"></canvas></div>
+        <figcaption><b>Differenz</b>Ziehen Sie zwei Bilder mit einem zeitlichen Abstand voneinander ab: Was stillsteht, Staub und ungleichm&auml;&szlig;iges Licht eingeschlossen, hebt sich auf; nur was sich bewegt hat, bleibt.</figcaption></figure>
+      <figure><div class="pane"><canvas id="pp-fft" class="px" width="64" height="64" aria-label="Fourier-Leistung der Differenz, gemittelt"></canvas>
+        <svg class="rings" viewBox="0 0 100 100" aria-hidden="true"><circle class="halo" cx="50.8" cy="50.8" r="10"/><circle class="r1" cx="50.8" cy="50.8" r="10"/><circle class="halo" cx="50.8" cy="50.8" r="30"/><circle class="r2" cx="50.8" cy="50.8" r="30"/></svg></div>
+        <figcaption><b>Fourier-Karte</b>Sortieren Sie die Differenz nach der Gr&ouml;&szlig;e der Muster und mitteln Sie &uuml;ber den Film. Jeder Ring enth&auml;lt eine Gr&ouml;&szlig;e: breite Muster nahe der Mitte (blau), kleine weiter au&szlig;en (rot).</figcaption></figure>
+      <figure><div class="pane light"><svg viewBox="0 0 100 100" role="img" aria-label="Kurven, die mit dem zeitlichen Abstand ansteigen, schneller f&uuml;r kleinere Muster">
+        <path class="ax" d="M14 86 H94 M14 86 V8"/>
+        <path class="ln c3" d="M14 80 C34 80 34 22 54 20 S80 20 94 20"/>
+        <path class="ln c2" d="M14 82 C24 82 26 30 38 28 S70 28 94 28"/>
+        <path class="ln c1" d="M14 78 C50 78 56 44 80 38 S90 37 94 37"/>
+        <text class="lab" x="54" y="97" text-anchor="middle">Abstand (log)</text>
+        <text class="lab" x="8" y="48" text-anchor="middle" transform="rotate(-90 8 48)">Differenz</text>
+      </svg></div>
+        <figcaption><b>Kurven</b>F&uuml;r jede Mustergr&ouml;&szlig;e, wie die Differenz mit dem zeitlichen Abstand w&auml;chst. Kleine Muster (rot) &auml;ndern sich zuerst, breite (blau) zuletzt.</figcaption></figure>
+      <figure><div class="pane light"><svg viewBox="0 0 100 100" role="img" aria-label="Raten gegen q, den Kehrwert der Mustergr&ouml;&szlig;e, logarithmisch: Steigung 2 f&uuml;r Diffusion, 1 f&uuml;r Schwimmen">
+        <path class="ax" d="M14 86 H94 M14 86 V8"/>
+        <path class="ln k" d="M18 80 L90 16"/>
+        <path class="ln k dash" d="M18 64 L90 32"/>
+        <circle class="dot c1" cx="30" cy="69.3" r="3"/><circle class="dot c3" cx="50" cy="51.6" r="3"/><circle class="dot c2" cx="72" cy="32" r="3"/>
+        <path class="ln k" d="M18 13 H28"/><text class="lab" x="31" y="15.5">Diffusion</text>
+        <path class="ln k dash" d="M18 23 H28"/><text class="lab" x="31" y="25.5">Schwimmen</text>
+        <text class="lab" x="54" y="97" text-anchor="middle">q (log)</text><text class="lab sm" x="15" y="97">breit</text><text class="lab sm" x="94" y="97" text-anchor="end">fein</text>
+        <text class="lab" x="8" y="48" text-anchor="middle" transform="rotate(-90 8 48)">Rate (log)</text>
+      </svg></div>
+        <figcaption><b>Die physikalischen Eigenschaften ableiten</b>Vergleichen Sie, wie stark jedes Muster erscheint und wie es sich mit der Zeit &auml;ndert. Ein Modell verbindet diese Messungen mit Teilchengr&ouml;&szlig;e, Schwimmgeschwindigkeit, Drift, Materialverhalten oder kollektiver Bewegung. Die Skizze zeigt ein Beispiel: die Rate jeder Mustergr&ouml;&szlig;e (q, gr&ouml;&szlig;er f&uuml;r feinere Muster), deren Steigung Diffusion (2) von Schwimmen (1) unterscheidet.</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="wrap next" aria-labelledby="h-next">
+    <p class="eyebrow">Vom Browser ins Labor</p>
+    <h2 id="h-next">Eigene Filme</h2>
+    <div class="next-grid">
+      <div><h3><a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a></h3>
+        <p>Lattuada et al., J. Chem. Phys. 163, 161501 (2025). Wie DDM in der Praxis funktioniert: Mikroskop und Kamera w&auml;hlen, den Film aufnehmen, ihn auswerten und das Ergebnis pr&uuml;fen.</p></div>
+      <div><h3><a href="https://github.com/somexlab/fastddm">fastDDM</a></h3>
+        <p>Unser Open-Source-Code zur Auswertung eigener Filme: eine Python-Bibliothek, die auf dem Prozessor oder der Grafikkarte l&auml;uft und die Strukturfunktion langer Filme schnell berechnet.</p></div>
+    </div>
+  </section>
+
+  <section class="wrap about" aria-labelledby="h-about">
+    <h2 id="h-about">&Uuml;ber diese Seiten</h2>
+    <p class="prose">Diese Seiten sind ein Divertissement. Zum Spa&szlig; haben wir Konfigurationen nahe denen unseres <a href="https://somexlab.github.io/">SoMeX-Labors</a> genommen und damit einige typische DDM-Experimente in Ihrem Browser simuliert. Die Simulationen sind einfach und beruhen auf vielen N&auml;herungen; jede Seite sagt, auf welchen. Weitere Anwendungen folgen. Etwas ist falsch oder funktioniert nicht? Bitte lassen Sie es uns (mich und Anthropic Claude) &uuml;ber die <a href="https://rcerbino.github.io/contact/">Kontaktseite</a> wissen.</p>
+    <p class="prose">Zum Zitieren dieser Seiten: R. Cerbino, <i>DDM zum Ausprobieren</i>, <a href="https://rcerbino.github.io/ddm/">rcerbino.github.io/ddm/</a> (2026), mit dem Datum, an dem Sie sie benutzt haben.</p>
+  </section>
+</main>
+
+<footer class="site"><div class="wrap">Roberto Cerbino, Universit&auml;t Wien. Die Simulationen laufen vollst&auml;ndig in Ihrem Browser; nichts wird hochgeladen.</div></footer>
+
+<script>
+(function () {
+  "use strict";
+  /* ---- small sketches of microscope movies (drawings for the cards, not the pages' simulation) ---- */
+  const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function gauss() { let u = 0, v = 0; while (u === 0) u = Math.random(); while (v === 0) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+  function wrap(x, L) { return ((x % L) + L) % L; }
+
+  /* a field of round particles; bright field: dark core with a faint bright ring */
+  function makeBeads(W, H, n, core, step, drift, cage) {
+    const p = []; for (let i = 0; i < n; i++) p.push([Math.random() * W, Math.random() * H]);
+    const home = p.map(function (q) { return q.slice(); }), off = p.map(function () { return [0, 0]; });
+    const R = Math.ceil(core * 3.2), img = new Float32Array(W * H);
+    return {
+      W: W, H: H, img: img,
+      step: function () {
+        if (cage) { p.forEach(function (q, i) { const o = off[i]; o[0] = (1 - cage) * o[0] + step * gauss(); o[1] = (1 - cage) * o[1] + step * gauss(); q[0] = wrap(home[i][0] + o[0], W); q[1] = wrap(home[i][1] + o[1], H); }); return; }   // beads held in cages (a gel)
+        for (const q of p) { q[0] = wrap(q[0] + step * gauss() + (drift || 0), W); q[1] = wrap(q[1] + step * gauss(), H); }
+      },
+      render: function () {
+        img.fill(0);
+        for (const q of p) {
+          const cx = q[0], cy = q[1], x0 = Math.floor(cx) - R, y0 = Math.floor(cy) - R;
+          for (let y = y0; y <= y0 + 2 * R; y++) {
+            const dy = y - cy, row = wrap(y, H) * W;
+            for (let x = x0; x <= x0 + 2 * R; x++) {
+              const dx = x - cx, r2 = (dx * dx + dy * dy) / (core * core);
+              img[row + wrap(x, W)] += -0.42 * Math.exp(-r2) + 0.1 * Math.exp(-(Math.sqrt(r2) - 1.9) * (Math.sqrt(r2) - 1.9) * 2.5);
+            }
+          }
+        }
+        return img;
+      }
+    };
+  }
+
+  /* proteins far too small to see: what the camera records is their number density, each ripple of it seen through
+     the optics of bright field (a ring of wave vectors) and fading by diffusion, the fine ripples fast and the wide ones
+     slowly. Built in Fourier space on a 128 x 128 grid: every mode a random process with rate D k^2; contrast stretched */
+  function makeRipples(W, H) {
+    const N = 128, k0 = 13, D = 1.6e-4, modes = [];
+    for (let ky = -N / 2 + 1; ky < N / 2; ky++) for (let kx = 0; kx < N / 2; kx++) {
+      if (kx === 0 && ky <= 0) continue;
+      const k = Math.hypot(kx, ky); if (k < 2 || k > 44) continue;
+      const u = k / k0, w = u * u * Math.exp(1 - u * u);          // the bright-field transfer: a broad ring
+      modes.push({ i: ((ky + N) % N) * N + kx, j: ((-ky + N) % N) * N + ((N - kx) % N), w: w, g: Math.min(0.6, D * k * k), re: gauss(), im: gauss() });
+    }
+    const re = new Float64Array(N * N), im = new Float64Array(N * N), r = new Float64Array(N), i_ = new Float64Array(N), img = new Float32Array(W * H);
+    return {
+      step: function () { modes.forEach(function (o) { const a = 1 - o.g, s = Math.sqrt(1 - a * a); o.re = a * o.re + s * gauss(); o.im = a * o.im + s * gauss(); }); },
+      render: function () {
+        re.fill(0); im.fill(0);
+        modes.forEach(function (o) { re[o.i] += o.w * o.re; im[o.i] += o.w * o.im; re[o.j] += o.w * o.re; im[o.j] -= o.w * o.im; });
+        for (let y = 0; y < N; y++) { for (let x = 0; x < N; x++) { r[x] = re[y * N + x]; i_[x] = im[y * N + x]; } fft1(r, i_, N); for (let x = 0; x < N; x++) { re[y * N + x] = r[x]; im[y * N + x] = i_[x]; } }
+        for (let x = 0; x < N; x++) { for (let y = 0; y < N; y++) { r[y] = re[y * N + x]; i_[y] = im[y * N + x]; } fft1(r, i_, N); for (let y = 0; y < N; y++) re[y * N + x] = r[y]; }
+        let ss = 0; for (let p = 0; p < N * N; p++) ss += re[p] * re[p];
+        const sd = Math.sqrt(ss / (N * N)) || 1;
+        // the field on the canvas, smoothly resampled, plus a little shot noise
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+          const fx = x * (N - 1) / (W - 1), fy = y * (N - 1) / (W - 1), x0 = Math.floor(fx), y0 = Math.floor(fy), ax = fx - x0, ay = fy - y0, x1 = Math.min(N - 1, x0 + 1), y1 = Math.min(N - 1, y0 + 1);
+          const v = (1 - ay) * ((1 - ax) * re[y0 * N + x0] + ax * re[y0 * N + x1]) + ay * ((1 - ax) * re[y1 * N + x0] + ax * re[y1 * N + x1]);
+          img[y * W + x] = 0.075 * v / sd + 0.03 * gauss();
+        }
+        return img;
+      }
+    };
+  }
+
+  /* a crowd of dyed spheres that push each other apart (soft discs for the sketch); confocal: bright spots on black */
+  function makeCrowd(W, H, n, rad, step) {
+    // start from an even, slightly jittered triangular arrangement at the density asked, so that no holes are left from
+    // a random start (the sketch's particles move too slowly to fill them)
+    const p = [], a = Math.sqrt(2 * W * H / (Math.sqrt(3) * n)), ny = Math.max(1, Math.round(H / (a * Math.sqrt(3) / 2))), nx = Math.max(1, Math.round(W / a));
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) p.push([wrap((i + (j % 2) * 0.5) * W / nx + 1.5 * gauss(), W), wrap((j + 0.5) * H / ny + 1.5 * gauss(), H)]);
+    n = p.length;
+    const R = Math.ceil(rad * 2.5), img = new Float32Array(W * H), d0 = 2.9 * rad;
+    const push = function () {
+      for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+        let dx = p[j][0] - p[i][0], dy = p[j][1] - p[i][1]; dx -= W * Math.round(dx / W); dy -= H * Math.round(dy / H);
+        const r = Math.sqrt(dx * dx + dy * dy); if (r >= d0 || r === 0) continue;
+        const m = 0.5 * (d0 - r) / r; p[i][0] -= m * dx; p[i][1] -= m * dy; p[j][0] += m * dx; p[j][1] += m * dy;
+      }
+      for (const q of p) { q[0] = wrap(q[0], W); q[1] = wrap(q[1], H); }
+    };
+    for (let k = 0; k < 60; k++) { for (const q of p) { q[0] += step * gauss(); q[1] += step * gauss(); } push(); }
+    return {
+      img: img,
+      step: function () { for (const q of p) { q[0] += step * gauss(); q[1] += step * gauss(); } push(); },
+      render: function () {
+        img.fill(0);
+        for (const q of p) {
+          const cx = q[0], cy = q[1], x0 = Math.floor(cx) - R, y0 = Math.floor(cy) - R;
+          for (let y = y0; y <= y0 + 2 * R; y++) { const dy = y - cy, row = wrap(y, H) * W; for (let x = x0; x <= x0 + 2 * R; x++) { const dx = x - cx; img[row + wrap(x, W)] += Math.exp(-(dx * dx + dy * dy) / (rad * rad)); } }
+        }
+        return img;
+      }
+    };
+  }
+
+  /* rod-shaped cells, about 60 % swimming (straight runs, an occasional tumble); phase contrast: dark body, bright halo */
+  function makeCells(W, H, n) {
+    const c = [];
+    for (let i = 0; i < n; i++) c.push({ x: Math.random() * W, y: Math.random() * H, a: Math.random() * 2 * Math.PI, swim: Math.random() < 0.6, v: 1.1 + 0.9 * Math.random() });
+    const L = 4.2, s = 1.35, R = Math.ceil(L + 4 * s), img = new Float32Array(W * H);
+    return {
+      img: img,
+      step: function () {
+        for (const k of c) {
+          if (k.swim) {
+            k.a += 0.035 * gauss(); if (Math.random() < 0.006) k.a = Math.random() * 2 * Math.PI;
+            k.x = wrap(k.x + k.v * Math.cos(k.a), W); k.y = wrap(k.y + k.v * Math.sin(k.a), H);
+          } else { k.a += 0.02 * gauss(); k.x = wrap(k.x + 0.22 * gauss(), W); k.y = wrap(k.y + 0.22 * gauss(), H); }
+        }
+      },
+      render: function () {
+        img.fill(0);
+        for (const k of c) {
+          const ux = Math.cos(k.a), uy = Math.sin(k.a), x0 = Math.floor(k.x) - R, y0 = Math.floor(k.y) - R;
+          for (let y = y0; y <= y0 + 2 * R; y++) {
+            const dy = y - k.y, row = wrap(y, H) * W;
+            for (let x = x0; x <= x0 + 2 * R; x++) {
+              const dx = x - k.x, along = Math.max(-L, Math.min(L, dx * ux + dy * uy)), ex = dx - along * ux, ey = dy - along * uy;
+              const d = Math.sqrt(ex * ex + ey * ey) / s;
+              img[row + wrap(x, W)] += -0.4 * Math.exp(-d * d) + 0.22 * Math.exp(-(d - 2.1) * (d - 2.1) * 1.4);
+            }
+          }
+        }
+        return img;
+      }
+    };
+  }
+
+  /* beads at different heights in a sheared layer: each slides back and forth by its height times the strain, those out of
+     focus drawn larger and fainter; a slow random walk stands for the rearrangements the shear leaves behind */
+  function makeSheared(W, H, n) {
+    const p = []; for (let i = 0; i < n; i++) p.push({ x: Math.random() * W, y: Math.random() * H, h: 2 * Math.random() - 1 });
+    const img = new Float32Array(W * H); let t = 0;
+    return {
+      img: img,
+      step: function () { t += 1; for (const q of p) { q.x = wrap(q.x + 0.05 * gauss(), W); q.y = wrap(q.y + 0.05 * gauss(), H); } },
+      render: function () {
+        img.fill(0);
+        const s = Math.sin(2 * Math.PI * t / 50);
+        for (const q of p) {
+          const core = 1.8 + 2.2 * Math.abs(q.h), amp = 1 / (1 + 1.5 * Math.abs(q.h)), R = Math.ceil(core * 3.2), cx = q.x + 22 * q.h * s, cy = q.y, x0 = Math.floor(cx) - R, y0 = Math.floor(cy) - R;
+          for (let y = y0; y <= y0 + 2 * R; y++) {
+            const dy = y - cy, row = wrap(y, H) * W;
+            for (let x = x0; x <= x0 + 2 * R; x++) { const dx = x - cx, r2 = (dx * dx + dy * dy) / (core * core); img[row + wrap(x, W)] += amp * (-0.42 * Math.exp(-r2) + 0.1 * Math.exp(-(Math.sqrt(r2) - 1.9) * (Math.sqrt(r2) - 1.9) * 2.5)); }
+          }
+        }
+        return img;
+      }
+    };
+  }
+
+  function grayTo(ctx, img, W, H, bg, gain) {
+    const id = ctx.createImageData(W, H), d = id.data;
+    for (let i = 0; i < W * H; i++) { const v = Math.max(0, Math.min(255, 255 * (bg + gain * img[i]))); d[4 * i] = v; d[4 * i + 1] = v; d[4 * i + 2] = v; d[4 * i + 3] = 255; }
+    ctx.putImageData(id, 0, 0);
+  }
+
+  /* ---- Fourier transform of a 64 x 64 image (radix 2) ---- */
+  function fft1(re, im, n) {
+    for (let i = 1, j = 0; i < n; i++) { let b = n >> 1; for (; j & b; b >>= 1) j ^= b; j ^= b; if (i < j) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; } }
+    for (let len = 2; len <= n; len <<= 1) {
+      const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+      for (let i = 0; i < n; i += len) {
+        let cr = 1, ci = 0;
+        for (let k = 0; k < len / 2; k++) {
+          const a = i + k, b = a + len / 2, xr = re[b] * cr - im[b] * ci, xi = re[b] * ci + im[b] * cr;
+          re[b] = re[a] - xr; im[b] = im[a] - xi; re[a] += xr; im[a] += xi;
+          const t = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = t;
+        }
+      }
+    }
+  }
+  function power2d(src, N, out) {
+    const re = new Float64Array(N * N), im = new Float64Array(N * N), r = new Float64Array(N), i_ = new Float64Array(N);
+    re.set(src);
+    for (let y = 0; y < N; y++) { for (let x = 0; x < N; x++) { r[x] = re[y * N + x]; i_[x] = im[y * N + x]; } fft1(r, i_, N); for (let x = 0; x < N; x++) { re[y * N + x] = r[x]; im[y * N + x] = i_[x]; } }
+    for (let x = 0; x < N; x++) { for (let y = 0; y < N; y++) { r[y] = re[y * N + x]; i_[y] = im[y * N + x]; } fft1(r, i_, N); for (let y = 0; y < N; y++) { re[y * N + x] = r[y]; im[y * N + x] = i_[y]; } }
+    for (let k = 0; k < N * N; k++) out[k] = re[k] * re[k] + im[k] * im[k];
+  }
+  // dark blue to warm white, for the Fourier map
+  const STOPS = [[0, 4, 8, 30], [0.35, 47, 69, 197], [0.65, 184, 35, 63], [0.85, 246, 160, 80], [1, 255, 248, 230]];
+  function cmap(t) {
+    t = Math.max(0, Math.min(1, t)); let k = 1; while (k < STOPS.length - 1 && STOPS[k][0] < t) k++;
+    const a = STOPS[k - 1], b = STOPS[k], u = (t - a[0]) / (b[0] - a[0]);
+    return [a[1] + u * (b[1] - a[1]), a[2] + u * (b[2] - a[2]), a[3] + u * (b[3] - a[3])];
+  }
+
+  /* ---- the animations ---- */
+  const scenes = [];
+  function scene(el, step, draw) { const s = { el: el, step: step, draw: draw, on: true }; scenes.push(s); return s; }
+
+  const cs = document.getElementById("cv-sizing"), ctxS = cs.getContext("2d"), beads = makeBeads(cs.width, cs.height, 80, 2.0, 0.55);
+  scene(cs, beads.step, function () { grayTo(ctxS, beads.render(), cs.width, cs.height, 0.74, 0.9); });
+
+  const crh = document.getElementById("cv-rheo"), ctxR = crh.getContext("2d"), caged = makeBeads(crh.width, crh.height, 80, 2.0, 0.35, 0, 0.25);
+  scene(crh, caged.step, function () { grayTo(ctxR, caged.render(), crh.width, crh.height, 0.74, 0.9); });
+  const ccr = document.getElementById("cv-crowd"), ctxC = ccr.getContext("2d"), crowd = makeCrowd(ccr.width, ccr.height, 275, 3.2, 0.35);
+  scene(ccr, crowd.step, function () { grayTo(ctxC, crowd.render(), ccr.width, ccr.height, 0.06, 0.8); });
+  const cpr = document.getElementById("cv-prot"), ctxP = cpr.getContext("2d"), ripples = makeRipples(cpr.width, cpr.height);
+  scene(cpr, ripples.step, function () { grayTo(ctxP, ripples.render(), cpr.width, cpr.height, 0.6, 1); });
+  const cdr = document.getElementById("cv-drift"), ctxD = cdr.getContext("2d"), drifting = makeBeads(cdr.width, cdr.height, 80, 2.0, 0.45, 0.35);
+  scene(cdr, drifting.step, function () { grayTo(ctxD, drifting.render(), cdr.width, cdr.height, 0.74, 0.9); });
+
+  const csh = document.getElementById("cv-shear"), ctxH = csh.getContext("2d"), sheared = makeSheared(csh.width, csh.height, 70);
+  scene(csh, sheared.step, function () { grayTo(ctxH, sheared.render(), csh.width, csh.height, 0.74, 0.9); });
+
+  const cti = document.getElementById("cv-tissue"), ctxT = cti.getContext("2d"), sheet = makeCrowd(cti.width, cti.height, 95, 3.6, 0.2);
+  let tShift = 0;
+  scene(cti, function () { sheet.step(); tShift += 0.25; }, function () { const im = sheet.render(), W = cti.width, H = cti.height, sh = Math.round(tShift) % W, out = new Float32Array(W * H); for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) out[y * W + (x + sh) % W] = im[y * W + x]; grayTo(ctxT, out, W, H, 0.05, 0.75); });
+
+  const cw = document.getElementById("cv-swim"), ctxW = cw.getContext("2d"), cells = makeCells(cw.width, cw.height, 34);
+  scene(cw, cells.step, function () { grayTo(ctxW, cells.render(), cw.width, cw.height, 0.5, 0.95); });
+
+  // the shared steps: movie, difference at a delay of LAG frames, Fourier power of the differences averaged over time
+  const N = 64, LAG = 5, small = makeBeads(N, N, 46, 1.25, 0.42), hist = [], pow = new Float64Array(N * N), acc = new Float64Array(N * N);
+  const cf = document.getElementById("pp-frame").getContext("2d"), cd = document.getElementById("pp-diff").getContext("2d"), cq = document.getElementById("pp-fft").getContext("2d");
+  let nAcc = 0;
+  function pipeStep() {
+    small.step();
+    hist.push(Float32Array.from(small.render())); if (hist.length > LAG + 1) hist.shift();
+    if (hist.length === LAG + 1) {
+      const a = hist[LAG], b = hist[0], diff = new Float64Array(N * N);
+      for (let k = 0; k < N * N; k++) diff[k] = a[k] - b[k];
+      power2d(diff, N, pow);
+      const w = nAcc < 60 ? 1 / (nAcc + 1) : 1 / 60; nAcc++;
+      for (let k = 0; k < N * N; k++) acc[k] = (1 - w) * acc[k] + w * pow[k];
+    }
+  }
+  function pipeDraw() {
+    const cur = hist[hist.length - 1]; if (!cur) return;
+    grayTo(cf, cur, N, N, 0.74, 0.9);
+    if (hist.length < LAG + 1) return;
+    const a = hist[LAG], b = hist[0], id = cd.createImageData(N, N), d = id.data;
+    for (let k = 0; k < N * N; k++) { const v = Math.max(0, Math.min(255, 128 + 330 * (a[k] - b[k]))); d[4 * k] = v; d[4 * k + 1] = v; d[4 * k + 2] = v; d[4 * k + 3] = 255; }
+    cd.putImageData(id, 0, 0);
+    // log scale, centred (zero pattern size in the middle); range from the brightest values
+    let mx = 0; for (let k = 1; k < N * N; k++) if (acc[k] > mx) mx = acc[k];
+    const top = Math.log10(mx + 1e-12), span = 3.2, iq = cq.createImageData(N, N), e = iq.data;
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      const k = ((y + N / 2) % N) * N + ((x + N / 2) % N), t = (Math.log10(acc[k] + 1e-12) - top + span) / span, c = cmap(t), o = 4 * (y * N + x);
+      e[o] = c[0]; e[o + 1] = c[1]; e[o + 2] = c[2]; e[o + 3] = 255;
+    }
+    cq.putImageData(iq, 0, 0);
+  }
+  scene(document.querySelector(".pipe-row"), pipeStep, pipeDraw);
+  // a settled first picture of everything, so nothing is blank before it scrolls into view
+  for (let i = 0; i < 40; i++) pipeStep();
+  scenes.forEach(function (s) { s.draw(); });
+
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver(function (es) { es.forEach(function (en) { scenes.forEach(function (s) { if (s.el === en.target) s.on = en.isIntersecting; }); }); });
+    scenes.forEach(function (s) { io.observe(s.el); });
+  }
+  if (still) {   // reduced motion: one settled picture of each, no animation
+    for (let i = 0; i < 90; i++) scenes.forEach(function (s) { s.step(); });
+    scenes.forEach(function (s) { s.draw(); });
+    return;
+  }
+  let last = 0;
+  function tick(t) {
+    if (t - last > 40) { last = t; scenes.forEach(function (s) { if (s.on) { s.step(); s.draw(); } }); }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>

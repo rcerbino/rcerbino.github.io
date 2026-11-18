@@ -6,6 +6,9 @@
 <meta name="description" content="Differential dynamic microscopy (DDM) hands on: simulated microscopy experiments in your browser, analysed step by step from the raw movie to the result. Size particles from how they move, measure how fast cells swim, or follow particles carried by a flow, gravity or heat.">
 <meta name="author" content="Roberto Cerbino">
 <link rel="canonical" href="https://rcerbino.github.io/ddm/">
+<link rel="alternate" hreflang="en" href="https://rcerbino.github.io/ddm/">
+<link rel="alternate" hreflang="it" href="https://rcerbino.github.io/ddm/it/">
+<link rel="alternate" hreflang="de" href="https://rcerbino.github.io/ddm/de/">
 <link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../css/fonts.css">
 <script>
@@ -76,6 +79,8 @@ p { margin: 0 0 1rem; }
 
 /* opening */
 .intro { padding-block: 2.75rem 1.25rem; }
+.langs { font-family: var(--sans); font-size: 0.85rem; margin: 0 0 1rem; display: flex; gap: 0.9rem; }
+.langs [aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
 /* one card per application */
 .apps { padding-block: 1.5rem 2.5rem; }
 .app-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
@@ -157,6 +162,7 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
 
 <main>
   <section class="wrap intro">
+    <nav class="langs" aria-label="Language"><span aria-current="true" lang="en">English</span><a href="it/" hreflang="it" lang="it">Italiano</a><a href="de/" hreflang="de" lang="de">Deutsch</a></nav>
     <p class="eyebrow">Differential dynamic microscopy</p>
     <h1>DDM, hands on</h1>
     <p class="lede"><a href="https://en.wikipedia.org/wiki/Differential_dynamic_microscopy">Differential dynamic microscopy</a> (DDM), introduced in 2008 (R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Phys. Rev. Lett. 100, 188102</a>), turns an ordinary microscope movie into a light scattering experiment: it measures how fast the patterns of each size in the image fade, without following any single particle or cell. From those rates follow sizes, speeds and much more. Each page below simulates an experiment in your browser and takes you through the whole analysis, from the raw movie to the result.</p>
@@ -229,6 +235,28 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
           <p class="what">An antibody in low and high salt, albumin, lysozyme and a sticky antibody, or a protein of your own: set its charge and the salt, and see how both numbers follow.</p>
           <ul class="chips"><li>Protein size</li><li>k<sub>D</sub></li><li>B<sub>2</sub></li></ul>
           <span class="go" aria-hidden="true">Open Proteins</span>
+        </div>
+      </article>
+      <article class="app">
+        <div class="head"><p class="eyebrow">Yielding</p>
+          <h2><a href="shear/">When does it start to flow?</a></h2></div>
+        <div class="media"><canvas id="cv-shear" width="240" height="150" aria-label="Animation: beads sliding back and forth, those above and below focus by more, as a soft material is sheared between two plates"></canvas><span class="tag">Bright field, beads in a sheared gel (sketch)</span></div>
+        <div class="body">
+          <p>Shear a soft material back and forth and compare frames taken one full cycle apart: what the shear undoes cancels, and the rearrangements it leaves behind show when a soft solid yields and starts to flow.</p>
+          <p class="what">A yield-stress microgel below and above its yield point, a rubber and a viscous liquid; a strain sweep from 5 % to 150 %, as in our echo-DDM experiments.</p>
+          <ul class="chips"><li>Oscillatory shear</li><li>Echo-DDM</li><li>Yielding</li></ul>
+          <span class="go" aria-hidden="true">Open Sheared materials</span>
+        </div>
+      </article>
+      <article class="app">
+        <div class="head"><p class="eyebrow">Collective motion</p>
+          <h2><a href="tissues/">Jammed, flowing or flocking?</a></h2></div>
+        <div class="media"><canvas id="cv-tissue" width="240" height="150" aria-label="Animation: fluorescent nuclei of a cell sheet, packed side by side, all drifting slowly the same way"></canvas><span class="tag">Fluorescence, nuclei of a cell sheet (sketch)</span></div>
+        <div class="body">
+          <p>Tell whether a sheet of epithelial cells is stuck like a solid, flows like a liquid or moves as a flock, from a time-lapse of their stained nuclei, without following any cell.</p>
+          <p class="what">Crawling cells that push each other and steer together: jammed sheets, fluid ones, flocking solids and flocking liquids, as in our studies of reawakened epithelia.</p>
+          <ul class="chips"><li>Jamming</li><li>Flocking</li><li>Cell displacements</li></ul>
+          <span class="go" aria-hidden="true">Open Moving tissues</span>
         </div>
       </article>
     </div>
@@ -421,6 +449,29 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
     };
   }
 
+  /* beads at different heights in a sheared layer: each slides back and forth by its height times the strain, those out of
+     focus drawn larger and fainter; a slow random walk stands for the rearrangements the shear leaves behind */
+  function makeSheared(W, H, n) {
+    const p = []; for (let i = 0; i < n; i++) p.push({ x: Math.random() * W, y: Math.random() * H, h: 2 * Math.random() - 1 });
+    const img = new Float32Array(W * H); let t = 0;
+    return {
+      img: img,
+      step: function () { t += 1; for (const q of p) { q.x = wrap(q.x + 0.05 * gauss(), W); q.y = wrap(q.y + 0.05 * gauss(), H); } },
+      render: function () {
+        img.fill(0);
+        const s = Math.sin(2 * Math.PI * t / 50);
+        for (const q of p) {
+          const core = 1.8 + 2.2 * Math.abs(q.h), amp = 1 / (1 + 1.5 * Math.abs(q.h)), R = Math.ceil(core * 3.2), cx = q.x + 22 * q.h * s, cy = q.y, x0 = Math.floor(cx) - R, y0 = Math.floor(cy) - R;
+          for (let y = y0; y <= y0 + 2 * R; y++) {
+            const dy = y - cy, row = wrap(y, H) * W;
+            for (let x = x0; x <= x0 + 2 * R; x++) { const dx = x - cx, r2 = (dx * dx + dy * dy) / (core * core); img[row + wrap(x, W)] += amp * (-0.42 * Math.exp(-r2) + 0.1 * Math.exp(-(Math.sqrt(r2) - 1.9) * (Math.sqrt(r2) - 1.9) * 2.5)); }
+          }
+        }
+        return img;
+      }
+    };
+  }
+
   function grayTo(ctx, img, W, H, bg, gain) {
     const id = ctx.createImageData(W, H), d = id.data;
     for (let i = 0; i < W * H; i++) { const v = Math.max(0, Math.min(255, 255 * (bg + gain * img[i]))); d[4 * i] = v; d[4 * i + 1] = v; d[4 * i + 2] = v; d[4 * i + 3] = 255; }
@@ -472,6 +523,13 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
   scene(cpr, ripples.step, function () { grayTo(ctxP, ripples.render(), cpr.width, cpr.height, 0.6, 1); });
   const cdr = document.getElementById("cv-drift"), ctxD = cdr.getContext("2d"), drifting = makeBeads(cdr.width, cdr.height, 80, 2.0, 0.45, 0.35);
   scene(cdr, drifting.step, function () { grayTo(ctxD, drifting.render(), cdr.width, cdr.height, 0.74, 0.9); });
+
+  const csh = document.getElementById("cv-shear"), ctxH = csh.getContext("2d"), sheared = makeSheared(csh.width, csh.height, 70);
+  scene(csh, sheared.step, function () { grayTo(ctxH, sheared.render(), csh.width, csh.height, 0.74, 0.9); });
+
+  const cti = document.getElementById("cv-tissue"), ctxT = cti.getContext("2d"), sheet = makeCrowd(cti.width, cti.height, 95, 3.6, 0.2);
+  let tShift = 0;
+  scene(cti, function () { sheet.step(); tShift += 0.25; }, function () { const im = sheet.render(), W = cti.width, H = cti.height, sh = Math.round(tShift) % W, out = new Float32Array(W * H); for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) out[y * W + (x + sh) % W] = im[y * W + x]; grayTo(ctxT, out, W, H, 0.05, 0.75); });
 
   const cw = document.getElementById("cv-swim"), ctxW = cw.getContext("2d"), cells = makeCells(cw.width, cw.height, 34);
   scene(cw, cells.step, function () { grayTo(ctxW, cells.render(), cw.width, cw.height, 0.5, 0.95); });

@@ -71,6 +71,8 @@ p { margin: 0 0 1rem; }
 
 /* opening */
 .intro { padding-block: 2.75rem 1.25rem; }
+.langs { font-family: var(--sans); font-size: 0.85rem; margin: 0 0 1rem; display: flex; gap: 0.9rem; }
+.langs [aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
 /* one card per application */
 .apps { padding-block: 1.5rem 2.5rem; }
 .app-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
@@ -159,6 +161,7 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
 
 <main>
   <section class="wrap intro">
+    <nav class="langs" aria-label="Language"><span aria-current="true" lang="en">English</span><a href="it/" hreflang="it" lang="it">Italiano</a><a href="de/" hreflang="de" lang="de">Deutsch</a></nav>
     <p class="eyebrow">Differential dynamic microscopy</p>
     <h1>DDM, hands on</h1>
     <p class="lede"><a href="https://en.wikipedia.org/wiki/Differential_dynamic_microscopy">Differential dynamic microscopy</a> (DDM), introduced in 2008 (R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Phys. Rev. Lett. 100, 188102</a>), turns an ordinary microscope movie into a light scattering experiment: it measures how fast the patterns of each size in the image fade, without following any single particle or cell. From those rates follow sizes, speeds and much more. Each page below simulates an experiment in your browser and takes you through the whole analysis, from the raw movie to the result.</p>
@@ -242,6 +245,17 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
           <p class="what">A yield-stress microgel below and above its yield point, a rubber and a viscous liquid; a strain sweep from 5 % to 150 %, as in our echo-DDM experiments.</p>
           <ul class="chips"><li>Oscillatory shear</li><li>Echo-DDM</li><li>Yielding</li></ul>
           <span class="go" aria-hidden="true">Open Sheared materials</span>
+        </div>
+      </article>
+      <article class="app">
+        <div class="head"><p class="eyebrow">Collective motion</p>
+          <h2><a href="tissues/">Jammed, flowing or flocking?</a></h2></div>
+        <div class="media"><canvas id="cv-tissue" width="240" height="150" aria-label="Animation: fluorescent nuclei of a cell sheet, packed side by side, all drifting slowly the same way"></canvas><span class="tag">Fluorescence, nuclei of a cell sheet (sketch)</span></div>
+        <div class="body">
+          <p>Tell whether a sheet of epithelial cells is stuck like a solid, flows like a liquid or moves as a flock, from a time-lapse of their stained nuclei, without following any cell.</p>
+          <p class="what">Crawling cells that push each other and steer together: jammed sheets, fluid ones, flocking solids and flocking liquids, as in our studies of reawakened epithelia.</p>
+          <ul class="chips"><li>Jamming</li><li>Flocking</li><li>Cell displacements</li></ul>
+          <span class="go" aria-hidden="true">Open Moving tissues</span>
         </div>
       </article>
     </div>
@@ -511,6 +525,10 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
 
   const csh = document.getElementById("cv-shear"), ctxH = csh.getContext("2d"), sheared = makeSheared(csh.width, csh.height, 70);
   scene(csh, sheared.step, function () { grayTo(ctxH, sheared.render(), csh.width, csh.height, 0.74, 0.9); });
+
+  const cti = document.getElementById("cv-tissue"), ctxT = cti.getContext("2d"), sheet = makeCrowd(cti.width, cti.height, 95, 3.6, 0.2);
+  let tShift = 0;
+  scene(cti, function () { sheet.step(); tShift += 0.25; }, function () { const im = sheet.render(), W = cti.width, H = cti.height, sh = Math.round(tShift) % W, out = new Float32Array(W * H); for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) out[y * W + (x + sh) % W] = im[y * W + x]; grayTo(ctxT, out, W, H, 0.05, 0.75); });
 
   const cw = document.getElementById("cv-swim"), ctxW = cw.getContext("2d"), cells = makeCells(cw.width, cw.height, 34);
   scene(cw, cells.step, function () { grayTo(ctxW, cells.render(), cw.width, cw.height, 0.5, 0.95); });

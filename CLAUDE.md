@@ -256,8 +256,25 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
   in Guidolin et al., Macromolecules 56, 8290, 2023), lysozyme and an illustrative sticky antibody. Standard bench: ORCA binned 2 x 2,
   condenser NA 0.1. Check: `node test-protein.js` (about two minutes).
 
+- "Sheared materials" /ddm/shear/ (`static/ddm/shear/index.html`): echo-DDM under oscillatory shear. `shear.src.html`, `app-shear.js`,
+  `shear-engine.js` (structure function at every delay up to three cycles and at whole cycles, log-spaced; sectors of +- 20 degrees along
+  the flow and the vorticity; at the echoes only pairs starting at zero strain, and A from those frames (x_phase); B from the camera
+  (x_noise; published: quadratic through the first three echoes); rate from a line through the origin of -ln f; jackknife over eight
+  parts of the movie) and `worker-shear.js` (bench and strain sweep). The shear is in `movie.js` option `shear` (affine displacement
+  relative to the focal plane, non-affine diffusion). Materials in `MATERIALS`/`rearrangements` in `app-shear.js`: the microgel set to
+  Edera et al., Soft Matter 17, 8553 (2021), at 20 % and 80 %. Check: `node test-shear.js` (about a minute).
+- "Moving tissues" /ddm/tissues/ (`static/ddm/tissues/index.html`): confluent monolayers, jammed, fluid or flocking. `tissue.src.html`,
+  `app-tissue.js`, `tissue-movie.js` (self-propelled soft discs with alignment of polarity to velocity, nuclei as Gaussian spots;
+  times in hours: the movie's frame_rate_hz is per hour), `tissue-engine.js` (sheet path from the phase of the widest patterns,
+  frames moved back by it (x_comoving), MSD as a Gaussian over a q band above the peak of A, order psi, state) and `worker-tissue.js`.
+  Method: Giavazzi et al., Front. Phys. 6, 120 (2018); model after Giavazzi et al., Soft Matter 14, 3471 (2018). Check:
+  `node test-tissue.js` (about a minute).
+- Exercises /ddm/exercises/ (`static/ddm/exercises/index.html`, from `exercises.src.html`, no app): questions with model answers for
+  every page, one section per page (anchor = page name), linked from each page's "Go further" and from the landing page. A new
+  page gets a section; numbers in the answers must match the page.
+
 All application pages have a fourth reader level, "Addict" (`#addict`): one switch for each step the
-analysis adds to the published method (`x_*` settings in `app.js`, `app-swim.js`, `app-drift.js`, `app-rheo.js`, `app-crowd.js` and `app-protein.js`, mapped to engine options;
+analysis adds to the published method (`x_*` settings in `app.js`, `app-swim.js`, `app-drift.js`, `app-rheo.js`, `app-crowd.js`, `app-protein.js`, `app-shear.js` and `app-tissue.js`, mapped to engine options;
 `opts.published_only` switches them all off), and a "published method only" row computed on the same movie.
 Each such step is described in the methods text and listed under "What this page adds to the published
 methods" (no tags in the text). A new step that is not in the cited papers gets both a list entry and a switch.
@@ -268,10 +285,10 @@ shareable. "Download the movie" writes the analysed frames as a 32-bit TIFF (`ti
 
 After any change to the sources: run `python3 ddm/build.py`, then `python3 build.py --check`, and commit
 both. Checks: `cd ddm && node test-optics.js data/mie_ref.json && node test-engine.js && node test-movie.js`
-(the last takes several minutes), for the swimmers `node test-swim.js && node test-active.js`, for the drift page `node test-drift.js`, for the rheology page `node test-rheo.js`, for the crowded page `node test-crowd.js`, and for the proteins page `node test-protein.js`. `node test-text.js` (after `--preview`, with `NODE_PATH=$(npm root -g)`) checks in a browser that the page text follows the sample on the bench.
+(the last takes several minutes), for the swimmers `node test-swim.js && node test-active.js`, for the drift page `node test-drift.js`, for the rheology page `node test-rheo.js`, for the crowded page `node test-crowd.js`, and for the proteins page `node test-protein.js`, `node test-shear.js`, `node test-tissue.js`. `node test-text.js` (after `--preview`, with `NODE_PATH=$(npm root -g)`) checks in a browser that the page text follows the sample on the bench.
 Notebooks for readers are in `static/ddm/notebooks/` (`ddm-sizing.ipynb` with fastDDM, `ddm-rheology.ipynb` with numpy and scipy for log-spaced frames, `ddm-crowded.ipynb` with numpy on the movie, the reference movie and the numbers file, `ddm-proteins.ipynb` with numpy on five movies of the antibody at 115 mM, 4.5 to 30 mg/mL). Each was run on the page's standard movie (downloaded TIFF and frame times); rerun them after a change to the analysis or to the export, and update the numbers quoted in them and on the pages.
 `python3 ddm/build.py --preview` writes stand-alone copies (`ddm-landing.html`, `ddm-hands-on.html`,
-`ddm-swimmers.html`, `ddm-drift.html`, `ddm-rheology.html`, `ddm-crowded.html`, `ddm-proteins.html`, linked to each other, Google Fonts) for previews outside the site; do not commit them.
+`ddm-swimmers.html`, `ddm-drift.html`, `ddm-rheology.html`, `ddm-crowded.html`, `ddm-proteins.html`, `ddm-shear.html`, `ddm-tissues.html`, `ddm-exercises.html`, linked to each other, Google Fonts) for previews outside the site; do not commit them.
 The page text follows the writing style above; it must stay ASCII (the build refuses other characters).
 
 ## Analytics
