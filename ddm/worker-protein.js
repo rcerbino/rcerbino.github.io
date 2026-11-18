@@ -15,7 +15,10 @@
   function runSample(cfg, R, opts, token, a, b, pre) {
     const mv = [];
     for (let k = 0; k < R; k++) mv.push(drive(FIELD.simulate(Object.assign({}, cfg, { seed: cfg.seed + 7919 * k })), token, a + (b - a) * 0.7 * k / R, a + (b - a) * 0.7 * (k + 1) / R, (pre || "") + (R > 1 ? "Movie " + (k + 1) + " of " + R + ": " : "")));
-    const res = drive(PROTEIN_ENGINE.analyse(mv, opts), token, a + (b - a) * 0.7, b, pre);
+    const pub = opts.compare_published;
+    const res = drive(PROTEIN_ENGINE.analyse(mv, opts), token, a + (b - a) * 0.7, pub ? a + (b - a) * 0.85 : b, pre);
+    // "Addict": the published method alone on the same movies
+    if (pub) { let rp = null; try { rp = drive(PROTEIN_ENGINE.analyse(mv, Object.assign({}, opts, { published_only: true })), token, a + (b - a) * 0.85, b, pre); } catch (e) { rp = null; } res.published = rp && rp.D_um2_s ? { D_um2_s: rp.D_um2_s, D_rel_err: rp.D_rel_err, A_mean: rp.A_mean, A_rel_err: rp.A_rel_err } : { failed: "too little to work with" }; }
     return { movies: mv, res: res };
   }
   // what the page needs of an analysis (the per-q data kept for the amplitude pass stay in the worker)
@@ -30,21 +33,24 @@
     try {
       if (m.type === "series") {
         // each concentration: R new movies and their analysis; then the lines, and the amplitudes again at the D of the line
-        const pts = [], kept = [];
+        const pts = [], kept = [], pub = [];
         for (let i = 0; i < m.list.length; i++) {
           const c = m.list[i], cfg = m.cfgs[i];
           const s = runSample(cfg, m.R, m.opts, m.token, i / m.list.length, (i + 1) / m.list.length, c + " mg/mL: ");
           const tA = s.movies[0].truth.amplitude, ar = s.res.rows.filter(function (x) { return x.q_per_um >= s.res.amp_q[0] && x.q_per_um <= s.res.amp_q[1] && x.A !== undefined; });
           const At = ar.length ? ar.reduce(function (p, x) { return p + tA.A[x.b]; }, 0) / ar.length : null;
           pts.push({ c: c, D: s.res.D_um2_s, D_rel_err: s.res.D_rel_err, A: s.res.A_mean, A_rel_err: s.res.A_rel_err, A_true: At, n_used: s.res.rows.filter(function (x) { return x.used; }).length });
+          if (s.res.published && !s.res.published.failed) pub.push({ c: c, D: s.res.published.D_um2_s, D_rel_err: s.res.published.D_rel_err, A: s.res.published.A_mean, A_rel_err: s.res.published.A_rel_err });
           kept.push(s.res);
         }
         let fit = PROTEIN_ENGINE.series(pts, m.M, m.T_C, m.eta);
-        if (fit.lineD && !m.opts.published_only) {
+        // the amplitudes again, each at the D of the line, which noise in its own D cannot bias
+        if (fit.lineD && m.opts.fix_D !== false) {
           pts.forEach(function (p, i) { const a = PROTEIN_ENGINE.amplitudeAt(kept[i], fit.lineD.a + fit.lineD.b * p.c); if (a) { p.A = a.A; p.A_rel_err = a.rel_err; } });
           fit = PROTEIN_ENGINE.series(pts, m.M, m.T_C, m.eta);
         }
-        self.postMessage({ type: "series", token: m.token, points: pts, fit: fit });
+        const fitPub = m.opts.compare_published ? (pub.length >= 2 ? PROTEIN_ENGINE.series(pub, m.M, m.T_C, m.eta) : { failed: "too little to work with" }) : null;
+        self.postMessage({ type: "series", token: m.token, points: pts, fit: fit, published: fitPub });
         return;
       }
       let out = null;

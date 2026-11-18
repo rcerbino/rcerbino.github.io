@@ -1,0 +1,646 @@
+<title>DDM of proteins</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  [hidden] { display: none !important; }
+/* Layout: the site's own page frame (header, measure, fluorescence palette); a two-column
+   "bench" where the controls stay in view and the analysis runs down as numbered steps. */
+:root {
+  --paper: #fafbfc;
+  --ink: #18202b;
+  --muted: #5a6472;
+  --rule: #dde2e8;
+  --accent: #2f45c5;      /* nuclei (DAPI) blue */
+  --accent-2: #b8233f;    /* actin red */
+  --tint: #eef1fb;
+  --panel: #ffffff;
+  --good: #1f7a4d; --good-bg: #dff3e8;
+  --warn: #8a5a00; --warn-bg: #fcefd6;
+  --bad: #a8322d;  --bad-bg: #f9e3e1;
+  --serif: "Spectral", Georgia, "Times New Roman", serif;
+  --sans: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --measure: 40rem;
+  --wide: 76rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0d1119; --ink: #e4e8ee; --muted: #98a2b3; --rule: #283040;
+    --accent: #93a1ff; --accent-2: #ff7a90; --tint: #161c2a; --panel: #121826;
+    --good: #6fd39a; --good-bg: #12301f; --warn: #f2b75c; --warn-bg: #3a2a10; --bad: #ff8f86; --bad-bg: #3a1714;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0d1119; --ink: #e4e8ee; --muted: #98a2b3; --rule: #283040;
+  --accent: #93a1ff; --accent-2: #ff7a90; --tint: #161c2a; --panel: #121826;
+  --good: #6fd39a; --good-bg: #12301f; --warn: #f2b75c; --warn-bg: #3a2a10; --bad: #ff8f86; --bad-bg: #3a1714;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--serif); font-size: 1.125rem; line-height: 1.65;
+}
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+.wrap { max-width: var(--wide); margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+@media (min-width: 40rem) { .wrap { padding-left: max(2rem, env(safe-area-inset-left, 0px)); padding-right: max(2rem, env(safe-area-inset-right, 0px)); } }
+
+/* site header (as on rcerbino.github.io) */
+.site-header { border-bottom: 1px solid var(--rule); }
+.header-inner { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 2rem; padding-block: 1.1rem 1rem; }
+.site-name { font-size: 1.35rem; font-weight: 500; color: var(--ink); text-decoration: none; }
+.site-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.2rem 1.25rem; }
+.site-nav a { font-family: var(--sans); font-size: 0.95rem; color: var(--muted); text-decoration: none; padding: 0.2rem 0; border-bottom: 2px solid transparent; }
+.site-nav a:hover { color: var(--ink); }
+.site-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+.ddm-switch { font-family: var(--sans); font-size: 0.9rem; margin: 0 0 0.6rem; color: var(--muted); }
+.ddm-switch a, .ddm-switch span { margin-right: 0.9rem; }
+.ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
+.proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
+.pn-more { display: none; font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+/* one line, the rest on request */
+.proto-note:not(.open) .pn-rest { display: none; }
+.proto-note:not(.open) .pn-more { display: inline; }
+
+h1, h2, h3 { font-weight: 500; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem); margin: 0 0 1rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; margin: 0 0 0.75rem; }
+h3 { font-size: 1.2rem; margin: 0 0 0.5rem; }
+p { margin: 0 0 1rem; }
+.lede { font-size: 1.25rem; line-height: 1.6; max-width: var(--measure); }
+.prose { max-width: var(--measure); }
+.small { font-family: var(--sans); font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
+.eyebrow { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 0.35rem; }
+
+/* reader levels: what each reader sees */
+html[data-level="curious"] .lvl-2, html[data-level="curious"] .lvl-3, html[data-level="student"] .lvl-3 { display: none !important; }
+html[data-level="student"] .only-1, html[data-level="researcher"] .only-1, html[data-level="addict"] .only-1 { display: none !important; }
+html[data-level="curious"] details.math { display: none; }
+html:not([data-level="addict"]) .lvl-4 { display: none !important; }
+/* what this page adds to the published methods */
+.adds { max-width: var(--measure); padding-left: 1.1rem; }
+.adds li { margin-bottom: 0.6rem; }
+.adds .where { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); }
+table.sizing tr.pub th, table.sizing tr.pub td { font-style: italic; }
+
+/* opening */
+.intro { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; padding-block: 2.5rem 1.5rem; align-items: center; }
+.intro > * { min-width: 0; }
+@media (min-width: 56rem) { .intro { grid-template-columns: minmax(0, 1fr) 19rem; gap: 3.5rem; } }
+.porthole { margin: 0; justify-self: center; display: grid; gap: 0.75rem; justify-items: center; }
+.porthole .lens { width: min(19rem, 78vw); aspect-ratio: 1; border-radius: 50%; overflow: hidden; border: 1px solid var(--rule); box-shadow: 0 0 0 10px var(--tint); background: #000; max-width: 100%; }
+.porthole canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+.porthole figcaption { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); text-align: center; max-width: 18rem; }
+
+.levels { margin: 1.5rem 0 0; border: 0; padding: 0; min-width: 0; }
+.levels legend { font-family: var(--sans); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; padding: 0; }
+.level-opts { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); max-width: 44rem; }
+.level-opts label { display: grid; gap: 0.1rem; padding: 0.6rem 0.8rem; border: 1px solid var(--rule); border-radius: 6px; cursor: pointer; font-family: var(--sans); background: var(--panel); }
+.level-opts input { position: absolute; opacity: 0; pointer-events: none; }
+.level-opts .t { font-weight: 600; font-size: 0.98rem; }
+.level-opts .d { font-size: 0.82rem; color: var(--muted); line-height: 1.35; }
+.level-opts label:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--tint); }
+.level-opts label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* result card */
+.result { font-family: var(--sans); border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); padding: 1rem 1.1rem; display: grid; gap: 0.5rem; }
+.result .big { font-family: var(--serif); font-size: 2.1rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.result .big small { font-size: 1rem; color: var(--muted); }
+.result dl { display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 1rem; margin: 0; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.result dt { color: var(--muted); }
+.result dd { margin: 0; }
+.chip { display: inline-block; font-family: var(--sans); font-size: 0.8rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 999px; justify-self: start; }
+.chip.good { color: var(--good); background: var(--good-bg); }
+.chip.warn { color: var(--warn); background: var(--warn-bg); }
+.chip.bad { color: var(--bad); background: var(--bad-bg); }
+.chip.info { color: var(--muted); background: var(--tint); }
+.tscroll { overflow-x: auto; min-width: 0; }
+.result, .result > *, .predict, .step-body > *, .steps > * { min-width: 0; }
+table.sizing { width: 100%; border-collapse: collapse; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+table.sizing td { white-space: nowrap; }
+table.sizing th, table.sizing td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--rule); text-align: right; vertical-align: top; }
+table.sizing th[scope="row"], table.sizing thead th:first-child { text-align: left; font-weight: 500; }
+table.sizing thead th { color: var(--muted); font-weight: 500; font-size: 0.8rem; }
+table.sizing tr.main th, table.sizing tr.main td { font-weight: 700; }
+table.sizing tr.truth th, table.sizing tr.truth td { color: var(--accent-2); }
+table.sizing .note { white-space: normal; display: block; font-size: 0.76rem; font-weight: 400; color: var(--muted); }
+.checks ul { list-style: none; margin: 0.3rem 0 0; padding: 0; display: grid; gap: 0.45rem; }
+.checks li { display: grid; grid-template-columns: 4.2rem 1fr; gap: 0.6rem; align-items: start; font-size: 0.86rem; line-height: 1.45; }
+.checks li .chip { justify-self: stretch; text-align: center; }
+details.more summary { cursor: pointer; font-size: 0.85rem; color: var(--muted); }
+details.more dl { margin-top: 0.4rem; }
+.hero-result { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1rem; font-family: var(--sans); margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--rule); max-width: 44rem; }
+.hero-result .n { font-family: var(--serif); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+
+/* bench */
+.bench-head { padding-block: 2rem 1rem; border-top: 1px solid var(--rule); }
+.bench { display: grid; gap: 2rem; padding-bottom: 3rem; }
+@media (min-width: 64rem) { .bench { grid-template-columns: 17.5rem minmax(0, 1fr); gap: 2.5rem; align-items: start; } .controls { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); max-height: calc(100vh - 5rem); overflow: auto; } }
+.controls { font-family: var(--sans); font-size: 0.9rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 1rem; display: grid; gap: 1rem; }
+.controls h3 { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.cgroup { display: grid; gap: 0.7rem; }
+/* blocks of settings: sample, microscope, camera, analysis; each folds to a one-line summary */
+/* each block has its own colour: green, cyan, yellow, purple (Paul Tol and Okabe-Ito palettes), chosen to stay
+   apart in normal vision and with the three common kinds of colour blindness; the titles still say what each block is */
+:root { --blk-sample: #228833; --blk-microscope: #33bbee; --blk-camera: #e0c200; --blk-analysis: #aa3377; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --blk-sample: #4cae5c; --blk-microscope: #66ccee; --blk-camera: #f0e442; --blk-analysis: #cc5599; } }
+:root[data-theme="dark"] { --blk-sample: #4cae5c; --blk-microscope: #66ccee; --blk-camera: #f0e442; --blk-analysis: #cc5599; }
+.cblock { --c: var(--rule); border-left: 4px solid var(--c); border-radius: 6px; padding: 0.6rem 0.65rem 0.7rem; background: var(--panel); background: color-mix(in srgb, var(--c) 8%, var(--panel)); }
+.cblock[data-block="sample"] { --c: var(--blk-sample); }
+.cblock[data-block="microscope"] { --c: var(--blk-microscope); }
+.cblock[data-block="camera"] { --c: var(--blk-camera); }
+.cblock[data-block="camera"] > summary h3, .cblock[data-block="camera"] .csub h4 { color: color-mix(in srgb, var(--c) 40%, var(--ink)); }   /* the yellow needs more ink to be readable */
+.cblock[data-block="analysis"] { --c: var(--blk-analysis); }
+.cblock > summary { cursor: pointer; list-style: none; display: grid; gap: 0.15rem; }
+.cblock > summary::-webkit-details-marker { display: none; }
+.cblock > summary h3 { color: var(--ink); color: color-mix(in srgb, var(--c) 55%, var(--ink)); }
+.cblock > summary h3::before { content: ""; display: inline-block; width: 0.42em; height: 0.42em; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); margin: 0 0.55em 0.18em 0.1em; transition: transform 0.15s; }
+.cblock:not([open]) > summary h3::before { transform: rotate(-45deg); margin-bottom: 0.05em; }
+.cblock .bsum { font-size: 0.8rem; color: var(--muted); line-height: 1.35; padding-left: 1.15em; }
+.cbody { display: grid; gap: 0.9rem; margin-top: 0.7rem; }
+.csub { display: grid; gap: 0.7rem; }
+.csub h4 { font-family: var(--sans); font-size: 0.8rem; font-weight: 600; color: var(--ink); color: color-mix(in srgb, var(--c) 55%, var(--ink)); margin: 0.2rem 0 -0.15rem; padding-bottom: 0.2rem; border-bottom: 1px solid var(--rule); border-bottom-color: color-mix(in srgb, var(--c) 30%, transparent); }
+@media (prefers-reduced-motion: reduce) { .cblock > summary h3::before { transition: none; } }
+.ctl { display: grid; gap: 0.2rem; }
+.ctl .row { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
+.ctl label { font-weight: 500; }
+.ctl output { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; white-space: nowrap; }
+.ctl input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
+.ctl select, .ctl input[type="number"] { font: inherit; padding: 0.3rem 0.4rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink); width: 100%; }
+.ctl .numentry { display: inline-flex; align-items: baseline; gap: 0.3rem; white-space: nowrap; color: var(--accent); font-weight: 600; }
+.ctl .numentry input[type="number"] { width: 5.5rem; padding: 0.15rem 0.3rem; text-align: right; font-variant-numeric: tabular-nums; }
+.ctl .hint { font-size: 0.78rem; color: var(--muted); line-height: 1.35; }
+.qrange { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+.btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+button { font: 500 0.88rem var(--sans); padding: 0.45rem 0.8rem; border-radius: 5px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.status { font-size: 0.82rem; color: var(--muted); min-height: 1.3em; }
+.runbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--panel); border-top: 1px solid var(--rule); box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06); font-family: var(--sans); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.runbar-inner { display: flex; align-items: center; gap: 0.9rem; padding-block: 0.5rem; }
+.runbar .bar { flex: 0 0 min(16rem, 38%); height: 6px; border-radius: 3px; }
+.runbar .status { flex: 1 1 auto; min-width: 0; min-height: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.runbar.busy .status { color: var(--ink); font-weight: 500; }
+.runbar.busy .bar span { background: var(--accent); }
+.runbar:not(.busy) .bar span { background: var(--good); }
+body { padding-bottom: 3.2rem; }
+.bar { height: 4px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.1s linear; }
+.error { color: var(--bad); background: var(--bad-bg); border-radius: 6px; padding: 0.6rem 0.8rem; font-family: var(--sans); font-size: 0.9rem; }
+
+.steps { display: grid; gap: 3rem; min-width: 0; }
+.steps.stale { opacity: 0.35; }
+.step { display: grid; gap: 1rem; min-width: 0; scroll-margin-top: 1rem; }
+.step-title { display: flex; gap: 0.75rem; align-items: baseline; }
+.step-title .num { font-family: var(--sans); font-size: 0.85rem; font-weight: 600; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; min-width: 1.7rem; height: 1.7rem; display: inline-grid; place-items: center; flex: none; }
+.step-title h2 { margin: 0; }
+.step-body { display: grid; gap: 1.25rem; min-width: 0; }
+@media (min-width: 48rem) { .step-body.split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+.text { min-width: 0; max-width: var(--measure); }
+.text p:last-child { margin-bottom: 0; }
+
+figure.viz { margin: 0; display: grid; gap: 0.5rem; min-width: 0; }
+.imgbox { position: relative; background: #000; border-radius: 4px; overflow: hidden; aspect-ratio: 1; max-width: 100%; }
+.imgbox canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.imgbox canvas.overlay { image-rendering: auto; }
+.imgbox .scale { position: absolute; left: 8px; bottom: 8px; font: 600 0.75rem var(--sans); color: #fff; text-shadow: 0 0 3px #000; }
+.imgbox .scale i { display: block; height: 3px; background: #fff; margin-bottom: 3px; box-shadow: 0 0 2px #000; }
+.pair { display: grid; gap: 0.75rem; grid-template-columns: 1fr 1fr; }
+.pair .cap { font-family: var(--sans); font-size: 0.8rem; color: var(--muted); }
+figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); line-height: 1.45; font-variant-numeric: tabular-nums; }
+.readout b { color: var(--ink); font-weight: 600; }
+.chart { position: relative; width: 100%; height: 300px; }
+.chart canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.chart.short { height: 220px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-family: var(--sans); font-size: 0.88rem; }
+.toolbar input[type="range"] { flex: 1 1 10rem; accent-color: var(--accent); }
+.toolbar.pickbar { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 0.8rem; margin-top: 0.5rem; }
+.toolbar.pickbar input[type="range"] { width: 100%; min-width: 0; }
+@media (pointer: coarse) { input[type="range"] { min-height: 2.5rem; } }   /* a larger touch area; the track stays thin */
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 0.3rem 0.7rem; background: var(--panel); }
+.seg button[aria-pressed="true"] { background: var(--tint); color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-family: var(--sans); font-size: 0.8rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.reasons { font-family: var(--sans); font-size: 0.82rem; color: var(--muted); margin: 0; padding-left: 1.1rem; }
+
+details.math { min-width: 0; font-family: var(--sans); font-size: 0.92rem; border-left: 2px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; padding: 0.55rem 0.9rem; max-width: var(--measure); }
+details.math summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+details.math .eq { font-family: var(--serif); font-size: 1.05rem; margin: 0.6rem 0; overflow-x: auto; white-space: nowrap; }
+details.math p { margin: 0.5rem 0; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--paper); border: 1px solid var(--rule); border-radius: 3px; padding: 0.05em 0.3em; }
+pre.code { font-family: var(--mono); font-size: 0.8rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 0.6rem; overflow-x: auto; margin: 0.5rem 0; line-height: 1.45; }
+
+.start-here { font-family: var(--sans); font-size: 0.92rem; margin: 0.6rem 0 0; max-width: 44rem; }
+#try-dyed { scroll-margin-top: 1rem; }   /* the shortcut lands on the chart, with the question right below it */
+.predict { font-family: var(--sans); font-size: 0.92rem; border: 1px dashed var(--accent); border-radius: 6px; padding: 0.7rem 0.9rem; display: grid; gap: 0.5rem; max-width: var(--measure); }
+.predict .q { font-weight: 600; }
+.predict .a { color: var(--ink); }
+.predict .verdict { font-weight: 600; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.numbers { font-family: var(--sans); font-size: 0.88rem; }
+.numbers summary { cursor: pointer; color: var(--muted); }
+.takeaway { font-family: var(--sans); font-size: 0.92rem; border-left: 3px solid var(--accent); padding: 0.1rem 0 0.1rem 0.8rem; max-width: var(--measure); margin: 0; }
+.transfer { font-family: var(--sans); font-size: 0.92rem; border: 1px solid var(--rule); border-radius: 6px; padding: 0.6rem 0.9rem; max-width: var(--measure); }
+.transfer summary, .inputs summary { cursor: pointer; }
+.inputs { font-family: var(--sans); font-size: 0.92rem; max-width: var(--measure); }
+.inputs p { margin: 0.5rem 0 0; }
+.transfer p { margin: 0.5rem 0 0; }
+.predict .base { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; color: var(--muted); }
+.predict button:disabled { cursor: default; opacity: 0.55; }
+.predict button[aria-pressed="true"] { opacity: 1; border-color: var(--accent); font-weight: 600; }
+
+/* what matters */
+.matters { border-top: 1px solid var(--rule); padding-block: 2.5rem 1rem; }
+.cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); margin-top: 1.25rem; }
+.card { border: 1px solid var(--rule); border-radius: 8px; padding: 1rem; display: grid; gap: 0.5rem; align-content: start; background: var(--panel); }
+.card h3 { margin: 0; font-size: 1.1rem; }
+.card p { font-size: 0.98rem; margin: 0; }
+.card .btns { margin-top: 0.25rem; }
+.further { border-top: 1px solid var(--rule); padding-block: 2.5rem 3rem; }
+.further ul { padding-left: 1.2rem; max-width: var(--measure); }
+.further li { margin-bottom: 0.5rem; }
+footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-size: 0.85rem; color: var(--muted); padding-block: 1.2rem 2rem; }
+
+.fovbox { height: 300px; }
+.pstrip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.5rem; max-width: 34rem; }
+.pstrip figure { margin: 0; display: grid; gap: 0.25rem; }
+.pstrip canvas { width: 100%; aspect-ratio: 1; image-rendering: pixelated; border-radius: 3px; background: #000; max-width: 100%; }
+.pstrip figcaption { font-family: var(--sans); font-size: 0.75rem; color: var(--muted); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.scalebar { height: 10px; border-radius: 3px; margin-top: 0.3rem; }
+.scalebar.div { background: linear-gradient(90deg, var(--accent), var(--panel), var(--accent-2)); border: 1px solid var(--rule); }
+.scalebar.wheel { background: linear-gradient(90deg, hsl(0 85% 50%), hsl(60 85% 50%), hsl(120 85% 50%), hsl(180 85% 50%), hsl(240 85% 50%), hsl(300 85% 50%), hsl(360 85% 50%)); }
+@media (max-width: 40rem) { .pair.stack { grid-template-columns: 1fr; } }
+.scalelab { display: flex; justify-content: space-between; font-family: var(--sans); font-size: 0.72rem; color: var(--muted); }
+</style>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="site-name" href="https://rcerbino.github.io/">Roberto Cerbino</a>
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="https://rcerbino.github.io/">Home</a></li>
+        <li><a href="https://rcerbino.github.io/about/">About</a></li>
+        <li><a href="https://rcerbino.github.io/research/">Research</a></li>
+        <li><a href="#" aria-current="page">DDM</a></li>
+        <li><a href="https://rcerbino.github.io/publications/">Publications</a></li>
+        <li><a href="https://rcerbino.github.io/talks/">Talks</a></li>
+        <li><a href="https://rcerbino.github.io/teaching/">Teaching</a></li>
+        <li><a href="https://rcerbino.github.io/contact/">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<div class="proto-note"><div class="wrap"><span>This web page is a divertissement.</span><span class="pn-rest" id="pn-rest"> For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the particles push each other only by touching or by their charge, not through the liquid around them) and rely on many approximations. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>. If you like it, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice.</span> <button type="button" class="pn-more" aria-expanded="false" aria-controls="pn-rest">More</button></div></div>
+
+
+<main>
+  <section class="wrap intro">
+    <div>
+      <p class="eyebrow">Differential dynamic microscopy</p>
+      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a><a href="../crowded/">Crowded particles</a><span aria-current="page">Proteins</span></nav>
+      <h1>Do these proteins attract or repel?</h1>
+      <p class="lede">Proteins are far too small to see in a microscope, yet a bright-field movie of a protein solution holds how fast they diffuse, and so how large they are. Filmed at a few concentrations, it also tells whether they repel or attract each other, through two numbers used to judge whether a protein formulation will stay stable: the diffusion interaction parameter k<sub>D</sub> and the second virial coefficient B<sub>2</sub>. Here you can check what differential dynamic microscopy (DDM) finds on simulated protein solutions (Guidolin et al. 2023).</p>
+      <p class="start-here"><a href="#try-salt">Try this first</a>: does adding salt make antibodies repel each other more, or less? Predict, then watch the page check it.</p>
+      <fieldset class="levels">
+        <legend>How deep do you want to go?</legend>
+        <div class="level-opts" role="radiogroup">
+          <label><input type="radio" name="level" id="lv-curious" value="curious"><span class="t">Curious</span><span class="d">The idea in words and pictures, no equations.</span></label>
+          <label><input type="radio" name="level" id="lv-student" value="student"><span class="t">Student</span><span class="d">The method step by step, equations folded away.</span></label>
+          <label><input type="radio" name="level" id="lv-researcher" value="researcher"><span class="t">Researcher</span><span class="d">All controls, equations open, and the matching code.</span></label>
+          <label><input type="radio" name="level" id="lv-addict" value="addict"><span class="t">Addict</span><span class="d">As Researcher, and you can switch off our tricks to see what each one does.</span></label>
+        </div>
+      </fieldset>
+      <div class="hero-result" id="hero-result" aria-live="polite">
+        <span>Simulating the movie...</span>
+      </div>
+    </div>
+    <figure class="porthole">
+      <div class="lens"><canvas id="hero-canvas" width="128" height="128" aria-label="Simulated microscope movie"></canvas></div>
+      <figcaption id="hero-cap">Live simulated bright-field movie</figcaption>
+    </figure>
+  </section>
+
+  <section class="wrap bench-head" aria-labelledby="bench-title">
+    <p class="eyebrow">Hands on</p>
+    <h2 id="bench-title">The bench</h2>
+    <p class="prose">Choose the protein, its charge and the salt in the buffer, then the microscope and the camera (controls on the left, or just below on a phone). The bench records four movies at one concentration and takes about ten seconds; the concentration series of step 7 takes about a minute. "Copy a link to this setup" gives an address that opens the bench with the same settings.</p>
+  </section>
+
+  <div class="wrap bench">
+    <aside class="controls" id="controls" aria-label="Experiment settings">
+      <div id="ctl-groups" class="cgroup" style="gap:1.1rem"></div>
+      <div class="btns">
+        <button type="button" id="btn-reset">Back to the standard sample</button>
+        <button type="button" id="btn-seed" class="lvl-3">New random sample</button>
+        <button type="button" id="btn-share">Copy a link to this setup</button>
+        <span class="small" id="share-msg" aria-live="polite"></span>
+      </div>
+      <div class="error" id="error" hidden></div>
+    </aside>
+
+    <div class="steps">
+      <!-- 1 -->
+      <section class="step" id="step-setup" aria-labelledby="h-setup">
+        <div class="step-title"><span class="num">1</span><h2 id="h-setup">Set up the microscope</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="chart fovbox"><canvas id="fov" aria-label="Field of view of the microscope, camera sensor and region of interest"></canvas></div>
+            <div class="legend" id="fov-legend"></div>
+          </figure>
+          <div class="text">
+            <p>The microscope sees a round field 25 mm across in its image plane. A camera chip covers a rectangle in it, and you choose which part of the chip to read out. Proteins scatter very little light, so the setup is chosen to catch as much of it as possible: plain bright field, the condenser aperture closed down so that the light is nearly coherent, a bright lamp that fills each pixel close to its capacity, and pixels binned 2 x 2.</p>
+            <p class="readout" id="fov-specs"></p>
+          </div>
+        </div>
+        <div class="text lvl-2"><h3>How one protein looks</h3></div>
+        <figure class="viz lvl-2">
+          <div class="pstrip" id="particle-strip"></div>
+          <figcaption id="particle-text"></figcaption>
+        </figure>
+        <p class="takeaway"><b>What this step gives:</b> the finest stripes the movie can hold, and how much light each protein changes in them: the objective, the condenser and the lamp decide both.</p>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: a movie of billions of proteins</summary>
+          <p>The proteins are not followed one by one: billions of them sit below the field of view. The movie is built from their number density <i>&rho;</i>(<b>r</b>, <i>t</i>). Each protein changes the light by the same faint image <i>K</i>(<i>q</i>, <i>z</i>), which depends on how far it is from focus; it is computed as for a particle on the <a href="../sizing/">sizing page</a> (Mie scattering of a sphere with the dry volume of the protein, from its mass and a partial specific volume of 0.73 mL/g, and a refractive index <i>n</i><sub>liquid</sub> + (d<i>n</i>/d<i>c</i>) / <i>v</i>, with d<i>n</i>/d<i>c</i> = 0.185 mL/g; the partially coherent light of the condenser; scalar optics). The Fourier transform of the image is then</p>
+          <div class="eq"><i>F</i>(<b>q</b>, <i>t</i>) &prop; (1/<i>L<sub>z</sub></i>) &Sigma;<sub><i>n</i></sub> <i>K&#770;</i><sub><i>n</i></sub>(<i>q</i>) <i>&rho;</i><sub><i>n</i></sub>(<b>q</b>, <i>t</i>), &nbsp;&nbsp; <i>K&#770;</i><sub><i>n</i></sub>(<i>q</i>) = &int; <i>K</i>(<i>q</i>, <i>z</i>) cos[<i>k<sub>n</sub></i>(<i>z</i> &minus; <i>z</i><sub>bottom</sub>)] d<i>z</i>, &nbsp;&nbsp; <i>k<sub>n</sub></i> = <i>n&pi;</i> / <i>L<sub>z</sub></i></div>
+          <p>a sum over the modes of the density between the two walls of the chamber, <i>L<sub>z</sub></i> apart. Each mode <i>&rho;<sub>n</sub></i> fluctuates as an independent random process with variance <i>N S</i>(0) (<i>N</i> proteins in the box, <i>S</i>(0) their structure factor at the scale of the microscope) and correlation time 1 / [<i>D<sub>c</sub></i> (<i>q</i><sup>2</sup> + <i>k<sub>n</sub></i><sup>2</sup>)], with <i>D<sub>c</sub></i> the collective diffusion coefficient. <i>S</i>(0) and <i>D<sub>c</sub></i> come from how the proteins interact (step 7). Over the exposure the camera averages each mode, drawn exactly from its statistics. Each pixel then gets the background light, the change made by the proteins, shot noise and read noise.</p>
+        </details>
+      </section>
+
+      <!-- 2 -->
+      <section class="step" id="step-movie" aria-labelledby="h-movie">
+        <div class="step-title"><span class="num">2</span><h2 id="h-movie">Record a movie</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="imgbox"><canvas id="movie" width="128" height="128" aria-label="Microscope movie"></canvas><div class="scale" id="movie-scale"><i></i><span></span></div></div>
+            <div class="toolbar"><button type="button" id="btn-play">Pause</button><span class="readout" id="movie-time"></span></div>
+            <div class="toolbar lvl-2"><button type="button" id="btn-tiff">Download the movie (TIFF)</button><button type="button" id="btn-times" hidden>Frame times (CSV)</button><span class="readout">32-bit, photoelectrons per pixel; opens in ImageJ, Fiji and fastDDM.</span></div>
+          </figure>
+          <div class="text">
+            <p id="movie-text"></p>
+            <p>Four movies of the same sample are recorded and analysed together: each one is short, because proteins move fast, and the browser can hold only so many frames.</p>
+            <p class="readout lvl-2" id="movie-specs"></p>
+          </div>
+        </div>
+        <p class="takeaway"><b>What this step gives:</b> a stack of frames and the time of each. The time between frames and the length of the movie set the fastest and the slowest changes that can be measured.</p>
+        <details class="math" data-open-at="researcher">
+          <summary>In fastDDM</summary>
+          <p>The structure function below is the same as fastDDM's. With your own movies you would start from the image files:</p>
+          <pre class="code">import fastddm as fd
+img_seq = fd.read_images(file_names)</pre>
+        </details>
+      </section>
+
+      <!-- 3 -->
+      <section class="step" id="step-diff" aria-labelledby="h-diff">
+        <div class="step-title"><span class="num">3</span><h2 id="h-diff">Subtract two frames</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="imgbox"><canvas id="diff" width="128" height="128" aria-label="Difference between two frames"></canvas></div>
+            <div class="toolbar"><label for="lag">Delay</label><input type="range" id="lag" min="0" max="10" value="5"><output id="lag-out" class="readout"></output></div>
+          </figure>
+          <div class="text">
+            <p>Subtract a frame from one taken a little later. Everything that stays still cancels out; what is left is what moved, plus the camera noise.</p>
+            <p id="diff-note"></p>
+          </div>
+        </div>
+        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what moved; what stayed put is gone. The longer the delay, the more has changed.</p>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: the difference image</summary>
+          <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
+        </details>
+      </section>
+
+      <!-- 4 -->
+      <section class="step" id="step-map" aria-labelledby="h-map">
+        <div class="step-title"><span class="num">4</span><h2 id="h-map">Split it into stripe patterns</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="pair">
+              <div><div class="imgbox"><canvas id="map" width="128" height="128" aria-label="Power spectrum of the differences; click to choose a pattern, or use the two sliders below the maps"></canvas><canvas id="map-ov" class="overlay" width="512" height="512" style="cursor:crosshair"></canvas></div><div class="cap">Strength of each pattern in the difference (click it, or use the sliders)</div></div>
+              <div><div class="imgbox"><canvas id="stripes" width="128" height="128" aria-label="The stripe pattern you selected"></canvas></div><div class="cap">The pattern you picked</div></div>
+            </div>
+            <div class="toolbar pickbar"><label for="pick-k">Stripes, wide to fine</label><input type="range" id="pick-k" min="1" max="63" step="1" value="10"><label for="pick-a">Direction</label><input type="range" id="pick-a" min="0" max="179" step="1" value="30"></div>
+            <div class="readout" id="pick-out"></div>
+            <div class="pair" style="margin-top:0.75rem">
+              <div><div class="imgbox"><canvas id="fmap" width="128" height="128" aria-label="How much of each pattern is left after the delay"></canvas></div><div class="cap">How much of each pattern is left</div><div class="scalebar div"></div><div class="scalelab"><span>-1</span><span>0, gone</span><span>1, all there</span></div></div>
+            </div>
+            <div class="readout" id="zoom-note"></div>
+          </figure>
+          <div class="text">
+            <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie. The centre of the map holds wide stripes, the edge fine ones.</p>
+            <p class="only-1">The charts further down label each pattern by <i>q</i>, a number that grows as the stripes get finer: <i>q</i> = 2&pi; divided by the stripe spacing, in inverse micrometres. Stripes 1 &micro;m apart have <i>q</i> of about 6.</p>
+            <p>Here each pattern is a ripple in the number of proteins: a few more along the bright stripes, a few fewer along the dark ones. Diffusion smooths every ripple out, the fine ones first. The camera noise adds the same amount to every pattern at every delay, so it can be told apart from the proteins, which add more the longer the delay.</p>
+            <p>The second map shows how much of each pattern is left after the delay: red where it is still all there, the colour of the page where it has faded.</p>
+            <p class="lvl-2" id="kopt-note">The dashed circle on the strength map marks the finest pattern the objective can resolve.</p>
+          </div>
+        </div>
+        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing (each q, one ring of the map) and each delay, how much the movie has changed. A point near the centre of the map is a wide pattern, a point far out a fine one.</p>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: structure function of a protein solution</summary>
+          <div class="eq"><i>d</i>(<i>q</i>, &Delta;<i>t</i>) = &lang; |<i>F</i>[&Delta;<i>I</i>](<b>q</b>; <i>t</i>, &Delta;<i>t</i>)|<sup>2</sup> &rang; = <i>A</i>(<i>q</i>) [1 &minus; <i>f</i>(<i>q</i>, &Delta;<i>t</i>)] + <i>B</i>, &nbsp;&nbsp; <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = &Sigma;<sub><i>n</i></sub> <i>w<sub>n</sub></i>(<i>q</i>) e<sup>&minus;<i>D<sub>c</sub></i>(<i>q</i><sup>2</sup> + <i>k<sub>n</sub></i><sup>2</sup>)&Delta;<i>t</i></sup></div>
+          <p>with <i>A</i>(<i>q</i>) &prop; <i>N S</i>(0) &Sigma;<sub><i>n</i></sub> |<i>K&#770;<sub>n</sub></i>(<i>q</i>)|<sup>2</sup> and weights <i>w<sub>n</sub></i> &prop; |<i>K&#770;<sub>n</sub></i>(<i>q</i>)|<sup>2</sup> that add up to 1: the modes of the density along the axis of the microscope, seen through the depth of field of step 1. <i>B</i> is the camera noise. The amplitude is proportional to the concentration and to <i>S</i>(0), the structure factor at wave vectors far below one over the size of a protein (<i>q R<sub>h</sub></i> is about 0.01 here): this is what step 7 uses. Map axes: <i>q<sub>x</sub></i> to the right, <i>q<sub>y</sub></i> up.</p>
+          <p class="lvl-3">With evenly spaced frames, as here, fastDDM gives the same structure function:</p>
+          <div class="lvl-3"><pre class="code">dqt = fd.ddm(img_seq, range(1, len(img_seq) // 2))   # lags in frames
+dqt.pixel_size = pixel_size      # um
+aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
+        </details>
+      </section>
+
+      <!-- 5 -->
+      <section class="step" id="step-curves" aria-labelledby="h-curves">
+        <div class="step-title"><span class="num">5</span><h2 id="h-curves">Watch each pattern change</h2></div>
+        <div class="step-body">
+          <div class="text">
+            <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. Fine stripes (red) fade first, wide ones (blue) last: to smooth out a wider ripple, the proteins have to travel further. Proteins are tiny next to the stripes, so a single number, how fast they spread, sets the fading of every pattern.</p>
+            <p class="only-1">The points are measured: how different two frames a delay apart look, with the camera noise taken away and divided by the full change, then turned around so that 1 means the whole pattern is still there and 0 that it is gone. They scatter because the proteins change the light so little.</p>
+            <p class="lvl-2">The points are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / (<i>A S&#772;</i>), the lines the model fitted at each <i>q</i> (step 6); <i>S&#772;</i> = &Sigma; <i>w<sub>n</sub> S</i>(<i>x<sub>n</sub></i>) &le; 1 is the part of each pattern left to fade once the exposure has blurred the fastest changes, so that every curve ends at 0. <b>The order of the analysis.</b> <i>d</i> is measured first and <i>B</i> comes from the camera; <i>A</i> and <i>D</i> are fitted together at each <i>q</i>, and the points follow from <i>A</i>.</p>
+          </div>
+          <figure class="viz">
+            <div class="chart"><canvas id="chart-curves" aria-label="How much of each pattern is left against the delay"></canvas></div>
+            <div class="legend" id="curves-legend"></div>
+          </figure>
+          <details class="numbers" id="curves-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <div class="predict" data-predict="radius" data-right="smaller">
+            <div class="q">Predict first: the antibody is <span data-pv="rh">5.3</span> nm in radius, and the bench holds <span data-pv="conc">8</span> mg/mL of it in a buffer with little salt, where the antibodies carry the same charge. Read as the motion of one protein alone, will the size DDM finds come out smaller, larger, or the same?</div>
+            <div class="btns"><button type="button" data-guess="smaller">Smaller</button><button type="button" data-guess="larger">Larger</button><button type="button" data-guess="same">The same</button></div>
+            <div class="a" hidden><span class="verdict"></span> Smaller: <span data-pv="rapp">4.8</span> nm on this bench (step 6). The antibodies repel each other, so a crowd of them evens out its ripples faster than one antibody wanders: the movie measures how the crowd spreads (collective diffusion), and read as one protein alone it makes the protein look smaller. Only extrapolating to zero concentration (step 7) gives the true size.</div>
+          </div>
+        </div>
+        <p class="takeaway"><b>What this step gives:</b> how fast each pattern fades. For proteins, one number, the collective diffusion coefficient, should describe them all.</p>
+      </section>
+
+      <!-- 6 -->
+      <section class="step" id="step-rates" aria-labelledby="h-rates">
+        <div class="step-title"><span class="num">6</span><h2 id="h-rates">How fast the proteins spread</h2></div>
+        <div class="step-body">
+          <div class="text">
+            <p class="only-1">From each pattern the page reads how fast the proteins spread: the diffusion coefficient. Patterns too faint against the camera noise, or that fade faster than one frame or more slowly than the movie lasts, are left out; the others are averaged. With the temperature and the viscosity of the buffer, the Stokes-Einstein relation turns the diffusion coefficient into a radius. But at any concentration the proteins feel each other, so this is an apparent radius.</p>
+            <p class="lvl-2">At each <i>q</i> the model of step 4 is fitted to <i>d</i>(<i>q</i>, &Delta;<i>t</i>), with <i>B</i> from the camera: <i>A</i> and <i>D</i>. The patterns that pass the checks below are averaged (weighted mean of ln <i>D</i>). The Stokes-Einstein relation gives an apparent hydrodynamic radius <i>R</i><sub>app</sub> = <i>k</i><sub>B</sub><i>T</i> / 6&pi;<i>&eta;D</i>; it equals <i>R<sub>h</sub></i> only at zero concentration, since <i>D</i> = <i>D<sub>c</sub></i> = <i>D</i><sub>0</sub> (1 + <i>k<sub>D</sub> c</i>).</p>
+          </div>
+          <figure class="viz">
+            <figcaption>How fast the proteins spread, read from each pattern</figcaption>
+            <div class="chart"><canvas id="chart-dq" aria-label="Diffusion coefficient found at each q"></canvas></div>
+            <ul class="reasons" id="dq-notes"></ul>
+          </figure>
+          <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <div class="step-body">
+            <div class="result" id="result" aria-live="polite"></div>
+          </div>
+        </div>
+        <details class="inputs"><summary>What the analysis is told, and what it finds</summary><p><b>Told (inputs):</b> the pixel size, the frame rate and the exposure time, the camera noise (from the mean count and the read noise), and the optics of the microscope with the thickness of the chamber, for the motion along its axis; the temperature and the viscosity of the buffer, only to turn D into a radius.</p><p><b>Found from the movies:</b> D and A at each q, and their averages.</p><p>In this simulation the analysis uses the same model of the optics that made the movie, so agreement here shows that the analysis recovers what was simulated under those assumptions; with a real microscope the optics are another input that can be wrong.</p></details>
+        <p class="takeaway"><b>What this step gives:</b> the collective diffusion coefficient at one concentration, and an apparent radius. Reading it as the size of one protein assumes that the proteins do not feel each other, which is true only at zero concentration.</p>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: the fit at each q</summary>
+          <div class="eq"><i>d</i>(<i>q</i>, &Delta;<i>t</i>) = <i>A</i> &Sigma;<sub><i>n</i></sub> <i>w<sub>n</sub></i> [<i>S</i>(<i>x<sub>n</sub></i>) &minus; <i>K</i>(<i>x<sub>n</sub></i>) e<sup>&minus;&Gamma;<sub><i>n</i></sub>&Delta;<i>t</i></sup>] + <i>B</i>, &nbsp;&nbsp; &Gamma;<sub><i>n</i></sub> = <i>D</i> (<i>q</i><sup>2</sup> + <i>k<sub>n</sub></i><sup>2</sup>), &nbsp; <i>x<sub>n</sub></i> = &Gamma;<sub><i>n</i></sub> <i>T<sub>e</sub></i></div>
+          <div class="eq"><i>S</i>(<i>x</i>) = 2 (<i>x</i> &minus; 1 + e<sup>&minus;<i>x</i></sup>) / <i>x</i><sup>2</sup>, &nbsp;&nbsp; <i>K</i>(<i>x</i>) = 2 (cosh <i>x</i> &minus; 1) / <i>x</i><sup>2</sup></div>
+          <p>The weights <i>w<sub>n</sub></i> come from the optics (step 4): proteins moving up and down through the depth of field change the image too. <i>S</i> and <i>K</i> account for the exposure <i>T<sub>e</sub></i>, during which the patterns keep changing; for <i>T<sub>e</sub></i> = 0 both are 1. <b>Fit.</b> <i>B</i> = 2 (mean count + read noise<sup>2</sup>), from the camera. At each <i>D</i> the best <i>A</i> follows by linear least squares; <i>D</i> is searched on a logarithmic grid and refined by golden sections, with weights (number of Fourier modes &times; pairs of frames) / <i>d</i><sup>2</sup>. Uncertainties from a jackknife that leaves out one of five parts of one movie at a time. <b>Checks.</b> A <i>q</i> is left out when no decay is found, when <i>A</i> is below three times its uncertainty (lost in the camera noise), when the decay is slower than half the movie or faster than one frame, when ln <i>D</i> is uncertain by more than 0.5, or when <i>D</i> is more than three times off the median of the others.</p>
+          <p><b>What the page does not fix.</b> In our tests <i>D</i> comes out about 1 % low on average, a little more than its uncertainty allows at the highest concentrations, and <i>R<sub>h</sub></i> from the series correspondingly 1-4 % high; we have not traced the cause. Interactions beyond first order in the concentration, and their effect on the hydrodynamic part of <i>k<sub>D</sub></i>, are left out of the simulation as well as of the analysis.</p>
+        </details>
+      </section>
+
+      <!-- 7 -->
+      <section class="step" id="step-series" aria-labelledby="h-series">
+        <div class="step-title"><span class="num">7</span><h2 id="h-series">Interactions from a concentration series</h2></div>
+        <div class="step-body">
+          <div class="text">
+            <p class="only-1">Repeat the measurement at five concentrations, and the interactions show. If the proteins repel each other, a crowd of them evens out faster the more of them there are, and its ripples get weaker than for as many independent proteins: the diffusion coefficient rises with the concentration, and the signal per protein drops. If they attract each other, both go the other way. Where the straight line through the diffusion coefficients meets zero concentration is one protein alone, which gives its true size.</p>
+            <p class="lvl-2">To first order in the concentration <i>c</i>, <i>D<sub>c</sub></i> = <i>D</i><sub>0</sub> (1 + <i>k<sub>D</sub> c</i>) and, since <i>A</i> &prop; <i>c S</i>(0) with <i>S</i>(0) = 1 / (1 + 2<i>A</i><sub>2</sub><i>Mc</i>), <i>c</i> / <i>A</i> &prop; 1 + 2<i>A</i><sub>2</sub><i>Mc</i>. Two weighted straight lines give <i>D</i><sub>0</sub> (hence <i>R<sub>h</sub></i>), the diffusion interaction parameter <i>k<sub>D</sub></i> and the second virial coefficient <i>A</i><sub>2</sub> = <i>B</i><sub>2</sub><i>N</i><sub>A</sub> / <i>M</i><sup>2</sup>, as in light scattering. The optics cancel in the ratio of amplitudes, because every movie is filmed the same way.</p>
+          </div>
+          <div class="toolbar" id="try-salt"><button type="button" id="btn-series">Run the concentration series</button><span class="readout" id="series-msg" aria-live="polite"></span></div>
+          <p class="readout" id="series-state"></p>
+          <div id="series-figs" hidden>
+            <figure class="viz">
+              <figcaption>How fast the proteins spread, against the concentration</figcaption>
+              <div class="chart"><canvas id="chart-sd" aria-label="Collective diffusion coefficient against concentration"></canvas></div>
+              <ul class="reasons" id="sd-notes"></ul>
+            </figure>
+            <figure class="viz">
+              <figcaption>Concentration over signal: the structure factor</figcaption>
+              <div class="chart"><canvas id="chart-sa" aria-label="Concentration divided by amplitude against concentration"></canvas></div>
+              <ul class="reasons" id="sa-notes"></ul>
+            </figure>
+            <details class="numbers" id="series-numbers"><summary>The numbers behind these charts</summary><div></div></details>
+          </div>
+          <div class="predict" data-predict="salt" data-right="down">
+            <div class="q">Do these proteins attract or repel? In this buffer with little salt the antibodies repel each other, and k<sub>D</sub> is about <span data-pv="kd">14</span> mL/g. Predict first: the salt goes from 15 to 115 mM. Does k<sub>D</sub> go up, go down, or stay the same?</div>
+            <div class="btns"><button type="button" data-guess="up">Up</button><button type="button" data-guess="down">Down</button><button type="button" data-guess="same">The same</button></div>
+            <div class="a" hidden><span class="verdict"></span> Down, to about <span data-pv="kdhigh">-5</span> mL/g. Salt ions crowd around each charged protein and screen its charge, so the repulsion fades within a short distance. What remains is the short-range attraction and the drag of each protein on its neighbours through the liquid, which both slow the crowd: the diffusion coefficient now falls as the concentration rises. The bench now runs at 115 mM, then the series, up to 30 mg/mL (about a minute); the lines of the earlier sample stay as dotted lines.</div>
+          </div>
+        </div>
+        <p class="takeaway"><b>What this step gives:</b> the true size of one protein, and two measures of how proteins interact: k<sub>D</sub> from how they move, A<sub>2</sub> (or B<sub>2</sub>) from how they arrange. Both assume a first-order dependence on concentration, which holds at low concentration only.</p>
+        <details class="transfer"><summary><b>A question to think about:</b> At 115 mM salt the antibody's A<sub>2</sub> is still positive, yet its k<sub>D</sub> is negative. How can the same proteins look repulsive in one measure and attractive in the other?</summary><p>A<sub>2</sub> counts everything that keeps two proteins apart, and their size alone makes it positive: hard spheres give A<sub>2</sub> = 4 v<sub>h</sub> / M. k<sub>D</sub> = 2 A<sub>2</sub> M &minus; k<sub>H</sub> also counts the drag of each protein on its neighbours through the liquid, k<sub>H</sub> = 6.55 v<sub>h</sub>, which slows the crowd. So k<sub>D</sub> turns negative as soon as A<sub>2</sub> drops below 3.3 v<sub>h</sub> / M, a little under the value for hard spheres: a weak attraction is enough, long before A<sub>2</sub> itself turns negative.</p></details>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: from the pair potential to k<sub>D</sub> and A<sub>2</sub></summary>
+          <p>Each protein is a hard sphere of radius <i>R<sub>h</sub></i> (<i>&sigma;</i> = 2<i>R<sub>h</sub></i>) with a net charge <i>Z</i>, screened by the salt (Debye-Hueckel), and a short-range attraction of depth <i>&epsilon;</i> at contact and range <i>&delta;</i> = 0.3 nm:</p>
+          <div class="eq"><i>U</i>(<i>r</i>) / <i>k</i><sub>B</sub><i>T</i> = <i>Z</i><sup>2</sup> <i>&lambda;</i><sub>B</sub> e<sup>&minus;<i>&kappa;</i>(<i>r</i> &minus; <i>&sigma;</i>)</sup> / [(1 + <i>&kappa;&sigma;</i>/2)<sup>2</sup> <i>r</i>] &minus; <i>&epsilon; &sigma;</i> e<sup>&minus;(<i>r</i> &minus; <i>&sigma;</i>)/<i>&delta;</i></sup> / <i>r</i>, &nbsp;&nbsp; <i>r</i> &gt; <i>&sigma;</i></div>
+          <p>with <i>&lambda;</i><sub>B</sub> the Bjerrum length (0.71 nm in water at room temperature) and 1/<i>&kappa;</i> the Debye length, 0.30 nm / &radic;(<i>I</i> in mol/L) for a monovalent salt. Then</p>
+          <div class="eq"><i>B</i><sub>2</sub> = 2&pi; &int;<sub>0</sub><sup>&infin;</sup> [1 &minus; e<sup>&minus;<i>U</i>(<i>r</i>)/<i>k</i><sub>B</sub><i>T</i></sup>] <i>r</i><sup>2</sup> d<i>r</i>, &nbsp;&nbsp; <i>A</i><sub>2</sub> = <i>B</i><sub>2</sub> <i>N</i><sub>A</sub> / <i>M</i><sup>2</sup>, &nbsp;&nbsp; <i>k<sub>D</sub></i> = 2<i>A</i><sub>2</sub><i>M</i> &minus; <i>k<sub>H</sub></i>, &nbsp;&nbsp; <i>k<sub>H</sub></i> = 6.55 <i>v<sub>h</sub></i></div>
+          <p>with <i>v<sub>h</sub></i> = 4&pi;<i>R<sub>h</sub></i><sup>3</sup><i>N</i><sub>A</sub> / 3<i>M</i>, the hydrodynamic volume per gram. Hard spheres give <i>A</i><sub>2</sub> = 4<i>v<sub>h</sub></i> / <i>M</i> and <i>k<sub>D</sub></i> = 1.45 <i>v<sub>h</sub></i> (Batchelor 1976; Felderhof 1978). How the charge and the attraction change the hydrodynamic part is left out: <i>k<sub>H</sub></i> is that of hard spheres (Batchelor 1972). <i>D</i><sub>0</sub> = <i>k</i><sub>B</sub><i>T</i> / 6&pi;<i>&eta;R<sub>h</sub></i>. The movie uses these <i>S</i>(0) and <i>D<sub>c</sub></i>; the page shows a warning when 2<i>A</i><sub>2</sub><i>Mc</i> or <i>k<sub>D</sub>c</i> exceeds 0.5, where the first-order description is stretched.</p>
+          <p><b>Fit.</b> Weighted straight lines through <i>D<sub>c</sub></i>(<i>c</i>) and <i>c</i>/<i>A</i>(<i>c</i>), with the uncertainties of step 6 (scaled up when the points scatter more than they allow). The amplitude <i>A</i> is the mean over <i>q</i> = 0.6-2.5 &micro;m<sup>&minus;1</sup>, where the signal is strongest; after the first line it is fitted again at each concentration with <i>D</i> fixed on the line. In Python, with the values of each concentration:</p>
+          <pre class="code">import numpy as np
+c = np.array([2.3, 4.5, 7.5, 11.3, 15.0])       # mg/mL
+D = np.array([...])                            # um^2/s, from step 6 at each c
+sD = np.array([...])                           # their uncertainties
+b, a = np.polyfit(c, D, 1, w=1 / sD)            # slope, intercept
+kD = b / a * 1e3                               # mL/g
+Rh = 1.380649e-23 * T / (6 * np.pi * eta * a * 1e-12)   # m</pre>
+        </details>
+        <details class="lvl-3 math" open>
+          <summary>Settings used for this run</summary>
+          <pre class="code" id="settings-json"></pre>
+          <div class="btns"><button type="button" id="btn-copy">Copy settings</button></div>
+        </details>
+      </section>
+    </div>
+  </div>
+
+  <section class="wrap matters" aria-labelledby="h-matters">
+    <p class="eyebrow">In a real experiment</p>
+    <h2 id="h-matters">What matters</h2>
+    <p class="prose">Each card sets the bench to a typical case and shows where to look; some also run the series of step 7. Use "Back to the standard sample" to start again.</p>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="wrap further lvl-2" aria-labelledby="h-adds">
+    <h2 id="h-adds">What this page adds to the published methods</h2>
+    <p class="prose">Guidolin et al. (2023) measured the size of proteins and their k<sub>D</sub> with bright-field DDM, from the diffusion coefficient at several concentrations. The steps below are not in the papers we cite: we added them while testing the page against its own simulations, and some may exist elsewhere. At the "Addict" level each can be switched off, and the result table shows the published method alone on the same movies (one exponential per q, frames taken as instants, the amplitudes from their own fits).</p>
+    <ul class="adds">
+      <li><b>Motion along the axis of the microscope.</b> Each pattern collects proteins over the depth in focus, and they also move up and down, so f(q, &Delta;t) is a weighted sum of exponentials with rates D (q&sup2; + k&sup2;), the weights from the optics. <span class="where">Step 6. With the condenser closed down, as here, the effect on the mean is small: it moved D by less than 1 % in our tests (antibody, 115 mM salt), more at the widest patterns.</span></li>
+      <li><b>Averaging over the exposure.</b> The camera averages each frame over its exposure, which softens the fastest patterns; the model does the same. <span class="where">Step 6. With an exposure as long as the time between frames, as here, leaving it out made D about 15 % too small and R<sub>h</sub> 6.2 nm instead of 5.3 in our tests; k<sub>D</sub>, a ratio, hardly changed.</span></li>
+      <li><b>Amplitudes at the diffusion coefficient of the line.</b> After the line through D<sub>c</sub>, each amplitude is fitted again with D fixed on the line, so the noise of its own D does not leak into it. <span class="where">Step 7. In our tests it changed A<sub>2</sub> by less than 1 %; it guards the most dilute samples, whose own D is the least certain.</span></li>
+    </ul>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-about">
+    <h2 id="h-about">About this tool</h2>
+    <p class="prose">This page is a simple tool, generated with Claude Opus 5.5, that simulates a realistic microscopy experiment in which DDM is used to measure the size of proteins and how they interact. The microscope, light sources and cameras are modelled mostly on the instruments of our SoMeX lab. The proteins are spheres with a charge and a short-range attraction, described to first order in their concentration; how they move and arrange follows from that, and the movie is built from their density rather than from single molecules. The aim is not to produce research-quality data, but to give anyone thinking of using DDM an idea of what it can measure on proteins, and of what limits it.</p>
+    <p class="prose">If you find something that looks wrong or does not work, please let us know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
+    <p class="prose">To cite this page: R. Cerbino, <i>DDM, hands on: proteins</i>, <a href="https://rcerbino.github.io/ddm/proteins/">rcerbino.github.io/ddm/proteins/</a> (2026), with the date you used it.</p>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-further">
+    <h2 id="h-further">Go further</h2>
+    <ul class="only-1">
+      <li><a href="../sizing/">Sizing particles</a>: larger particles far apart, and how their size follows from the motion.</li>
+      <li><a href="../crowded/">Crowded particles</a>: when particles are close enough to arrange themselves.</li>
+      <li><a href="https://rcerbino.github.io/research/">Research</a>: what the SoMeX group measures with DDM.</li>
+      <li>Switch to <a href="#student" data-level-link="student">Student</a> above for the equations behind each step.</li>
+    </ul>
+    <ul>
+      <li>C. Guidolin, C. Heim, N. B. P. Adams, P. Baaske, V. Rondelli, R. Cerbino and F. Giavazzi, <a href="https://doi.org/10.1021/acs.macromol.3c00782">Protein sizing with differential dynamic microscopy</a>, Macromolecules 56, 8290 (2023). Bright-field DDM of proteins: their size, and k<sub>D</sub> from a concentration series.</li>
+      <li>J. R. Laber, T. M. Laue and D. I. Filoti, <a href="https://doi.org/10.1093/abt/tbac018">Use of Debye-H&uuml;ckel-Henry charge measurements in early antibody development elucidates effects of non-specific association</a>, Antibody Therapeutics 5, 211 (2022). Charge and interactions of monoclonal antibodies.</li>
+      <li>A. George and W. W. Wilson, <a href="https://doi.org/10.1107/S0907444994001216">Predicting protein crystallization from a dilute solution property</a>, Acta Cryst. D 50, 361 (1994). The second virial coefficient as a guide to how proteins behave.</li>
+      <li>G. K. Batchelor, <a href="https://doi.org/10.1017/S0022112076001663">Brownian diffusion of particles with hydrodynamic interaction</a>, J. Fluid Mech. 74, 1 (1976); B. U. Felderhof, <a href="https://doi.org/10.1088/0305-4470/11/5/022">Diffusion of interacting Brownian particles</a>, J. Phys. A 11, 929 (1978). The collective diffusion of hard spheres, to first order in their concentration.</li>
+      <li>G. K. Batchelor, <a href="https://doi.org/10.1017/S0022112072001399">Sedimentation in a dilute dispersion of spheres</a>, J. Fluid Mech. 52, 245 (1972). The hydrodynamic part of k<sub>D</sub>.</li>
+      <li>R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope</a>, Phys. Rev. Lett. 100, 188102 (2008); E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a>, J. Chem. Phys. 163, 161501 (2025).</li>
+    </ul>
+    <ul class="lvl-3">
+      <li>fastDDM tutorial notebook on real movies: <a href="https://github.com/somexlab/fastddm-tutorials/tree/main/Tutorial_7-Intermolecular_interactions">interactions between proteins from how their diffusion changes with concentration (tutorial 7)</a>; <a href="https://github.com/somexlab/fastddm-tutorials">all tutorials</a>.</li>
+      <li><a href="https://github.com/somexlab/fastddm">fastDDM</a> (Python, CPU and GPU, GPL 3.0): <code>pip install fastddm</code>. <a href="https://fastddm.readthedocs.io/">Documentation</a>.</li>
+      <li>For collaborations or questions about applying DDM to your samples, see <a href="https://rcerbino.github.io/contact/">Contact</a>.</li>
+    </ul>
+  </section>
+</main>
+
+<!-- progress of the simulation, pinned to the bottom of the window so it is always in view -->
+<div class="runbar" id="runbar">
+  <div class="wrap runbar-inner">
+    <div class="bar" aria-hidden="true"><span id="bar"></span></div>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+  </div>
+</div>
+<footer class="site"><div class="wrap">Roberto Cerbino, University of Vienna. The simulation and the analysis run entirely in your browser; nothing is uploaded.</div></footer>
+
+<script type="application/json" id="objectives-data">/*OBJECTIVES*/</script>
+<script id="optics-src">
+/*OPTICS*/
+</script>
+<script id="field-src">
+/*FIELD*/
+</script>
+<script id="engine-src">
+/*ENGINE*/
+</script>
+<script id="protein-src">
+/*PROTEIN*/
+</script>
+<script id="pengine-src">
+/*PENGINE*/
+</script>
+<script type="text/plain" id="worker-src">
+/*WORKER*/
+</script>
+<script>
+/*TIFF*/
+</script>
+<script>
+/*APP*/
+</script>

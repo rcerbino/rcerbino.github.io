@@ -71,7 +71,7 @@
     need(expo <= 1 / fr * 1.0000001, "exposure longer than the frame interval");
     const T_C = num(cfg, "T_C", 0, 90), Lz = num(cfg, "cell_um", 1, 400), hf = num(cfg, "focus_um", 0, 400);
     const pr = cfg.protein; need(pr, "protein missing");
-    const dP = num(pr, "diameter_um", 1e-4, 0.1), nP = num(pr, "n", 1, 2), rho = num(pr, "number_density_um3", 1, 1e8);
+    const dP = num(pr, "diameter_um", 1e-4, 0.1), nP = num(pr, "n", 1, 2), rho = num(pr, "number_density_um3", 1, 1e10);
     const S0 = num(pr, "S0", 0.01, 100), Dc = num(pr, "Dc_um2_s", 0.01, 1e4);
     const a = num(det, "pixel_um", 0.5, 30) * b / mag, L = N * a;
     const zlo = hf - Lz, zhi = hf;
@@ -109,7 +109,8 @@
     }
     const modes = { p: [], wr: [], wi: [], a1: [], l11: [], l21: [], l22: [], bb: [], gd: [], gs: [] };
     const amp = new Float64Array(N / 2 + 1), cnt = new Float64Array(N / 2 + 1);   // expected A(q) per ring, for the truth
-    const bgE = num(cfg, "light_frac", 0.0005, 1) * (det.full_well_e * b * b);
+    const fullWell = det.bin_charge ? det.full_well_e : det.full_well_e * b * b;   // as in movie.js: charge binning keeps the full well
+    const bgE = num(cfg, "light_frac", 0.0005, 1) * fullWell;
     const gap = 1 / fr - expo;
     for (let iy = 0; iy < N; iy++) for (let ix = 0; ix < N; ix++) {
       const ky = iy < N / 2 ? iy : iy - N, kx = ix < N / 2 ? ix : ix - N;
@@ -156,7 +157,7 @@
     const withGap = gap > 1e-2 * Math.max(expo, 1e-12);   // a gap shorter than a hundredth of the exposure is left out
     const XR = new Float64Array(M), XI = new Float64Array(M), SQ = Math.SQRT1_2;
     for (let m = 0; m < M; m++) { XR[m] = SQ * rng.g(); XI[m] = SQ * rng.g(); }
-    const readE = det.read_noise_e * b, fullWell = det.full_well_e * b * b;
+    const readE = det.bin_charge ? det.read_noise_e : det.read_noise_e * b;
     const tb = O.FFT.tables(N), wk = O.FFT.work(N);
     const Fr = new Float64Array(P), Fi = new Float64Array(P), re = new Float64Array(P), im = new Float64Array(P);
     const frames = new Float32Array(P * T), fft = new Float32Array(2 * P * T);

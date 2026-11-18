@@ -128,8 +128,11 @@
       let vD = 0, vA = 0; for (let j = 0; j < K; j++) { vD += (Dj[j] - mD) * (Dj[j] - mD); vA += (Aj[j] - mA) * (Aj[j] - mA); }
       row.D_um2_s = fit.D; row.lnD_err = Math.sqrt((K - 1) / K * vD); row.A = fit.A; row.A_err = Math.sqrt((K - 1) / K * vA); row.B = B;
       row.gamma_hz = fit.D * q * q;
-      row.f = Array.from(y, function (v) { return fit.A > 0 ? 1 - v / fit.A : NaN; });
-      row.model_f = Array.from(model(fit.D, q, taus, Te, dw, new Float64Array(L)), function (v) { return 1 - v; });
+      // f relative to what is left to fade: the exposure already blurs part of each pattern (the plateau sum w S(x) < 1)
+      const plat = model(fit.D, q, [Infinity], Te, dw, new Float64Array(1))[0] || 1;
+      row.f = Array.from(y, function (v) { return fit.A > 0 ? 1 - v / (fit.A * plat) : NaN; });
+      row.model_f = Array.from(model(fit.D, q, taus, Te, dw, new Float64Array(L)), function (v) { return 1 - v / plat; });
+      row.plateau = plat;
       // the pattern must change within the movie and not entirely within one frame, and the signal must stand out of the noise
       if (fit.atEdge) row.reason = "no decay found";
       else if (!(fit.A > 3 * row.A_err) || !(fit.A > 0)) row.reason = "signal lost in camera noise";

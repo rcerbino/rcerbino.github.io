@@ -220,6 +220,17 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
           <span class="go" aria-hidden="true">Open Crowded particles</span>
         </div>
       </article>
+      <article class="app">
+        <div class="head"><p class="eyebrow">Proteins</p>
+          <h2><a href="proteins/">Do they attract or repel?</a></h2></div>
+        <div class="media"><canvas id="cv-prot" width="240" height="150" aria-label="Animation: a grey field with faint ripples that come and go, as proteins too small to see diffuse in a bright-field microscope"></canvas><span class="tag">Bright field, a protein solution (sketch, contrast stretched)</span></div>
+        <div class="body">
+          <p>Measure the size of proteins far too small to see, and whether they repel or attract each other, from bright-field movies at a few concentrations: the diffusion interaction parameter k<sub>D</sub> and the second virial coefficient B<sub>2</sub>.</p>
+          <p class="what">An antibody in low and high salt, albumin, lysozyme and a sticky antibody, or a protein of your own: set its charge and the salt, and see how both numbers follow.</p>
+          <ul class="chips"><li>Protein size</li><li>k<sub>D</sub></li><li>B<sub>2</sub></li></ul>
+          <span class="go" aria-hidden="true">Open Proteins</span>
+        </div>
+      </article>
     </div>
   </section>
 
@@ -309,6 +320,20 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
             }
           }
         }
+        return img;
+      }
+    };
+  }
+
+  /* proteins far too small to see: their density ripples, each wave fading at a rate that grows with its fineness
+     (a few random Fourier modes, each a random process); bright field, contrast stretched */
+  function makeRipples(W, H, n) {
+    const m = []; for (let i = 0; i < n; i++) { const kx = Math.round((Math.random() - 0.5) * 16), ky = Math.round((Math.random() - 0.5) * 10); if (kx === 0 && ky === 0) continue; m.push({ kx: 2 * Math.PI * kx / W, ky: 2 * Math.PI * ky / H, re: gauss(), im: gauss() }); }
+    const img = new Float32Array(W * H), D = 6;
+    return {
+      step: function () { m.forEach(function (o) { const g = Math.min(0.5, D * (o.kx * o.kx + o.ky * o.ky)), s = Math.sqrt(1 - (1 - g) * (1 - g)); o.re = (1 - g) * o.re + s * gauss(); o.im = (1 - g) * o.im + s * gauss(); }); },
+      render: function () {
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { let v = 0; for (let i = 0; i < m.length; i++) { const o = m[i], ph = o.kx * x + o.ky * y; v += o.re * Math.cos(ph) - o.im * Math.sin(ph); } img[y * W + x] = 0.012 * v + 0.025 * gauss(); }
         return img;
       }
     };
@@ -421,6 +446,8 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
   scene(crh, caged.step, function () { grayTo(ctxR, caged.render(), crh.width, crh.height, 0.74, 0.9); });
   const ccr = document.getElementById("cv-crowd"), ctxC = ccr.getContext("2d"), crowd = makeCrowd(ccr.width, ccr.height, 230, 3.2, 0.35);
   scene(ccr, crowd.step, function () { grayTo(ctxC, crowd.render(), ccr.width, ccr.height, 0.06, 0.8); });
+  const cpr = document.getElementById("cv-prot"), ctxP = cpr.getContext("2d"), ripples = makeRipples(cpr.width, cpr.height, 70);
+  scene(cpr, ripples.step, function () { grayTo(ctxP, ripples.render(), cpr.width, cpr.height, 0.62, 1); });
   const cdr = document.getElementById("cv-drift"), ctxD = cdr.getContext("2d"), drifting = makeBeads(cdr.width, cdr.height, 80, 2.0, 0.45, 0.35);
   scene(cdr, drifting.step, function () { grayTo(ctxD, drifting.render(), cdr.width, cdr.height, 0.74, 0.9); });
 
