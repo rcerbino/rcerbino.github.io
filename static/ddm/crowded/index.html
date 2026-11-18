@@ -345,6 +345,8 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
     </aside>
 
     <div class="steps">
+      <nav class="step-index" aria-label="Steps on this page"><ol><li><a href="#step-setup" data-title="Set up the microscope" aria-label="Step 1: Set up the microscope">1</a></li><li><a href="#step-movie" data-title="Record a movie" aria-label="Step 2: Record a movie">2</a></li><li><a href="#step-diff" data-title="Subtract two frames" aria-label="Step 3: Subtract two frames">3</a></li><li><a href="#step-map" data-title="Split it into stripe patterns" aria-label="Step 4: Split it into stripe patterns">4</a></li><li><a href="#step-curves" data-title="Watch each pattern change" aria-label="Step 5: Watch each pattern change">5</a></li><li><a href="#step-rates" data-title="Structure and collective motion" aria-label="Step 6: Structure and collective motion">6</a></li></ol><span class="now" aria-hidden="true"></span></nav>
+
       <!-- 1 -->
       <section class="step" id="step-setup" aria-labelledby="h-setup">
         <div class="step-title"><span class="num">1</span><h2 id="h-setup">Set up the microscope</h2></div>
@@ -411,7 +413,7 @@ ref_seq = fd.read_images(reference_file_names)</pre>
             <p id="diff-note"></p>
           </div>
         </div>
-        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what moved; what stayed put is gone. The longer the delay, the more has changed.</p>
+        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what moved; what stayed put is gone. Comparing several delays shows how the image changes over time: random motion usually makes the difference grow with the delay, while directed motion can also make it swing up and down.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: the difference image</summary>
           <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
@@ -559,7 +561,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
           <div class="eq"><i>S</i>(<i>q</i>) = [<i>A</i>(<i>q</i>) / <i>N</i>] / [<i>A</i><sub>ref</sub>(<i>q</i>) / <i>N</i><sub>ref</sub>]</div>
           <div class="eq">&Gamma;(<i>q</i>) = &minus;d ln <i>f</i> / d&Delta;<i>t</i> at short times = <i>D</i><sub>0</sub> <i>q</i><sup>2</sup> <i>H</i>(<i>q</i>) / <i>S</i>(<i>q</i>), &nbsp;&nbsp; <i>D</i>(<i>q</i>) = <i>D</i><sub>0</sub> &Gamma;(<i>q</i>) / &Gamma;<sub>ref</sub>(<i>q</i>)</div>
           <p><b>Amplitudes.</b> <i>A</i>(<i>q</i>) = 2&lang;|<i>F</i>(<i>q</i>)|<sup>2</sup>&rang; &minus; <i>B</i>, from the mean power of each pattern, with <i>B</i> = 2 (excess-noise factor &times; mean count + read noise<sup>2</sup>), the camera noise, the same at every <i>q</i>. The mean power counts everything in the image that stays put during the movie, dust and uneven light included, which the difference images of step 3 ignore. The simulated movies have none. In a real experiment, subtract the power of a movie of the liquid alone, taken the same way, or use twice the variance over time of each pattern, which leaves out what never changes (fine for a crowd that flows, as here). The reference is a movie of the same particles at a volume fraction of 4 %, without interactions, through the same optics, long enough for its particles to wander through the whole depth of the box twice (the number near the focus sets the amplitude); <i>A</i><sub>ref</sub> and its rates are smoothed over seven neighbouring <i>q</i>. Only <i>q</i> where both movies carry more signal than <i>B</i> are used. The uncertainty of S(q) is the scatter of seven neighbouring <i>q</i> about a parabola through them.</p>
-          <p><b>Rates.</b> At each <i>q</i>, a straight line through ln <i>f</i> against the delay, weighted by the noise of <i>f</i>, from the first delay down to <i>f</i> = 0.6 (at least three delays); its slope is &minus;&Gamma;. The same line through the reference movie gives &Gamma;<sub>ref</sub> = <i>D</i><sub>0</sub><i>q</i><sup>2</sup> plus what motion along the axis adds: particles leaving the layer in focus change the patterns too. Their ratio gives <i>D</i>(<i>q</i>). Uncertainties from a jackknife over ten parts of the movie. Without hydrodynamic interactions the hydrodynamic function <i>H</i>(<i>q</i>) is 1. For hard spheres, the Percus-Yevick structure factor (Wertheim 1963) is drawn for comparison.</p>
+          <p><b>Rates.</b> At each <i>q</i>, a straight line through ln <i>f</i> against the delay, weighted by the noise of <i>f</i>, from the first delay down to <i>f</i> = 0.6 (at least three delays); its slope is &minus;&Gamma;. The same line through the reference movie gives &Gamma;<sub>ref</sub> = <i>D</i><sub>0</sub><i>q</i><sup>2</sup> plus what motion along the axis adds: particles leaving the layer in focus change the patterns too. Their ratio, times <i>D</i><sub>0</sub>, is what the page measures; the axial part largely, but not entirely, cancels in it (see below). It is read as the collective diffusion <i>D</i>(<i>q</i>) under the assumptions of the model, chiefly that the reference adds the same axial part and that there are no hydrodynamic interactions. Uncertainties from a jackknife over ten parts of the movie. Without hydrodynamic interactions the hydrodynamic function <i>H</i>(<i>q</i>) is 1. For hard spheres, the Percus-Yevick structure factor (Wertheim 1963) is drawn for comparison.</p>
           <p><b>What the page does not fix.</b> Each pattern of the image collects particles over the depth in focus, so it mixes in wave vectors along the axis: at the widest patterns S(q) and D(q) take in some of their neighbours at larger q, and the peak looks a little lower and broader. The short-time rate needs delays before the cages are felt; the fit reaches a little beyond them.</p>
         </details>
         <details class="lvl-3 math" open>
@@ -584,7 +586,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     <ul class="adds">
       <li><b>Camera noise known from the detector.</b> B = 2 (excess-noise factor &times; mean count + read noise&sup2;), the same at every q. <span class="where">Step 6.</span></li>
       <li><b>A line that may miss f = 1.</b> The straight line through ln f over the first delays has its own intercept, so a small error in A does not tilt it. <span class="where">Step 6.</span></li>
-      <li><b>Rates against the reference.</b> D(q) = D0 &Gamma; / &Gamma;<sub>ref</sub>, with the rate of the same pattern in the dilute movie, instead of &Gamma; / q&sup2;: motion along the axis of the microscope cancels out. <span class="where">Step 6. Without it, the widest patterns of a sample at 5 % read D more than twice too large through the spinning disk in our tests.</span></li>
+      <li><b>Rates against the reference.</b> D(q) = D0 &Gamma; / &Gamma;<sub>ref</sub>, with the rate of the same pattern in the dilute movie, instead of &Gamma; / q&sup2;: what motion along the axis of the microscope adds largely cancels out, though not entirely (step 6). Reading the ratio as the collective diffusion D(q)/D0 assumes the model of the page, without hydrodynamic interactions. <span class="where">Step 6. Without it, the widest patterns of a sample at 5 % read D more than twice too large through the spinning disk in our tests.</span></li>
       <li><b>Reference smoothed over q.</b> The amplitude and the rates of the dilute reference change smoothly with q, so they are smoothed over seven neighbouring q bins. <span class="where">Step 6. Bin by bin, the noise of the reference made the peak of S(q) 3-9 % too high in our tests (three samples).</span></li>
     </ul>
   </section>
@@ -618,6 +620,31 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     </ul>
   </section>
 </main>
+<style>
+.step-index { position: sticky; top: 0; z-index: 6; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; padding: 0.45rem 0; margin-bottom: -1.5rem; background: var(--paper); border-bottom: 1px solid var(--rule); font-size: 0.85rem; }
+.step-index ol { display: flex; gap: 0.3rem; list-style: none; margin: 0; padding: 0; }
+.step-index a { display: inline-flex; align-items: center; justify-content: center; min-width: 1.9rem; height: 1.9rem; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink); text-decoration: none; font-variant-numeric: tabular-nums; }
+.step-index a:hover { border-color: var(--accent); }
+.step-index a[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.step-index .now { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 12rem; }
+.step { scroll-margin-top: 3.5rem; }
+@media (max-width: 40rem) { .step-index .now { display: none; } .step-index a { min-width: 1.75rem; height: 1.75rem; } }
+</style>
+<script>
+(function () {
+  var nav = document.querySelector(".step-index"); if (!nav) return;
+  var links = Array.prototype.slice.call(nav.querySelectorAll("a")), now = nav.querySelector(".now");
+  var steps = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
+  function mark() {
+    var k = 0, y = nav.getBoundingClientRect().bottom + 40;
+    steps.forEach(function (s, i) { if (s && s.getBoundingClientRect().top <= y) k = i; });
+    links.forEach(function (a, i) { if (i === k) a.setAttribute("aria-current", "step"); else a.removeAttribute("aria-current"); });
+    now.textContent = "Step " + (k + 1) + " of " + links.length + ": " + links[k].getAttribute("data-title");
+  }
+  window.addEventListener("scroll", mark, { passive: true }); window.addEventListener("resize", mark); mark();
+})();
+</script>
+
 <!-- progress of the simulation, pinned to the bottom of the window so it is always in view -->
 <div class="runbar" id="runbar">
   <div class="wrap runbar-inner">
@@ -4800,7 +4827,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
     { key: "x_offset", lvl: 4, label: "Rate from a line that may miss f = 1", kind: "select", options: ONOFF("the line goes through f = 1 at zero delay"),
       hint: function () { return "On: the straight line through ln f over the first delays has its own intercept, so a small error in A, or a fast part before the first delay, does not tilt it. Off: it is forced through ln f = 0 at zero delay."; } },
     { key: "x_refrate", lvl: 4, label: "Rates against the reference", kind: "select", options: ONOFF("D(q) = \u0393 / q\u00b2"),
-      hint: function () { return "On: D(q) / D0 = \u0393 / \u0393ref, the rate of each pattern against that of the same pattern in the dilute reference, which holds what motion along the axis of the microscope adds. Off: D(q) = \u0393 / q\u00b2."; } },
+      hint: function () { return "On: D(q) / D0 = \u0393 / \u0393ref, the rate of each pattern against that of the same pattern in the dilute reference, which holds what motion along the axis of the microscope adds, so that it largely cancels. Off: D(q) = \u0393 / q\u00b2."; } },
     { key: "x_refsmooth", lvl: 4, label: "Reference smoothed over q", kind: "select", options: ONOFF("each q bin of the reference on its own"),
       hint: function () { return "On: the amplitude and the rates of the reference, which change smoothly with q, are smoothed over seven neighbouring q bins. Off: each bin on its own, with its own noise."; } }
   );

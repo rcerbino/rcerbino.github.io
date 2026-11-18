@@ -8,6 +8,7 @@ application, "Sizing particles" (/ddm/sizing/) and "Swimming cells" (/ddm/swimme
 The site version loads the fonts served by this site (no Google Fonts) and leaves a marker where the site's
 build.py writes the main menu, so the menu always matches the other pages.
 """
+import re
 import sys
 from pathlib import Path
 
@@ -80,6 +81,48 @@ PREVIEW_LINKS = {
 }
 
 
+# a compact index of the steps at the top of each application page: numbered links that stay in view while the
+# reader scrolls, with the title of the step in view (built from the step titles, so it follows the sources)
+STEP_INDEX_STYLE = """<style>
+.step-index { position: sticky; top: 0; z-index: 6; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; padding: 0.45rem 0; margin-bottom: -1.5rem; background: var(--paper); border-bottom: 1px solid var(--rule); font-size: 0.85rem; }
+.step-index ol { display: flex; gap: 0.3rem; list-style: none; margin: 0; padding: 0; }
+.step-index a { display: inline-flex; align-items: center; justify-content: center; min-width: 1.9rem; height: 1.9rem; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink); text-decoration: none; font-variant-numeric: tabular-nums; }
+.step-index a:hover { border-color: var(--accent); }
+.step-index a[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.step-index .now { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 12rem; }
+.step { scroll-margin-top: 3.5rem; }
+@media (max-width: 40rem) { .step-index .now { display: none; } .step-index a { min-width: 1.75rem; height: 1.75rem; } }
+</style>
+"""
+STEP_INDEX_SCRIPT = """<script>
+(function () {
+  var nav = document.querySelector(".step-index"); if (!nav) return;
+  var links = Array.prototype.slice.call(nav.querySelectorAll("a")), now = nav.querySelector(".now");
+  var steps = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
+  function mark() {
+    var k = 0, y = nav.getBoundingClientRect().bottom + 40;
+    steps.forEach(function (s, i) { if (s && s.getBoundingClientRect().top <= y) k = i; });
+    links.forEach(function (a, i) { if (i === k) a.setAttribute("aria-current", "step"); else a.removeAttribute("aria-current"); });
+    now.textContent = "Step " + (k + 1) + " of " + links.length + ": " + links[k].getAttribute("data-title");
+  }
+  window.addEventListener("scroll", mark, { passive: true }); window.addEventListener("resize", mark); mark();
+})();
+</script>
+"""
+
+
+def add_step_index(out):
+    if '<div class="steps">' not in out:
+        return out
+    steps = re.findall(r'<section class="step" id="([^"]+)"[^>]*>\s*<div class="step-title"><span class="num">(\d+)</span><h2 id="[^"]*">(.*?)</h2>', out)
+    assert len(steps) >= 5, "step titles not found"
+    items = "".join('<li><a href="#%s" data-title="%s" aria-label="Step %s: %s">%s</a></li>' % (sid, re.sub("<[^>]+>", "", t), n, re.sub("<[^>]+>", "", t), n) for sid, n, t in steps)
+    nav = '<nav class="step-index" aria-label="Steps on this page"><ol>' + items + '</ol><span class="now" aria-hidden="true"></span></nav>\n'
+    out = out.replace('<div class="steps">', '<div class="steps">\n      ' + nav, 1)
+    out = out.replace("</main>", "</main>\n" + STEP_INDEX_STYLE + STEP_INDEX_SCRIPT, 1)
+    return out
+
+
 def assemble(page="sizing"):
     cfg = PAGES[page]
     src = (HERE / cfg["src"]).read_text()
@@ -92,6 +135,7 @@ def assemble(page="sizing"):
         out = out.replace(k, t)
     # the source is a fragment: give it a document type (standards mode), a character set and a viewport
     # for phones, which the site pages get from templates/base.html
+    out = add_step_index(out)
     out = DOC_START + out
     bad = [c for c in out if ord(c) > 127]
     assert not bad, "non-ASCII characters: %r" % sorted(set(bad))

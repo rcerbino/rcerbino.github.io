@@ -643,6 +643,7 @@
     });
   }
   function syncControls() {
+    if (typeof curvesSteps === "function") curvesSteps();
     syncPredictionBases();
     CONTROLS.forEach(function (c) {
       const e = ctlEls[c.kind === "qrange" ? "qrange" : c.key];
@@ -1580,9 +1581,13 @@
     if (d >= w) return "The cells are larger than the smallest detail the microscope resolves, so you can see their shape; DDM still never needs to find or follow them.";
     return "Each cell is smaller than the smallest detail the microscope resolves (about " + fmtSig(w, 2) + " " + MU + "m here), so it shows as a blurred spot of about that width.";
   }
+  // step 5 describes the curves of the sample on the bench: updated as soon as the share of swimmers changes, not only when the run ends
+  function curvesSteps() {
+    $("curves-steps").textContent = state.swim_frac < 0.05 ? "Here no cell swims, so each curve rises in one step, as the cells, which only jiggle, wander off." : state.swim_frac > 0.95 ? "Here almost every cell swims, so each curve rises mostly in one quick step, as the swimmers carry the pattern away." : "Each curve rises in two steps: first quickly, because the swimmers carry the pattern away, then slowly, as the cells that only jiggle wander off.";
+  }
   function renderText() {
     // step 5 describes the curves of the sample on the bench
-    $("curves-steps").textContent = state.swim_frac < 0.05 ? "Here no cell swims, so each curve rises in one step, as the cells, which only jiggle, wander off." : state.swim_frac > 0.95 ? "Here almost every cell swims, so each curve rises mostly in one quick step, as the swimmers carry the pattern away." : "Each curve rises in two steps: first quickly, because the swimmers carry the pattern away, then slowly, as the cells that only jiggle wander off.";
+    curvesSteps();
     const m = cache.movie, cfg = cache.cfg, sw = m.truth.swim;
     const modeTxt = { brightfield: "a bright-field microscope", phase: "a phase-contrast microscope", darkfield: "a dark-field microscope", dic: "a DIC microscope", fluorescence: "a widefield fluorescence microscope", spinning: "a spinning-disk confocal microscope", scanning: "a point-scanning confocal microscope" }[state.mode];
     $("movie-text").textContent = "The movie shows " + (state.shape === "rod" ? fmtSize(cfg.diameter_um) + " long rod-shaped cells" : fmtSize(cfg.diameter_um) + " round cells") + ", filmed through " + modeTxt + " " + (m.times_s ? "at log-spaced times, in cycles that start at " + fmtNum(cfg.frame_rate_hz) + " frames a second and slow down (" + fmtDur(m.times_s[m.T - 1] + 1 / m.frame_rate_hz) + " in all). " : fmtNum(cfg.frame_rate_hz) + " times a second. ") +

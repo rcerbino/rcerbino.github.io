@@ -378,7 +378,7 @@
     { key: "x_offset", lvl: 4, label: "Rate from a line that may miss f = 1", kind: "select", options: ONOFF("the line goes through f = 1 at zero delay"),
       hint: function () { return "On: the straight line through ln f over the first delays has its own intercept, so a small error in A, or a fast part before the first delay, does not tilt it. Off: it is forced through ln f = 0 at zero delay."; } },
     { key: "x_refrate", lvl: 4, label: "Rates against the reference", kind: "select", options: ONOFF("D(q) = \u0393 / q\u00b2"),
-      hint: function () { return "On: D(q) / D0 = \u0393 / \u0393ref, the rate of each pattern against that of the same pattern in the dilute reference, which holds what motion along the axis of the microscope adds. Off: D(q) = \u0393 / q\u00b2."; } },
+      hint: function () { return "On: D(q) / D0 = \u0393 / \u0393ref, the rate of each pattern against that of the same pattern in the dilute reference, which holds what motion along the axis of the microscope adds, so that it largely cancels. Off: D(q) = \u0393 / q\u00b2."; } },
     { key: "x_refsmooth", lvl: 4, label: "Reference smoothed over q", kind: "select", options: ONOFF("each q bin of the reference on its own"),
       hint: function () { return "On: the amplitude and the rates of the reference, which change smoothly with q, are smoothed over seven neighbouring q bins. Off: each bin on its own, with its own noise."; } }
   );
