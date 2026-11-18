@@ -309,8 +309,8 @@
   const CONTROLS = [
     { key: "particle", group: "Sample", lvl: 2, label: "Material of the particles", kind: "select", options: function () { return SHAPE_MATERIALS.sphere.map(function (k) { return [k, MATERIALS[k]]; }); } },
     { key: "n_custom", group: "Sample", lvl: 1, label: "Particle refractive index", kind: "lin", min: 1.3, max: 2.6, step: 0.01, fmt: function (v) { return v.toFixed(2); }, when: function () { return state.particle === "custom"; } },
-    { key: "diameter_um", group: "Sample", lvl: 1, label: "Diameter of the particles", kind: "log", min: 0.6, max: 3, fmt: fmtSize, hint: function () { return level === "curious" ? "Larger particles move more slowly, and arrange themselves on a larger scale." : "Alone they would diffuse with D0 = " + fmtSig(dSE(), 3) + " " + MU + "m\u00b2/s, crossing their own diameter in about " + fmtTime(tauB()) + " (the Brownian time, \u03c3\u00b2/D0)."; } },
-    { key: "phi_c", group: "Sample", lvl: 1, label: "How crowded: volume fraction", kind: "lin", min: 0.01, max: 0.45, step: 0.01, fmt: function (v) { return Math.round(100 * v) + " %"; }, hint: function () { return interHint() + " " + particleCount() + " particles in the simulated volume." + (phiCapped ? " Lowered to fit what the browser can follow." : ""); } },
+    { key: "diameter_um", group: "Sample", lvl: 1, label: "Diameter of the particles", kind: "log", entry: { unit: MU + "m", scale: 1, step: 0.01, digits: 3 }, min: 0.6, max: 3, fmt: fmtSize, hint: function () { return level === "curious" ? "Larger particles move more slowly, and arrange themselves on a larger scale." : "Alone they would diffuse with D0 = " + fmtSig(dSE(), 3) + " " + MU + "m\u00b2/s, crossing their own diameter in about " + fmtTime(tauB()) + " (the Brownian time, \u03c3\u00b2/D0)."; } },
+    { key: "phi_c", group: "Sample", lvl: 1, label: "How crowded: volume fraction", kind: "lin", entry: { unit: "%", scale: 100, step: 1, digits: 0 }, min: 0.01, max: 0.45, step: 0.01, fmt: function (v) { return Math.round(100 * v) + " %"; }, hint: function () { return interHint() + " " + particleCount() + " particles in the simulated volume." + (phiCapped ? " Lowered to fit what the browser can follow." : ""); } },
     { key: "inter", group: "Sample", lvl: 1, label: "How they interact", kind: "select", options: Object.keys(INTER).map(function (k) { return [k, INTER[k]]; }) },
     { key: "U0", group: "Sample", lvl: 2, label: "Repulsion at contact", kind: "log", min: 3, max: 300, fmt: function (v) { return fmtSig(v, 2) + " kT"; }, when: function () { return state.inter === "yukawa"; } },
     { key: "kappa_sigma", group: "Sample", lvl: 2, label: "Range of the repulsion: diameter / Debye length", kind: "log", min: 2, max: 30, fmt: function (v) { return fmtSig(v, 2); }, when: function () { return state.inter === "yukawa"; }, hint: function () { return "Smaller numbers: less salt, a longer reach."; } },
@@ -319,7 +319,7 @@
     { key: "glycerol_w", group: "Sample", lvl: 2, label: "Glycerol (by mass)", kind: "lin", min: 0, max: 0.95, step: 0.05, fmt: function (v) { return Math.round(100 * v) + " %"; }, when: function () { return state.liquid === "glycerol"; }, hint: function () { return "Viscosity " + fmtSig(viscosity_mPa_s(), 2) + " mPa s at " + Math.round(state.T_C) + " " + DEG + "C."; } },
     { key: "n_liquid", group: "Sample", lvl: 3, label: "Liquid refractive index", kind: "lin", min: 1.30, max: 1.60, step: 0.005, fmt: function (v) { return v.toFixed(3); }, when: function () { return state.liquid === "custom"; } },
     { key: "visc_mPa_s", group: "Sample", lvl: 3, label: "Liquid viscosity", kind: "log", min: 0.3, max: 1000, fmt: function (v) { return fmtSig(v, 2) + " mPa s"; }, when: function () { return state.liquid === "custom"; } },
-    { key: "T_C", group: "Sample", lvl: 2, label: "Temperature", kind: "lin", min: 5, max: 60, step: 1, fmt: function (v) { return v.toFixed(0) + " " + DEG + "C"; } },
+    { key: "T_C", group: "Sample", lvl: 2, label: "Temperature", kind: "lin", min: 5, max: 60, step: 1, entry: { unit: DEG + "C", scale: 1, step: 1, digits: 0 }, fmt: function (v) { return v.toFixed(0) + " " + DEG + "C"; } },
     { key: "cell_um", group: "Sample", lvl: 2, label: "Chamber thickness", kind: "log", min: 3, max: 30, fmt: function (v) { return fmtSig(v, 2) + " " + MU + "m"; }, hint: function () { return "The simulated box repeats sideways and in depth, so there are no walls."; } },
     { key: "focus_frac", group: "Sample", lvl: 2, label: "Focus height in the chamber", kind: "lin", min: 0, max: 1, step: 0.05, fmt: function (v) { return fmtSig(v * state.cell_um, 2) + " " + MU + "m above the bottom"; } },
 
@@ -486,14 +486,22 @@
       const id = "c-" + c.key;
       let hintEl = null;
       if (c.kind === "log" || c.kind === "lin") {
-        wrap.innerHTML = '<div class="row"><label for="' + id + '"></label><output for="' + id + '"></output></div><input type="range" id="' + id + '">';
+        // a number box replaces the read-out where an exact value matters (c.entry: unit, scale from the stored value, step)
+        const E = c.entry;
+        wrap.innerHTML = '<div class="row"><label for="' + id + '"></label>' + (E ? '<span class="numentry"><input type="number" inputmode="decimal"> ' + E.unit + '</span>' : '<output for="' + id + '"></output>') + '</div><input type="range" id="' + id + '">';
         wrap.querySelector("label").textContent = typeof c.label === "function" ? c.label() : c.label;
-        const inp = wrap.querySelector("input"), out = wrap.querySelector("output");
+        const inp = wrap.querySelector('input[type="range"]'), out = wrap.querySelector("output"), num = wrap.querySelector('input[type="number"]');
         if (c.kind === "log") { inp.min = 0; inp.max = 1000; inp.step = 1; } else { inp.min = c.min; inp.max = c.max; inp.step = c.step; }
         const read = function () { return c.kind === "log" ? c.min * Math.pow(c.max / c.min, inp.value / 1000) : parseFloat(inp.value); };
-        inp.addEventListener("input", function () { out.textContent = c.fmt(read()); inp.setAttribute("aria-valuetext", out.textContent); });
+        const show = function (v) { const t = c.fmt(v); if (out) out.textContent = t; else num.value = +(v * E.scale).toFixed(E.digits); inp.setAttribute("aria-valuetext", t); };
+        if (num) {
+          num.min = c.min * E.scale; num.max = c.max * E.scale; num.step = E.step;
+          num.setAttribute("aria-label", (typeof c.label === "function" ? c.label() : c.label) + " (" + E.unit + ")");
+          num.addEventListener("change", function () { const v = parseFloat(num.value) / E.scale; if (!isFinite(v)) { show(state[c.key]); return; } state[c.key] = Math.min(c.max, Math.max(c.min, v)); ctlEls[c.key].set(state[c.key]); onChange(c.key); });
+        }
+        inp.addEventListener("input", function () { show(read()); });
         inp.addEventListener("change", function () { state[c.key] = read(); onChange(c.key); });
-        ctlEls[c.key] = { wrap: wrap, set: function (v) { inp.value = c.kind === "log" ? 1000 * Math.log(v / c.min) / Math.log(c.max / c.min) : v; out.textContent = c.fmt(v); inp.setAttribute("aria-valuetext", out.textContent); } };
+        ctlEls[c.key] = { wrap: wrap, set: function (v) { inp.value = c.kind === "log" ? 1000 * Math.log(v / c.min) / Math.log(c.max / c.min) : v; show(v); } };
       } else if (c.kind === "select" || c.kind === "objective") {
         wrap.innerHTML = '<label for="' + id + '"></label><select id="' + id + '"></select>';
         wrap.querySelector("label").textContent = typeof c.label === "function" ? c.label() : c.label;
@@ -1180,6 +1188,7 @@
       r.f.forEach(function (f, li) { if (isFinite(f)) dot(ctx, a.fx(taus[li]), a.fy(Math.max(-0.15, Math.min(1.15, f))), k === pkk ? 3.2 : 2.4, col, null); });
     });
     a.done();
+    fillNumbers("curves-numbers", ["Delay (s)"].concat(pick.map(function (k) { return "q = " + fmtSig(res.rows[k].q_per_um, 3); })), taus.map(function (t, li) { return [t].concat(pick.map(function (k) { return res.rows[k].f[li]; })); }));
     const leg = $("curves-legend"); leg.innerHTML = "";
     pick.forEach(function (k) { const q = res.rows[k].q_per_um, s = document.createElement("span"); s.innerHTML = '<i style="background:' + (k === pkk ? C.ink : qColor(qPos(q))) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / q, 2) + " " + MU + "m" : "q = " + q.toFixed(2) + " " + MU + "m\u207b\u00b9") + (k === res.peak.k && hasPeak(res) ? (level === "curious" ? " (neighbours)" : " (peak of S)") : ""); leg.appendChild(s); });
   }
@@ -1345,6 +1354,7 @@
       result: { peak_q_per_um: hasPeak(r) ? +r.peak.q_per_um.toPrecision(3) : null, peak_S: hasPeak(r) ? +r.peak.S.toPrecision(3) : null, D0_um2_s: +D0.toPrecision(3),
         q_per_um: r.rows.map(function (x) { return +x.q_per_um.toPrecision(3); }), S: r.rows.map(function (x) { return +x.S.toPrecision(3); }), D_over_D0: r.rows.map(function (x) { return x.D_um2_s ? +(x.D_um2_s / D0).toPrecision(3) : null; }) } };
     $("settings-json").textContent = JSON.stringify(obj, null, 1).replace(/\[\s+([-\d.e+,\s\[\]nul]+?)\s+\]/g, function (m, a) { return "[" + a.replace(/\s+/g, " ") + "]"; });
+    focusableScrollers();
   }
   function renderLag() { const res = cache.res, li = lagIndex(); $("lag").max = res.lags.length - 1; $("lag-out").textContent = fmtDur(res.taus_s[li]) + (res.pairs ? " (" + res.lags[li] + (res.lags[li] === 1 ? " frame interval, " : " frame intervals, ") + res.pairs[li].length / 2 + " pairs of frames)" : " (" + res.lags[li] + (res.lags[li] === 1 ? " frame)" : " frames)")); $("lag").setAttribute("aria-valuetext", fmtDur(res.taus_s[li])); }
   function renderAll() {
@@ -1456,6 +1466,14 @@
     if (!el) { el = document.createElement("div"); el.id = "sr-live"; el.className = "sr-only"; el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
     el.textContent = ""; setTimeout(function () { el.textContent = t; }, 50);
   }
+
+  // code and equations wider than the page scroll sideways: they take the keyboard focus so they can be scrolled without a mouse
+  function focusableScrollers() { document.querySelectorAll("pre, .eq").forEach(function (el) { if (el.scrollWidth > el.clientWidth + 1) { el.tabIndex = 0; if (!el.getAttribute("aria-label")) el.setAttribute("aria-label", el.tagName === "PRE" ? "Code" : "Equation"); } else el.removeAttribute("tabindex"); }); }
+  document.addEventListener("toggle", function () { focusableScrollers(); }, true);
+  window.addEventListener("resize", function () { focusableScrollers(); });
+  window.addEventListener("load", function () { focusableScrollers(); });
+  // charts drawn on canvases are announced as pictures, with their description
+  document.querySelectorAll("canvas[aria-label]").forEach(function (c) { if (!c.getAttribute("role")) c.setAttribute("role", "img"); });
 
   // ---- wiring -------------------------------------------------------------------------------
   buildControls(); buildCards(); buildPredictions();

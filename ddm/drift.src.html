@@ -154,6 +154,7 @@ details.more dl { margin-top: 0.4rem; }
 .cblock[data-block="sample"] { --c: var(--blk-sample); }
 .cblock[data-block="microscope"] { --c: var(--blk-microscope); }
 .cblock[data-block="camera"] { --c: var(--blk-camera); }
+.cblock[data-block="camera"] > summary h3, .cblock[data-block="camera"] .csub h4 { color: color-mix(in srgb, var(--c) 40%, var(--ink)); }   /* the yellow needs more ink to be readable */
 .cblock[data-block="analysis"] { --c: var(--blk-analysis); }
 .cblock > summary { cursor: pointer; list-style: none; display: grid; gap: 0.15rem; }
 .cblock > summary::-webkit-details-marker { display: none; }
@@ -171,6 +172,8 @@ details.more dl { margin-top: 0.4rem; }
 .ctl output { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; white-space: nowrap; }
 .ctl input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
 .ctl select, .ctl input[type="number"] { font: inherit; padding: 0.3rem 0.4rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink); width: 100%; }
+.ctl .numentry { display: inline-flex; align-items: baseline; gap: 0.3rem; white-space: nowrap; color: var(--accent); font-weight: 600; }
+.ctl .numentry input[type="number"] { width: 5.5rem; padding: 0.15rem 0.3rem; text-align: right; font-variant-numeric: tabular-nums; }
 .ctl .hint { font-size: 0.78rem; color: var(--muted); line-height: 1.35; }
 .qrange { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
 .btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }

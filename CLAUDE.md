@@ -258,6 +258,7 @@ shareable. "Download the movie" writes the analysed frames as a 32-bit TIFF (`ti
 After any change to the sources: run `python3 ddm/build.py`, then `python3 build.py --check`, and commit
 both. Checks: `cd ddm && node test-optics.js data/mie_ref.json && node test-engine.js && node test-movie.js`
 (the last takes several minutes), for the swimmers `node test-swim.js && node test-active.js`, for the drift page `node test-drift.js`, for the rheology page `node test-rheo.js`, and for the crowded page `node test-crowd.js`.
+Notebooks for readers are in `static/ddm/notebooks/` (`ddm-sizing.ipynb` with fastDDM, `ddm-rheology.ipynb` with numpy and scipy for log-spaced frames). Each was run on the page's standard movie (downloaded TIFF and frame times); rerun them after a change to the analysis or to the export, and update the numbers quoted in them and on the pages.
 `python3 ddm/build.py --preview` writes stand-alone copies (`ddm-landing.html`, `ddm-hands-on.html`,
 `ddm-swimmers.html`, `ddm-drift.html`, `ddm-rheology.html`, `ddm-crowded.html`, linked to each other, Google Fonts) for previews outside the site; do not commit them.
 The page text follows the writing style above; it must stay ASCII (the build refuses other characters).
