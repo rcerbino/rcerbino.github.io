@@ -1248,6 +1248,7 @@
       dot(ctx, X, a.fy(v), 2.8, col, null);
     });
     a.done();
+    fillNumbers("chart-numbers", ["q (" + MU + "m\u207b\u00b9)", "S(q) measured", "S(q) simulated", "D(q)/D0 measured", "Expected at the shortest delays"], rows.map(function (r) { const t = trueS(r.q_per_um); return [r.q_per_um, r.S, t, r.D_um2_s > 0 ? r.D_um2_s / D0 : null, t ? 1 / t : null]; }));
     const ul = $("dq-notes"); ul.innerHTML = "";
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
     const x = cache.movie.truth.interact.label_fraction, few = x <= 0.1;
@@ -1260,7 +1261,6 @@
     add((cache.res.ref_rate ? "Dots: D(q) / D0 = \u0393(q) / \u0393ref(q), the rate of each pattern at the first delays against that of the same pattern in the dilute reference (bars: jackknife over ten parts of the movie); D0 = " : "Dots: D(q) = \u0393(q) / q\u00b2 from the first delays (bars: jackknife over ten parts of the movie), against D0 = ") + fmtSig(D0, 3) + " " + MU + "m\u00b2/s. Red: " + (x < 1 ? "D0 / [1 + x (S - 1)], with x = " + x + (few ? ", close to D0" : "") : "D0 / S(q)") + ", what the shortest delays should show without hydrodynamic interactions (this simulation has none).");
     if (few) add("With few particles dyed the dots follow self diffusion. They sit below D0 because the fit, down to f = 0.6, reaches delays where each particle already feels its cage.");
     else add("Why S(q) can match while D(q) sits below the red line: S(q) comes from the amplitudes, which do not depend on timing, but D(q) needs the initial slope of ln f, and the fit, down to f = 0.6, reaches delays where the cages are already felt. At the widest patterns each pattern of the image also takes in waves tilted along the axis of the microscope, where D0 / S is lower. Real colloids would also have hydrodynamic interactions, H(q) different from 1, which this simulation leaves out.");
-    fillNumbers("chart-numbers", ["q (" + MU + "m\u207b\u00b9)", "S(q) measured", "S(q) simulated", "D(q)/D0 measured", "Expected at the shortest delays"], rows.map(function (r) { const t = trueS(r.q_per_um); return [r.q_per_um, r.S, t, r.D_um2_s > 0 ? r.D_um2_s / D0 : null, t ? 1 / t : null]; }));
   }
 
   // ---- result -------------------------------------------------------------------------------
