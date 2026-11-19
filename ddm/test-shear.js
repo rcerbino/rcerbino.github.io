@@ -7,7 +7,7 @@ let fails = 0;
 function check(name, ok, msg) { console.log((ok ? "ok   " : "FAIL ") + name + ": " + msg); if (!ok) fails++; }
 function orca() { return { kind: "camera", pixel_um: 6.5, binning: 1, bin_charge: false, qe: 0.82, read_noise_e: 1.6, full_well_e: 30000, timing: "global", t_row_s: 0, rows_total: 512, crop_row0: 0 }; }
 function run(shear, glyc, seed) {
-  const cfg = { seed: seed || 1, mode: "brightfield", objective: { mag: 20, na: 0.45 }, illum: { na_in: 0, na_out: 0.52 }, source: "green", homodyne: false, light_frac: 0.5,
+  const cfg = { seed: seed || 1, mode: "brightfield", objective: { mag: 20, na: 0.45 }, illum: { na_in: 0, na_out: 0.52 }, source: "green", homodyne: true, light_frac: 0.5,
     detector: orca(), n_px: 128, n_frames: 512, frame_rate_hz: 4, exposure_s: 0.002, particle: "ps", diameter_um: 2, size_spread: 0, volume_fraction: 0.01,
     liquid: { glycerol_w: glyc || 0 }, T_C: 22, cell_um: 40, focus_um: 20, drift_um_s: 0, shear: shear };
   const mv = DDM.runToEnd(MOVIE.simulate(cfg));

@@ -261,7 +261,8 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
   the flow and the vorticity; at the echoes only pairs starting at zero strain, and A from those frames (x_phase); B from the camera
   (x_noise; published: quadratic through the first three echoes); rate from a line through the origin of -ln f; jackknife over eight
   parts of the movie) and `worker-shear.js` (bench and strain sweep). The shear is in `movie.js` option `shear` (affine displacement
-  relative to the focal plane, non-affine diffusion). Materials in `MATERIALS`/`rearrangements` in `app-shear.js`: the microgel set to
+  relative to the focal plane, non-affine diffusion; bright field with the scattered-intensity term, `homodyne: true`, which beads of a
+  micrometre or more need, or the image goes below zero and clips). Materials in `MATERIALS`/`rearrangements` in `app-shear.js`: the microgel set to
   Edera et al., Soft Matter 17, 8553 (2021), at 20 % and 80 %. Check: `node test-shear.js` (about a minute).
 - "Moving tissues" /ddm/tissues/ (`static/ddm/tissues/index.html`): confluent monolayers, jammed, fluid or flocking. `tissue.src.html`,
   `app-tissue.js`, `tissue-movie.js` (self-propelled soft discs with alignment of polarity to velocity, nuclei as Gaussian spots;

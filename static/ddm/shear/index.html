@@ -413,7 +413,7 @@ m = 4                                  # frames per period</pre>
             <p id="diff-note"></p>
           </div>
         </div>
-        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what changed. Half a cycle apart the shear has moved the beads; a whole cycle apart it has put them back, apart from what the material did on its own.</p>
+        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what changed. A quarter of a cycle apart the shear has moved the beads; a whole cycle apart it has put them back, apart from what the material did on its own.</p>
         <details class="math" data-open-at="researcher">
           <summary>The math: the difference image</summary>
           <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
@@ -439,7 +439,7 @@ m = 4                                  # frames per period</pre>
           <div class="text">
             <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie. The centre of the map holds wide stripes, the edge fine ones.</p>
             <p class="only-1">The charts further down label each pattern by <i>q</i>, a number that grows as the stripes get finer: <i>q</i> = 2&pi; divided by the stripe spacing, in inverse micrometres. Stripes 1 &micro;m apart have <i>q</i> of about 6.</p>
-            <p>The shear moves the beads along x only, so it mostly affects stripes that cross the flow: those whose spacing is measured along x, to the left and right of the centre of the map. Stripes lying along the flow, above and below the centre, hardly notice it. Move the delay slider to half a period and then to a whole one, and watch the map.</p>
+            <p>The shear moves the beads along x only, so it mostly affects stripes that cross the flow: those whose spacing is measured along x, to the left and right of the centre of the map. Stripes lying along the flow, above and below the centre, hardly notice it. Move the delay slider to a quarter of a period and then to a whole one, and watch the map.</p>
             <p class="lvl-2" id="kopt-note">The dashed circle on the strength map marks the finest pattern the microscope can resolve.</p>
           </div>
         </div>
@@ -458,7 +458,7 @@ m = 4                                  # frames per period</pre>
         <div class="step-title"><span class="num">5</span><h2 id="h-cycle">Watch a pattern through a few cycles</h2></div>
         <div class="step-body">
           <div class="text">
-            <p>Follow one stripe spacing over the first three cycles, in the two directions. Across the flow, the pattern fades within each cycle, as the shear carries beads at different depths by different amounts, and comes back at the end of it, when the plates are where they started: an echo. Along the flow, the shear hardly touches the pattern.</p>
+            <p>Follow one stripe spacing over the first three cycles, in the two directions. Across the flow, the pattern fades within each cycle, as the shear carries beads at different depths by different amounts, and comes back at the end of it, when the plates are where they started: an echo. Half way through it comes back only in part: pairs of frames that start at rest find the plates back in place, those that start at the largest strain find them on the opposite side. Along the flow, the shear hardly touches the pattern.</p>
             <p class="lvl-2">The points are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i> in the two sectors, at the <i>q</i> picked on the map of step 4. The echoes, at whole periods, are drawn larger: how high they reach is what step 6 follows over the whole movie.</p>
           </div>
           <figure class="viz">
@@ -496,7 +496,7 @@ m = 4                                  # frames per period</pre>
           </figure>
           <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
           <figure class="viz">
-            <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>. Large beads make a strong signal: it stands far above the noise until the finest patterns the microscope resolves.</figcaption>
+            <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>. Large beads make a strong signal: it stands far above the noise until the finest patterns the microscope resolves. The dips are the patterns at which the light scattered across a bead cancels, at spacings set by its size (for 2 &micro;m beads, near 2.7 and 5.7 &micro;m<sup>-1</sup>): there the signal is weak and those patterns count little.</figcaption>
             <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
             <div class="legend" id="amp-legend"></div>
           </figure>
@@ -510,7 +510,7 @@ m = 4                                  # frames per period</pre>
         <details class="math" data-open-at="researcher">
           <summary>The math: the fit of the echoes</summary>
           <div class="eq">&minus;ln <i>f</i>(<i>q</i>, <i>kT</i><sub>0</sub>) = &Gamma;(<i>q</i>) <i>kT</i><sub>0</sub>, &nbsp;&nbsp; &Gamma; = &Sigma;<sub><i>k</i></sub> <i>w<sub>k</sub> t<sub>k</sub></i> (&minus;ln <i>f<sub>k</sub></i>) / &Sigma;<sub><i>k</i></sub> <i>w<sub>k</sub> t<sub>k</sub></i><sup>2</sup>, &nbsp;&nbsp; <i>w<sub>k</sub></i> = <i>f<sub>k</sub></i><sup>2</sup></div>
-          <p><b>Noise and amplitude.</b> <i>B</i> = 2 (mean count + read noise<sup>2</sup>), from the camera; <i>A</i> = 2&lang;|<i>F</i>|<sup>2</sup>&rang; &minus; <i>B</i>, from the mean power of each mode, so that a sample that never rearranges keeps its whole amplitude (its temporal variance would be zero). <b>Echoes at zero strain.</b> A bead that moved along the height between two echoes sits where the affine displacement is different: at strain <i>&gamma;</i> it is displaced by <i>&gamma;</i> &Delta;<i>h</i> along the flow, which adds <i>&gamma;</i><sub>0</sub><sup>2</sup> sin<sup>2</sup>(phase) &lang;&Delta;<i>h</i><sup>2</sup>&rang; to &lang;&Delta;<i>x</i><sup>2</sup>&rang;. Averaged over every phase, as in the paper, <i>D<sub>x</sub></i> gains <i>&gamma;</i><sub>0</sub><sup>2</sup> <i>D<sub>h</sub></i> / 2; pairs that start at zero strain (every half period here) leave it out. <b>Checks.</b> A <i>q</i> is left out when its signal is below the noise, when it is finer than the microscope resolves, when it fades within one period (fewer than three echoes above 0.15), or when it hardly fades within the movie (the last echo above 0.9). When no pattern fades enough, the page gives the slowest <i>D</i> this movie could have shown: &minus;ln 0.9 / (<i>q</i><sub>max</sub><sup>2</sup> <i>t</i><sub>max</sub>). <b>What the page does not fix.</b> Below the yield point, where the echoes fade only over most of the movie, the jackknife underestimates the uncertainty: on six independent samples at 20 % strain, <i>D</i> along the flow scattered by 13 % from sample to sample, about twice the jackknife, around the right value (on average 2 % high). The simulated layer holds about 160 beads, and each wanders by less than a pixel over the movie; a real field of view holds many more. Above it (80 %) the jackknife matched the scatter, about 10 %.</p>
+          <p><b>Noise and amplitude.</b> <i>B</i> = 2 (mean count + read noise<sup>2</sup>), from the camera; <i>A</i> = 2&lang;|<i>F</i>|<sup>2</sup>&rang; &minus; <i>B</i>, from the mean power of each mode, so that a sample that never rearranges keeps its whole amplitude (its temporal variance would be zero). <b>Echoes at zero strain.</b> A bead that moved along the height between two echoes sits where the affine displacement is different: at strain <i>&gamma;</i> it is displaced by <i>&gamma;</i> &Delta;<i>h</i> along the flow, which adds <i>&gamma;</i><sub>0</sub><sup>2</sup> sin<sup>2</sup>(phase) &lang;&Delta;<i>h</i><sup>2</sup>&rang; to &lang;&Delta;<i>x</i><sup>2</sup>&rang;. Averaged over every phase, as in the paper, <i>D<sub>x</sub></i> gains <i>&gamma;</i><sub>0</sub><sup>2</sup> <i>D<sub>h</sub></i> / 2; pairs that start at zero strain (every half period here) leave it out. <b>Checks.</b> A <i>q</i> is left out when its signal is below the noise, when it is finer than the microscope resolves, when it fades within one period (fewer than three echoes above 0.15), or when it hardly fades within the movie (the last echo above 0.9). When no pattern fades enough, the page gives the slowest <i>D</i> this movie could have shown: &minus;ln 0.9 / (<i>q</i><sub>max</sub><sup>2</sup> <i>t</i><sub>max</sub>). <b>What the page does not fix.</b> Below the yield point, where the echoes fade only over most of the movie, the jackknife underestimates the uncertainty: on six independent samples at 20 % strain, <i>D</i> along the flow scattered by 12 % from sample to sample, about twice the jackknife, around the right value (on average 1 % high). The simulated layer holds about 160 beads, and each wanders by less than a pixel over the movie; a real field of view holds many more. Above it (80 %) the jackknife came close to the scatter: 12 % against 15 %.</p>
           <p>In Python, with <code>F</code> the Fourier transform of each frame and <code>m</code> frames per period:</p>
           <pre class="code">import numpy as np
 F = np.fft.fft2(img_seq)                       # frames x rows x columns
@@ -573,8 +573,8 @@ def echo_d(k):                                 # d(q) at k periods, pairs starti
     <h2 id="h-adds">What this page adds to the published methods</h2>
     <p class="prose">Edera et al. (2021) introduced echo-DDM: images taken a whole number of periods apart under oscillatory shear, their structure functions averaged over the phases of the cycle, with the noise from the first delays. The steps below are not in the papers we cite: we added them while testing the page against its own simulations, and some may exist elsewhere. At the "Addict" level each can be switched off, and the result table shows the published method alone on the same movie (every phase averaged, B from a quadratic through the first three echoes).</p>
     <ul class="adds">
-      <li><b>Echoes at zero strain.</b> Only pairs of frames that start when the strain is zero, every half period, are used at the echoes: a bead that moved along the height between two echoes is carried by a different amount by the shear, which adds &gamma;<sub>0</sub><sup>2</sup> sin<sup>2</sup>(phase) &lang;&Delta;h<sup>2</sup>&rang; along the flow; at zero strain it adds nothing. It needs the camera to start at a known phase. <span class="where">Step 6. In a liquid sheared at 50 %, averaging over every phase read D along the flow 12 % too large in our tests (four samples), as the formula says; the error grows as the square of the strain. The amplitude A is then taken from the same frames, at zero strain, where the exposure blurs the beads most: from all frames it read D along the flow 8 % too small.</span></li>
-      <li><b>Noise from the camera.</b> B = 2 (mean count + read noise&sup2;), the same at every q, instead of a quadratic through the first three echoes. <span class="where">Step 6. At 80 % strain, where the first echoes have already faded a lot, the quadratic made D along the flow about 15 % too small in our tests (four samples); at 20 % it made no difference.</span></li>
+      <li><b>Echoes at zero strain.</b> Only pairs of frames that start when the strain is zero, every half period, are used at the echoes: a bead that moved along the height between two echoes is carried by a different amount by the shear, which adds &gamma;<sub>0</sub><sup>2</sup> sin<sup>2</sup>(phase) &lang;&Delta;h<sup>2</sup>&rang; along the flow; at zero strain it adds nothing. It needs the camera to start at a known phase. <span class="where">Step 6. In a liquid sheared at 50 %, averaging over every phase read D along the flow about 10 % larger than the pairs at rest in our tests (four samples), as the formula says; the error grows as the square of the strain. The amplitude A is then taken from the same frames, at zero strain, where the exposure blurs the beads most: from all frames it read D along the flow about 2 % too small.</span></li>
+      <li><b>Noise from the camera.</b> B = 2 (mean count + read noise&sup2;), the same at every q, instead of a quadratic through the first three echoes. <span class="where">Step 6. At 80 % strain, where the first echoes have already faded a lot, the quadratic made D along the flow about 4 % too small in our tests (six samples); at 20 % it made no difference.</span></li>
     </ul>
   </section>
 
@@ -4283,7 +4283,7 @@ def echo_d(k):                                 # d(q) at k periods, pairs starti
         const l0 = function (z) { return (z - x[1]) * (z - x[2]) / ((x[0] - x[1]) * (x[0] - x[2])); }, l1 = function (z) { return (z - x[0]) * (z - x[2]) / ((x[1] - x[0]) * (x[1] - x[2])); }, l2 = function (z) { return (z - x[0]) * (z - x[1]) / ((x[2] - x[0]) * (x[2] - x[1])); };
         B = Math.max(0, Math.min(y[0], y[0] * l0(0) + y[1] * l1(0) + y[2] * l2(0)));
       }
-      Bq[s][b] = B; Aq[s][b] = 2 * (allPhases ? pow : powR)[s][b] - B;
+      Bq[s][b] = B; Aq[s][b] = 2 * (allPhases || opts.amp_frames === "all" ? pow : powR)[s][b] - B;   // amp_frames "all": A from every frame (a check used by the tests only)
     }
 
     // 4. rates at the echoes
@@ -4543,7 +4543,8 @@ def echo_d(k):                                 # d(q) at k periods, pairs starti
   function simConfig(g) {
     const ob = objective(), r = rearrangements(state.material, g === undefined ? state.strain : g, state.freq_hz);
     return {
-      seed: state.seed, mode: "brightfield", objective: { mag: ob.m, na: ob.na }, illum: { na_in: 0, na_out: condNA() }, source: state.source, homodyne: false, light_frac: state.light_frac,
+      seed: state.seed, mode: "brightfield", objective: { mag: ob.m, na: ob.na }, illum: { na_in: 0, na_out: condNA() }, source: state.source, light_frac: state.light_frac,
+      homodyne: true,   // keep |E_s|^2: the phase shift through a polystyrene bead of a micrometre or more is large, and without it bright field goes below zero
       detector: detectorConfig(), n_px: simPx(), n_frames: nFrames(), frame_rate_hz: frameRate(), exposure_s: state.exposure_ms / 1000,
       particle: "ps", diameter_um: state.diameter_um, size_spread: 0, volume_fraction: state.phi,
       liquid: { glycerol_w: state.material === "liquid" ? state.glycerol_w : 0 }, T_C: state.T_C, cell_um: state.cell_um, focus_um: state.cell_um / 2, drift_um_s: 0,
@@ -4824,8 +4825,9 @@ def echo_d(k):                                 # d(q) at k periods, pairs starti
     const fresh = movie !== cache.movie;
     cache.movie = movie; cache.res = res; cache.cfg = cfg; cache.opts = opts;
     if (fresh) {
-      // the delay slider at half a cycle (or one cycle with one frame per cycle); the lower map zoomed on the patterns used
-      const want = res.frames_per_period > 1 ? res.frames_per_period / 2 : res.frames_per_period;
+      // the delay slider at a quarter of a cycle, when the strain has changed most (half a cycle with two frames per cycle, one cycle
+      // with one); the lower map zoomed on the patterns used
+      const fpp = res.frames_per_period, want = fpp >= 4 ? fpp / 4 : fpp > 1 ? fpp / 2 : fpp;
       $("lag").max = res.lags.length - 1; $("lag").value = Math.max(0, res.lags.indexOf(Math.round(want)));
       const qz = res.window.q_max_used || 3;
       cache.zoomK = Math.max(8, Math.min(movie.n / 2 - 1, Math.round(qz * movie.L_um / (2 * Math.PI)) + 2));
@@ -4943,8 +4945,8 @@ def echo_d(k):                                 # d(q) at k periods, pairs starti
     if (c.width !== n) { c.width = n; c.height = n; }
     const ctx = c.getContext("2d"), img = ctx.createImageData(n, n), d = img.data, o1 = f1 * n * n, o2 = f2 * n * n;
     if (diffScale === null) {
-      // one scale for every delay: the difference half a cycle apart (or one frame apart), so that echoes look as dark as they are
-      const h = Math.max(1, Math.round(cache.res.frames_per_period / 2)); let s = 0;
+      // one scale for every delay: the difference a quarter of a cycle apart (or one frame apart), so that echoes look as dark as they are
+      const h = Math.max(1, Math.round(cache.res.frames_per_period / 4)); let s = 0;
       for (let p = 0; p < n * n; p++) { const v = movie.frames[h * n * n + p] - movie.frames[p]; s += v * v; }
       diffScale = 3 * Math.sqrt(s / (n * n)) || 1;
     }
@@ -5283,7 +5285,7 @@ def echo_d(k):                                 # d(q) at k periods, pairs starti
     const m = cache.movie, res = cache.res, k = res.frames_per_period;
     $("movie-text").textContent = "The movie shows " + state.diameter_um + " " + MU + "m beads in " + MATERIALS[state.material].label.replace(/ \(.*$/, "").replace(/^An? /, "a ").replace(/,.*$/, "").toLowerCase() + ", sheared at " + fmtPct(state.strain) + " and " + fmtSig(state.freq_hz, 2) + " Hz. " + (k > 1 ? "Within each cycle, beads in focus stay put while those above and below it slide back and forth, the further from focus the more." : "One frame per cycle: every frame catches the plates in the same place.");
     $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s, " + k + " per cycle, " + fmtSig(m.T / k, 3) + " cycles, exposure " + fmtTime(m.exposure_s) + ". " + m.info.n_particles + " beads in a layer " + cache.cfg.cell_um + " " + MU + "m deep around the focus.";
-    $("diff-note").textContent = k > 1 ? "With the delay at half a cycle the shear has moved the beads out of focus by the most, and the difference is strong. At a whole cycle they are back: in a rubber the difference is only camera noise; in a material that rearranges, what is left is what the shear did not undo." : "With one frame per cycle every delay is a whole number of cycles: the difference shows only what the shear did not undo.";
+    $("diff-note").textContent = k > 1 ? "With the delay at a quarter of a cycle the beads above and below the focus have slid along the flow by up to the full strain, and the difference is strong. Half a cycle apart the plates are either back where they were or at the opposite side, depending on where the pair starts, so part of the difference stays. At a whole cycle they are back: in a rubber the difference is only camera noise; in a material that rearranges, what is left is what the shear did not undo." : "With one frame per cycle every delay is a whole number of cycles: the difference shows only what the shear did not undo.";
     const sb = $("movie-scale"), target = m.L_um / 4, nice = niceStep(target) > target ? niceStep(target) / 2 : niceStep(target);
     sb.querySelector("i").style.width = (100 * nice / m.L_um).toFixed(1) + "%"; sb.querySelector("span").textContent = fmtSig(nice, 2) + " " + MU + "m"; sb.style.width = "100%";
   }
@@ -5314,7 +5316,7 @@ def echo_d(k):                                 # d(q) at k periods, pairs starti
       shows: [{ label: "1 per cycle", set: { per_cycle: 1 }, go: "step-cycle" }, { label: "8 per cycle", set: { per_cycle: 8 }, go: "step-cycle" }] },
     { lvl: 2, title: "Wider patterns for fast rearrangements", text: "Above the yield point the finest patterns lose their echo within one cycle: no echo is left to follow. Only patterns wider than the distance a bead wanders in a few cycles keep one. A lower magnification brings wider patterns into the image; a higher frequency does not help, if the material rearranges by the same amount in every cycle, as assumed here.",
       shows: [{ label: "80 %, 20x", set: { strain: 0.8 }, go: "step-rates" }, { label: "80 %, 10x", set: { strain: 0.8, objective: objIndexByName("CFI Plan Fluor 10X") }, go: "step-rates" }] },
-    { lvl: 3, title: "Echoes at zero strain", text: "A bead that moves up or down between two echoes sits where the shear carries it further or less far, but only while the plates are displaced. Comparing frames that start at zero strain leaves this out; averaging over every phase, as in the paper, adds half the strain squared times the vertical diffusion to the diffusion along the flow: at 80 % about a fifth more, at 150 % about three quarters more. In our tests the page read D along the flow within 15 % up to 150 %, the published method up to 45 % too high. Switch it off at the Addict level to see the difference in the result table.",
+    { lvl: 3, title: "Echoes at zero strain", text: "A bead that moves up or down between two echoes sits where the shear carries it further or less far, but only while the plates are displaced. Comparing frames that start at zero strain leaves this out; averaging over every phase, as in the paper, adds half the strain squared times the vertical diffusion to the diffusion along the flow: at 80 % about a fifth more, at 150 % about three quarters more. In our tests (three samples each at 80, 100 and 150 %) the page read D along the flow within about 20 %, the published method up to 40 % too high. Switch it off at the Addict level to see the difference in the result table.",
       shows: [{ label: "Liquid at 50 %", set: { material: "liquid", strain: 0.5 }, go: "step-rates" }, { label: "Microgel at 150 %", set: { strain: 1.5 }, go: "step-rates" }] }
   ];
   function buildCards() {

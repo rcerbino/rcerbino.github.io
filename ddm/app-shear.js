@@ -83,7 +83,8 @@
   function simConfig(g) {
     const ob = objective(), r = rearrangements(state.material, g === undefined ? state.strain : g, state.freq_hz);
     return {
-      seed: state.seed, mode: "brightfield", objective: { mag: ob.m, na: ob.na }, illum: { na_in: 0, na_out: condNA() }, source: state.source, homodyne: false, light_frac: state.light_frac,
+      seed: state.seed, mode: "brightfield", objective: { mag: ob.m, na: ob.na }, illum: { na_in: 0, na_out: condNA() }, source: state.source, light_frac: state.light_frac,
+      homodyne: true,   // keep |E_s|^2: the phase shift through a polystyrene bead of a micrometre or more is large, and without it bright field goes below zero
       detector: detectorConfig(), n_px: simPx(), n_frames: nFrames(), frame_rate_hz: frameRate(), exposure_s: state.exposure_ms / 1000,
       particle: "ps", diameter_um: state.diameter_um, size_spread: 0, volume_fraction: state.phi,
       liquid: { glycerol_w: state.material === "liquid" ? state.glycerol_w : 0 }, T_C: state.T_C, cell_um: state.cell_um, focus_um: state.cell_um / 2, drift_um_s: 0,
@@ -364,8 +365,9 @@
     const fresh = movie !== cache.movie;
     cache.movie = movie; cache.res = res; cache.cfg = cfg; cache.opts = opts;
     if (fresh) {
-      // the delay slider at half a cycle (or one cycle with one frame per cycle); the lower map zoomed on the patterns used
-      const want = res.frames_per_period > 1 ? res.frames_per_period / 2 : res.frames_per_period;
+      // the delay slider at a quarter of a cycle, when the strain has changed most (half a cycle with two frames per cycle, one cycle
+      // with one); the lower map zoomed on the patterns used
+      const fpp = res.frames_per_period, want = fpp >= 4 ? fpp / 4 : fpp > 1 ? fpp / 2 : fpp;
       $("lag").max = res.lags.length - 1; $("lag").value = Math.max(0, res.lags.indexOf(Math.round(want)));
       const qz = res.window.q_max_used || 3;
       cache.zoomK = Math.max(8, Math.min(movie.n / 2 - 1, Math.round(qz * movie.L_um / (2 * Math.PI)) + 2));
@@ -483,8 +485,8 @@
     if (c.width !== n) { c.width = n; c.height = n; }
     const ctx = c.getContext("2d"), img = ctx.createImageData(n, n), d = img.data, o1 = f1 * n * n, o2 = f2 * n * n;
     if (diffScale === null) {
-      // one scale for every delay: the difference half a cycle apart (or one frame apart), so that echoes look as dark as they are
-      const h = Math.max(1, Math.round(cache.res.frames_per_period / 2)); let s = 0;
+      // one scale for every delay: the difference a quarter of a cycle apart (or one frame apart), so that echoes look as dark as they are
+      const h = Math.max(1, Math.round(cache.res.frames_per_period / 4)); let s = 0;
       for (let p = 0; p < n * n; p++) { const v = movie.frames[h * n * n + p] - movie.frames[p]; s += v * v; }
       diffScale = 3 * Math.sqrt(s / (n * n)) || 1;
     }
@@ -823,7 +825,7 @@
     const m = cache.movie, res = cache.res, k = res.frames_per_period;
     $("movie-text").textContent = "The movie shows " + state.diameter_um + " " + MU + "m beads in " + MATERIALS[state.material].label.replace(/ \(.*$/, "").replace(/^An? /, "a ").replace(/,.*$/, "").toLowerCase() + ", sheared at " + fmtPct(state.strain) + " and " + fmtSig(state.freq_hz, 2) + " Hz. " + (k > 1 ? "Within each cycle, beads in focus stay put while those above and below it slide back and forth, the further from focus the more." : "One frame per cycle: every frame catches the plates in the same place.");
     $("movie-specs").innerHTML = objective().n + ". Pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + m.T + " frames at " + fmtNum(m.frame_rate_hz) + " frames/s, " + k + " per cycle, " + fmtSig(m.T / k, 3) + " cycles, exposure " + fmtTime(m.exposure_s) + ". " + m.info.n_particles + " beads in a layer " + cache.cfg.cell_um + " " + MU + "m deep around the focus.";
-    $("diff-note").textContent = k > 1 ? "With the delay at half a cycle the shear has moved the beads out of focus by the most, and the difference is strong. At a whole cycle they are back: in a rubber the difference is only camera noise; in a material that rearranges, what is left is what the shear did not undo." : "With one frame per cycle every delay is a whole number of cycles: the difference shows only what the shear did not undo.";
+    $("diff-note").textContent = k > 1 ? "With the delay at a quarter of a cycle the beads above and below the focus have slid along the flow by up to the full strain, and the difference is strong. Half a cycle apart the plates are either back where they were or at the opposite side, depending on where the pair starts, so part of the difference stays. At a whole cycle they are back: in a rubber the difference is only camera noise; in a material that rearranges, what is left is what the shear did not undo." : "With one frame per cycle every delay is a whole number of cycles: the difference shows only what the shear did not undo.";
     const sb = $("movie-scale"), target = m.L_um / 4, nice = niceStep(target) > target ? niceStep(target) / 2 : niceStep(target);
     sb.querySelector("i").style.width = (100 * nice / m.L_um).toFixed(1) + "%"; sb.querySelector("span").textContent = fmtSig(nice, 2) + " " + MU + "m"; sb.style.width = "100%";
   }
@@ -854,7 +856,7 @@
       shows: [{ label: "1 per cycle", set: { per_cycle: 1 }, go: "step-cycle" }, { label: "8 per cycle", set: { per_cycle: 8 }, go: "step-cycle" }] },
     { lvl: 2, title: "Wider patterns for fast rearrangements", text: "Above the yield point the finest patterns lose their echo within one cycle: no echo is left to follow. Only patterns wider than the distance a bead wanders in a few cycles keep one. A lower magnification brings wider patterns into the image; a higher frequency does not help, if the material rearranges by the same amount in every cycle, as assumed here.",
       shows: [{ label: "80 %, 20x", set: { strain: 0.8 }, go: "step-rates" }, { label: "80 %, 10x", set: { strain: 0.8, objective: objIndexByName("CFI Plan Fluor 10X") }, go: "step-rates" }] },
-    { lvl: 3, title: "Echoes at zero strain", text: "A bead that moves up or down between two echoes sits where the shear carries it further or less far, but only while the plates are displaced. Comparing frames that start at zero strain leaves this out; averaging over every phase, as in the paper, adds half the strain squared times the vertical diffusion to the diffusion along the flow: at 80 % about a fifth more, at 150 % about three quarters more. In our tests the page read D along the flow within 15 % up to 150 %, the published method up to 45 % too high. Switch it off at the Addict level to see the difference in the result table.",
+    { lvl: 3, title: "Echoes at zero strain", text: "A bead that moves up or down between two echoes sits where the shear carries it further or less far, but only while the plates are displaced. Comparing frames that start at zero strain leaves this out; averaging over every phase, as in the paper, adds half the strain squared times the vertical diffusion to the diffusion along the flow: at 80 % about a fifth more, at 150 % about three quarters more. In our tests (three samples each at 80, 100 and 150 %) the page read D along the flow within about 20 %, the published method up to 40 % too high. Switch it off at the Addict level to see the difference in the result table.",
       shows: [{ label: "Liquid at 50 %", set: { material: "liquid", strain: 0.5 }, go: "step-rates" }, { label: "Microgel at 150 %", set: { strain: 1.5 }, go: "step-rates" }] }
   ];
   function buildCards() {

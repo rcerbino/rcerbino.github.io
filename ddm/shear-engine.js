@@ -132,7 +132,7 @@
         const l0 = function (z) { return (z - x[1]) * (z - x[2]) / ((x[0] - x[1]) * (x[0] - x[2])); }, l1 = function (z) { return (z - x[0]) * (z - x[2]) / ((x[1] - x[0]) * (x[1] - x[2])); }, l2 = function (z) { return (z - x[0]) * (z - x[1]) / ((x[2] - x[0]) * (x[2] - x[1])); };
         B = Math.max(0, Math.min(y[0], y[0] * l0(0) + y[1] * l1(0) + y[2] * l2(0)));
       }
-      Bq[s][b] = B; Aq[s][b] = 2 * (allPhases ? pow : powR)[s][b] - B;
+      Bq[s][b] = B; Aq[s][b] = 2 * (allPhases || opts.amp_frames === "all" ? pow : powR)[s][b] - B;   // amp_frames "all": A from every frame (a check used by the tests only)
     }
 
     // 4. rates at the echoes
