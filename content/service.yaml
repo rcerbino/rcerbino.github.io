@@ -54,14 +54,14 @@ standing:
       - what: Member, European Space Sciences Committee
         url: https://www.essc.esf.org/
         years: 2025-
-      - what: Member, structural commission on the future of the institute IBI-4, Forschungszentrum Jülich
-        years: "2026"
       - what: Committee member, Particle Characterisation Interest Group, Royal Society of Chemistry
         years: 2025-
       - what: Coordinator, ESA Facility Definition Team for Soft Matter and Biophysics
         years: 2023-2024
       - what: Member, SciSpacE Expert Strategy Group, European Space Agency
         years: "2022"
+      - what: Member, structural commission on the future of the institute IBI-4, Forschungszentrum Jülich
+        years: 2021-2022
       - what: Advisory panel of the book section, Physics Today
         years: 2016-2021
   - group: University of Vienna
@@ -117,6 +117,7 @@ activities:
   # ---- 2023
   - {date: 2023, group: jury, kind: jury, what: "Soft Matter Lectureship, Royal Society of Chemistry", role: "Assessment of nominees"}
   - {date: 2023, group: jury, kind: conference, what: "International Congress on Rheology, Athens", role: "Poster review committee"}
+  - {date: 2023, group: jury, kind: conference, what: "EMBO Workshop \"When biology of endocytosis meets physics\", Venice", role: "Poster prize jury"}
   - {date: 2023, group: thesis, kind: phd, what: "Stefano Castellini", where: "University of Milan, Italy", role: "Final examination board"}
   - {date: 2023, group: thesis, kind: phd, what: "Antonio Ciarlo", where: "University of Naples Federico II, Italy", role: "External referee"}
   - {date: 2023, group: thesis, kind: phd, what: "Final examination board, doctorate in Physics (three candidates)", where: "University of Naples Federico II, Italy"}
@@ -140,26 +141,28 @@ activities:
   - {date: 2020, group: people, kind: hiring, what: "Tenure-track researcher in Applied Physics, University of Milan, Italy", role: "Selection board"}
   - {date: 2020, group: people, kind: hiring, what: "Associate professor, University of Padua, Italy", role: "Selection board"}
   # ---- earlier
+  - {date: 2019, group: thesis, kind: phd, what: "Enrico Lattuada", where: "Politecnico di Milano, Italy", role: "External evaluator and defence committee"}
+  - {date: 2018, group: thesis, kind: phd, what: "Javier Fernández Castañón", where: "Sapienza University of Rome, Italy", role: "External referee"}
   - {date: 2018, group: thesis, kind: phd, what: "Stefano Villa", where: "University of Montpellier, France", role: "Jury member"}
   - {date: 2018, group: people, kind: hiring, what: "Fixed-term researcher in Applied Physics, University of Milan, Italy", role: "Selection board"}
   - {date: 2018, group: people, kind: hiring, what: "Research fellowship, University of Milan, Italy", role: "Selection board"}
-  - {date: 2018, group: people, kind: hiring, what: "Technical staff position, University of Milan, Italy", role: "Selection board"}
+  - {date: 2017, group: people, kind: hiring, what: "Technical staff position, University of Milan, Italy", role: "Selection board"}
   - {date: 2017, group: people, kind: hiring, what: "Tender for advanced microscopy equipment (1.3 million euro), University of Milan, Italy", role: "Tender board"}
   - {date: 2016, group: thesis, kind: phd, what: "Matteo Molteni", where: "University of Insubria, Italy", role: "Final examination board"}
   - {date: 2014, group: thesis, kind: phd, what: "Tommaso Fraccia", where: "University of Milan, Italy", role: "Final examination board"}
   - {date: 2014, group: jury, kind: jury, what: "Prize \"Riscopri Alessandro Volt@\", Centro Volta, Como, Italy", role: "Jury member"}
   - {date: 2011, group: jury, kind: conference, what: "Optical Sensors conference, Optical Society of America", role: "Programme committee"}
-  # ---- year not recorded
-  - {when: "before 2020", group: thesis, kind: phd, what: "Chiara Bosisio", where: "University of Milano-Bicocca, Italy", role: "Final examination board"}
-  - {when: "before 2020", group: thesis, kind: phd, what: "Valentina Quercioli", where: "University of Milano-Bicocca, Italy", role: "Final examination board"}
-  - {when: "before 2020", group: thesis, kind: phd, what: "Gaurav Jayaswal", where: "University of Padua, Italy", role: "Final examination board"}
-  - {when: "before 2020", group: thesis, kind: phd, what: "Cristina Rea", where: "University of Padua, Italy", role: "Final examination board"}
-  - {when: "before 2020", group: thesis, kind: phd, what: "Jacopo Grilli", where: "University of Padua, Italy", role: "Final examination board"}
-  - {when: "before 2020", group: thesis, kind: phd, what: "Stefano Zamuner", where: "University of Padua, Italy", role: "Final examination board"}
-  - {when: "before 2020", group: thesis, kind: phd, what: "Gonzalo Alfredo Carvacho", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
-  - {when: "before 2020", group: thesis, kind: phd, what: "Alvaro Andres Cuevas", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
-  - {when: "before 2020", group: thesis, kind: phd, what: "Giuseppe Di Domenico", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
-  - {when: "before 2020", group: thesis, kind: phd, what: "Giacomo Frangipane", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
-  - {when: "before 2020", group: thesis, kind: phd, what: "Marcello Graziosi", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
-  - {when: "before 2020", group: thesis, kind: phd, what: "Syed Adil Rad", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
-  - {when: "before 2020", group: thesis, kind: phd, what: "Niko Viggianiello", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  # ---- years found later (calendar and email, Nov 2026)
+  - {date: 2008, group: thesis, kind: phd, what: "Chiara Bosisio", where: "University of Milano-Bicocca, Italy", role: "Final examination board"}
+  - {date: 2008, group: thesis, kind: phd, what: "Valentina Quercioli", where: "University of Milano-Bicocca, Italy", role: "Final examination board"}
+  - {date: 2015, group: thesis, kind: phd, what: "Gaurav Jayaswal", where: "University of Padua, Italy", role: "Final examination board"}
+  - {date: 2015, group: thesis, kind: phd, what: "Cristina Rea", where: "University of Padua, Italy", role: "Final examination board"}
+  - {date: 2015, group: thesis, kind: phd, what: "Jacopo Grilli", where: "University of Padua, Italy", role: "Final examination board"}
+  - {date: 2015, group: thesis, kind: phd, what: "Stefano Zamuner", where: "University of Padua, Italy", role: "Final examination board"}
+  - {date: 2018, group: thesis, kind: phd, what: "Gonzalo Alfredo Carvacho", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {date: 2018, group: thesis, kind: phd, what: "Alvaro Andres Cuevas", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {date: 2018, group: thesis, kind: phd, what: "Giuseppe Di Domenico", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {date: 2018, group: thesis, kind: phd, what: "Giacomo Frangipane", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {date: 2018, group: thesis, kind: phd, what: "Marcello Graziosi", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {date: 2018, group: thesis, kind: phd, what: "Syed Adil Rad", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {date: 2018, group: thesis, kind: phd, what: "Niko Viggianiello", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
