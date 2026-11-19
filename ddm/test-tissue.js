@@ -38,5 +38,21 @@ function run(v0, J) { const mv = DDM.runToEnd(TM.simulate(Object.assign({}, base
       const i = r.taus_s.findIndex(function (x) { return x >= 3; }), tv = trueAt(t.msd, r.taus_s[i]); check("  displacement at " + r.taus_s[i].toFixed(1) + " h within 25 %", Math.abs(r.msd[i] / tv - 1) < 0.25, r.msd[i].toFixed(2) + " vs " + tv.toFixed(2) + " um^2"); }
   });
 });
+// step 6: the rate against q (stretched or compressed exponential), the best model, the speed in the fluid sheet
+const TR = require("./tissue-rates.js");
+[[6, 0, [1.5, 2.3], "cage"], [30, 0, [0.8, 1.2], "kww|prw"]].forEach(function (c) {
+  const mv = DDM.runToEnd(TM.simulate(Object.assign({}, base, { v0_um_h: c[0], J_h: c[1] }))), r = DDM.runToEnd(TE.analyse(mv, { cell_area_um2: 225 }));
+  const rows = r.rows.filter(function (x) { return x.A > 3 * x.B; }), tf = TR.truthFs(mv.truth.positions, mv.T, mv.L_um, mv.frame_h, r.lags, rows.map(function (x) { return x.q_per_um; }));
+  const fit = function (m) { return rows.map(function (x, i) { return { row: x, meas: TR.fitCurve(r.taus_s, x.f, x.q_per_um, m), truth: TR.fitCurve(tf.taus, tf.f[i], x.q_per_um, m) }; }); };
+  const K = fit("kww"), band = K.filter(function (o) { return o.row.q_per_um >= r.band.q_lo && o.meas && o.meas.measured; });
+  let sx = 0, sy = 0, sxx = 0, sxy = 0; band.forEach(function (o) { const x = Math.log(o.row.q_per_um), y = Math.log(o.meas.rate); sx += x; sy += y; sxx += x * x; sxy += x * y; });
+  const n = band.length, slope = (n * sxy - sx * sy) / (n * sxx - sx * sx);
+  check("v0 " + c[0] + ": rate grows as q^" + slope.toFixed(2), slope > c[2][0] && slope < c[2][1], "expected " + c[2].join(" to "));
+  const dev = band.filter(function (o) { return o.row.used && o.truth && o.truth.rate; }).map(function (o) { return Math.abs(Math.log(o.meas.rate / o.truth.rate)); }).sort(function (a, b) { return a - b; });
+  check("  rates in the band within 20 % of single cells (median)", dev[Math.floor(dev.length / 2)] < Math.log(1.2), (100 * (Math.exp(dev[Math.floor(dev.length / 2)]) - 1)).toFixed(1) + " %");
+  const bic = ["kww", "prw", "cage", "exp"].map(function (m) { let b = 0; fit(m).forEach(function (o) { if (o.meas) b += o.meas.n * Math.log(o.meas.rms * o.meas.rms + 1e-12) + o.meas.k * Math.log(o.meas.n); }); return [m, b]; }).sort(function (a, b) { return a[1] - b[1]; });
+  check("  best model " + bic[0][0], new RegExp("^(" + c[3] + ")$").test(bic[0][0]), "expected " + c[3]);
+  if (c[0] === 30) { const v = band.filter(function (o) { return o.row.used; }).map(function (o) { return 2 * o.meas.rate / o.row.q_per_um; }).sort(function (a, b) { return a - b; })[Math.floor(band.length / 2)]; check("  2 Gamma / q within 10 % of the rms speed", Math.abs(v / tf.vrms - 1) < 0.1, v.toFixed(1) + " vs " + tf.vrms.toFixed(1) + " um/h"); }
+});
 console.log(fails ? fails + " check(s) failed" : "all checks passed");
 process.exit(fails ? 1 : 0);

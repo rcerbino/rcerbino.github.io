@@ -267,7 +267,11 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
   `app-tissue.js`, `tissue-movie.js` (self-propelled soft discs with alignment of polarity to velocity, nuclei as Gaussian spots;
   times in hours: the movie's frame_rate_hz is per hour), `tissue-engine.js` (sheet path from the phase of the widest patterns,
   frames moved back by it (x_comoving), MSD as a Gaussian over a q band above the peak of A, order psi, state) and `worker-tissue.js`.
-  Step 7, the network of nuclei: `tissue-voronoi.js` finds the nuclei in every frame (local maxima, sub-pixel from a log-parabola),
+  Step 6, the rate against q: `tissue-rates.js` fits f at every q with A > 3B with a model chosen on the page (`fit_model`: kww
+  default, prw, cage, exp; a two-exponential model was tried and dropped: its rates jumped between q), ranks the four by BIC for the
+  movie, and fits the self intermediate scattering function of the simulated cells (`truthFs`, from `truth.positions`, computed in
+  the worker) with the same model. Step 5 draws the fitted model through the dots.
+  Step 8, the network of nuclei: `tissue-voronoi.js` finds the nuclei in every frame (local maxima, sub-pixel from a log-parabola),
   links them (mutual nearest neighbours closer than half a spacing), cuts Voronoi cells by bisectors (kept only when complete inside
   the field; the truth uses the periodic box and `truth.positions` from `tissue-movie.js`), and gives the shape index, sides and the
   neighbours kept after a delay (an edge longer than a tenth of a spacing to count, any edge to stay); the sweep also plots the

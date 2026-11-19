@@ -23,7 +23,7 @@
   const BASE = {
     tstate: "jammed", v0_um_h: 6, J_h: 0, Dr_h: 0.5, cell_um: 15, packing: 1.0, muk_h: 20,
     binning: 4, sim_px: 128, frame_min: 5, n_frames: 256, photons: 20000,
-    q_min: null, q_max: null, seed: 3, x_comoving: "on", channel: "nuclei"
+    q_min: null, q_max: null, seed: 3, x_comoving: "on", channel: "nuclei", fit_model: "kww"
   };
   let state = Object.assign({}, BASE);
   const LEVEL_RANK = { curious: 1, student: 2, researcher: 3, addict: 4 };
@@ -56,7 +56,7 @@
   // what DDM is run on: the movie of the nuclei, or images drawn from the nuclei found in each frame (step 7)
   const CHANNELS = [
     ["nuclei", "The nuclei, as filmed", "DDM runs on the movie of the nuclei."],
-    ["edges", "The cell edges: the network of the nuclei", "In each frame the page finds the nuclei, draws the Voronoi network they make (step 7) and films it as a stain of the cell edges would show it, with the same camera."],
+    ["edges", "The cell edges: the network of the nuclei", "In each frame the page finds the nuclei, draws the Voronoi network they make (step 8) and films it as a stain of the cell edges would show it, with the same camera."],
     ["both", "Nuclei and cell edges together", "The light of the cell edges added to the movie of the nuclei, as two stains seen together."]
   ];
   const CHAN_WORDS = { nuclei: "the nuclei", edges: "the cell edges", both: "nuclei and edges" };
@@ -223,7 +223,7 @@
   // ---- running (in a background worker when the browser allows it) --------------------
   const cache = { movie: null, res: null, cfg: null, opts: null, series: null };
   let timer = null, worker = null, runToken = 0, workerOK = true, seriesQueued = false, inflight = null, pending = {};
-  function workerSource() { return ["tmovie-src", "engine-src", "tengine-src", "tvoronoi-src"].map(function (id) { return document.getElementById(id).textContent; }).join("\n") + "\n" + document.getElementById("worker-src").textContent; }
+  function workerSource() { return ["tmovie-src", "engine-src", "tengine-src", "tvoronoi-src", "trates-src"].map(function (id) { return document.getElementById(id).textContent; }).join("\n") + "\n" + document.getElementById("worker-src").textContent; }
   function makeWorker() { try { return new Worker(URL.createObjectURL(new Blob([workerSource()], { type: "text/javascript" }))); } catch (e) { workerOK = false; return null; } }
   function schedule() { clearTimeout(timer); timer = setTimeout(function () { start("simulate"); }, 150); }
   function scheduleAnalysis() { clearTimeout(timer); timer = setTimeout(function () { start(cache.movie ? "analyse" : "simulate"); }, 150); }
@@ -299,6 +299,7 @@
     const res = await drive(TISSUE_ENGINE.analyse(vw, opts), token, 0.9, 1); if (!res) return;
     if (opts.compare_published) { const rp = await drive(TISSUE_ENGINE.analyse(vw, Object.assign({}, opts, { published_only: true })), token, 0.95, 1); res.published = rp ? pubSummary(rp) : { failed: "stopped" }; }
     res.channel = ch;
+    if (movieHere.truth.positions) res.truthFs = TISSUE_RATES.truthFs(movieHere.truth.positions, movieHere.T, movieHere.L_um, movieHere.frame_h, res.lags, res.rows.map(function (r) { return r.q_per_um; }));
     inflight = null;
     finish(movieHere, res, kind === "simulate" ? cfg : cache.cfg, opts, ch === "nuclei" ? null : { channel: ch, frames: vw.frames });
   }
@@ -440,7 +441,7 @@
     let txt = "Stripe spacing <b>" + fmtSig(spacing, 2) + " " + MU + "m</b>, " + fmtSig(spacing / state.cell_um, 2) + " cells";
     if (level !== "curious") txt += ", q = <b>" + q.toFixed(2) + " " + MU + "m<sup>-1</sup></b>, direction " + ang + "&deg;";
     const b = Math.round(k), r = cache.res.rows.find(function (x) { return x.b === b; });
-    if (r && r.used) txt += ": one of the patterns that give the displacement (step 6)";
+    if (r && r.used) txt += ": one of the patterns that give the displacement (step 7)";
     else if (q < cache.res.band.q_lo) txt += ": wider than the patterns used, where the arrangement of the cells slows the patterns";
     else txt += ": finer than the patterns used, where the nuclei fade into the noise";
     $("pick-out").innerHTML = txt + "."; syncPick();
@@ -565,7 +566,9 @@
     const pick = pickRows();
     pick.forEach(function (r) {
       const col = qColor(qPos(Math.max(qSpan[0], r.q_per_um)));
-      poly(ctx, r.f.map(function (v, i) { return isFinite(v) ? [a.fx(taus[i]), a.fy(Math.max(-0.4, Math.min(1.15, v)))] : null; }), col, 1.2);
+      const fit = fitOfRow(r);
+      if (fit) { const ts = []; for (let k = 0; k <= 80; k++) ts.push(x0 * Math.pow(x1 / x0, k / 80)); poly(ctx, ts.map(function (t) { return [a.fx(t), a.fy(Math.max(-0.4, Math.min(1.15, fit.curve(t))))]; }), col, 1.4); }
+      else poly(ctx, r.f.map(function (v, i) { return isFinite(v) ? [a.fx(taus[i]), a.fy(Math.max(-0.4, Math.min(1.15, v)))] : null; }), col, 1.2);
       r.f.forEach(function (f, i) { if (isFinite(f)) dot(ctx, a.fx(taus[i]), a.fy(Math.max(-0.4, Math.min(1.15, f))), 2.4, col, null); });
       if (res.comoving && level !== "curious") r.f_lab.forEach(function (f, i) { if (isFinite(f)) dot(ctx, a.fx(taus[i]), a.fy(Math.max(-0.4, Math.min(1.15, f))), 2.6, null, col); });
     });
@@ -573,9 +576,121 @@
     fillNumbers("curves-numbers", ["Delay (h)"].concat(pick.map(function (r) { return "q = " + fmtSig(r.q_per_um, 3) + (res.comoving ? ", sheet frame" : ""); })), taus.map(function (t, li) { return [t].concat(pick.map(function (r) { return r.f[li]; })); }));
     const leg = $("curves-legend"); leg.innerHTML = "";
     pick.forEach(function (r) { const s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(Math.max(qSpan[0], r.q_per_um))) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / r.q_per_um, 2) + " " + MU + "m" : "q = " + r.q_per_um.toFixed(2) + " " + MU + "m" + MINUS1) + (r.used ? "" : " (wider than the band)"); leg.appendChild(s); });
-    if (res.comoving && level !== "curious") { const s = document.createElement("span"); s.textContent = "Dots: in the frame of the sheet; circles: as recorded" + (compare && compare.curves ? "; dotted: " + compare.label : ""); leg.appendChild(s); }
+    { const s = document.createElement("span"); s.textContent = (res.comoving && level !== "curious" ? "Dots: in the frame of the sheet; circles: as recorded; " : "Dots: measured; ") + "lines: the fit of step 6 (" + FIT_WORDS[state.fit_model] + ")" + (compare && compare.curves ? "; dotted: " + compare.label : ""); leg.appendChild(s); }
   }
-  // step 6: mean squared displacement, measured and simulated
+  // ---- step 6: the rate of each pattern against q ---------------------------------------------------------------
+  const FIT_MODELS = ["kww", "prw", "cage", "exp"];
+  const FIT_WORDS = { kww: "stretched or compressed exponential", prw: "persistent random walk", cage: "exponential to a plateau", exp: "exponential" };
+  // the fits of every q with signal, for one model: measured, and of the simulated cells (truth); kept until the next result
+  let fitCache = { res: null, by: {} };
+  function fitRows() { return cache.res.rows.filter(function (r) { return r.A > 3 * r.B; }); }
+  function fitsFor(model) {
+    const res = cache.res;
+    if (fitCache.res !== res) fitCache = { res: res, by: {} };
+    if (fitCache.by[model]) return fitCache.by[model];
+    const rows = fitRows(), tf = res.truthFs;
+    const meas = rows.map(function (r) { return TISSUE_RATES.fitCurve(res.taus_s, r.f, r.q_per_um, model); });
+    const truth = rows.map(function (r) {
+      if (!tf) return null;
+      const i = tf.q.indexOf(r.q_per_um); return i >= 0 ? TISSUE_RATES.fitCurve(tf.taus, tf.f[i], r.q_per_um, model) : null;
+    });
+    let bic = 0; meas.forEach(function (o) { if (o) bic += o.n * Math.log(o.rms * o.rms + 1e-12) + o.k * Math.log(o.n); });
+    return (fitCache.by[model] = { rows: rows, meas: meas, truth: truth, bic: bic });
+  }
+  function fitOfRow(r) { const F = fitsFor(state.fit_model), i = F.rows.indexOf(r); return i >= 0 ? F.meas[i] : null; }
+  // slope of log rate against log q over the measured points from the start of the band
+  function rateSlope(F) {
+    const lo = cache.res.band.q_lo, pts = [];
+    F.meas.forEach(function (o, i) { if (o && o.measured && F.rows[i].q_per_um >= lo) pts.push([Math.log(F.rows[i].q_per_um), Math.log(o.rate)]); });
+    if (pts.length < 3) return null;
+    let sx = 0, sy = 0, sxx = 0, sxy = 0; pts.forEach(function (p) { sx += p[0]; sy += p[1]; sxx += p[0] * p[0]; sxy += p[0] * p[1]; });
+    const n = pts.length, sl = (n * sxy - sx * sy) / (n * sxx - sx * sx);
+    return { slope: sl, icept: (sy - sl * sx) / n, n: n };
+  }
+  function median(a) { a = a.filter(Number.isFinite).sort(function (x, y) { return x - y; }); return a.length ? a[Math.floor(a.length / 2)] : null; }
+  function bandParams(F, key) { const lo = cache.res.band.q_lo, hi = cache.res.band.q_hi; return median(F.meas.map(function (o, i) { return o && o.measured && F.rows[i].q_per_um >= lo && F.rows[i].q_per_um <= hi ? key(o) : NaN; })); }
+  function drawGamma() {
+    const res = cache.res; if (!res || !$("chart-gamma")) return;
+    const F = fitsFor(state.fit_model), rows = F.rows;
+    if (!rows.length) return;
+    const vals = []; F.meas.concat(F.truth).forEach(function (o) { if (o && o.rate > 0) vals.push(o.rate); });
+    if (!vals.length) return;
+    const qs = rows.map(function (r) { return r.q_per_um; }), x0 = qs[0] / 1.2, x1 = qs[qs.length - 1] * 1.2;
+    const y0 = Math.min.apply(null, vals) / 2, y1 = Math.max.apply(null, vals) * 2;
+    const a = axes($("chart-gamma"), { xlog: true, ylog: true, x0: x0, x1: x1, y0: y0, y1: y1, xlabel: "q (" + MU + "m" + MINUS1 + ")", ylabel: "Rate \u0393 (per hour)" }), ctx = a.ctx;
+    // the band of step 7, and the spacing of neighbours
+    ctx.fillStyle = C.tint; ctx.globalAlpha = 0.6; ctx.fillRect(a.fx(res.band.q_lo), a.m.t, a.fx(res.band.q_hi) - a.fx(res.band.q_lo), a.ph); ctx.globalAlpha = 1;
+    ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(a.fx(res.band.q_peak), a.m.t); ctx.lineTo(a.fx(res.band.q_peak), a.m.t + a.ph); ctx.stroke(); ctx.setLineDash([]);
+    // reference slopes through the middle of the measured band
+    const sl = rateSlope(F);
+    if (sl) {
+      const qm = Math.sqrt(res.band.q_lo * res.band.q_hi), gm = Math.exp(sl.icept + sl.slope * Math.log(qm));
+      [[1, [6, 4]], [2, [2, 3]]].forEach(function (p) { poly(ctx, [x0, x1].map(function (q) { return [a.fx(q), a.fy(gm * Math.pow(q / qm, p[0]))]; }), C.muted, 1, p[1], 0.8); });
+    }
+    poly(ctx, F.truth.map(function (o, i) { return o && o.rate > 0 ? [a.fx(qs[i]), a.fy(o.rate)] : null; }), C["accent-2"], 1.8);
+    F.meas.forEach(function (o, i) { if (o && o.rate > 0) dot(ctx, a.fx(qs[i]), a.fy(o.rate), 3, o.measured ? C.accent : null, C.accent); });
+    a.done();
+    $("gamma-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>Measured (hollow: the curve barely moved within the movie, or had already gone)</span><span><i style="background:' + C["accent-2"] + '"></i>Single simulated cells, same model</span><span>Shaded: the band of step 7; dotted: the spacing of neighbours; grey: slopes 1 (long dashes, going straight) and 2 (short dashes, wandering at random)</span>';
+    const pname = { kww: "\u03b2", prw: "t_p (h)", cage: "plateau c", exp: null }[state.fit_model];
+    fillNumbers("gamma-numbers", ["q (" + MU + "m" + MINUS1 + ")", "Rate, measured (1/h)", "single cells, simulated", "Measured?", pname ? pname + ", measured" : "", "rms of the fit"].filter(Boolean),
+      rows.map(function (r, i) { const o = F.meas[i], t = F.truth[i], p = o ? (state.fit_model === "kww" ? o.params.beta : state.fit_model === "prw" ? o.params.tp : state.fit_model === "cage" ? o.params.c : null) : null; const row = [r.q_per_um, o ? o.rate : null, t ? t.rate : null, o ? (o.measured ? "yes" : o.why === "slow" ? "too slow" : "too fast") : "-"]; if (pname) row.push(p); row.push(o ? o.rms : null); return row; }));
+    drawFitShape(F);
+  }
+  function drawFitShape(F) {
+    const fig = $("fig-shape"), m = state.fit_model; if (!fig) return;
+    fig.hidden = m === "exp"; if (m === "exp") return;
+    const qs = F.rows.map(function (r) { return r.q_per_um; }), x0 = qs[0] / 1.2, x1 = qs[qs.length - 1] * 1.2;
+    const key = m === "kww" ? function (o) { return o.params.beta; } : m === "prw" ? function (o) { return o.params.tp; } : function (o) { return o.params.c; };
+    const vals = []; F.meas.concat(F.truth).forEach(function (o) { if (o && o.measured) vals.push(key(o)); });
+    const o0 = m === "kww" ? { ylog: false, y0: 0.2, y1: 2.1, ylabel: "\u03b2", ref: 1, cap: "Shape of the fitted curve: \u03b2 below 1 means a spread of rates, above 1 persistent, directed motion" }
+      : m === "prw" ? { ylog: true, y0: Math.max(1e-3, Math.min.apply(null, vals.concat([0.05])) / 2), y1: Math.max.apply(null, vals.concat([1])) * 2, ylabel: "Persistence time t_p (h)", ref: 1 / state.Dr_h, cap: "Persistence time of the fitted random walk; grey: the time over which a cell on its own forgets its direction (1 / rotational noise)" }
+      : { ylog: false, y0: 0, y1: 1.02, ylabel: "Plateau c", ref: null, cap: "Height of the plateau: the share of each pattern that the cage keeps" };
+    $("shape-cap").textContent = o0.cap;
+    const a = axes($("chart-fitshape"), { xlog: true, ylog: o0.ylog, x0: x0, x1: x1, y0: o0.y0, y1: o0.y1, xlabel: "q (" + MU + "m" + MINUS1 + ")", ylabel: o0.ylabel }), ctx = a.ctx;
+    if (o0.ref !== null && o0.ref > o0.y0 && o0.ref < o0.y1) { ctx.strokeStyle = C.muted; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(a.m.l, a.fy(o0.ref)); ctx.lineTo(a.m.l + a.pw, a.fy(o0.ref)); ctx.stroke(); ctx.setLineDash([]); }
+    poly(ctx, F.truth.map(function (o, i) { return o && o.measured ? [a.fx(qs[i]), a.fy(Math.min(o0.y1, Math.max(o0.y0, key(o))))] : null; }), C["accent-2"], 1.8);
+    F.meas.forEach(function (o, i) { if (o && o.measured) dot(ctx, a.fx(qs[i]), a.fy(Math.min(o0.y1, Math.max(o0.y0, key(o)))), 3, C.accent, null); });
+    a.done();
+    $("fitshape-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>Measured</span><span><i style="background:' + C["accent-2"] + '"></i>Single simulated cells</span>';
+  }
+  function renderGamma() {
+    const el = $("gamma-result"); if (!el || !cache.res) return;
+    const sel = $("fit-model");
+    if (!sel.options.length) FIT_MODELS.forEach(function (m) { const o = document.createElement("option"); o.value = m; o.textContent = FIT_WORDS[m].charAt(0).toUpperCase() + FIT_WORDS[m].slice(1) + (m === "kww" ? " (default)" : ""); sel.appendChild(o); });
+    sel.value = state.fit_model;
+    drawGamma();
+    // which model describes these curves best
+    const ranks = FIT_MODELS.map(function (m) { return { m: m, bic: fitsFor(m).bic }; }).sort(function (x, y) { return x.bic - y.bic; });
+    $("fit-best").textContent = "Best for this movie: " + FIT_WORDS[ranks[0].m] + (ranks[0].m === state.fit_model ? " (the one shown)" : "") + ".";
+    const F = fitsFor(state.fit_model), sl = rateSlope(F), m = state.fit_model;
+    let h = '<div class="eyebrow">The rate against q</div>';
+    let s = "";
+    if (!sl) s = "Too few patterns faded enough within the movie to read how the rate grows with q. ";
+    else if (m === "cage") s += "Over the band of step 7 the rate of the decaying part grows as q<sup>" + fmtSig(sl.slope, 2) + "</sup>; with a plateau it is the rate of the rattling inside the cage, and its slope is not read like the others. ";
+    else {
+      // a rate growing as q^s goes with displacements growing as t^(2/s) (Gaussian displacements)
+      s += "Over the band of step 7 the rate grows as q<sup>" + fmtSig(sl.slope, 2) + "</sup>, as for displacements growing as t<sup>" + fmtSig(2 / sl.slope, 2) + "</sup> (t<sup>1</sup>: wandering at random, t<sup>2</sup>: going straight): ";
+      s += sl.slope < 1.4 ? "over the distances these patterns probe, the cells go nearly straight. " : sl.slope < 2.4 ? "close to random wandering over these distances. " : "the cells are held back, more than random wandering would allow: a cage. ";
+    }
+    if (m === "kww") {
+      const b = bandParams(F, function (o) { return o.params.beta; }); if (b !== null) s += "The curves are " + (b > 1.1 ? "compressed" : b < 0.9 ? "stretched" : "close to simple exponentials") + " (\u03b2 = " + fmtSig(b, 2) + " in the band). ";
+      if (b !== null && b > 1.4 && sl && sl.slope < 1.4) { const v = bandParams(F, function (o) { return 2 * o.rate / o.q; }), vt = cache.res.truthFs ? cache.res.truthFs.vrms : null; s += "For cells going straight at a spread of speeds, 2\u0393/q is their rms speed: " + fmtSig(v, 2) + " " + MU + "m/h" + (vt ? " (simulated, relative to the sheet over one frame: " + fmtSig(vt, 2) + ")" : "") + ". "; }
+    }
+    if (m === "prw") { const tp = bandParams(F, function (o) { return o.params.tp; }), v = bandParams(F, function (o) { return Math.sqrt(2 * o.params.D / o.params.tp); }), t1 = cache.res.taus_s[0]; if (tp !== null) s += tp < t1 ? "No persistence shows: the walk looks random from the shortest delay. " : "Fitted persistence time " + fmtH(tp) + " and speed " + fmtSig(v, 2) + " " + MU + "m/h in the band: effective values, bent by collisions with neighbours. "; }
+    if (m === "cage") { const c = bandParams(F, function (o) { return o.params.c; }), sz = bandParams(F, function (o) { return o.params.c > 0 ? Math.sqrt(-4 * Math.log(o.params.c) / (o.q * o.q)) : NaN; }); if (c !== null) s += c > 0.02 ? "The curves stop at a plateau of " + fmtSig(c, 2) + " in the band, as for a cell rattling over about " + fmtSig(sz, 2) + " " + MU + "m. " : "No plateau: the patterns fade completely. "; }
+    const lo = res_band(), agree = []; F.meas.forEach(function (o, i) { const t = F.truth[i]; if (o && o.measured && t && t.rate && F.rows[i].q_per_um >= lo[0] && F.rows[i].q_per_um <= lo[1]) agree.push(Math.abs(Math.log(o.rate / t.rate))); });
+    const ag = median(agree);
+    h += '<p class="small" style="margin:0">' + s + (ag !== null ? "In the band the rates agree with those of single simulated cells within " + fmtSig(100 * (Math.exp(ag) - 1), 2) + " % (median)." : "") + '</p>';
+    if (level !== "curious") {
+      h += '<details class="more"><summary>The four models on this movie</summary><div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Model</th><th scope="col">Typical rms of the fit</th><th scope="col">Slope</th><th scope="col">Rank</th></tr></thead><tbody>';
+      ranks.forEach(function (r, k) { const G = fitsFor(r.m), s2 = rateSlope(G); h += '<tr><th scope="row">' + FIT_WORDS[r.m] + '</th><td>' + fmtSig(median(G.meas.map(function (o) { return o ? o.rms : NaN; })), 2) + '</td><td>' + (s2 ? fmtSig(s2.slope, 2) : "-") + '</td><td>' + (k + 1) + '</td></tr>'; });
+      h += '</tbody></table></div><p class="small">Ranked by the Bayesian information criterion over all q: a model with more parameters must fit enough better to win.</p></details>';
+    }
+    el.innerHTML = h;
+  }
+  function res_band() { return [cache.res.band.q_lo, cache.res.band.q_hi]; }
+
+  // step 7: mean squared displacement, measured and simulated
   function trueMsdAt(t) { const m = cache.movie.truth.msd; let i = 0; while (i < m.lag_h.length - 1 && m.lag_h[i + 1] < t) i++; if (i >= m.lag_h.length - 1) return m.um2[m.um2.length - 1]; const w = (Math.log(t) - Math.log(m.lag_h[i])) / (Math.log(m.lag_h[i + 1]) - Math.log(m.lag_h[i])); return Math.exp(Math.log(Math.max(1e-9, m.um2[i])) * (1 - w) + Math.log(Math.max(1e-9, m.um2[i + 1])) * w); }
   function drawMsd() {
     const res = cache.res, taus = res.taus_s, tr = cache.movie.truth.msd, cell2 = state.cell_um * state.cell_um;
@@ -627,7 +742,7 @@
     fillNumbers("amp-numbers", ["q (" + MU + "m" + MINUS1 + ")", "A", "B", "Used"], pts.map(function (p) { return [p.q, p.A > 0 ? p.A : null, p.B > 0 ? p.B : null, p.used ? "yes" : "no"]; }));
   }
 
-  // ---- step 7: the network of nuclei ------------------------------------------------------------
+  // ---- step 8: the network of nuclei ------------------------------------------------------------
   const T_KEPT = 4;   // hours: the delay at which the sweep reads the neighbours kept
   // fraction of neighbours kept after h hours, interpolated in log time between the delays measured
   function keptAt(list, h) {
@@ -733,13 +848,13 @@
       h += '<details class="more"><summary>Details</summary><dl>';
       h += '<dt>Nuclei</dt><dd>' + fmtSig(m.n_detected, 3) + ' found per frame' + (t ? ' (' + t.n_cells + ' cells simulated; ' + pc(t.found_frac) + ' of the true nuclei found, within ' + fmtSig(t.loc_err_um, 2) + ' ' + MU + 'm rms)' : '') + '; each followed for ' + fmtSig(m.track_frames, 3) + ' frames on average</dd>';
       h += '<dt>Cells</dt><dd>' + pc(m.kept_frac) + ' of the nuclei have a complete Voronoi cell inside the field; mean shape index ' + fmtSig(m.p_mean, 3) + ' +- ' + fmtSig(m.p_sd, 2) + ' (simulated ' + (t ? fmtSig(t.p_mean, 3) : "-") + '), ' + pc(m.hex_frac) + ' hexagons (simulated ' + (t ? pc(t.hex_frac) : "-") + ')</dd>';
-      h += '<dt>Displacement in 1 h</dt><dd>from the tracks, relative to the nuclei followed: ' + (md !== null ? fmtSig(md, 2) : "-") + ' ' + MU + 'm' + SQ + '; DDM, step 6: ' + (dd !== null ? fmtSig(dd, 2) : "-") + '; simulated: ' + (mt !== null ? fmtSig(mt, 2) : "-") + '</dd>';
+      h += '<dt>Displacement in 1 h</dt><dd>from the tracks, relative to the nuclei followed: ' + (md !== null ? fmtSig(md, 2) : "-") + ' ' + MU + 'm' + SQ + '; DDM, step 7: ' + (dd !== null ? fmtSig(dd, 2) : "-") + '; simulated: ' + (mt !== null ? fmtSig(mt, 2) : "-") + '</dd>';
       h += '</dl></details>';
     }
     el.innerHTML = h;
   }
 
-  // ---- step 8: the motility sweep -----------------------------------------------------------------
+  // ---- step 9: the motility sweep -----------------------------------------------------------------
   const T2 = 2;   // hours: the delay at which the sweep reads the displacement
   function at2(p) { let best = null; p.taus_s.forEach(function (t, i) { if (p.msd[i] > 0 && (best === null || Math.abs(Math.log(t / T2)) < Math.abs(Math.log(p.taus_s[best] / T2)))) best = i; }); return best !== null && Math.abs(Math.log(p.taus_s[best] / T2)) < 0.25 ? p.msd[best] : null; }
   function true2(p) { const m = p.truth.msd; let i = 0; while (i < m.lag_h.length - 1 && m.lag_h[i + 1] < T2) i++; return m.um2[Math.min(i + 1, m.um2.length - 1)]; }
@@ -844,7 +959,7 @@
     const ch = cache.shown.channel;
     $("movie-text").textContent = (ch === "edges" ? "The movie shows the edges of " : ch === "both" ? "The movie shows the nuclei and the edges of " : "The movie shows the nuclei of ") + m.truth.n_cells + " cells over " + fmtH(m.T * m.frame_h) + ", one frame every " + fmtSig(state.frame_min, 2) + " minutes. " + (st && st.v0_um_h !== undefined ? st.note : "The cells crawl at up to " + fmtSig(state.v0_um_h, 2) + " " + MU + "m/h" + (state.J_h > 0 ? " and steer towards where they are pushed." : ", each in its own direction."));
     $("movie-specs").innerHTML = "10x objective, pixel " + fmtSig(m.pixel_um, 3) + " " + MU + "m, " + m.n + " x " + m.n + " pixels, field " + fmtSig(m.L_um, 3) + " " + MU + "m. " + m.T + " frames, " + fmtSig(state.frame_min, 2) + " min apart. Nuclei as spots of rms radius 2.5 " + MU + "m, " + fmtSig(state.photons, 2) + " photons each per frame; simulation step " + fmtSig(60 * m.info.step_h, 2) + " min." +
-      (ch ? " The cell edges are not filmed but drawn: in each frame the nuclei are found and their Voronoi network (step 7) is drawn as lines of rms width 1.5 " + MU + "m, with as much light per cell as a nucleus, " + (ch === "both" ? "added to the frame of the nuclei" : "on the same background") + ", with the shot noise and read noise of the camera." : "");
+      (ch ? " The cell edges are not filmed but drawn: in each frame the nuclei are found and their Voronoi network (step 8) is drawn as lines of rms width 1.5 " + MU + "m, with as much light per cell as a nucleus, " + (ch === "both" ? "added to the frame of the nuclei" : "on the same background") + ", with the shot noise and read noise of the camera." : "");
     $("diff-note").textContent = "Move the delay slider: in a jammed sheet the difference stays faint for hours; in a fluid or flocking one it is full of pairs of " + (ch === "edges" ? "dark and bright lines" : ch === "both" ? "dark and bright spots and lines" : "spots") + " within an hour.";
     const sb = $("movie-scale"), target = m.L_um / 4, nice = niceStep(target) > target ? niceStep(target) / 2 : niceStep(target);
     sb.querySelector("i").style.width = (100 * nice / m.L_um).toFixed(1) + "%"; sb.querySelector("span").textContent = fmtSig(nice, 2) + " " + MU + "m"; sb.style.width = "100%";
@@ -854,6 +969,7 @@
     const obj = { microscope: "Nikon Ti2-E, 10x, fluorescence", detector: "Hamamatsu ORCA-Flash4.0 V3, binned " + state.binning + " x " + state.binning, simulation: cache.cfg, analysis: cache.opts,
       result: { state: res.state, V_um_h: res.V_um_h.map(function (v) { return +v.toPrecision(3); }), psi: res.psi !== null ? +res.psi.toPrecision(3) : null, delays_h: res.taus_s.map(function (v) { return +v.toPrecision(3); }), msd_um2: res.msd.map(function (v) { return v ? +v.toPrecision(3) : null; }) },
       network: netBrief(),
+      rates: (function () { const F = fitsFor(state.fit_model), sl = rateSlope(F); return { model: state.fit_model, slope: sl ? +sl.slope.toPrecision(3) : null, q_per_um: F.rows.map(function (r) { return +r.q_per_um.toPrecision(3); }), rate_per_h: F.meas.map(function (o) { return o && o.rate ? +o.rate.toPrecision(3) : null; }) }; })(),
       sweep: s ? s.points.map(function (p) { const k4 = p.net && p.net.measured ? keptAt(p.net.measured.kept, T_KEPT) : null; return { v0_um_h: p.set.v0_um_h, J_h: p.set.J_h, state: p.state, psi: p.psi !== null ? +p.psi.toPrecision(3) : null, neighbours_kept_4h: k4 !== null ? +k4.toPrecision(3) : null }; }) : null };
     $("settings-json").textContent = JSON.stringify(obj, null, 1).replace(/\[\s+([-\d.e+,\s\[\]nul]+?)\s+\]/g, function (m, a) { return "[" + a.replace(/\s+/g, " ") + "]"; });
     focusableScrollers();
@@ -862,7 +978,7 @@
   function renderAll() {
     if (!cache.res) return;
     readColors(); grey = greyRange(cache.shown); greyNuc = greyRange(cache.movie); diffScale = null;
-    setQSpan(); renderLag(); renderText(); drawCell(); drawMovieFrames(); drawMap(); drawStripes(); drawCurves(); drawMsd(); drawPath(); drawAmp(); renderResult(); renderNetwork(); drawSeries(); renderSettings();
+    setQSpan(); renderLag(); renderText(); drawCell(); drawMovieFrames(); drawMap(); drawStripes(); renderGamma(); drawCurves(); drawMsd(); drawPath(); drawAmp(); renderResult(); renderNetwork(); drawSeries(); renderSettings();
   }
 
   // ---- "what matters" cards ---------------------------------------------------------------
@@ -976,11 +1092,12 @@
     try { navigator.clipboard.writeText(txt).then(function () { $("btn-copy").textContent = "Copied"; }, fallback); } catch (e) { fallback(); }
   });
   let rz = null;
-  const redraw = function () { clearTimeout(rz); rz = setTimeout(function () { readColors(); if (cache.res) { drawCell(); drawCurves(); drawMsd(); drawPath(); drawSeries(); drawAmp(); drawMapOverlay(); drawNet(); drawKept(); drawShape(); } }, 80); };
+  const redraw = function () { clearTimeout(rz); rz = setTimeout(function () { readColors(); if (cache.res) { drawCell(); drawCurves(); drawGamma(); drawMsd(); drawPath(); drawSeries(); drawAmp(); drawMapOverlay(); drawNet(); drawKept(); drawShape(); } }, 80); };
   new ResizeObserver(redraw).observe(document.querySelector(".steps"));
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
   new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   $("btn-series").addEventListener("click", function () { startSeries(); });
+  $("fit-model").addEventListener("change", function () { state.fit_model = $("fit-model").value; if (cache.res) { renderGamma(); drawCurves(); renderSettings(); } });
   $("net-frame").addEventListener("input", function () { if (cache.movie) drawNet(); });
   $("net-colour").addEventListener("change", function () { if (cache.movie) drawNet(); });
 
@@ -990,7 +1107,7 @@
     Object.keys(BASE).forEach(function (k) { const v = state[k]; if (JSON.stringify(v) === JSON.stringify(BASE[k])) return; q.push(encodeURIComponent(k) + "=" + encodeURIComponent(v === null ? "null" : String(v))); });
     return "#" + level + (q.length ? "/" + q.join("&") : "");
   }
-  const HASH_KEYS = { seed: 1, q_min: 1, q_max: 1 }; CONTROLS.forEach(function (c) { if (c.key) HASH_KEYS[c.key] = 1; });
+  const HASH_KEYS = { seed: 1, q_min: 1, q_max: 1, fit_model: 1 }; CONTROLS.forEach(function (c) { if (c.key) HASH_KEYS[c.key] = 1; });
   function parseHash(h) {
     const parts = String(h || "").replace(/^#/, "").split("/"), set = {};
     (parts[1] || "").split("&").forEach(function (kv) {
@@ -1025,6 +1142,6 @@
     controls: function () { return CONTROLS.filter(function (c) { return c.kind !== "qrange" && (!c.when || c.when()); }).map(function (c) { return { key: c.key, kind: c.kind, lvl: c.lvl, min: c.min, max: c.max, options: c.kind === "select" ? c.options.map(function (o) { return o[0]; }) : null }; }); },
     truth: function () { return cache && cache.movie ? cache.movie.truth : null; },
     cfg: function () { return cache && cache.cfg ? JSON.parse(JSON.stringify(cache.cfg)) : null; },
-    result: function () { const r = cache && cache.res; if (!r) return null; const s = seriesValid() ? cache.series : null; return { state: r.state, true_state: trueState(), V: r.V_um_h, psi: r.psi, msd: r.msd, taus: r.taus_s, verdict: verdict().text, published: r.published || null, network: netBrief(), series: s ? s.points.map(function (p) { return { set: p.set, state: p.state, psi: p.psi }; }) : null }; }
+    result: function () { const r = cache && cache.res; if (!r) return null; const s = seriesValid() ? cache.series : null; return { state: r.state, true_state: trueState(), V: r.V_um_h, psi: r.psi, msd: r.msd, taus: r.taus_s, verdict: verdict().text, published: r.published || null, network: netBrief(), rates: (function () { const F = fitsFor(state.fit_model), sl = rateSlope(F); return { model: state.fit_model, slope: sl ? sl.slope : null, measured: F.meas.filter(function (o) { return o && o.measured; }).length, fitted: F.meas.length }; })(), series: s ? s.points.map(function (p) { return { set: p.set, state: p.state, psi: p.psi }; }) : null }; }
   };
 })();

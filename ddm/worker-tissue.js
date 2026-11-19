@@ -54,6 +54,8 @@
       const res = drive(TISSUE_ENGINE.analyse(vw, m.opts), m.token, 0.9, m.opts.compare_published ? 0.95 : 1);
       if (m.opts.compare_published) { try { res.published = pubSummary(drive(TISSUE_ENGINE.analyse(vw, Object.assign({}, m.opts, { published_only: true })), m.token, 0.95, 1)); } catch (e) { res.published = { failed: e.message }; } }
       res.channel = ch;
+      // the simulated cells' own decay at every q, for the rates of step 6
+      if (movie.truth.positions) res.truthFs = TISSUE_RATES.truthFs(movie.truth.positions, movie.T, movie.L_um, movie.frame_h, res.lags, res.rows.map(function (r) { return r.q_per_um; }));
       res.d2d = res.d2d.map(function (a) { return a.slice(); }); res.d2d_lab = null;
       const transfer = res.d2d.map(function (a) { return a.buffer; });
       if (out) transfer.push(out.frames.buffer);
