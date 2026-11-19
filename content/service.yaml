@@ -78,6 +78,10 @@ standing:
         years: 2012-2021
       - what: Board of the doctoral school in Physics, Astrophysics and Applied Physics
         years: 2013-2021
+      - what: Coordinator of Flagship 1 and member of the programme committee, 4EU+ European University Alliance
+        years: 2019-2021
+      - what: Representative of the University in the e-learning group of the League of European Research Universities
+        years: 2017-2021
       - what: Steering Committee, NOLIMITS imaging platform
         years: 2016-2021
       - what: Direction Board, University Linguistic Centre
@@ -137,6 +141,7 @@ activities:
   - {date: 2021, group: thesis, kind: phd, what: "Akash Singh", where: "Université Claude Bernard Lyon 1, France", role: "Report on the thesis"}
   - {date: 2021, group: thesis, kind: phd, what: "Falko Schmidt", where: "University of Gothenburg, Sweden", role: "Examining committee"}
   - {date: 2021, group: people, kind: hiring, what: "Research fellowship, University of Milan, Italy", role: "Selection board"}
+  - {date: 2021, group: institution, kind: institution, what: "National research assessment (VQR), Italian agency for the evaluation of universities and research", role: "Reviewer in the 2011-2014 and 2015-2019 rounds"}
   # ---- 2020
   - {date: 2020, group: people, kind: hiring, what: "Tenure-track researcher in Applied Physics, University of Milan, Italy", role: "Selection board"}
   - {date: 2020, group: people, kind: hiring, what: "Associate professor, University of Padua, Italy", role: "Selection board"}
@@ -147,6 +152,7 @@ activities:
   - {date: 2018, group: people, kind: hiring, what: "Fixed-term researcher in Applied Physics, University of Milan, Italy", role: "Selection board"}
   - {date: 2018, group: people, kind: hiring, what: "Research fellowship, University of Milan, Italy", role: "Selection board"}
   - {date: 2017, group: people, kind: hiring, what: "Technical staff position, University of Milan, Italy", role: "Selection board"}
+  - {date: 2017, group: jury, kind: jury, what: "E.W.R. Steacie Memorial Fellowship, Natural Sciences and Engineering Research Council of Canada", role: "Evaluation board"}
   - {date: 2017, group: people, kind: hiring, what: "Tender for advanced microscopy equipment (1.3 million euro), University of Milan, Italy", role: "Tender board"}
   - {date: 2016, group: thesis, kind: phd, what: "Matteo Molteni", where: "University of Insubria, Italy", role: "Final examination board"}
   - {date: 2014, group: thesis, kind: phd, what: "Tommaso Fraccia", where: "University of Milan, Italy", role: "Final examination board"}
