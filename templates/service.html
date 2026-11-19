@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% from "macros.html" import page_head %}
+
+{% block content %}
+{% call page_head("Service", service.intro, visuals.heads[page], root) %}
+  {% set c = service_counts %}
+  <p>{{ service_total }} evaluations and committee tasks since {{ service_strip[0].year }}: {{ c.thesis }} doctoral theses and habilitations,
+    {{ c.people }} promotions, appointments and hiring boards, {{ c.jury }} juries and committees, and {{ c.institution }} evaluation of an institution.
+    My <a href="#refereeing">refereeing for journals</a> is at the end of the page.</p>
+  <p>{{ service.grants_line }}</p>
+  <p class="quiet">{{ service.partial_note }}</p>
+{% endcall %}
+
+<div class="service">
+{% if service_strip %}
+{% set W = 720 %}{% set H = 150 %}{% set L = 26 %}{% set B = 22 %}{% set T = 8 %}
+{% set n = service_strip | length %}
+{% set step = (W - L - 4) / n %}
+{% set ymax = ((service_strip_max / 4) | round(0, 'ceil') * 4) | int %}
+{% set labels = dict(service_groups) %}
+<figure class="pub-strip talk-strip">
+  <div class="chart-scroll">
+  <svg viewBox="0 0 {{ W }} {{ H }}" role="img" aria-labelledby="ss-title ss-desc">
+    <title id="ss-title">Evaluations and committee tasks per year, by kind</title>
+    <desc id="ss-desc">{% for r in service_strip %}{{ r.year }}: {{ r.total }}. {% endfor %}</desc>
+    {% for t in range(0, ymax + 1, 4) %}
+      {% set y = H - B - (H - B - T) * t / ymax %}
+      <line class="grid" x1="{{ L }}" x2="{{ W - 2 }}" y1="{{ y }}" y2="{{ y }}"/>
+      {% if t %}<text class="tick" x="{{ L - 5 }}" y="{{ y + 4 }}" text-anchor="end">{{ t }}</text>{% endif %}
+    {% endfor %}
+    {% for r in service_strip %}
+      {% set x0 = L + step * loop.index0 + step * 0.14 %}
+      {% set acc = namespace(y=H - B) %}
+      {% for g, c in r.parts %}
+        {% set h = (H - B - T) * c / ymax %}
+        <rect class="seg tseg-{{ g }}" x="{{ x0 }}" y="{{ acc.y - h }}" width="{{ step * 0.72 }}" height="{{ h }}"><title>{{ r.year }}: {{ c }} - {{ labels[g] | lower }}</title></rect>
+        {% set acc.y = acc.y - h %}
+      {% endfor %}
+      {% if r.year % 5 == 0 %}<text class="tick" x="{{ x0 + step * 0.36 }}" y="{{ H - 6 }}" text-anchor="middle">{{ r.year }}</text>{% endif %}
+    {% endfor %}
+  </svg>
+  </div>
+  <figcaption>Per year:
+    {% for key, label in service_groups %}<span class="tdot tdot-{{ key }}" aria-hidden="true"></span>{{ label | lower }}{% if not loop.last %}, {% endif %}{% endfor %}.
+    Standing roles and entries without a year are not counted. {{ current_year }} is the year to date.</figcaption>
+</figure>
+{% endif %}
+
+<section class="cv">
+{% for g in service.standing %}
+  <h2>{{ g.group }}</h2>
+  <dl class="timeline">
+    {% for it in g["items"] %}
+    <dt>{{ it.years | default('', true) }}</dt><dd>{{ it.what | linked(it.url) }}</dd>
+    {% endfor %}
+  </dl>
+{% endfor %}
+</section>
+
+{% for l in service_lists if l["items"] %}
+<section>
+  <h2 id="{{ l.key }}">{{ l.label }}</h2>
+  {% if l.note %}<p class="quiet">{{ l.note }}</p>{% endif %}
+  <ol class="news-list long talk-list service-list">
+    {% for a in l["items"] %}
+    <li class="talk">
+      <span class="when">{{ a.date or a.when }}</span>
+      <span class="what">
+        <span class="talk-title">{{ a.what }}</span>
+        <span class="talk-event"><span class="tdot tdot-{{ a.group }}" aria-hidden="true"></span>{% if a.where %}{{ a.where }}{% if a.role %} - {% endif %}{% endif %}{{ a.role or '' }}</span>
+      </span>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endfor %}
+
+<section class="approach" id="refereeing">
+  <h2>Refereeing for journals</h2>
+  <p class="quiet">Why I keep refereeing while working as an editor is on the <a href="{{ root }}{{ link('approach/') }}#reviewing">Approach page</a>.</p>
+  {% include "review_record.html" %}
+</section>
+</div>
+{% endblock %}

@@ -1,0 +1,168 @@
+# Service: committees, panels, boards, juries, and evaluations other than
+# journal refereeing. Shown on the Service page.
+#
+# Rules (agreed with Roberto, Nov 2026):
+#   - Boards, committees, juries and institutional evaluations: named in full.
+#   - Doctoral theses and habilitations: candidate, university, role, year.
+#     Add a thesis only once the report is sent or the defence has taken place.
+#   - Promotion and appointment cases: institution, country and year only.
+#     Never the name of the person evaluated.
+#   - Grant and fellowship reviewing: ONE summary line (grants_line), no list,
+#     never a proposal. It stays out of the bio, roles and news.
+#   - Not listed: journal refereeing, reference letters, own students,
+#     invitations that were declined or did not go ahead.
+#
+# standing: roles held over several years, newest first inside each group.
+# activities: single evaluations, newest first. Each has
+#   date:  YYYY; leave it out when the year is not known and give `when:` instead
+#          (for example "before 2020"); such entries are listed last and are not in the chart
+#   group: thesis (doctoral theses and habilitations)
+#          people (promotions, appointments, hiring and selection boards)
+#          jury   (prize juries, selection panels, conference committees)
+#          institution (evaluation of institutions)
+#   kind:  the list it appears in: phd, habilitation, career, hiring, jury,
+#          conference, institution
+#   what, where: plain text; role: optional.
+
+intro: >-
+  Much of the work of a scientist happens on committees, boards and juries, and in reading and
+  judging the work of others. This page lists what I have done.
+
+# Shown under the opening lines.
+partial_note: >-
+  The lists are partial. Over the years I did not keep an accurate record of these activities,
+  so earlier ones in particular are missing.
+
+grants_line: >-
+  I also review grant and fellowship applications for the European Research Council, the European
+  Space Agency and national funding bodies in nine countries. I do not list them one by one.
+
+standing:
+  - group: Boards and advisory committees
+    items:
+      - what: Chair of the Board, Liquid Matter Division, European Physical Society
+        url: https://www.eps.org/eps-cmd
+        years: 2024-2027
+      - what: Board member, Liquid Matter Division, European Physical Society
+        years: 2021-2024
+      - what: Board member, Condensed Matter Division, European Physical Society
+        url: https://www.eps.org/eps-cmd
+        years: 2024-
+      - what: Member, Human Spaceflight and Exploration Science Advisory Committee, European Space Agency
+        url: https://explorationscience.esa.int/science-advisory/test-science-advisory-groups/
+        years: 2024-
+      - what: Member, European Space Sciences Committee
+        url: https://www.essc.esf.org/
+        years: 2025-
+      - what: Committee member, Particle Characterisation Interest Group, Royal Society of Chemistry
+        years: 2025-
+      - what: Coordinator, ESA Facility Definition Team for Soft Matter and Biophysics
+        years: 2023-2024
+      - what: Member, SciSpacE Expert Strategy Group, European Space Agency
+        years: "2022"
+      - what: Member, structural commission on the future of the institute IBI-4, Forschungszentrum Jülich
+        years: 2021-2022
+      - what: Advisory panel of the book section, Physics Today
+        years: 2016-2021
+  - group: University of Vienna
+    items:
+      - what: Member for the Faculty of Physics, Internationalisation Council of the University
+        years: 2024-
+      - what: Member, study conference (Studienkonferenz) for Physics
+        years: 2022-2024
+  - group: University of Milan
+    items:
+      - what: Steering Committee, Faculty of Medicine and Surgery
+        years: 2010-2012 and 2015-2021
+      - what: Board of the Department of Medical Biotechnology and Translational Medicine
+        years: 2012-2021
+      - what: Board of the doctoral school in Physics, Astrophysics and Applied Physics
+        years: 2013-2021
+      - what: Steering Committee, NOLIMITS imaging platform
+        years: 2016-2021
+      - what: Direction Board, University Linguistic Centre
+        years: 2015-2021
+      - what: Organising committee and admission board, International Medical School
+        years: 2013-2021
+      - what: Admission board, specialisation school in Physical Medicine and Rehabilitation
+        years: 2010-2021
+
+activities:
+  # ---- 2026
+  - {date: 2026, group: jury, kind: jury, what: "Europhysics Prize of the European Physical Society", role: "Jury member"}
+  - {date: 2026, group: jury, kind: jury, what: "Soft Matter Lectureship, Royal Society of Chemistry", role: "Assessment of nominees"}
+  - {date: 2026, group: jury, kind: conference, what: "Meeting of the Austrian Society for Rheology, Graz", role: "Evaluation of abstracts"}
+  - {date: 2026, group: thesis, kind: phd, what: "Concetta Santangelo", where: "University of Milan, Italy", role: "External referee"}
+  - {date: 2026, group: thesis, kind: phd, what: "Elisa Ballin", where: "Sapienza University of Rome, Italy", role: "External referee"}
+  - {date: 2026, group: thesis, kind: phd, what: "Davide Lazzari", where: "National doctoral programme in RNA therapeutics and gene therapy, Italy", role: "External referee"}
+  - {date: 2026, group: thesis, kind: phd, what: "Fabiana Gallo", where: "University of Naples Federico II, Italy", role: "External referee"}
+  # ---- 2025
+  - {date: 2025, group: institution, kind: institution, what: "Charles University, Prague, Czech Republic", role: "Member of the International Evaluation Panel (natural sciences)"}
+  - {date: 2025, group: jury, kind: jury, what: "Franziska Seidl programme, University of Vienna", role: "Jury member"}
+  - {date: 2025, group: jury, kind: jury, what: "Soft Matter Lectureship, Royal Society of Chemistry", role: "Assessment of nominees"}
+  - {date: 2025, group: thesis, kind: habilitation, what: "Bruno Issenmann", where: "Université Claude Bernard Lyon 1, France", role: "Rapporteur and jury member"}
+  - {date: 2025, group: thesis, kind: phd, what: "Conrad Möckel", where: "Friedrich-Alexander-Universität Erlangen-Nürnberg, Germany", role: "External reviewer"}
+  - {date: 2025, group: thesis, kind: phd, what: "Konstantina Lyroni", where: "University of Montpellier, France", role: "Thesis follow-up committee (2025 and 2026)"}
+  - {date: 2025, group: thesis, kind: phd, what: "Konstantine Cheishvili", where: "Delft University of Technology, Netherlands", role: "Doctoral committee"}
+  # ---- 2024
+  - {date: 2024, group: jury, kind: jury, what: "Liquid Matter Prize of the European Physical Society", role: "Member of the awarding board"}
+  - {date: 2024, group: jury, kind: jury, what: "Soft Matter Lectureship, Royal Society of Chemistry", role: "Assessment of nominees"}
+  - {date: 2024, group: jury, kind: conference, what: "12th Liquid Matter Conference, Mainz", role: "International Programme Committee"}
+  - {date: 2024, group: thesis, kind: habilitation, what: "Geoffroy Aubry", where: "University of Fribourg, Switzerland", role: "External expert"}
+  - {date: 2024, group: thesis, kind: habilitation, what: "Pierre Ronceray", where: "Aix-Marseille University, France", role: "Rapporteur"}
+  - {date: 2024, group: thesis, kind: phd, what: "Souvik Sadhukhan", where: "Tata Institute of Fundamental Research, India", role: "External examiner"}
+  - {date: 2024, group: thesis, kind: phd, what: "Gülce Bayram", where: "Bilkent University, Turkey", role: "Jury member"}
+  - {date: 2024, group: people, kind: career, what: "Raman Research Institute, Bangalore, India", role: "Promotion"}
+  - {date: 2024, group: people, kind: career, what: "University of Fribourg, Switzerland", role: "Expert opinion (update)"}
+  # ---- 2023
+  - {date: 2023, group: jury, kind: jury, what: "Soft Matter Lectureship, Royal Society of Chemistry", role: "Assessment of nominees"}
+  - {date: 2023, group: jury, kind: conference, what: "International Congress on Rheology, Athens", role: "Poster review committee"}
+  - {date: 2023, group: jury, kind: conference, what: "EMBO Workshop \"When biology of endocytosis meets physics\", Venice", role: "Poster prize jury"}
+  - {date: 2023, group: thesis, kind: phd, what: "Stefano Castellini", where: "University of Milan, Italy", role: "Final examination board"}
+  - {date: 2023, group: thesis, kind: phd, what: "Antonio Ciarlo", where: "University of Naples Federico II, Italy", role: "External referee"}
+  - {date: 2023, group: thesis, kind: phd, what: "Final examination board, doctorate in Physics (three candidates)", where: "University of Naples Federico II, Italy"}
+  - {date: 2023, group: thesis, kind: phd, what: "Final examination board, doctorate in Chemical Engineering (three candidates)", where: "University of Naples Federico II, Italy"}
+  - {date: 2023, group: people, kind: career, what: "University of Edinburgh, United Kingdom", role: "Promotion"}
+  - {date: 2023, group: people, kind: career, what: "Raman Research Institute, Bangalore, India", role: "Promotion"}
+  - {date: 2023, group: people, kind: career, what: "University of Jordan, Amman, Jordan", role: "Promotion"}
+  - {date: 2023, group: people, kind: career, what: "University of Milan, Italy", role: "External assessor"}
+  # ---- 2022
+  - {date: 2022, group: thesis, kind: phd, what: "Rosalia Ferraro", where: "University of Naples Federico II, Italy", role: "External referee"}
+  - {date: 2022, group: thesis, kind: phd, what: "Diogo Pinto", where: "University of Lisbon, Portugal", role: "External reviewer"}
+  - {date: 2022, group: people, kind: career, what: "University of Edinburgh, United Kingdom", role: "Promotion"}
+  - {date: 2022, group: people, kind: career, what: "Max Planck Institute for Dynamics and Self-Organization, Göttingen, Germany", role: "Appointment"}
+  - {date: 2022, group: people, kind: career, what: "University of Fribourg, Switzerland", role: "Expert opinion"}
+  - {date: 2022, group: people, kind: career, what: "National Centre for Biological Sciences, Bangalore, India", role: "Promotion"}
+  # ---- 2021
+  - {date: 2021, group: thesis, kind: phd, what: "Akash Singh", where: "Université Claude Bernard Lyon 1, France", role: "Report on the thesis"}
+  - {date: 2021, group: thesis, kind: phd, what: "Falko Schmidt", where: "University of Gothenburg, Sweden", role: "Examining committee"}
+  - {date: 2021, group: people, kind: hiring, what: "Research fellowship, University of Milan, Italy", role: "Selection board"}
+  # ---- 2020
+  - {date: 2020, group: people, kind: hiring, what: "Tenure-track researcher in Applied Physics, University of Milan, Italy", role: "Selection board"}
+  - {date: 2020, group: people, kind: hiring, what: "Associate professor, University of Padua, Italy", role: "Selection board"}
+  # ---- earlier
+  - {date: 2019, group: thesis, kind: phd, what: "Enrico Lattuada", where: "Politecnico di Milano, Italy", role: "External evaluator and defence committee"}
+  - {date: 2018, group: thesis, kind: phd, what: "Javier Fernández Castañón", where: "Sapienza University of Rome, Italy", role: "External referee"}
+  - {date: 2018, group: thesis, kind: phd, what: "Stefano Villa", where: "University of Montpellier, France", role: "Jury member"}
+  - {date: 2018, group: people, kind: hiring, what: "Fixed-term researcher in Applied Physics, University of Milan, Italy", role: "Selection board"}
+  - {date: 2018, group: people, kind: hiring, what: "Research fellowship, University of Milan, Italy", role: "Selection board"}
+  - {date: 2017, group: people, kind: hiring, what: "Technical staff position, University of Milan, Italy", role: "Selection board"}
+  - {date: 2017, group: people, kind: hiring, what: "Tender for advanced microscopy equipment (1.3 million euro), University of Milan, Italy", role: "Tender board"}
+  - {date: 2016, group: thesis, kind: phd, what: "Matteo Molteni", where: "University of Insubria, Italy", role: "Final examination board"}
+  - {date: 2014, group: thesis, kind: phd, what: "Tommaso Fraccia", where: "University of Milan, Italy", role: "Final examination board"}
+  - {date: 2014, group: jury, kind: jury, what: "Prize \"Riscopri Alessandro Volt@\", Centro Volta, Como, Italy", role: "Jury member"}
+  - {date: 2011, group: jury, kind: conference, what: "Optical Sensors conference, Optical Society of America", role: "Programme committee"}
+  # ---- years found later (calendar and email, Nov 2026)
+  - {date: 2008, group: thesis, kind: phd, what: "Chiara Bosisio", where: "University of Milano-Bicocca, Italy", role: "Final examination board"}
+  - {date: 2008, group: thesis, kind: phd, what: "Valentina Quercioli", where: "University of Milano-Bicocca, Italy", role: "Final examination board"}
+  - {date: 2015, group: thesis, kind: phd, what: "Gaurav Jayaswal", where: "University of Padua, Italy", role: "Final examination board"}
+  - {date: 2015, group: thesis, kind: phd, what: "Cristina Rea", where: "University of Padua, Italy", role: "Final examination board"}
+  - {date: 2015, group: thesis, kind: phd, what: "Jacopo Grilli", where: "University of Padua, Italy", role: "Final examination board"}
+  - {date: 2015, group: thesis, kind: phd, what: "Stefano Zamuner", where: "University of Padua, Italy", role: "Final examination board"}
+  - {date: 2018, group: thesis, kind: phd, what: "Gonzalo Alfredo Carvacho", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {date: 2018, group: thesis, kind: phd, what: "Alvaro Andres Cuevas", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {date: 2018, group: thesis, kind: phd, what: "Giuseppe Di Domenico", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {date: 2018, group: thesis, kind: phd, what: "Giacomo Frangipane", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {date: 2018, group: thesis, kind: phd, what: "Marcello Graziosi", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {date: 2018, group: thesis, kind: phd, what: "Syed Adil Rad", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {date: 2018, group: thesis, kind: phd, what: "Niko Viggianiello", where: "Sapienza University of Rome, Italy", role: "Final examination board"}

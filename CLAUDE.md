@@ -177,7 +177,15 @@ approves them.
   the companies.
 - Do not add grant review panels or grant reviewing (European Research Council
   or any other funder) to the bio, roles or news: Roberto finds them meaningless
-  there.
+  there. The Service page carries one summary line about it
+  (`service.yaml > grants_line`) and nothing more: no list of funders, calls or years.
+- Service page (`content/service.yaml`): promotion and appointment cases show the
+  institution, country and year only, never the person. A thesis or habilitation
+  is added once the report is sent or the defence has taken place. Journal
+  refereeing appears there only as the yearly record (charts from
+  `approach.yaml > reviewing`, template `review_record.html`); the Approach page
+  keeps the text and links to it. Reference letters and declined invitations are
+  not listed. The page has no header image, and says that its lists are partial.
 
 ## Where things live
 
@@ -188,6 +196,7 @@ approves them.
 | Research themes, lab, grants | `content/research.yaml` |
 | Courses, teaching innovation, mentoring | `content/teaching.yaml` |
 | News | `content/news.yaml` |
+| Service page: boards, committees, juries, theses and habilitations evaluated, promotion and hiring cases; the rules for what may be named are at the top of the file | `content/service.yaml` |
 | Talks (all of them, newest first; the Talks page shows them all, the News page the six most recent). Each has `date`, `title`, `event`, `place` and a `kind`: plenary, keynote, invited, contributed, seminar, colloquium, lecture, public or teaching. Proper names keep their accents (Düsseldorf, Cargèse). Talks given by co-authors are not listed. | `content/talks.yaml` |
 | DDM page sources (built into `static/ddm/index.html` by `python3 ddm/build.py`) | `ddm/` |
 | Publication tags (selected, review, cover), hidden items, fixes, preprint pairings | `data/publications_overrides.yaml` |
