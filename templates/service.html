@@ -5,7 +5,7 @@
 {% call page_head("Service", service.intro, visuals.heads[page], root) %}
   {% set c = service_counts %}
   <p>{{ service_total }} evaluations and committee tasks since {{ service_strip[0].year }}: {{ c.thesis }} doctoral theses and habilitations,
-    {{ c.people }} promotions, appointments and hiring boards, {{ c.jury }} juries and committees, and {{ c.institution }} evaluation of an institution.
+    {{ c.people }} promotions, appointments and hiring boards, {{ c.jury }} juries and committees, and {{ c.institution }} {% if c.institution == 1 %}evaluation of an institution{% else %}evaluations of institutions{% endif %}.
     My <a href="#refereeing">refereeing for journals</a> is at the end of the page.</p>
   <p>{{ service.grants_line }}</p>
   <p class="quiet">{{ service.partial_note }}</p>
