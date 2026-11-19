@@ -662,27 +662,32 @@
     fillNumbers("cycle-numbers", ["Delay (cycles)", "Across the flow (q along x)", "Along the flow (q along y)"], cx.map(function (v, i) { return [v[0], v[1], cyv[i] ? cyv[i][1] : null]; }));
     $("cycle-legend").innerHTML = '<span><i style="background:' + C["accent-2"] + '"></i>Stripes across the flow (q along x)</span><span><i style="background:' + C.accent + '"></i>Stripes along the flow (q along y)</span><span>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / q, 2) + " " + MU + "m" : "q = " + q.toFixed(2) + " " + MU + "m" + MINUS1) + '; large dots: the echoes, whole cycles apart' + (compare && compare.cycle ? '; dotted: ' + compare.label : '') + '</span>';
   }
-  // step 6: f at the echoes along the flow, with the fitted exponentials
-  function pickRows() {
-    const used = cache.res.rows.filter(function (r) { return r.sec[0].used; }), pool = used.length >= 2 ? used : cache.res.rows.filter(function (r) { return r.A > r.B && r.sec[0].f; });
+  // step 6: f at the echoes in each direction (sector 0: q along x, the flow; sector 1: q along y, the vorticity), with the fitted exponentials
+  function pickRows(sec) {
+    const used = cache.res.rows.filter(function (r) { return r.sec[sec].used; }), pool = used.length >= 2 ? used : cache.res.rows.filter(function (r) { return r.A > r.B && r.sec[sec].f; });
     const n = Math.min(5, pool.length), out = [];
     for (let i = 0; i < n; i++) out.push(pool[Math.round(i * (pool.length - 1) / Math.max(1, n - 1))]);
     return out;
   }
   function drawCurves() {
     const res = cache.res, ts = res.echo_k.map(function (k) { return k * res.period_s; }), x0 = ts[0] * 0.8, x1 = ts[ts.length - 1] * 1.25;
-    const a = axes($("chart-curves"), { xlog: true, ylog: false, x0: x0, x1: x1, y0: -0.15, y1: 1.15, xlabel: "Delay (s), whole cycles", ylabel: level === "curious" ? "How much of the pattern is left" : "f(q, kT\u2080)" }), ctx = a.ctx;
-    ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.m.l, a.fy(0)); ctx.lineTo(a.m.l + a.pw, a.fy(0)); ctx.stroke();
-    const pick = pickRows();
-    pick.forEach(function (r) {
-      const e = r.sec[0], col = qColor(qPos(r.q_per_um));
-      if (e.used && level !== "curious") { const pts = []; for (let i = 0; i <= 60; i++) { const t = x0 * Math.pow(x1 / x0, i / 60); pts.push([a.fx(t), a.fy(Math.exp(-e.gamma_hz * t))]); } poly(ctx, pts, col, 1.4); }
-      e.f.forEach(function (f, i) { if (isFinite(f)) dot(ctx, a.fx(ts[i]), a.fy(Math.max(-0.15, Math.min(1.15, f))), 2.4, col, null); });
+    const picks = [pickRows(0), pickRows(1)];
+    [["chart-curves", "curves-legend"], ["chart-curves-v", "curves-legend-v"]].forEach(function (ids, sec) {
+      const cv = $(ids[0]); if (!cv) return;
+      const a = axes(cv, { xlog: true, ylog: false, x0: x0, x1: x1, y0: -0.15, y1: 1.15, xlabel: "Delay (s), whole cycles", ylabel: level === "curious" ? "How much of the pattern is left" : "f(q, kT\u2080)" }), ctx = a.ctx;
+      ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.m.l, a.fy(0)); ctx.lineTo(a.m.l + a.pw, a.fy(0)); ctx.stroke();
+      picks[sec].forEach(function (r) {
+        const e = r.sec[sec], col = qColor(qPos(r.q_per_um));
+        if (e.used && level !== "curious") { const pts = []; for (let i = 0; i <= 60; i++) { const t = x0 * Math.pow(x1 / x0, i / 60); pts.push([a.fx(t), a.fy(Math.exp(-e.gamma_hz * t))]); } poly(ctx, pts, col, 1.4); }
+        (e.f || []).forEach(function (f, i) { if (isFinite(f)) dot(ctx, a.fx(ts[i]), a.fy(Math.max(-0.15, Math.min(1.15, f))), 2.4, col, null); });
+      });
+      a.done();
+      const leg = $(ids[1]); leg.innerHTML = "";
+      picks[sec].forEach(function (r) { const s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(r.q_per_um)) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / r.q_per_um, 2) + " " + MU + "m" : "q = " + r.q_per_um.toFixed(2) + " " + MU + "m" + MINUS1); leg.appendChild(s); });
     });
-    a.done();
-    fillNumbers("curves-numbers", ["Delay (s)"].concat(pick.map(function (r) { return "q = " + fmtSig(r.q_per_um, 3); })), ts.map(function (t, i) { return [t].concat(pick.map(function (r) { return r.sec[0].f[i]; })); }));
-    const leg = $("curves-legend"); leg.innerHTML = "";
-    pick.forEach(function (r) { const s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(r.q_per_um)) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / r.q_per_um, 2) + " " + MU + "m" : "q = " + r.q_per_um.toFixed(2) + " " + MU + "m" + MINUS1); leg.appendChild(s); });
+    const NAME = ["flow", "vorticity"];
+    fillNumbers("curves-numbers", ["Delay (s)"].concat(picks[0].map(function (r) { return NAME[0] + ", q = " + fmtSig(r.q_per_um, 3); }), picks[1].map(function (r) { return NAME[1] + ", q = " + fmtSig(r.q_per_um, 3); })),
+      ts.map(function (t, i) { return [t].concat(picks[0].map(function (r) { return r.sec[0].f ? r.sec[0].f[i] : null; }), picks[1].map(function (r) { return r.sec[1].f ? r.sec[1].f[i] : null; })); }));
   }
   function drawDq() {
     const res = cache.res, tD = trueD(cache.cfg.shear.strain);
@@ -768,7 +773,10 @@
     const add = function (t) { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); };
     if (pts.length && state.material === "carbopol") {
       const lo = pts.find(function (p) { return Math.abs(p.strain - 0.2) < 1e-6; }), hi = pts.find(function (p) { return Math.abs(p.strain - 0.8) < 1e-6; });
-      if (lo && hi && lo.flow.D_um2_s && hi.flow.D_um2_s) add("From 20 % to 80 % strain the rearrangements along the flow grow " + fmtNum(hi.flow.D_um2_s / lo.flow.D_um2_s) + " times (simulated " + fmtNum(trueD(0.8)[0] / trueD(0.2)[0]) + "): the microgel yields.");
+      if (lo && hi && lo.flow.D_um2_s && hi.flow.D_um2_s) add("From 20 % to 80 % strain the rearrangements along the flow grow " + fmtNum(hi.flow.D_um2_s / lo.flow.D_um2_s) + " times (simulated " + fmtNum(trueD(0.8)[0] / trueD(0.2)[0]) + ")" + (lo.vort.D_um2_s && hi.vort.D_um2_s ? ", along the vorticity " + fmtNum(hi.vort.D_um2_s / lo.vort.D_um2_s) + " times (simulated " + fmtNum(trueD(0.8)[1] / trueD(0.2)[1]) + ")" : "") + ": the microgel yields.");
+      // which direction rearranges more, below and above the yield point
+      const an = function (p) { return p && p.flow.D_um2_s > 0 && p.vort.D_um2_s > 0 ? p.flow.D_um2_s / p.vort.D_um2_s : null; }, rl = an(lo), rh = an(hi);
+      if (rl !== null && rh !== null) add("Flow over vorticity: " + fmtSig(rl, 2) + " at 20 % (simulated " + fmtSig(trueD(0.2)[0] / trueD(0.2)[1], 2) + "), " + fmtSig(rh, 2) + " at 80 % (simulated " + fmtSig(trueD(0.8)[0] / trueD(0.8)[1], 2) + "). In the simulation, set on the microgel of Edera et al. (2021), the beads wander about as much in both directions below the yield point, and more along the flow above it.");
     }
     if (pts.length && state.material === "liquid") add("The liquid gives the same D at every strain: its flow is reversible, and only the Brownian motion of the beads, " + fmtD(thermalD()) + " " + MU + "m" + SQ + "/s, is left.");
     if (pts.length && state.material === "rubber") add("The rubber never rearranges: every point is only a limit, set by how long the movie lasts and the finest pattern used.");
@@ -792,9 +800,13 @@
     const res = cache.res, t = trueD(cache.cfg.shear.strain), v = verdict(), f = res.flow, w = res.vort, g = cache.cfg.shear.strain;
     let h = '<div class="eyebrow">Result</div>';
     const Dm = f.D_um2_s > 0 ? f.D_um2_s : w.D_um2_s;
-    h += '<div class="big">' + (Dm > 0 ? (level === "curious" ? "The beads wander " + fmtSig(1000 * perCycle(Dm), 2) + " nm per cycle" : "D = " + describe(f) + " " + MU + "m" + SQ + "/s along the flow") : (f.bound && f.bound.above ? "Faster than one cycle" : "No rearrangement seen")) + '</div>';
+    const both = f.D_um2_s > 0 && w.D_um2_s > 0, nm = function (e) { return fmtSig(1000 * perCycle(e.D_um2_s), 2) + " nm"; };
+    h += '<div class="big">' + (Dm > 0 ? (level === "curious" ? (both ? "The beads wander " + nm(f) + " per cycle along the flow, " + nm(w) + " along the vorticity" : "The beads wander " + fmtSig(1000 * perCycle(Dm), 2) + " nm per cycle") : "D<sub>flow</sub> = " + describe(f) + ", D<sub>vorticity</sub> = " + describe(w) + " " + MU + "m" + SQ + "/s") : (f.bound && f.bound.above ? "Faster than one cycle" : "No rearrangement seen")) + '</div>';
     let s;
-    if (Dm > 0) s = "At " + fmtPct(g) + " strain and " + fmtSig(state.freq_hz, 2) + " Hz, the shear leaves each bead about " + fmtSig(1000 * perCycle(Dm), 2) + " nm from where it started, per cycle and along each direction (" + fmtSig(Math.sqrt(2 * Dm * res.T / (state.freq_hz * res.frames_per_period)), 2) + " " + MU + "m over the whole movie). Along the flow D = " + describe(f) + ", along the vorticity " + describe(w) + " " + MU + "m" + SQ + "/s.";
+    if (Dm > 0) {
+      s = "At " + fmtPct(g) + " strain and " + fmtSig(state.freq_hz, 2) + " Hz, the shear leaves each bead, per cycle, " + (both ? "about " + nm(f) + " from where it started along the flow (the shear direction) and " + nm(w) + " along the vorticity" : "about " + fmtSig(1000 * perCycle(Dm), 2) + " nm from where it started") + " (" + fmtSig(Math.sqrt(2 * Dm * res.T / (state.freq_hz * res.frames_per_period)), 2) + " " + MU + "m over the whole movie). Along the flow D = " + describe(f) + ", along the vorticity " + describe(w) + " " + MU + "m" + SQ + "/s.";
+      if (both) { const r = f.D_um2_s / w.D_um2_s, err = Math.hypot(f.rel_err || 0, w.rel_err || 0); s += Math.abs(Math.log(r)) < Math.max(0.1, 2 * err) ? " The two directions agree within the uncertainty: the rearrangements show no preferred direction." : " The rearrangements along the flow are " + fmtSig(r, 2) + " times those along the vorticity" + (r > 1 ? ": the shear stirs the beads more in its own direction." : "."); }
+    }
     else if (f.bound && f.bound.above) s = "Even the widest patterns used lost their echo within one cycle: the material rearranges by more than a stripe spacing per cycle. Wider patterns (a lower magnification) or a gentler strain would show it.";
     else s = "The echoes hardly fade over the " + fmtSig(res.T / res.frames_per_period, 3) + " cycles of the movie: any rearrangement is slower than D = " + fmtD(res.D_limit.below) + " " + MU + "m" + SQ + "/s, about " + fmtSig(1000 * perCycle(res.D_limit.below), 2) + " nm per cycle. A longer movie or finer patterns would lower this limit.";
     h += '<p class="small" style="margin:0">' + s + ' As simulated: ' + fmtD(t[0]) + ' and ' + fmtD(t[1]) + '.</p>';
@@ -818,7 +830,8 @@
       h += '</dl></details>';
     }
     $("result").innerHTML = h + ampLine();
-    $("hero-result").innerHTML = '<span>' + (level === "curious" ? "Rearrangements, simulated" : "D along the flow, simulated") + '</span><span class="n">' + fmtD(t[0]) + ' ' + MU + 'm' + SQ + '/s</span><span>Measured by echo-DDM</span><span class="n">' + (f.D_um2_s > 0 ? fmtD(f.D_um2_s) : f.bound && f.bound.below ? "< " + fmtD(f.bound.below) : f.bound && f.bound.above ? "> " + fmtD(f.bound.above) : "-") + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
+    const meas = function (e) { return e.D_um2_s > 0 ? fmtD(e.D_um2_s) : e.bound && e.bound.below ? "< " + fmtD(e.bound.below) : e.bound && e.bound.above ? "> " + fmtD(e.bound.above) : "-"; };
+    $("hero-result").innerHTML = '<span>D (' + MU + 'm' + SQ + '/s) along the flow, simulated</span><span class="n">' + fmtD(t[0]) + '</span><span>measured</span><span class="n">' + meas(f) + '</span><span>along the vorticity, simulated</span><span class="n">' + fmtD(t[1]) + '</span><span>measured</span><span class="n">' + meas(w) + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
     $("hero-cap").textContent = "Simulated bright-field movie of beads in " + MATERIALS[state.material].label.replace(/ \(.*$/, "").replace(/^An? /, "a ").replace(/,.*$/, "") + " sheared at " + fmtPct(g) + ", " + fmtSig(state.freq_hz, 2) + " Hz, field " + fmtSig(cache.movie.L_um, 2) + " " + MU + "m.";
   }
   function renderText() {

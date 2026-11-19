@@ -135,6 +135,8 @@ table.sizing .note { white-space: normal; display: block; font-size: 0.76rem; fo
 details.more summary { cursor: pointer; font-size: 0.85rem; color: var(--muted); }
 details.more dl { margin-top: 0.4rem; }
 .hero-result { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1rem; font-family: var(--sans); margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--rule); max-width: 44rem; }
+.echo-pair { display: grid; gap: 0 1.5rem; }
+@media (min-width: 60rem) { .echo-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 .hero-result .n { font-family: var(--serif); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
 
 /* bench */
@@ -483,12 +485,19 @@ m = 4                                  # frames per period</pre>
             <p class="only-1">Now compare only frames a whole number of cycles apart. Each echo is a little lower than the one before if the material rearranges a little every cycle: fine stripes lose their echo first, wide ones last. From how fast the echoes fade the page reads how fast the beads wander away from where the shear would have brought them back, along the flow and across it.</p>
             <p class="lvl-2">At each <i>q</i> and in each sector, <i>f</i> at the echoes is fitted with a weighted line through the origin of &minus;ln <i>f</i> against the delay, while <i>f</i> &gt; 0.15 (weights <i>f</i><sup>2</sup>): the rate &Gamma;, and <i>D</i> = &Gamma; / <i>q</i><sup>2</sup>. The <i>q</i> that pass the checks are averaged (mean of ln <i>D</i>; uncertainty from a jackknife over eight parts of the movie). Only pairs that start at zero strain are used (Addict: "Echoes at zero strain").</p>
           </div>
-          <figure class="viz">
-            <figcaption>How much of each pattern along the flow is left at the echoes</figcaption>
-            <div class="chart"><canvas id="chart-curves" aria-label="How much of each pattern is left at the echoes, against the delay"></canvas></div>
-            <div class="legend" id="curves-legend"></div>
-          </figure>
-          <details class="numbers" id="curves-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <div class="echo-pair">
+            <figure class="viz">
+              <figcaption>Along the flow, the shear direction (patterns with q along x): how much of each is left at the echoes</figcaption>
+              <div class="chart"><canvas id="chart-curves" aria-label="How much of each pattern across the flow is left at the echoes, against the delay"></canvas></div>
+              <div class="legend" id="curves-legend"></div>
+            </figure>
+            <figure class="viz">
+              <figcaption>Along the vorticity (patterns with q along y): how much of each is left at the echoes</figcaption>
+              <div class="chart"><canvas id="chart-curves-v" aria-label="How much of each pattern along the flow is left at the echoes, against the delay"></canvas></div>
+              <div class="legend" id="curves-legend-v"></div>
+            </figure>
+          </div>
+          <details class="numbers" id="curves-numbers"><summary>The numbers behind these charts</summary><div></div></details>
           <figure class="viz">
             <figcaption>How fast the beads wander, read from each pattern, along the flow and along the vorticity</figcaption>
             <div class="chart"><canvas id="chart-dq" aria-label="Diffusion coefficient of the rearrangements found at each q"></canvas></div>
