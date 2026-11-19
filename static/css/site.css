@@ -113,6 +113,7 @@ ul.plain li:last-child { border-bottom: 0; }
 .intro-links { font-family: var(--sans); font-size: 0.98rem; display: flex; flex-wrap: wrap; gap: 0.4rem 1.5rem; }
 .portrait { margin: 0; }
 .portrait img { display: block; width: 100%; max-width: 15rem; aspect-ratio: 1; object-fit: cover; border-radius: 50%; }
+.portrait figcaption { max-width: 15rem; margin-top: .4rem; text-align: center; font-size: .75rem; color: var(--muted, #6b7280); }
 @media (min-width: 52rem) { .portrait { margin-top: 2.6rem; } }
 .home-grid { display: grid; gap: 0 3.5rem; margin-top: 1rem; }
 @media (min-width: 52rem) { .home-grid { grid-template-columns: 1fr 1fr; } }
