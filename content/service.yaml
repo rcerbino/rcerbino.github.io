@@ -14,7 +14,8 @@
 #
 # standing: roles held over several years, newest first inside each group.
 # activities: single evaluations, newest first. Each has
-#   date:  YYYY
+#   date:  YYYY; leave it out when the year is not known and give `when:` instead
+#          (for example "before 2020"); such entries are listed last and are not in the chart
 #   group: thesis (doctoral theses and habilitations)
 #          people (promotions, appointments, hiring and selection boards)
 #          jury   (prize juries, selection panels, conference committees)
@@ -25,7 +26,12 @@
 
 intro: >-
   Much of the work of a scientist happens on committees, boards and juries, and in reading and
-  judging the work of others. This page lists what I have done outside journal refereeing.
+  judging the work of others. This page lists what I have done.
+
+# Shown under the opening lines.
+partial_note: >-
+  The lists are partial. Over the years I did not keep an accurate record of these activities,
+  so earlier ones in particular are missing.
 
 grants_line: >-
   I also review grant and fellowship applications for the European Research Council, the European
@@ -143,12 +149,17 @@ activities:
   - {date: 2014, group: thesis, kind: phd, what: "Tommaso Fraccia", where: "University of Milan, Italy", role: "Final examination board"}
   - {date: 2014, group: jury, kind: jury, what: "Prize \"Riscopri Alessandro Volt@\", Centro Volta, Como, Italy", role: "Jury member"}
   - {date: 2011, group: jury, kind: conference, what: "Optical Sensors conference, Optical Society of America", role: "Programme committee"}
-
-# Final examination boards before 2020 for which the year is not recorded.
-earlier_theses:
-  - where: University of Milano-Bicocca
-    names: Chiara Bosisio, Valentina Quercioli
-  - where: University of Padua
-    names: Gaurav Jayaswal, Cristina Rea, Jacopo Grilli, Stefano Zamuner
-  - where: Sapienza University of Rome
-    names: Gonzalo Alfredo Carvacho, Alvaro Andres Cuevas, Giuseppe Di Domenico, Giacomo Frangipane, Marcello Graziosi, Syed Adil Rad, Niko Viggianiello
+  # ---- year not recorded
+  - {when: "before 2020", group: thesis, kind: phd, what: "Chiara Bosisio", where: "University of Milano-Bicocca, Italy", role: "Final examination board"}
+  - {when: "before 2020", group: thesis, kind: phd, what: "Valentina Quercioli", where: "University of Milano-Bicocca, Italy", role: "Final examination board"}
+  - {when: "before 2020", group: thesis, kind: phd, what: "Gaurav Jayaswal", where: "University of Padua, Italy", role: "Final examination board"}
+  - {when: "before 2020", group: thesis, kind: phd, what: "Cristina Rea", where: "University of Padua, Italy", role: "Final examination board"}
+  - {when: "before 2020", group: thesis, kind: phd, what: "Jacopo Grilli", where: "University of Padua, Italy", role: "Final examination board"}
+  - {when: "before 2020", group: thesis, kind: phd, what: "Stefano Zamuner", where: "University of Padua, Italy", role: "Final examination board"}
+  - {when: "before 2020", group: thesis, kind: phd, what: "Gonzalo Alfredo Carvacho", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {when: "before 2020", group: thesis, kind: phd, what: "Alvaro Andres Cuevas", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {when: "before 2020", group: thesis, kind: phd, what: "Giuseppe Di Domenico", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {when: "before 2020", group: thesis, kind: phd, what: "Giacomo Frangipane", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {when: "before 2020", group: thesis, kind: phd, what: "Marcello Graziosi", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {when: "before 2020", group: thesis, kind: phd, what: "Syed Adil Rad", where: "Sapienza University of Rome, Italy", role: "Final examination board"}
+  - {when: "before 2020", group: thesis, kind: phd, what: "Niko Viggianiello", where: "Sapienza University of Rome, Italy", role: "Final examination board"}

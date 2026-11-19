@@ -182,7 +182,10 @@ approves them.
 - Service page (`content/service.yaml`): promotion and appointment cases show the
   institution, country and year only, never the person. A thesis or habilitation
   is added once the report is sent or the defence has taken place. Journal
-  refereeing, reference letters and declined invitations are not listed.
+  refereeing appears there only as the yearly record (charts from
+  `approach.yaml > reviewing`, template `review_record.html`); the Approach page
+  keeps the text and links to it. Reference letters and declined invitations are
+  not listed. The page has no header image, and says that its lists are partial.
 
 ## Where things live
 

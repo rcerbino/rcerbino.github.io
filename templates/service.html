@@ -6,8 +6,9 @@
   {% set c = service_counts %}
   <p>{{ service_total }} evaluations and committee tasks since {{ service_strip[0].year }}: {{ c.thesis }} doctoral theses and habilitations,
     {{ c.people }} promotions, appointments and hiring boards, {{ c.jury }} juries and committees, and {{ c.institution }} evaluation of an institution.
-    Refereeing for journals is on the <a href="{{ root }}{{ link('approach/') }}">Approach page</a>.</p>
+    My <a href="#refereeing">refereeing for journals</a> is at the end of the page.</p>
   <p>{{ service.grants_line }}</p>
+  <p class="quiet">{{ service.partial_note }}</p>
 {% endcall %}
 
 <div class="service">
@@ -41,7 +42,7 @@
   </div>
   <figcaption>Per year:
     {% for key, label in service_groups %}<span class="tdot tdot-{{ key }}" aria-hidden="true"></span>{{ label | lower }}{% if not loop.last %}, {% endif %}{% endfor %}.
-    Standing roles are not counted; the years before 2020 are incomplete. {{ current_year }} is the year to date.</figcaption>
+    Standing roles and entries without a year are not counted. {{ current_year }} is the year to date.</figcaption>
 </figure>
 {% endif %}
 
@@ -63,7 +64,7 @@
   <ol class="news-list long talk-list service-list">
     {% for a in l["items"] %}
     <li class="talk">
-      <span class="when">{{ a.date }}</span>
+      <span class="when">{{ a.date or a.when }}</span>
       <span class="what">
         <span class="talk-title">{{ a.what }}</span>
         <span class="talk-event"><span class="tdot tdot-{{ a.group }}" aria-hidden="true"></span>{% if a.where %}{{ a.where }}{% if a.role %} - {% endif %}{% endif %}{{ a.role or '' }}</span>
@@ -71,11 +72,13 @@
     </li>
     {% endfor %}
   </ol>
-  {% if l.key == 'phd' and service.earlier_theses %}
-  <p class="quiet">Earlier final examination boards (before 2020):
-    {% for e in service.earlier_theses %}{{ e.names }} ({{ e.where }}){% if not loop.last %}; {% endif %}{% endfor %}.</p>
-  {% endif %}
 </section>
 {% endfor %}
+
+<section class="approach" id="refereeing">
+  <h2>Refereeing for journals</h2>
+  <p class="quiet">Why I keep refereeing while working as an editor is on the <a href="{{ root }}{{ link('approach/') }}#reviewing">Approach page</a>.</p>
+  {% include "review_record.html" %}
+</section>
 </div>
 {% endblock %}

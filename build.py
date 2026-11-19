@@ -98,7 +98,7 @@ SERVICE_KINDS = [
     # (key, heading, group, note)
     ("institution", "Evaluation of institutions", "institution", None),
     ("jury", "Prize juries and selection panels", "jury", None),
-    ("conference", "Conference committees", "jury", "Conferences I chair or organise are on the About page."),
+    ("conference", "Conference committees", "jury", None),
     ("habilitation", "Habilitations", "thesis", None),
     ("phd", "Doctoral theses", "thesis", "As external referee or member of the examination board. Theses I supervised are on the Teaching page."),
     ("career", "Promotions and appointments", "people",
@@ -383,7 +383,7 @@ def main(check=False, preview=False):
 
     # Service: single evaluations by kind (newest first) and a per-year chart by group
     kind_group = {k: g for k, _, g, _ in SERVICE_KINDS}
-    acts = sorted(service.get("activities") or [], key=lambda a: -int(a["date"]))
+    acts = sorted(service.get("activities") or [], key=lambda a: -int(a.get("date") or 0))
     for a in acts:
         if a.get("kind") not in kind_group or a.get("group") != kind_group.get(a.get("kind")):
             problems.append(f"Unknown or mismatched service kind/group in service.yaml: {a.get('what')!r}")
@@ -394,7 +394,8 @@ def main(check=False, preview=False):
     if acts:
         sy = defaultdict(Counter)
         for a in acts:
-            sy[int(a["date"])][a["group"]] += 1
+            if a.get("date"):
+                sy[int(a["date"])][a["group"]] += 1
         for y in range(min(sy), current_year + 1):
             c = sy.get(y, Counter())
             service_strip.append({"year": y, "total": sum(c.values()),
