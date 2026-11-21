@@ -83,6 +83,10 @@ p { margin: 0 0 1rem; }
 .langs [aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
 /* one card per application */
 .apps { padding-block: 1.5rem 2.5rem; }
+.app-group + .app-group { margin-top: 2.75rem; }
+.group-title { font-size: 1.6rem; margin: 0 0 0.3rem; }
+.group-note { font-family: var(--sans); font-size: 0.95rem; color: var(--muted); max-width: 44rem; margin: 0 0 1.1rem; }
+.app.learn { grid-template-rows: auto 1fr; border-style: dashed; }
 .app-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
 @media (min-width: 48rem) { .app-grid { grid-template-columns: repeat(2, 1fr); } }
 .app { position: relative; display: grid; grid-template-rows: auto auto 1fr; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
@@ -94,11 +98,11 @@ p { margin: 0 0 1rem; }
 .start-here { font-family: var(--sans); font-size: 0.95rem; margin: 0.9rem 0 0; }
 .app .head { padding: 1.1rem 1.25rem 0.8rem; }
 .app .head .eyebrow { margin-bottom: 0.2rem; }
-.app .head h2 { margin: 0; }
+.app .head h3 { margin: 0; }
 .app .body { display: grid; align-content: start; gap: 0.15rem; padding: 1rem 1.25rem 1.25rem; }
-.app h2 { font-size: 1.7rem; margin: 0 0 0.35rem; }
-.app h2 a { color: var(--ink); text-decoration: none; }
-.app h2 a::after { content: ""; position: absolute; inset: 0; }   /* the whole card is the link */
+.app h3 { font-size: 1.7rem; font-weight: 500; margin: 0 0 0.35rem; }
+.app h3 a { color: var(--ink); text-decoration: none; }
+.app h3 a::after { content: ""; position: absolute; inset: 0; }   /* the whole card is the link */
 .app p { margin: 0 0 0.6rem; }
 .app .what { font-family: var(--sans); font-size: 0.86rem; color: var(--muted); line-height: 1.5; margin: 0 0 0.9rem; }
 .app .chips { list-style: none; margin: 0 0 1rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
@@ -170,95 +174,121 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
   </section>
 
   <section class="wrap apps" aria-label="Applicazioni">
-    <div class="app-grid">
-      <article class="app">
-        <div class="head"><p class="eyebrow">Moto browniano</p>
-          <h2><a href="../sizing/">Quanto sono grandi?</a></h2></div>
-        <div class="media"><canvas id="cv-sizing" width="240" height="150" aria-label="Animazione: particelle che si agitano in un liquido, come in un microscopio in campo chiaro"></canvas><span class="tag">Campo chiaro, sfere colloidali (schizzo)</span></div>
-        <div class="body">
-          <p>Misura la dimensione di particelle colloidali da quanto in fretta vagano, come nella diffusione dinamica della luce, ma con un microscopio e in campioni in cui la diffusione della luce &egrave; in difficolt&agrave;.</p>
-          <p class="what">Sfere, ellissoidi e bastoncini, alcuni dei quali ruotano oltre a vagare; sette modalit&agrave; di imaging, dal campo chiaro al confocale; telecamere, rumore, profondit&agrave; di campo e l'effetto di ciascuno sul risultato.</p>
-          <ul class="chips"><li>Diffusione</li><li>Dimensione delle particelle</li><li>Rotazione</li></ul>
-          <span class="go" aria-hidden="true">Apri Sizing particles (in inglese)</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Moto attivo</p>
-          <h2><a href="../swimmers/">Quanto nuotano veloci?</a></h2></div>
-        <div class="media"><canvas id="cv-swim" width="240" height="150" aria-label="Animazione: batteri a bastoncino, alcuni che nuotano e altri fermi, come in un microscopio a contrasto di fase"></canvas><span class="tag">Contrasto di fase, batteri (schizzo)</span></div>
-        <div class="body">
-          <p>Misura quanto velocemente nuotano batteri, alghe o spermatozoi, quanto variano le velocit&agrave; e quale parte delle cellule nuota, da un filmato di motilit&agrave; con migliaia di cellule.</p>
-          <p class="what">Ceppi di E. coli, Salmonella, B. subtilis, Chlamydomonas, Euglena e spermatozoi bovini, impostati come in esperimenti pubblicati, o cellule progettate da te.</p>
-          <ul class="chips"><li>Velocit&agrave; di nuoto</li><li>Dispersione delle velocit&agrave;</li><li>Frazione di nuotatori</li></ul>
-          <span class="go" aria-hidden="true">Apri Swimming cells (in inglese)</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Deriva</p>
-          <h2><a href="../drift/">Dove stanno andando?</a></h2></div>
-        <div class="media"><canvas id="cv-drift" width="240" height="150" aria-label="Animazione: particelle che si agitano, trasportate lentamente verso destra da un flusso, come in un microscopio in campo chiaro"></canvas><span class="tag">Campo chiaro, sfere in un flusso (schizzo)</span></div>
-        <div class="body">
-          <p>Misura velocit&agrave; e direzione di particelle trasportate da un flusso, dalla gravit&agrave; o da un gradiente di temperatura mentre continuano ad agitarsi, e scopri quanto lenta pu&ograve; essere una deriva perch&eacute; un filmato la mostri ancora.</p>
-          <p class="what">Flussi uniformi e in canale; sedimentazione con il microscopio dritto o sul fianco; termoforesi di sfere di polistirene con coefficienti di Soret da misure pubblicate.</p>
-          <ul class="chips"><li>Flusso</li><li>Sedimentazione</li><li>Termoforesi</li></ul>
-          <span class="go" aria-hidden="true">Apri Drifting particles (in inglese)</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Viscoelasticit&agrave;</p>
-          <h2><a href="../rheology/">Liquido o solido?</a></h2></div>
-        <div class="media"><canvas id="cv-rheo" width="240" height="150" aria-label="Animazione: sfere che vibrano sul posto in un gel soffice, come in un microscopio in campo chiaro"></canvas><span class="tag">Campo chiaro, sfere in un gel (schizzo)</span></div>
-        <div class="body">
-          <p>Misura quanto &egrave; elastico e quanto &egrave; viscoso un materiale soffice, da quanto si allontanano le sfere traccianti mescolate al suo interno: microreologia con un microscopio, da una goccia di campione.</p>
-          <p class="what">Liquidi semplici, micelle vermiformi, soluzioni polimeriche e un gel che si forma, con moduli noti esattamente; dal filmato a G' e G'' su diverse decadi di frequenza.</p>
-          <ul class="chips"><li>Microreologia</li><li>G' e G''</li><li>Gelificazione</li></ul>
-          <span class="go" aria-hidden="true">Apri Liquid or solid (in inglese)</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Interazioni</p>
-          <h2><a href="../crowded/">Come si dispongono nella folla?</a></h2></div>
-        <div class="media"><canvas id="cv-crowd" width="240" height="150" aria-label="Animazione: particelle colorate fitte, ognuna che si agita tra le vicine, come in un microscopio confocale"></canvas><span class="tag">Confocale, colloidi concentrati (schizzo)</span></div>
-        <div class="body">
-          <p>Misura come si dispongono particelle che si spingono a vicenda, e come si muove la folla, da un filmato confocale: il fattore di struttura e la diffusione collettiva, come nella diffusione della luce.</p>
-          <p class="what">Sfere dure e cariche, da diluite fino al 45 % del volume, tutte colorate o solo alcune; nella simulazione le particelle si spingono davvero, cos&igrave; ci&ograve; che trova la DDM si confronta con ci&ograve; che fanno realmente.</p>
-          <ul class="chips"><li>Fattore di struttura</li><li>Diffusione collettiva</li><li>Autodiffusione</li></ul>
-          <span class="go" aria-hidden="true">Apri Crowded particles (in inglese)</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Proteine</p>
-          <h2><a href="../proteins/">Si attraggono o si respingono?</a></h2></div>
-        <div class="media"><canvas id="cv-prot" width="240" height="150" aria-label="Animazione: un campo grigio con deboli increspature che vanno e vengono, mentre proteine troppo piccole per essere viste diffondono in un microscopio in campo chiaro"></canvas><span class="tag">Campo chiaro, una soluzione di proteine (schizzo, contrasto aumentato)</span></div>
-        <div class="body">
-          <p>Misura la dimensione di proteine troppo piccole per essere viste, e se si respingono o si attraggono, da filmati in campo chiaro a poche concentrazioni: il parametro di interazione diffusiva k<sub>D</sub> e il secondo coefficiente del viriale B<sub>2</sub>.</p>
-          <p class="what">Un anticorpo con poco e con molto sale, l'albumina, il lisozima e un anticorpo appiccicoso, o una proteina tua: imposta la sua carica e il sale, e guarda come cambiano i due numeri.</p>
-          <ul class="chips"><li>Dimensione delle proteine</li><li>k<sub>D</sub></li><li>B<sub>2</sub></li></ul>
-          <span class="go" aria-hidden="true">Apri Proteins (in inglese)</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Snervamento</p>
-          <h2><a href="../shear/">Quando comincia a scorrere?</a></h2></div>
-        <div class="media"><canvas id="cv-shear" width="240" height="150" aria-label="Animazione: sfere che scorrono avanti e indietro, di pi&ugrave; quelle sopra e sotto il fuoco, mentre un materiale soffice &egrave; deformato tra due piastre"></canvas><span class="tag">Campo chiaro, sfere in un gel sotto taglio (schizzo)</span></div>
-        <div class="body">
-          <p>Deforma un materiale soffice avanti e indietro e confronta fotogrammi presi a un ciclo intero di distanza: ci&ograve; che il taglio annulla si cancella, e i riarrangiamenti che lascia dietro di s&eacute; mostrano quando un solido soffice cede e comincia a scorrere.</p>
-          <p class="what">Un microgel con soglia di snervamento, sotto e sopra lo snervamento, una gomma e un liquido viscoso; una scansione in deformazione dal 5 % al 150 %, come nei nostri esperimenti di echo-DDM.</p>
-          <ul class="chips"><li>Taglio oscillatorio</li><li>Echo-DDM</li><li>Snervamento</li></ul>
-          <span class="go" aria-hidden="true">Apri Sheared materials (in inglese)</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Moto collettivo</p>
-          <h2><a href="../tissues/">Bloccato, fluido o in stormo?</a></h2></div>
-        <div class="media"><canvas id="cv-tissue" width="240" height="150" aria-label="Animazione: nuclei fluorescenti di uno strato di cellule, fianco a fianco, che derivano lentamente tutti nella stessa direzione"></canvas><span class="tag">Fluorescenza, nuclei di uno strato di cellule (schizzo)</span></div>
-        <div class="body">
-          <p>Capisci se uno strato di cellule epiteliali &egrave; bloccato come un solido, scorre come un liquido o si muove come uno stormo, da un time-lapse dei loro nuclei colorati, senza seguire nessuna cellula.</p>
-          <p class="what">Cellule che strisciano, si spingono e si orientano insieme: strati bloccati, strati fluidi, solidi e liquidi in stormo, come nei nostri studi sugli epiteli risvegliati.</p>
-          <ul class="chips"><li>Blocco (jamming)</li><li>Moto in stormo</li><li>Spostamenti delle cellule</li></ul>
-          <span class="go" aria-hidden="true">Apri Moving tissues (in inglese)</span>
-        </div>
-      </article>
+    <div class="app-group" id="start" aria-labelledby="h-start">
+      <h2 class="group-title" id="h-start">Da dove cominciare</h2>
+      <p class="group-note">Come funziona la DDM, passo dopo passo, dal filmato grezzo alla dimensione di una particella. Le altre pagine partono da qui.</p>
+      <div class="app-grid">
+        <article class="app">
+          <div class="head"><p class="eyebrow">Moto browniano</p>
+            <h3><a href="../sizing/">Quanto sono grandi?</a></h3></div>
+          <div class="media"><canvas id="cv-sizing" width="240" height="150" aria-label="Animazione: particelle che si agitano in un liquido, come in un microscopio in campo chiaro"></canvas><span class="tag">Campo chiaro, sfere colloidali (schizzo)</span></div>
+          <div class="body">
+            <p>Misura la dimensione di particelle colloidali da quanto in fretta vagano, come nella diffusione dinamica della luce, ma con un microscopio e in campioni in cui la diffusione della luce &egrave; in difficolt&agrave;.</p>
+            <p class="what">Sfere, ellissoidi e bastoncini, alcuni dei quali ruotano oltre a vagare; sette modalit&agrave; di imaging, dal campo chiaro al confocale; telecamere, rumore, profondit&agrave; di campo e l'effetto di ciascuno sul risultato.</p>
+            <ul class="chips"><li>Diffusione</li><li>Dimensione delle particelle</li><li>Rotazione</li></ul>
+            <span class="go" aria-hidden="true">Apri Sizing particles (in inglese)</span>
+          </div>
+        </article>
+        <article class="app learn">
+          <div class="head"><p class="eyebrow">Per insegnare ed esercitarsi</p>
+            <h3><a href="../exercises/">Esercizi e notebook</a></h3></div>
+          <div class="body">
+            <p>Domande con soluzioni per ogni pagina, per prevedere, calcolare e discutere, stampabili per una lezione o per studiare da soli.</p>
+            <p class="what">Ogni pagina permette di scaricare il filmato che ha simulato, e diverse rimandano a un notebook Python, per rifare l'analisi da soli, con fastDDM o poche righe di numpy.</p>
+            <ul class="chips"><li>Esercizi</li><li>Soluzioni</li><li>Notebook</li></ul>
+            <span class="go" aria-hidden="true">Apri gli esercizi</span>
+          </div>
+        </article>
+      </div>
+    </div>
+    <div class="app-group" id="classic" aria-labelledby="h-classic">
+      <h2 class="group-title" id="h-classic">Applicazioni classiche</h2>
+      <p class="group-note">Usi consolidati della DDM, ognuno su un tipo di moto: nuotare, derivare, e sfere che si agitano in un materiale soffice.</p>
+      <div class="app-grid">
+        <article class="app">
+          <div class="head"><p class="eyebrow">Moto attivo</p>
+            <h3><a href="../swimmers/">Quanto nuotano veloci?</a></h3></div>
+          <div class="media"><canvas id="cv-swim" width="240" height="150" aria-label="Animazione: batteri a bastoncino, alcuni che nuotano e altri fermi, come in un microscopio a contrasto di fase"></canvas><span class="tag">Contrasto di fase, batteri (schizzo)</span></div>
+          <div class="body">
+            <p>Misura quanto velocemente nuotano batteri, alghe o spermatozoi, quanto variano le velocit&agrave; e quale parte delle cellule nuota, da un filmato di motilit&agrave; con migliaia di cellule.</p>
+            <p class="what">Ceppi di E. coli, Salmonella, B. subtilis, Chlamydomonas, Euglena e spermatozoi bovini, impostati come in esperimenti pubblicati, o cellule progettate da te.</p>
+            <ul class="chips"><li>Velocit&agrave; di nuoto</li><li>Dispersione delle velocit&agrave;</li><li>Frazione di nuotatori</li></ul>
+            <span class="go" aria-hidden="true">Apri Swimming cells (in inglese)</span>
+          </div>
+        </article>
+        <article class="app">
+          <div class="head"><p class="eyebrow">Deriva</p>
+            <h3><a href="../drift/">Dove stanno andando?</a></h3></div>
+          <div class="media"><canvas id="cv-drift" width="240" height="150" aria-label="Animazione: particelle che si agitano, trasportate lentamente verso destra da un flusso, come in un microscopio in campo chiaro"></canvas><span class="tag">Campo chiaro, sfere in un flusso (schizzo)</span></div>
+          <div class="body">
+            <p>Misura velocit&agrave; e direzione di particelle trasportate da un flusso, dalla gravit&agrave; o da un gradiente di temperatura mentre continuano ad agitarsi, e scopri quanto lenta pu&ograve; essere una deriva perch&eacute; un filmato la mostri ancora.</p>
+            <p class="what">Flussi uniformi e in canale; sedimentazione con il microscopio dritto o sul fianco; termoforesi di sfere di polistirene con coefficienti di Soret da misure pubblicate.</p>
+            <ul class="chips"><li>Flusso</li><li>Sedimentazione</li><li>Termoforesi</li></ul>
+            <span class="go" aria-hidden="true">Apri Drifting particles (in inglese)</span>
+          </div>
+        </article>
+        <article class="app">
+          <div class="head"><p class="eyebrow">Viscoelasticit&agrave;</p>
+            <h3><a href="../rheology/">Liquido o solido?</a></h3></div>
+          <div class="media"><canvas id="cv-rheo" width="240" height="150" aria-label="Animazione: sfere che vibrano sul posto in un gel soffice, come in un microscopio in campo chiaro"></canvas><span class="tag">Campo chiaro, sfere in un gel (schizzo)</span></div>
+          <div class="body">
+            <p>Misura quanto &egrave; elastico e quanto &egrave; viscoso un materiale soffice, da quanto si allontanano le sfere traccianti mescolate al suo interno: microreologia con un microscopio, da una goccia di campione.</p>
+            <p class="what">Liquidi semplici, micelle vermiformi, soluzioni polimeriche e un gel che si forma, con moduli noti esattamente; dal filmato a G' e G'' su diverse decadi di frequenza.</p>
+            <ul class="chips"><li>Microreologia</li><li>G' e G''</li><li>Gelificazione</li></ul>
+            <span class="go" aria-hidden="true">Apri Liquid or solid (in inglese)</span>
+          </div>
+        </article>
+      </div>
+    </div>
+    <div class="app-group" id="advanced" aria-labelledby="h-advanced">
+      <h2 class="group-title" id="h-advanced">Applicazioni avanzate</h2>
+      <p class="group-note">Metodi pi&ugrave; recenti, vicini alla ricerca di oggi: particelle che si spingono, proteine troppo piccole per essere viste, materiali sotto taglio e tessuti in movimento. Danno per scontata la prima pagina.</p>
+      <div class="app-grid">
+        <article class="app">
+          <div class="head"><p class="eyebrow">Interazioni</p>
+            <h3><a href="../crowded/">Come si dispongono nella folla?</a></h3></div>
+          <div class="media"><canvas id="cv-crowd" width="240" height="150" aria-label="Animazione: particelle colorate fitte, ognuna che si agita tra le vicine, come in un microscopio confocale"></canvas><span class="tag">Confocale, colloidi concentrati (schizzo)</span></div>
+          <div class="body">
+            <p>Misura come si dispongono particelle che si spingono a vicenda, e come si muove la folla, da un filmato confocale: il fattore di struttura e la diffusione collettiva, come nella diffusione della luce.</p>
+            <p class="what">Sfere dure e cariche, da diluite fino al 45 % del volume, tutte colorate o solo alcune; nella simulazione le particelle si spingono davvero, cos&igrave; ci&ograve; che trova la DDM si confronta con ci&ograve; che fanno realmente.</p>
+            <ul class="chips"><li>Fattore di struttura</li><li>Diffusione collettiva</li><li>Autodiffusione</li></ul>
+            <span class="go" aria-hidden="true">Apri Crowded particles (in inglese)</span>
+          </div>
+        </article>
+        <article class="app">
+          <div class="head"><p class="eyebrow">Proteine</p>
+            <h3><a href="../proteins/">Si attraggono o si respingono?</a></h3></div>
+          <div class="media"><canvas id="cv-prot" width="240" height="150" aria-label="Animazione: un campo grigio con deboli increspature che vanno e vengono, mentre proteine troppo piccole per essere viste diffondono in un microscopio in campo chiaro"></canvas><span class="tag">Campo chiaro, una soluzione di proteine (schizzo, contrasto aumentato)</span></div>
+          <div class="body">
+            <p>Misura la dimensione di proteine troppo piccole per essere viste, e se si respingono o si attraggono, da filmati in campo chiaro a poche concentrazioni: il parametro di interazione diffusiva k<sub>D</sub> e il secondo coefficiente del viriale B<sub>2</sub>.</p>
+            <p class="what">Un anticorpo con poco e con molto sale, l'albumina, il lisozima e un anticorpo appiccicoso, o una proteina tua: imposta la sua carica e il sale, e guarda come cambiano i due numeri.</p>
+            <ul class="chips"><li>Dimensione delle proteine</li><li>k<sub>D</sub></li><li>B<sub>2</sub></li></ul>
+            <span class="go" aria-hidden="true">Apri Proteins (in inglese)</span>
+          </div>
+        </article>
+        <article class="app">
+          <div class="head"><p class="eyebrow">Snervamento</p>
+            <h3><a href="../shear/">Quando comincia a scorrere?</a></h3></div>
+          <div class="media"><canvas id="cv-shear" width="240" height="150" aria-label="Animazione: sfere che scorrono avanti e indietro, di pi&ugrave; quelle sopra e sotto il fuoco, mentre un materiale soffice &egrave; deformato tra due piastre"></canvas><span class="tag">Campo chiaro, sfere in un gel sotto taglio (schizzo)</span></div>
+          <div class="body">
+            <p>Deforma un materiale soffice avanti e indietro e confronta fotogrammi presi a un ciclo intero di distanza: ci&ograve; che il taglio annulla si cancella, e i riarrangiamenti che lascia dietro di s&eacute; mostrano quando un solido soffice cede e comincia a scorrere.</p>
+            <p class="what">Un microgel con soglia di snervamento, sotto e sopra lo snervamento, una gomma e un liquido viscoso; una scansione in deformazione dal 5 % al 150 %, come nei nostri esperimenti di echo-DDM.</p>
+            <ul class="chips"><li>Taglio oscillatorio</li><li>Echo-DDM</li><li>Snervamento</li></ul>
+            <span class="go" aria-hidden="true">Apri Sheared materials (in inglese)</span>
+          </div>
+        </article>
+        <article class="app">
+          <div class="head"><p class="eyebrow">Moto collettivo</p>
+            <h3><a href="../tissues/">Bloccato, fluido o in stormo?</a></h3></div>
+          <div class="media"><canvas id="cv-tissue" width="240" height="150" aria-label="Animazione: nuclei fluorescenti di uno strato di cellule, fianco a fianco, che derivano lentamente tutti nella stessa direzione"></canvas><span class="tag">Fluorescenza, nuclei di uno strato di cellule (schizzo)</span></div>
+          <div class="body">
+            <p>Capisci se uno strato di cellule epiteliali &egrave; bloccato come un solido, scorre come un liquido o si muove come uno stormo, da un time-lapse dei loro nuclei colorati, senza seguire nessuna cellula.</p>
+            <p class="what">Cellule che strisciano, si spingono e si orientano insieme: strati bloccati, strati fluidi, solidi e liquidi in stormo, come nei nostri studi sugli epiteli risvegliati; la velocit&agrave; di ogni motivo e la rete dei nuclei seguita cellula per cellula.</p>
+            <ul class="chips"><li>Blocco (jamming)</li><li>Moto in stormo</li><li>Spostamenti delle cellule</li></ul>
+            <span class="go" aria-hidden="true">Apri Moving tissues (in inglese)</span>
+          </div>
+        </article>
+      </div>
     </div>
   </section>
 

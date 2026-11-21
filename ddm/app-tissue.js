@@ -75,7 +75,7 @@
     { key: "binning", lvl: 2, label: "Binning (10x objective)", kind: "select", num: true, options: [[2, "2 x 2 (1.3 " + MU + "m pixels)"], [4, "4 x 4 (2.6 " + MU + "m pixels)"]], hint: function () { return "Field " + fmtSig(simPx() * pixelUm(), 3) + " " + MU + "m across."; } },
     { key: "photons", lvl: 3, label: "Light from each nucleus (photons per frame)", kind: "log", min: 500, max: 1e5, fmt: function (v) { return fmtSig(v, 2); } },
     { key: "sim_px", lvl: 3, label: "Simulated part of the image", kind: "select", num: true, options: [[64, "64 x 64 pixels (fast)"], [128, "128 x 128 pixels"], [256, "256 x 256 pixels (slow)"]], hint: function () { return "About " + fmtSig(movieSeconds(), 2) + " s per movie."; } },
-    { key: "channel", lvl: 1, label: "Images analysed", kind: "select", options: CHANNELS.map(function (c) { return [c[0], c[1]]; }), hint: function () { return CHANNELS.find(function (c) { return c[0] === state.channel; })[2]; } },
+    { key: "channel", lvl: 2, label: "Images analysed", kind: "select", options: CHANNELS.map(function (c) { return [c[0], c[1]]; }), hint: function () { return CHANNELS.find(function (c) { return c[0] === state.channel; })[2]; } },
     { key: "qrange", lvl: 3, label: "Fit range in q (1/" + MU + "m)", kind: "qrange" }
   ];
   const ONOFF = function (off) { return [["on", "On"], ["off", "Off: " + off]]; };
@@ -1097,6 +1097,7 @@
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
   new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   $("btn-series").addEventListener("click", function () { startSeries(); });
+  document.querySelectorAll(".opt-show").forEach(function (b) { b.addEventListener("click", function () { b.closest(".step").classList.add("unfolded"); readColors(); if (cache.res) { renderGamma(); drawCurves(); renderNetwork(); } }); });
   $("fit-model").addEventListener("change", function () { state.fit_model = $("fit-model").value; if (cache.res) { renderGamma(); drawCurves(); renderSettings(); } });
   $("net-frame").addEventListener("input", function () { if (cache.movie) drawNet(); });
   $("net-colour").addEventListener("change", function () { if (cache.movie) drawNet(); });

@@ -83,6 +83,10 @@ p { margin: 0 0 1rem; }
 .langs [aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
 /* one card per application */
 .apps { padding-block: 1.5rem 2.5rem; }
+.app-group + .app-group { margin-top: 2.75rem; }
+.group-title { font-size: 1.6rem; margin: 0 0 0.3rem; }
+.group-note { font-family: var(--sans); font-size: 0.95rem; color: var(--muted); max-width: 44rem; margin: 0 0 1.1rem; }
+.app.learn { grid-template-rows: auto 1fr; border-style: dashed; }
 .app-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
 @media (min-width: 48rem) { .app-grid { grid-template-columns: repeat(2, 1fr); } }
 .app { position: relative; display: grid; grid-template-rows: auto auto 1fr; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
@@ -94,11 +98,11 @@ p { margin: 0 0 1rem; }
 .start-here { font-family: var(--sans); font-size: 0.95rem; margin: 0.9rem 0 0; }
 .app .head { padding: 1.1rem 1.25rem 0.8rem; }
 .app .head .eyebrow { margin-bottom: 0.2rem; }
-.app .head h2 { margin: 0; }
+.app .head h3 { margin: 0; }
 .app .body { display: grid; align-content: start; gap: 0.15rem; padding: 1rem 1.25rem 1.25rem; }
-.app h2 { font-size: 1.7rem; margin: 0 0 0.35rem; }
-.app h2 a { color: var(--ink); text-decoration: none; }
-.app h2 a::after { content: ""; position: absolute; inset: 0; }   /* the whole card is the link */
+.app h3 { font-size: 1.7rem; font-weight: 500; margin: 0 0 0.35rem; }
+.app h3 a { color: var(--ink); text-decoration: none; }
+.app h3 a::after { content: ""; position: absolute; inset: 0; }   /* the whole card is the link */
 .app p { margin: 0 0 0.6rem; }
 .app .what { font-family: var(--sans); font-size: 0.86rem; color: var(--muted); line-height: 1.5; margin: 0 0 0.9rem; }
 .app .chips { list-style: none; margin: 0 0 1rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
@@ -170,95 +174,121 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
   </section>
 
   <section class="wrap apps" aria-label="Anwendungen">
-    <div class="app-grid">
-      <article class="app">
-        <div class="head"><p class="eyebrow">Brownsche Bewegung</p>
-          <h2><a href="../sizing/">Wie gro&szlig; sind sie?</a></h2></div>
-        <div class="media"><canvas id="cv-sizing" width="240" height="150" aria-label="Animation: Teilchen, die in einer Fl&uuml;ssigkeit zittern, wie in einem Hellfeldmikroskop"></canvas><span class="tag">Hellfeld, kolloidale Kugeln (Skizze)</span></div>
-        <div class="body">
-          <p>Bestimmen Sie die Gr&ouml;&szlig;e kolloidaler Teilchen daraus, wie schnell sie umherwandern, wie bei der dynamischen Lichtstreuung, aber mit einem Mikroskop und in Proben, bei denen die Lichtstreuung an ihre Grenzen st&ouml;&szlig;t.</p>
-          <p class="what">Kugeln, Ellipsoide und St&auml;bchen, von denen sich manche auch drehen; sieben Bildgebungsverfahren vom Hellfeld bis zur Konfokalmikroskopie; Kameras, Rauschen, Sch&auml;rfentiefe und was jedes davon am Ergebnis &auml;ndert.</p>
-          <ul class="chips"><li>Diffusion</li><li>Teilchengr&ouml;&szlig;e</li><li>Rotation</li></ul>
-          <span class="go" aria-hidden="true">Sizing particles &ouml;ffnen (auf Englisch)</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Aktive Bewegung</p>
-          <h2><a href="../swimmers/">Wie schnell schwimmen sie?</a></h2></div>
-        <div class="media"><canvas id="cv-swim" width="240" height="150" aria-label="Animation: st&auml;bchenf&ouml;rmige Bakterien, manche schwimmend, manche still, wie in einem Phasenkontrastmikroskop"></canvas><span class="tag">Phasenkontrast, Bakterien (Skizze)</span></div>
-        <div class="body">
-          <p>Messen Sie, wie schnell Bakterien, Algen oder Spermien schwimmen, wie stark die Geschwindigkeiten streuen und welcher Anteil der Zellen schwimmt, aus einem Motilit&auml;tsfilm mit Tausenden von Zellen.</p>
-          <p class="what">E.-coli-St&auml;mme, Salmonella, B. subtilis, Chlamydomonas, Euglena und Bullenspermien, eingestellt wie in ver&ouml;ffentlichten Experimenten, oder Zellen nach eigenem Entwurf.</p>
-          <ul class="chips"><li>Schwimmgeschwindigkeit</li><li>Streuung der Geschwindigkeiten</li><li>Anteil der Schwimmer</li></ul>
-          <span class="go" aria-hidden="true">Swimming cells &ouml;ffnen (auf Englisch)</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Drift</p>
-          <h2><a href="../drift/">Wohin bewegen sie sich?</a></h2></div>
-        <div class="media"><canvas id="cv-drift" width="240" height="150" aria-label="Animation: zitternde Teilchen, von einer Str&ouml;mung langsam nach rechts getragen, wie in einem Hellfeldmikroskop"></canvas><span class="tag">Hellfeld, Kugeln in einer Str&ouml;mung (Skizze)</span></div>
-        <div class="body">
-          <p>Messen Sie Geschwindigkeit und Richtung von Teilchen, die von einer Str&ouml;mung, der Schwerkraft oder einem Temperaturgradienten getragen werden, w&auml;hrend sie weiter zittern, und finden Sie heraus, wie langsam eine Drift sein darf, damit ein Film sie noch zeigt.</p>
-          <p class="what">Pfropfen- und Kanalstr&ouml;mungen; Sedimentation mit aufrechtem oder gekipptem Mikroskop; Thermophorese von Polystyrolkugeln mit Soret-Koeffizienten aus ver&ouml;ffentlichten Messungen.</p>
-          <ul class="chips"><li>Str&ouml;mung</li><li>Sedimentation</li><li>Thermophorese</li></ul>
-          <span class="go" aria-hidden="true">Drifting particles &ouml;ffnen (auf Englisch)</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Viskoelastizit&auml;t</p>
-          <h2><a href="../rheology/">Fl&uuml;ssig oder fest?</a></h2></div>
-        <div class="media"><canvas id="cv-rheo" width="240" height="150" aria-label="Animation: Kugeln, die in einem weichen Gel auf der Stelle zittern, wie in einem Hellfeldmikroskop"></canvas><span class="tag">Hellfeld, Kugeln in einem Gel (Skizze)</span></div>
-        <div class="body">
-          <p>Messen Sie, wie elastisch und wie z&auml;h ein weiches Material ist, daraus, wie weit eingemischte Tracerkugeln kommen: Mikrorheologie mit einem Mikroskop, aus einem Tropfen Probe.</p>
-          <p class="what">Einfache Fl&uuml;ssigkeiten, wurmartige Mizellen, Polymerl&ouml;sungen und ein entstehendes Gel, mit genau bekannten Moduln; vom Film zu G' und G'' &uuml;ber mehrere Dekaden der Frequenz.</p>
-          <ul class="chips"><li>Mikrorheologie</li><li>G' und G''</li><li>Gelbildung</li></ul>
-          <span class="go" aria-hidden="true">Liquid or solid &ouml;ffnen (auf Englisch)</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Wechselwirkungen</p>
-          <h2><a href="../crowded/">Wie ordnen sie sich im Gedr&auml;nge?</a></h2></div>
-        <div class="media"><canvas id="cv-crowd" width="240" height="150" aria-label="Animation: dicht gepackte gef&auml;rbte Teilchen, jedes zwischen seinen Nachbarn zitternd, wie in einem Konfokalmikroskop"></canvas><span class="tag">Konfokal, konzentrierte Kolloide (Skizze)</span></div>
-        <div class="body">
-          <p>Messen Sie, wie sich Teilchen anordnen, die einander wegdr&uuml;cken, und wie sich das Gedr&auml;nge bewegt, aus einem Konfokalfilm: Strukturfaktor und kollektive Diffusion, wie bei der Lichtstreuung.</p>
-          <p class="what">Harte und geladene Kugeln, von verd&uuml;nnt bis 45 % des Volumens, alle gef&auml;rbt oder nur wenige; in der Simulation dr&uuml;cken die Teilchen einander tats&auml;chlich weg, so wird, was DDM findet, mit dem verglichen, was sie wirklich tun.</p>
-          <ul class="chips"><li>Strukturfaktor</li><li>Kollektive Diffusion</li><li>Selbstdiffusion</li></ul>
-          <span class="go" aria-hidden="true">Crowded particles &ouml;ffnen (auf Englisch)</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Proteine</p>
-          <h2><a href="../proteins/">Ziehen sie sich an oder sto&szlig;en sie sich ab?</a></h2></div>
-        <div class="media"><canvas id="cv-prot" width="240" height="150" aria-label="Animation: ein graues Feld mit schwachen, kommenden und gehenden Wellen, w&auml;hrend unsichtbar kleine Proteine in einem Hellfeldmikroskop diffundieren"></canvas><span class="tag">Hellfeld, eine Proteinl&ouml;sung (Skizze, Kontrast verst&auml;rkt)</span></div>
-        <div class="body">
-          <p>Messen Sie die Gr&ouml;&szlig;e von Proteinen, die viel zu klein sind, um sie zu sehen, und ob sie sich absto&szlig;en oder anziehen, aus Hellfeldfilmen bei einigen Konzentrationen: den Diffusions-Wechselwirkungsparameter k<sub>D</sub> und den zweiten Virialkoeffizienten B<sub>2</sub>.</p>
-          <p class="what">Ein Antik&ouml;rper bei wenig und bei viel Salz, Albumin, Lysozym und ein klebriger Antik&ouml;rper, oder ein eigenes Protein: Stellen Sie seine Ladung und das Salz ein und sehen Sie, wie beide Zahlen folgen.</p>
-          <ul class="chips"><li>Proteingr&ouml;&szlig;e</li><li>k<sub>D</sub></li><li>B<sub>2</sub></li></ul>
-          <span class="go" aria-hidden="true">Proteins &ouml;ffnen (auf Englisch)</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Flie&szlig;grenze</p>
-          <h2><a href="../shear/">Wann beginnt es zu flie&szlig;en?</a></h2></div>
-        <div class="media"><canvas id="cv-shear" width="240" height="150" aria-label="Animation: Kugeln, die hin und her gleiten, &uuml;ber und unter dem Fokus st&auml;rker, w&auml;hrend ein weiches Material zwischen zwei Platten geschert wird"></canvas><span class="tag">Hellfeld, Kugeln in einem gescherten Gel (Skizze)</span></div>
-        <div class="body">
-          <p>Scheren Sie ein weiches Material hin und her und vergleichen Sie Bilder, die genau einen Zyklus auseinanderliegen: Was die Scherung r&uuml;ckg&auml;ngig macht, hebt sich auf, und die Umlagerungen, die sie zur&uuml;ckl&auml;sst, zeigen, wann ein weicher Festk&ouml;rper nachgibt und zu flie&szlig;en beginnt.</p>
-          <p class="what">Ein Mikrogel mit Flie&szlig;grenze, unter und &uuml;ber dieser Grenze, ein Gummi und eine z&auml;he Fl&uuml;ssigkeit; ein Amplitudendurchlauf von 5 % bis 150 %, wie in unseren Echo-DDM-Experimenten.</p>
-          <ul class="chips"><li>Oszillierende Scherung</li><li>Echo-DDM</li><li>Flie&szlig;grenze</li></ul>
-          <span class="go" aria-hidden="true">Sheared materials &ouml;ffnen (auf Englisch)</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Kollektive Bewegung</p>
-          <h2><a href="../tissues/">Blockiert, flie&szlig;end oder im Schwarm?</a></h2></div>
-        <div class="media"><canvas id="cv-tissue" width="240" height="150" aria-label="Animation: fluoreszierende Zellkerne einer Zellschicht, dicht an dicht, die alle langsam in dieselbe Richtung driften"></canvas><span class="tag">Fluoreszenz, Zellkerne einer Zellschicht (Skizze)</span></div>
-        <div class="body">
-          <p>Erkennen Sie, ob eine Schicht von Epithelzellen wie ein Festk&ouml;rper feststeckt, wie eine Fl&uuml;ssigkeit flie&szlig;t oder sich als Schwarm bewegt, aus einer Zeitrafferaufnahme ihrer gef&auml;rbten Zellkerne, ohne einer einzelnen Zelle zu folgen.</p>
-          <p class="what">Kriechende Zellen, die einander schieben und sich gemeinsam ausrichten: blockierte und flie&szlig;ende Schichten, schw&auml;rmende Festk&ouml;rper und schw&auml;rmende Fl&uuml;ssigkeiten, wie in unseren Studien &uuml;ber wiedererweckte Epithelien.</p>
-          <ul class="chips"><li>Jamming</li><li>Schwarmbildung</li><li>Verschiebungen der Zellen</li></ul>
-          <span class="go" aria-hidden="true">Moving tissues &ouml;ffnen (auf Englisch)</span>
-        </div>
-      </article>
+    <div class="app-group" id="start" aria-labelledby="h-start">
+      <h2 class="group-title" id="h-start">Hier beginnen</h2>
+      <p class="group-note">Wie DDM funktioniert, Schritt f&uuml;r Schritt, vom Rohfilm bis zur Gr&ouml;&szlig;e eines Teilchens. Die anderen Seiten bauen darauf auf.</p>
+      <div class="app-grid">
+        <article class="app">
+          <div class="head"><p class="eyebrow">Brownsche Bewegung</p>
+            <h3><a href="../sizing/">Wie gro&szlig; sind sie?</a></h3></div>
+          <div class="media"><canvas id="cv-sizing" width="240" height="150" aria-label="Animation: Teilchen, die in einer Fl&uuml;ssigkeit zittern, wie in einem Hellfeldmikroskop"></canvas><span class="tag">Hellfeld, kolloidale Kugeln (Skizze)</span></div>
+          <div class="body">
+            <p>Bestimmen Sie die Gr&ouml;&szlig;e kolloidaler Teilchen daraus, wie schnell sie umherwandern, wie bei der dynamischen Lichtstreuung, aber mit einem Mikroskop und in Proben, bei denen die Lichtstreuung an ihre Grenzen st&ouml;&szlig;t.</p>
+            <p class="what">Kugeln, Ellipsoide und St&auml;bchen, von denen sich manche auch drehen; sieben Bildgebungsverfahren vom Hellfeld bis zur Konfokalmikroskopie; Kameras, Rauschen, Sch&auml;rfentiefe und was jedes davon am Ergebnis &auml;ndert.</p>
+            <ul class="chips"><li>Diffusion</li><li>Teilchengr&ouml;&szlig;e</li><li>Rotation</li></ul>
+            <span class="go" aria-hidden="true">Sizing particles &ouml;ffnen (auf Englisch)</span>
+          </div>
+        </article>
+        <article class="app learn">
+          <div class="head"><p class="eyebrow">F&uuml;r Lehre und &Uuml;bung</p>
+            <h3><a href="../exercises/">&Uuml;bungen und Notebooks</a></h3></div>
+          <div class="body">
+            <p>Fragen mit Musterl&ouml;sungen zu jeder Seite, zum Vorhersagen, Rechnen und Diskutieren, druckbar f&uuml;r den Unterricht oder zum Selbststudium.</p>
+            <p class="what">Jede Seite l&auml;sst den simulierten Film herunterladen, und mehrere verweisen auf ein Python-Notebook, um die Analyse selbst durchzuf&uuml;hren, mit fastDDM oder wenigen Zeilen numpy.</p>
+            <ul class="chips"><li>&Uuml;bungen</li><li>Musterl&ouml;sungen</li><li>Notebooks</li></ul>
+            <span class="go" aria-hidden="true">Zu den &Uuml;bungen</span>
+          </div>
+        </article>
+      </div>
+    </div>
+    <div class="app-group" id="classic" aria-labelledby="h-classic">
+      <h2 class="group-title" id="h-classic">Klassische Anwendungen</h2>
+      <p class="group-note">Bew&auml;hrte Anwendungen der DDM, jede zu einer Art von Bewegung: Schwimmen, Driften und Kugeln, die in einem weichen Material zittern.</p>
+      <div class="app-grid">
+        <article class="app">
+          <div class="head"><p class="eyebrow">Aktive Bewegung</p>
+            <h3><a href="../swimmers/">Wie schnell schwimmen sie?</a></h3></div>
+          <div class="media"><canvas id="cv-swim" width="240" height="150" aria-label="Animation: st&auml;bchenf&ouml;rmige Bakterien, manche schwimmend, manche still, wie in einem Phasenkontrastmikroskop"></canvas><span class="tag">Phasenkontrast, Bakterien (Skizze)</span></div>
+          <div class="body">
+            <p>Messen Sie, wie schnell Bakterien, Algen oder Spermien schwimmen, wie stark die Geschwindigkeiten streuen und welcher Anteil der Zellen schwimmt, aus einem Motilit&auml;tsfilm mit Tausenden von Zellen.</p>
+            <p class="what">E.-coli-St&auml;mme, Salmonella, B. subtilis, Chlamydomonas, Euglena und Bullenspermien, eingestellt wie in ver&ouml;ffentlichten Experimenten, oder Zellen nach eigenem Entwurf.</p>
+            <ul class="chips"><li>Schwimmgeschwindigkeit</li><li>Streuung der Geschwindigkeiten</li><li>Anteil der Schwimmer</li></ul>
+            <span class="go" aria-hidden="true">Swimming cells &ouml;ffnen (auf Englisch)</span>
+          </div>
+        </article>
+        <article class="app">
+          <div class="head"><p class="eyebrow">Drift</p>
+            <h3><a href="../drift/">Wohin bewegen sie sich?</a></h3></div>
+          <div class="media"><canvas id="cv-drift" width="240" height="150" aria-label="Animation: zitternde Teilchen, von einer Str&ouml;mung langsam nach rechts getragen, wie in einem Hellfeldmikroskop"></canvas><span class="tag">Hellfeld, Kugeln in einer Str&ouml;mung (Skizze)</span></div>
+          <div class="body">
+            <p>Messen Sie Geschwindigkeit und Richtung von Teilchen, die von einer Str&ouml;mung, der Schwerkraft oder einem Temperaturgradienten getragen werden, w&auml;hrend sie weiter zittern, und finden Sie heraus, wie langsam eine Drift sein darf, damit ein Film sie noch zeigt.</p>
+            <p class="what">Pfropfen- und Kanalstr&ouml;mungen; Sedimentation mit aufrechtem oder gekipptem Mikroskop; Thermophorese von Polystyrolkugeln mit Soret-Koeffizienten aus ver&ouml;ffentlichten Messungen.</p>
+            <ul class="chips"><li>Str&ouml;mung</li><li>Sedimentation</li><li>Thermophorese</li></ul>
+            <span class="go" aria-hidden="true">Drifting particles &ouml;ffnen (auf Englisch)</span>
+          </div>
+        </article>
+        <article class="app">
+          <div class="head"><p class="eyebrow">Viskoelastizit&auml;t</p>
+            <h3><a href="../rheology/">Fl&uuml;ssig oder fest?</a></h3></div>
+          <div class="media"><canvas id="cv-rheo" width="240" height="150" aria-label="Animation: Kugeln, die in einem weichen Gel auf der Stelle zittern, wie in einem Hellfeldmikroskop"></canvas><span class="tag">Hellfeld, Kugeln in einem Gel (Skizze)</span></div>
+          <div class="body">
+            <p>Messen Sie, wie elastisch und wie z&auml;h ein weiches Material ist, daraus, wie weit eingemischte Tracerkugeln kommen: Mikrorheologie mit einem Mikroskop, aus einem Tropfen Probe.</p>
+            <p class="what">Einfache Fl&uuml;ssigkeiten, wurmartige Mizellen, Polymerl&ouml;sungen und ein entstehendes Gel, mit genau bekannten Moduln; vom Film zu G' und G'' &uuml;ber mehrere Dekaden der Frequenz.</p>
+            <ul class="chips"><li>Mikrorheologie</li><li>G' und G''</li><li>Gelbildung</li></ul>
+            <span class="go" aria-hidden="true">Liquid or solid &ouml;ffnen (auf Englisch)</span>
+          </div>
+        </article>
+      </div>
+    </div>
+    <div class="app-group" id="advanced" aria-labelledby="h-advanced">
+      <h2 class="group-title" id="h-advanced">Fortgeschrittene Anwendungen</h2>
+      <p class="group-note">Neuere Methoden, nah an der aktuellen Forschung: Teilchen, die einander schieben, unsichtbar kleine Proteine, gescherte Materialien und bewegte Gewebe. Sie setzen die erste Seite voraus.</p>
+      <div class="app-grid">
+        <article class="app">
+          <div class="head"><p class="eyebrow">Wechselwirkungen</p>
+            <h3><a href="../crowded/">Wie ordnen sie sich im Gedr&auml;nge?</a></h3></div>
+          <div class="media"><canvas id="cv-crowd" width="240" height="150" aria-label="Animation: dicht gepackte gef&auml;rbte Teilchen, jedes zwischen seinen Nachbarn zitternd, wie in einem Konfokalmikroskop"></canvas><span class="tag">Konfokal, konzentrierte Kolloide (Skizze)</span></div>
+          <div class="body">
+            <p>Messen Sie, wie sich Teilchen anordnen, die einander wegdr&uuml;cken, und wie sich das Gedr&auml;nge bewegt, aus einem Konfokalfilm: Strukturfaktor und kollektive Diffusion, wie bei der Lichtstreuung.</p>
+            <p class="what">Harte und geladene Kugeln, von verd&uuml;nnt bis 45 % des Volumens, alle gef&auml;rbt oder nur wenige; in der Simulation dr&uuml;cken die Teilchen einander tats&auml;chlich weg, so wird, was DDM findet, mit dem verglichen, was sie wirklich tun.</p>
+            <ul class="chips"><li>Strukturfaktor</li><li>Kollektive Diffusion</li><li>Selbstdiffusion</li></ul>
+            <span class="go" aria-hidden="true">Crowded particles &ouml;ffnen (auf Englisch)</span>
+          </div>
+        </article>
+        <article class="app">
+          <div class="head"><p class="eyebrow">Proteine</p>
+            <h3><a href="../proteins/">Ziehen sie sich an oder sto&szlig;en sie sich ab?</a></h3></div>
+          <div class="media"><canvas id="cv-prot" width="240" height="150" aria-label="Animation: ein graues Feld mit schwachen, kommenden und gehenden Wellen, w&auml;hrend unsichtbar kleine Proteine in einem Hellfeldmikroskop diffundieren"></canvas><span class="tag">Hellfeld, eine Proteinl&ouml;sung (Skizze, Kontrast verst&auml;rkt)</span></div>
+          <div class="body">
+            <p>Messen Sie die Gr&ouml;&szlig;e von Proteinen, die viel zu klein sind, um sie zu sehen, und ob sie sich absto&szlig;en oder anziehen, aus Hellfeldfilmen bei einigen Konzentrationen: den Diffusions-Wechselwirkungsparameter k<sub>D</sub> und den zweiten Virialkoeffizienten B<sub>2</sub>.</p>
+            <p class="what">Ein Antik&ouml;rper bei wenig und bei viel Salz, Albumin, Lysozym und ein klebriger Antik&ouml;rper, oder ein eigenes Protein: Stellen Sie seine Ladung und das Salz ein und sehen Sie, wie beide Zahlen folgen.</p>
+            <ul class="chips"><li>Proteingr&ouml;&szlig;e</li><li>k<sub>D</sub></li><li>B<sub>2</sub></li></ul>
+            <span class="go" aria-hidden="true">Proteins &ouml;ffnen (auf Englisch)</span>
+          </div>
+        </article>
+        <article class="app">
+          <div class="head"><p class="eyebrow">Flie&szlig;grenze</p>
+            <h3><a href="../shear/">Wann beginnt es zu flie&szlig;en?</a></h3></div>
+          <div class="media"><canvas id="cv-shear" width="240" height="150" aria-label="Animation: Kugeln, die hin und her gleiten, &uuml;ber und unter dem Fokus st&auml;rker, w&auml;hrend ein weiches Material zwischen zwei Platten geschert wird"></canvas><span class="tag">Hellfeld, Kugeln in einem gescherten Gel (Skizze)</span></div>
+          <div class="body">
+            <p>Scheren Sie ein weiches Material hin und her und vergleichen Sie Bilder, die genau einen Zyklus auseinanderliegen: Was die Scherung r&uuml;ckg&auml;ngig macht, hebt sich auf, und die Umlagerungen, die sie zur&uuml;ckl&auml;sst, zeigen, wann ein weicher Festk&ouml;rper nachgibt und zu flie&szlig;en beginnt.</p>
+            <p class="what">Ein Mikrogel mit Flie&szlig;grenze, unter und &uuml;ber dieser Grenze, ein Gummi und eine z&auml;he Fl&uuml;ssigkeit; ein Amplitudendurchlauf von 5 % bis 150 %, wie in unseren Echo-DDM-Experimenten.</p>
+            <ul class="chips"><li>Oszillierende Scherung</li><li>Echo-DDM</li><li>Flie&szlig;grenze</li></ul>
+            <span class="go" aria-hidden="true">Sheared materials &ouml;ffnen (auf Englisch)</span>
+          </div>
+        </article>
+        <article class="app">
+          <div class="head"><p class="eyebrow">Kollektive Bewegung</p>
+            <h3><a href="../tissues/">Blockiert, flie&szlig;end oder im Schwarm?</a></h3></div>
+          <div class="media"><canvas id="cv-tissue" width="240" height="150" aria-label="Animation: fluoreszierende Zellkerne einer Zellschicht, dicht an dicht, die alle langsam in dieselbe Richtung driften"></canvas><span class="tag">Fluoreszenz, Zellkerne einer Zellschicht (Skizze)</span></div>
+          <div class="body">
+            <p>Erkennen Sie, ob eine Schicht von Epithelzellen wie ein Festk&ouml;rper feststeckt, wie eine Fl&uuml;ssigkeit flie&szlig;t oder sich als Schwarm bewegt, aus einer Zeitrafferaufnahme ihrer gef&auml;rbten Zellkerne, ohne einer einzelnen Zelle zu folgen.</p>
+            <p class="what">Kriechende Zellen, die einander schieben und sich gemeinsam ausrichten: blockierte und flie&szlig;ende Schichten, schw&auml;rmende Festk&ouml;rper und schw&auml;rmende Fl&uuml;ssigkeiten, wie in unseren Studien &uuml;ber wiedererweckte Epithelien; die Rate jedes Musters und das Netz der Zellkerne, Zelle f&uuml;r Zelle verfolgt.</p>
+            <ul class="chips"><li>Jamming</li><li>Schwarmbildung</li><li>Verschiebungen der Zellen</li></ul>
+            <span class="go" aria-hidden="true">Moving tissues &ouml;ffnen (auf Englisch)</span>
+          </div>
+        </article>
+      </div>
     </div>
   </section>
 

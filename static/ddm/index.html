@@ -83,6 +83,10 @@ p { margin: 0 0 1rem; }
 .langs [aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
 /* one card per application */
 .apps { padding-block: 1.5rem 2.5rem; }
+.app-group + .app-group { margin-top: 2.75rem; }
+.group-title { font-size: 1.6rem; margin: 0 0 0.3rem; }
+.group-note { font-family: var(--sans); font-size: 0.95rem; color: var(--muted); max-width: 44rem; margin: 0 0 1.1rem; }
+.app.learn { grid-template-rows: auto 1fr; border-style: dashed; }
 .app-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
 @media (min-width: 48rem) { .app-grid { grid-template-columns: repeat(2, 1fr); } }
 .app { position: relative; display: grid; grid-template-rows: auto auto 1fr; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
@@ -94,11 +98,11 @@ p { margin: 0 0 1rem; }
 .start-here { font-family: var(--sans); font-size: 0.95rem; margin: 0.9rem 0 0; }
 .app .head { padding: 1.1rem 1.25rem 0.8rem; }
 .app .head .eyebrow { margin-bottom: 0.2rem; }
-.app .head h2 { margin: 0; }
+.app .head h3 { margin: 0; }
 .app .body { display: grid; align-content: start; gap: 0.15rem; padding: 1rem 1.25rem 1.25rem; }
-.app h2 { font-size: 1.7rem; margin: 0 0 0.35rem; }
-.app h2 a { color: var(--ink); text-decoration: none; }
-.app h2 a::after { content: ""; position: absolute; inset: 0; }   /* the whole card is the link */
+.app h3 { font-size: 1.7rem; font-weight: 500; margin: 0 0 0.35rem; }
+.app h3 a { color: var(--ink); text-decoration: none; }
+.app h3 a::after { content: ""; position: absolute; inset: 0; }   /* the whole card is the link */
 .app p { margin: 0 0 0.6rem; }
 .app .what { font-family: var(--sans); font-size: 0.86rem; color: var(--muted); line-height: 1.5; margin: 0 0 0.9rem; }
 .app .chips { list-style: none; margin: 0 0 1rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
@@ -170,95 +174,121 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
   </section>
 
   <section class="wrap apps" aria-label="Applications">
-    <div class="app-grid">
-      <article class="app">
-        <div class="head"><p class="eyebrow">Brownian motion</p>
-          <h2><a href="sizing/">How big are they?</a></h2></div>
-        <div class="media"><canvas id="cv-sizing" width="240" height="150" aria-label="Animation: particles jiggling in a liquid, as seen in a bright-field microscope"></canvas><span class="tag">Bright field, colloidal beads (sketch)</span></div>
-        <div class="body">
-          <p>Size colloidal particles from how fast they wander, as in dynamic light scattering, but with a microscope and in samples where light scattering struggles.</p>
-          <p class="what">Spheres, ellipsoids and rods, some of which turn as well as wander; seven imaging modes from bright field to confocal; cameras, noise, depth of field and what each does to the result.</p>
-          <ul class="chips"><li>Diffusion</li><li>Particle size</li><li>Rotation</li></ul>
-          <span class="go" aria-hidden="true">Open Sizing particles</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Active motion</p>
-          <h2><a href="swimmers/">How fast do they swim?</a></h2></div>
-        <div class="media"><canvas id="cv-swim" width="240" height="150" aria-label="Animation: rod-shaped bacteria, some swimming and some still, as seen in a phase-contrast microscope"></canvas><span class="tag">Phase contrast, bacteria (sketch)</span></div>
-        <div class="body">
-          <p>Measure how fast bacteria, algae or sperm swim, how much the speeds spread and which share of the cells swims, from a motility movie with thousands of cells.</p>
-          <p class="what">E. coli strains, Salmonella, B. subtilis, Chlamydomonas, Euglena and bull sperm, set up as in published experiments, or cells of your own design.</p>
-          <ul class="chips"><li>Swimming speed</li><li>Speed spread</li><li>Share of swimmers</li></ul>
-          <span class="go" aria-hidden="true">Open Swimming cells</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Drift</p>
-          <h2><a href="drift/">Where are they going?</a></h2></div>
-        <div class="media"><canvas id="cv-drift" width="240" height="150" aria-label="Animation: particles jiggling and carried slowly to the right by a flow, as seen in a bright-field microscope"></canvas><span class="tag">Bright field, beads in a flow (sketch)</span></div>
-        <div class="body">
-          <p>Measure the speed and direction of particles carried by a flow, by gravity or by a temperature gradient, while they keep jiggling, and find out how slow a drift a movie can still show.</p>
-          <p class="what">Plug and channel flows; sedimentation with the microscope upright or on its side; thermophoresis of polystyrene beads with Soret coefficients from published measurements.</p>
-          <ul class="chips"><li>Flow</li><li>Sedimentation</li><li>Thermophoresis</li></ul>
-          <span class="go" aria-hidden="true">Open Drifting particles</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Viscoelasticity</p>
-          <h2><a href="rheology/">Liquid or solid?</a></h2></div>
-        <div class="media"><canvas id="cv-rheo" width="240" height="150" aria-label="Animation: beads rattling in place in a soft gel, as seen in a bright-field microscope"></canvas><span class="tag">Bright field, beads in a gel (sketch)</span></div>
-        <div class="body">
-          <p>Measure how elastic and how viscous a soft material is, from how far tracer beads mixed into it get: microrheology with a microscope, from a drop of sample.</p>
-          <p class="what">Simple liquids, wormlike micelles, polymer solutions and a gel forming, with moduli known exactly; from the movie to G' and G'' over several decades of frequency.</p>
-          <ul class="chips"><li>Microrheology</li><li>G' and G''</li><li>Gelation</li></ul>
-          <span class="go" aria-hidden="true">Open Liquid or solid</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Interactions</p>
-          <h2><a href="crowded/">How do they arrange in a crowd?</a></h2></div>
-        <div class="media"><canvas id="cv-crowd" width="240" height="150" aria-label="Animation: dyed particles packed close together, each jiggling among its neighbours, as seen in a confocal microscope"></canvas><span class="tag">Confocal, concentrated colloids (sketch)</span></div>
-        <div class="body">
-          <p>Measure how particles that push each other arrange themselves, and how the crowd moves, from a confocal movie: the structure factor and collective diffusion, as in light scattering.</p>
-          <p class="what">Hard and charged spheres from dilute to 45 % of the volume, all dyed or only a few; the particles are simulated pushing each other, so what DDM finds is checked against what they really do.</p>
-          <ul class="chips"><li>Structure factor</li><li>Collective diffusion</li><li>Self diffusion</li></ul>
-          <span class="go" aria-hidden="true">Open Crowded particles</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Proteins</p>
-          <h2><a href="proteins/">Do they attract or repel?</a></h2></div>
-        <div class="media"><canvas id="cv-prot" width="240" height="150" aria-label="Animation: a grey field with faint ripples that come and go, as proteins too small to see diffuse in a bright-field microscope"></canvas><span class="tag">Bright field, a protein solution (sketch, contrast stretched)</span></div>
-        <div class="body">
-          <p>Measure the size of proteins far too small to see, and whether they repel or attract each other, from bright-field movies at a few concentrations: the diffusion interaction parameter k<sub>D</sub> and the second virial coefficient B<sub>2</sub>.</p>
-          <p class="what">An antibody in low and high salt, albumin, lysozyme and a sticky antibody, or a protein of your own: set its charge and the salt, and see how both numbers follow.</p>
-          <ul class="chips"><li>Protein size</li><li>k<sub>D</sub></li><li>B<sub>2</sub></li></ul>
-          <span class="go" aria-hidden="true">Open Proteins</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Yielding</p>
-          <h2><a href="shear/">When does it start to flow?</a></h2></div>
-        <div class="media"><canvas id="cv-shear" width="240" height="150" aria-label="Animation: beads sliding back and forth, those above and below focus by more, as a soft material is sheared between two plates"></canvas><span class="tag">Bright field, beads in a sheared gel (sketch)</span></div>
-        <div class="body">
-          <p>Shear a soft material back and forth and compare frames taken one full cycle apart: what the shear undoes cancels, and the rearrangements it leaves behind show when a soft solid yields and starts to flow.</p>
-          <p class="what">A yield-stress microgel below and above its yield point, a rubber and a viscous liquid; a strain sweep from 5 % to 150 %, as in our echo-DDM experiments.</p>
-          <ul class="chips"><li>Oscillatory shear</li><li>Echo-DDM</li><li>Yielding</li></ul>
-          <span class="go" aria-hidden="true">Open Sheared materials</span>
-        </div>
-      </article>
-      <article class="app">
-        <div class="head"><p class="eyebrow">Collective motion</p>
-          <h2><a href="tissues/">Jammed, flowing or flocking?</a></h2></div>
-        <div class="media"><canvas id="cv-tissue" width="240" height="150" aria-label="Animation: fluorescent nuclei of a cell sheet, packed side by side, all drifting slowly the same way"></canvas><span class="tag">Fluorescence, nuclei of a cell sheet (sketch)</span></div>
-        <div class="body">
-          <p>Tell whether a sheet of epithelial cells is stuck like a solid, flows like a liquid or moves as a flock, from a time-lapse of their stained nuclei, without following any cell.</p>
-          <p class="what">Crawling cells that push each other and steer together: jammed sheets, fluid ones, flocking solids and flocking liquids, as in our studies of reawakened epithelia.</p>
-          <ul class="chips"><li>Jamming</li><li>Flocking</li><li>Cell displacements</li></ul>
-          <span class="go" aria-hidden="true">Open Moving tissues</span>
-        </div>
-      </article>
+    <div class="app-group" id="start" aria-labelledby="h-start">
+      <h2 class="group-title" id="h-start">Start here</h2>
+      <p class="group-note">How DDM works, step by step, from the raw movie to the size of a particle. The other pages build on it.</p>
+      <div class="app-grid">
+        <article class="app">
+          <div class="head"><p class="eyebrow">Brownian motion</p>
+            <h3><a href="sizing/">How big are they?</a></h3></div>
+          <div class="media"><canvas id="cv-sizing" width="240" height="150" aria-label="Animation: particles jiggling in a liquid, as seen in a bright-field microscope"></canvas><span class="tag">Bright field, colloidal beads (sketch)</span></div>
+          <div class="body">
+            <p>Size colloidal particles from how fast they wander, as in dynamic light scattering, but with a microscope and in samples where light scattering struggles.</p>
+            <p class="what">Spheres, ellipsoids and rods, some of which turn as well as wander; seven imaging modes from bright field to confocal; cameras, noise, depth of field and what each does to the result.</p>
+            <ul class="chips"><li>Diffusion</li><li>Particle size</li><li>Rotation</li></ul>
+            <span class="go" aria-hidden="true">Open Sizing particles</span>
+          </div>
+        </article>
+        <article class="app learn">
+          <div class="head"><p class="eyebrow">Teaching and practice</p>
+            <h3><a href="exercises/">Exercises and notebooks</a></h3></div>
+          <div class="body">
+            <p>Questions with model answers for every page, to predict, compute and discuss, printable for a class or for study on your own.</p>
+            <p class="what">Every page lets you download the movie it simulated, and several link a Python notebook, to run the analysis yourself, with fastDDM or a few lines of numpy.</p>
+            <ul class="chips"><li>Exercises</li><li>Model answers</li><li>Notebooks</li></ul>
+            <span class="go" aria-hidden="true">Open the exercises</span>
+          </div>
+        </article>
+      </div>
+    </div>
+    <div class="app-group" id="classic" aria-labelledby="h-classic">
+      <h2 class="group-title" id="h-classic">Classic applications</h2>
+      <p class="group-note">Established uses of DDM, each about one kind of motion: swimming, drifting, and beads jiggling in a soft material.</p>
+      <div class="app-grid">
+        <article class="app">
+          <div class="head"><p class="eyebrow">Active motion</p>
+            <h3><a href="swimmers/">How fast do they swim?</a></h3></div>
+          <div class="media"><canvas id="cv-swim" width="240" height="150" aria-label="Animation: rod-shaped bacteria, some swimming and some still, as seen in a phase-contrast microscope"></canvas><span class="tag">Phase contrast, bacteria (sketch)</span></div>
+          <div class="body">
+            <p>Measure how fast bacteria, algae or sperm swim, how much the speeds spread and which share of the cells swims, from a motility movie with thousands of cells.</p>
+            <p class="what">E. coli strains, Salmonella, B. subtilis, Chlamydomonas, Euglena and bull sperm, set up as in published experiments, or cells of your own design.</p>
+            <ul class="chips"><li>Swimming speed</li><li>Speed spread</li><li>Share of swimmers</li></ul>
+            <span class="go" aria-hidden="true">Open Swimming cells</span>
+          </div>
+        </article>
+        <article class="app">
+          <div class="head"><p class="eyebrow">Drift</p>
+            <h3><a href="drift/">Where are they going?</a></h3></div>
+          <div class="media"><canvas id="cv-drift" width="240" height="150" aria-label="Animation: particles jiggling and carried slowly to the right by a flow, as seen in a bright-field microscope"></canvas><span class="tag">Bright field, beads in a flow (sketch)</span></div>
+          <div class="body">
+            <p>Measure the speed and direction of particles carried by a flow, by gravity or by a temperature gradient, while they keep jiggling, and find out how slow a drift a movie can still show.</p>
+            <p class="what">Plug and channel flows; sedimentation with the microscope upright or on its side; thermophoresis of polystyrene beads with Soret coefficients from published measurements.</p>
+            <ul class="chips"><li>Flow</li><li>Sedimentation</li><li>Thermophoresis</li></ul>
+            <span class="go" aria-hidden="true">Open Drifting particles</span>
+          </div>
+        </article>
+        <article class="app">
+          <div class="head"><p class="eyebrow">Viscoelasticity</p>
+            <h3><a href="rheology/">Liquid or solid?</a></h3></div>
+          <div class="media"><canvas id="cv-rheo" width="240" height="150" aria-label="Animation: beads rattling in place in a soft gel, as seen in a bright-field microscope"></canvas><span class="tag">Bright field, beads in a gel (sketch)</span></div>
+          <div class="body">
+            <p>Measure how elastic and how viscous a soft material is, from how far tracer beads mixed into it get: microrheology with a microscope, from a drop of sample.</p>
+            <p class="what">Simple liquids, wormlike micelles, polymer solutions and a gel forming, with moduli known exactly; from the movie to G' and G'' over several decades of frequency.</p>
+            <ul class="chips"><li>Microrheology</li><li>G' and G''</li><li>Gelation</li></ul>
+            <span class="go" aria-hidden="true">Open Liquid or solid</span>
+          </div>
+        </article>
+      </div>
+    </div>
+    <div class="app-group" id="advanced" aria-labelledby="h-advanced">
+      <h2 class="group-title" id="h-advanced">Advanced applications</h2>
+      <p class="group-note">Newer methods, closer to current research: particles that push each other, proteins too small to see, materials under shear and moving tissues. They take the first page for granted.</p>
+      <div class="app-grid">
+        <article class="app">
+          <div class="head"><p class="eyebrow">Interactions</p>
+            <h3><a href="crowded/">How do they arrange in a crowd?</a></h3></div>
+          <div class="media"><canvas id="cv-crowd" width="240" height="150" aria-label="Animation: dyed particles packed close together, each jiggling among its neighbours, as seen in a confocal microscope"></canvas><span class="tag">Confocal, concentrated colloids (sketch)</span></div>
+          <div class="body">
+            <p>Measure how particles that push each other arrange themselves, and how the crowd moves, from a confocal movie: the structure factor and collective diffusion, as in light scattering.</p>
+            <p class="what">Hard and charged spheres from dilute to 45 % of the volume, all dyed or only a few; the particles are simulated pushing each other, so what DDM finds is checked against what they really do.</p>
+            <ul class="chips"><li>Structure factor</li><li>Collective diffusion</li><li>Self diffusion</li></ul>
+            <span class="go" aria-hidden="true">Open Crowded particles</span>
+          </div>
+        </article>
+        <article class="app">
+          <div class="head"><p class="eyebrow">Proteins</p>
+            <h3><a href="proteins/">Do they attract or repel?</a></h3></div>
+          <div class="media"><canvas id="cv-prot" width="240" height="150" aria-label="Animation: a grey field with faint ripples that come and go, as proteins too small to see diffuse in a bright-field microscope"></canvas><span class="tag">Bright field, a protein solution (sketch, contrast stretched)</span></div>
+          <div class="body">
+            <p>Measure the size of proteins far too small to see, and whether they repel or attract each other, from bright-field movies at a few concentrations: the diffusion interaction parameter k<sub>D</sub> and the second virial coefficient B<sub>2</sub>.</p>
+            <p class="what">An antibody in low and high salt, albumin, lysozyme and a sticky antibody, or a protein of your own: set its charge and the salt, and see how both numbers follow.</p>
+            <ul class="chips"><li>Protein size</li><li>k<sub>D</sub></li><li>B<sub>2</sub></li></ul>
+            <span class="go" aria-hidden="true">Open Proteins</span>
+          </div>
+        </article>
+        <article class="app">
+          <div class="head"><p class="eyebrow">Yielding</p>
+            <h3><a href="shear/">When does it start to flow?</a></h3></div>
+          <div class="media"><canvas id="cv-shear" width="240" height="150" aria-label="Animation: beads sliding back and forth, those above and below focus by more, as a soft material is sheared between two plates"></canvas><span class="tag">Bright field, beads in a sheared gel (sketch)</span></div>
+          <div class="body">
+            <p>Shear a soft material back and forth and compare frames taken one full cycle apart: what the shear undoes cancels, and the rearrangements it leaves behind show when a soft solid yields and starts to flow.</p>
+            <p class="what">A yield-stress microgel below and above its yield point, a rubber and a viscous liquid; a strain sweep from 5 % to 150 %, as in our echo-DDM experiments.</p>
+            <ul class="chips"><li>Oscillatory shear</li><li>Echo-DDM</li><li>Yielding</li></ul>
+            <span class="go" aria-hidden="true">Open Sheared materials</span>
+          </div>
+        </article>
+        <article class="app">
+          <div class="head"><p class="eyebrow">Collective motion</p>
+            <h3><a href="tissues/">Jammed, flowing or flocking?</a></h3></div>
+          <div class="media"><canvas id="cv-tissue" width="240" height="150" aria-label="Animation: fluorescent nuclei of a cell sheet, packed side by side, all drifting slowly the same way"></canvas><span class="tag">Fluorescence, nuclei of a cell sheet (sketch)</span></div>
+          <div class="body">
+            <p>Tell whether a sheet of epithelial cells is stuck like a solid, flows like a liquid or moves as a flock, from a time-lapse of their stained nuclei, without following any cell.</p>
+            <p class="what">Crawling cells that push each other and steer together: jammed sheets, fluid ones, flocking solids and flocking liquids, as in our studies of reawakened epithelia; the rate of each pattern, and the network of nuclei followed cell by cell.</p>
+            <ul class="chips"><li>Jamming</li><li>Flocking</li><li>Cell displacements</li></ul>
+            <span class="go" aria-hidden="true">Open Moving tissues</span>
+          </div>
+        </article>
+      </div>
     </div>
   </section>
 

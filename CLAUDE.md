@@ -209,8 +209,11 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
 - Landing page /ddm/ (`static/ddm/index.html`, from `landing.src.html`): one card per application and the
   shared steps drawn live from a small sketch movie; no reader levels (each application page has its own).
   Old links with a hash (/ddm/#student) are sent on to /ddm/sizing/.
-  A new application gets a card here, an entry in `PAGES` and `PREVIEW_LINKS` in `ddm/build.py`, an
-  `EXTRA_PAGES` entry with None, and a link in the switch under each application title.
+  The cards are in three groups: Start here (sizing, and a card for the exercises), Classic applications (swimmers,
+  drift, rheology) and Advanced applications (crowded, proteins, shear, tissues); the switch under each application
+  title shows the same groups (Start, Classic, Advanced). Group headings and notes are translated in `landing_i18n.py`.
+  A new application gets a card in its group, an entry in `PAGES` and `PREVIEW_LINKS` in `ddm/build.py`, an
+  `EXTRA_PAGES` entry with None, and a link in its group of the switch under each application title.
 - "Sizing particles" /ddm/sizing/ (`static/ddm/sizing/index.html`): `page.src.html` with the styles and text,
   `app.js` the page logic, `optics.js` image formation, `movie.js` the simulated movie, `ddm-engine.js` the
   analysis, `worker.js`, `data/` Nikon objectives.
@@ -272,6 +275,7 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
   default, prw, cage, exp; a two-exponential model was tried and dropped: its rates jumped between q), ranks the four by BIC for the
   movie, and fits the self intermediate scattering function of the simulated cells (`truthFs`, from `truth.positions`, computed in
   the worker) with the same model. Step 5 draws the fitted model through the dots.
+  Steps 6 and 8 carry `data-optional`: at the Curious level they are folded to a line and a "Show this step" button.
   Step 8, the network of nuclei: `tissue-voronoi.js` finds the nuclei in every frame (local maxima, sub-pixel from a log-parabola),
   links them (mutual nearest neighbours closer than half a spacing), cuts Voronoi cells by bisectors (kept only when complete inside
   the field; the truth uses the periodic box and `truth.positions` from `tissue-movie.js`), and gives the shape index, sides and the

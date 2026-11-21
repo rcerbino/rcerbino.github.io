@@ -66,6 +66,8 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .ddm-switch { font-family: var(--sans); font-size: 0.9rem; margin: 0 0 0.6rem; color: var(--muted); }
 .ddm-switch a, .ddm-switch span { margin-right: 0.9rem; }
 .ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
+.ddm-switch .sw-group { display: inline-block; margin-right: 1.1rem; }
+.ddm-switch .sw-label { font-weight: 600; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; margin-right: 0.45rem; }
 .proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
 .pn-more { display: none; font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
 /* one line, the rest on request */
@@ -310,7 +312,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap intro">
     <div>
       <p class="eyebrow">Differential dynamic microscopy</p>
-      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><span aria-current="page">Swimming cells</span><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a><a href="../crowded/">Crowded particles</a><a href="../proteins/">Proteins</a><a href="../shear/">Sheared materials</a><a href="../tissues/">Moving tissues</a></nav>
+      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><span class="sw-group"><b class="sw-label">Start:</b><a href="../sizing/">Sizing particles</a></span><span class="sw-group"><b class="sw-label">Classic:</b><span aria-current="page">Swimming cells</span><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a></span><span class="sw-group"><b class="sw-label">Advanced:</b><a href="../crowded/">Crowded particles</a><a href="../proteins/">Proteins</a><a href="../shear/">Sheared materials</a><a href="../tissues/">Moving tissues</a></span></nav>
       <h1>How fast do cells swim?</h1>
       <p class="lede">Many bacteria swim, and so do algae and sperm. How fast they swim and how many of them do it tells a biologist whether they are healthy, hungry or poisoned, and a clinician how well sperm move, one of the main measures of a semen analysis. Following cells one by one is slow and gives a few hundred tracks at best. Differential dynamic microscopy (DDM) reads the swimming speeds and the share of swimmers from an ordinary microscope movie of thousands of cells in a few minutes, without following any of them (Wilson et al. 2011). Here a simulated microscope lets you run this motility assay yourself, from the raw movie to the distribution of swimming speeds, and see where it can go wrong.</p>
       <fieldset class="levels">

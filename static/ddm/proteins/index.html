@@ -66,6 +66,8 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .ddm-switch { font-family: var(--sans); font-size: 0.9rem; margin: 0 0 0.6rem; color: var(--muted); }
 .ddm-switch a, .ddm-switch span { margin-right: 0.9rem; }
 .ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
+.ddm-switch .sw-group { display: inline-block; margin-right: 1.1rem; }
+.ddm-switch .sw-label { font-weight: 600; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; margin-right: 0.45rem; }
 .proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
 .pn-more { display: none; font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
 /* one line, the rest on request */
@@ -303,7 +305,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap intro">
     <div>
       <p class="eyebrow">Differential dynamic microscopy</p>
-      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a><a href="../crowded/">Crowded particles</a><span aria-current="page">Proteins</span><a href="../shear/">Sheared materials</a><a href="../tissues/">Moving tissues</a></nav>
+      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><span class="sw-group"><b class="sw-label">Start:</b><a href="../sizing/">Sizing particles</a></span><span class="sw-group"><b class="sw-label">Classic:</b><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a></span><span class="sw-group"><b class="sw-label">Advanced:</b><a href="../crowded/">Crowded particles</a><span aria-current="page">Proteins</span><a href="../shear/">Sheared materials</a><a href="../tissues/">Moving tissues</a></span></nav>
       <h1>Do these proteins attract or repel?</h1>
       <p class="lede">Proteins are far too small to see in a microscope, yet a bright-field movie of a protein solution holds how fast they diffuse, and so how large they are. Filmed at a few concentrations, it also tells whether they repel or attract each other, through two numbers used to judge whether a protein formulation will stay stable: the diffusion interaction parameter k<sub>D</sub> and the second virial coefficient B<sub>2</sub>. Here you can check what differential dynamic microscopy (DDM) finds on simulated protein solutions (Guidolin et al. 2023).</p>
       <p class="start-here"><a href="#try-salt">Try this first</a>: does adding salt make antibodies repel each other more, or less? Predict, then watch the page check it.</p>

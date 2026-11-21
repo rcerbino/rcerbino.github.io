@@ -61,6 +61,8 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .ddm-switch { font-family: var(--sans); font-size: 0.9rem; margin: 0 0 0.6rem; color: var(--muted); }
 .ddm-switch a, .ddm-switch span { margin-right: 0.9rem; }
 .ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
+.ddm-switch .sw-group { display: inline-block; margin-right: 1.1rem; }
+.ddm-switch .sw-label { font-weight: 600; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; margin-right: 0.45rem; }
 .proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
 .pn-more { display: none; font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
 /* one line, the rest on request */
@@ -79,6 +81,11 @@ p { margin: 0 0 1rem; }
 
 /* reader levels: what each reader sees */
 html[data-level="curious"] .lvl-2, html[data-level="curious"] .lvl-3, html[data-level="student"] .lvl-3 { display: none !important; }
+/* extra steps: folded for the Curious level, one click away */
+.opt-note { display: none; font-family: var(--sans); font-size: 0.95rem; color: var(--muted); margin: 0.4rem 0 0; }
+.opt-note button { margin-left: 0.4rem; }
+html[data-level="curious"] .step[data-optional]:not(.unfolded) > .opt-note { display: block; }
+html[data-level="curious"] .step[data-optional]:not(.unfolded) > :not(.step-title):not(.opt-note) { display: none !important; }
 html[data-level="student"] .only-1, html[data-level="researcher"] .only-1, html[data-level="addict"] .only-1 { display: none !important; }
 html[data-level="curious"] details.math { display: none; }
 html:not([data-level="addict"]) .lvl-4 { display: none !important; }
@@ -306,7 +313,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap intro">
     <div>
       <p class="eyebrow">Differential dynamic microscopy</p>
-      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a><a href="../crowded/">Crowded particles</a><a href="../proteins/">Proteins</a><a href="../shear/">Sheared materials</a><span aria-current="page">Moving tissues</span></nav>
+      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><span class="sw-group"><b class="sw-label">Start:</b><a href="../sizing/">Sizing particles</a></span><span class="sw-group"><b class="sw-label">Classic:</b><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a></span><span class="sw-group"><b class="sw-label">Advanced:</b><a href="../crowded/">Crowded particles</a><a href="../proteins/">Proteins</a><a href="../shear/">Sheared materials</a><span aria-current="page">Moving tissues</span></span></nav>
       <h1>Is this tissue jammed, flowing or flocking?</h1>
       <p class="lede">Epithelial cells packed into a sheet can be stuck, each caged by its neighbours, like a solid; they can flow past each other, like a liquid; or they can all set off in the same direction, as a flock. A time-lapse movie of their stained nuclei tells which, without following any cell. Here you can check what differential dynamic microscopy (DDM) finds on simulated monolayers (Giavazzi et al. 2017, 2018).</p>
       <p class="start-here"><a href="#try-sweep">Try this first</a>: let the cells steer towards where they are pushed. Does the sheet become more fluid or more solid? Predict, then watch the page check it.</p>
@@ -466,8 +473,9 @@ img_seq = fd.read_images(file_names)      # one frame every few minutes</pre>
       </section>
 
       <!-- 6 -->
-      <section class="step" id="step-gamma" aria-labelledby="h-gamma">
+      <section class="step" id="step-gamma" data-optional="1" aria-labelledby="h-gamma">
         <div class="step-title"><span class="num">6</span><h2 id="h-gamma">How fast each pattern fades: the rate against q</h2></div>
+        <p class="opt-note">An extra step: the rate of each pattern against its size, the classical result of DDM, with a choice of model for the fit. <button type="button" class="opt-show">Show this step</button></p>
         <div class="step-body">
           <div class="text">
             <p>Fit each curve of step 5 with a model and read its rate: how many times per hour the pattern fades by a factor e. Finer patterns fade faster, because a smaller move is enough to blur them. How fast the rate grows with q says how the cells move. If halving the width of the pattern doubles the rate (rate proportional to q), the cells go straight over that distance; if it multiplies it by four (q<sup>2</sup>), they wander at random, as in diffusion; more than that, and they are held in a cage.</p>
@@ -546,8 +554,9 @@ msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q 
       </section>
 
       <!-- 8 -->
-      <section class="step" id="step-network" aria-labelledby="h-network">
+      <section class="step" id="step-network" data-optional="1" aria-labelledby="h-network">
         <div class="step-title"><span class="num">8</span><h2 id="h-network">The network of nuclei</h2></div>
+        <p class="opt-note">An extra step: the nuclei found one by one, the network they make, and how many neighbours each cell keeps over time. <button type="button" class="opt-show">Show this step</button></p>
         <div class="step-body split">
           <figure class="viz">
             <div class="chart fovbox"><canvas id="net" aria-label="A frame of the movie with the nuclei found and the Voronoi network they make"></canvas></div>
