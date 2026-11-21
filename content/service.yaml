@@ -131,6 +131,7 @@ activities:
   - {date: 2023, group: people, kind: career, what: "University of Jordan, Amman, Jordan", role: "Promotion"}
   - {date: 2023, group: people, kind: career, what: "University of Milan, Italy", role: "External assessor"}
   # ---- 2022
+  - {date: 2022, group: thesis, kind: habilitation, what: "Andreas Zöttl", where: "University of Vienna, Austria", role: "Member of the habilitation committee"}
   - {date: 2022, group: thesis, kind: phd, what: "Rosalia Ferraro", where: "University of Naples Federico II, Italy", role: "External referee"}
   - {date: 2022, group: thesis, kind: phd, what: "Diogo Pinto", where: "University of Lisbon, Portugal", role: "External reviewer"}
   - {date: 2022, group: people, kind: career, what: "University of Edinburgh, United Kingdom", role: "Promotion"}
