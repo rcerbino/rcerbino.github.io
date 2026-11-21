@@ -784,6 +784,8 @@
   function finish(movie, res, cfg, opts) {
     const fresh = movie !== cache.movie;
     cache.movie = movie; cache.res = res; cache.cfg = cfg; cache.opts = opts;
+    document.querySelectorAll(".cal-px").forEach(function (e) { e.textContent = String(+(movie.pixel_um || movie.L_um / movie.n).toPrecision(4)); });   // the calibration in the code examples
+    document.querySelectorAll(".cal-fps").forEach(function (e) { e.textContent = String(+movie.frame_rate_hz.toPrecision(4)); });
     // a new movie: the delay where the patterns along the drift have swung about one and a half times before they fade,
     // v (t / D)^(1/2) = 4 pi (two fringes before the patterns fade), and a zoom of the lower maps on the patterns still there
     if (fresh) {
@@ -1199,6 +1201,25 @@
     return { ctx: ctx, fx: fx, fy: fy, m: m, pw: pw, ph: ph, done: function () { ctx.restore(); } };
   }
   function dot(ctx, x, y, r, fill, stroke) { ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * Math.PI); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.2; ctx.stroke(); } }
+  // a different marker for each curve of the chart of curves, so that they can be told apart by shape as well as by colour
+  const MARKS = ["circle", "square", "triangle", "diamond", "down", "pentagon", "star"];
+  function shapePts(x, y, r, j) {
+    const s = MARKS[j % MARKS.length], n = { triangle: 3, down: 3, diamond: 4, pentagon: 5, star: 10 }[s], R = 1.3 * r, rot = s === "down" ? Math.PI / 2 : -Math.PI / 2, p = [];
+    for (let i = 0; i < n; i++) { const t = rot + 2 * Math.PI * i / n, rr = s === "star" && i % 2 ? 0.5 * R : R; p.push([x + rr * Math.cos(t), y + rr * Math.sin(t)]); }
+    return p;
+  }
+  function mark(ctx, x, y, r, fill, stroke, j) {
+    const s = MARKS[j % MARKS.length]; ctx.beginPath();
+    if (s === "circle") ctx.arc(x, y, r, 0, 2 * Math.PI);
+    else if (s === "square") ctx.rect(x - 0.9 * r, y - 0.9 * r, 1.8 * r, 1.8 * r);
+    else { shapePts(x, y, r, j).forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); ctx.closePath(); }
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.2; ctx.stroke(); }
+  }
+  function markIcon(col, j) {
+    const s = MARKS[j % MARKS.length], body = s === "circle" ? '<circle cx="6" cy="6" r="4.5"/>' : s === "square" ? '<rect x="2" y="2" width="8" height="8"/>' :
+      '<polygon points="' + shapePts(6, 6, 4, j).map(function (p) { return p[0].toFixed(2) + "," + p[1].toFixed(2); }).join(" ") + '"/>';
+    return '<svg class="mk" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style="fill:' + col + '">' + body + "</svg>";
+  }
   let qSpan = null;
   function setQSpan() { const w = cache.res.window; qSpan = [w.q_from, w.q_to]; }
   function qPos(q) { const lo = Math.log(qSpan[0]), hi = Math.log(qSpan[1]); return hi > lo ? (Math.log(q) - lo) / (hi - lo) : 0.5; }
@@ -1211,7 +1232,7 @@
     const pool = rows.slice(0, Math.max(2, Math.ceil(rows.length / 2))), pick = [], k = Math.min(4, pool.length);
     for (let i = 0; i < k; i++) pick.push(pool[Math.round(i * (pool.length - 1) / Math.max(1, k - 1))]);
     const D = res.D_um2_s, v = res.detected ? res.v_um_s : 0;
-    pick.forEach(function (r) {
+    pick.forEach(function (r, j) {
       const col = qColor(qPos(r.q_per_um)), q = r.q_per_um;
       ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.beginPath();
       // the curves average directions within about 15 degrees of the axis: so does the model
@@ -1221,11 +1242,11 @@
         const f = Math.exp(-D * q * q * t) * c, X = a.fx(t), Y = a.fy(f); if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y);
       }
       ctx.stroke();
-      for (let li = 0; li < taus.length; li++) dot(ctx, a.fx(taus[li]), a.fy(r.f[li]), 2.4, col, null);
+      for (let li = 0; li < taus.length; li++) mark(ctx, a.fx(taus[li]), a.fy(r.f[li]), 2.4, col, null, j);
     });
     a.done();
     const leg = $(legendId); leg.innerHTML = "";
-    pick.forEach(function (r) { const s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(r.q_per_um)) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / r.q_per_um, 2) + " " + MU + "m" : "q = " + r.q_per_um.toFixed(2)); leg.appendChild(s); });
+    pick.forEach(function (r, j) { const s = document.createElement("span"); s.innerHTML = markIcon(qColor(qPos(r.q_per_um)), j) + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / r.q_per_um, 2) + " " + MU + "m" : "q = " + r.q_per_um.toFixed(2)); leg.appendChild(s); });
   }
   function drawCurves() {
     const res = cache.res, ev = expectedDrift(), byDrift = res.curves_axes !== "image";
@@ -1303,9 +1324,23 @@
     return '<p class="small amp-line" style="margin:0.5rem 0 0"><b>Signal and camera noise:</b> over the ' + pts.length + ' patterns used, the signal A is ' + fmtSig(r[0], 2) + ' to ' + fmtSig(r[r.length - 1], 2) + ' times the camera noise B' +
       (level === "curious" ? '' : ' (A from ' + fx(Math.min.apply(null, As)) + ' to ' + fx(Math.max.apply(null, As)) + ', B ' + (bHi / bLo < 1.05 ? '= ' + fx(bLo) : 'from ' + fx(bLo) + ' to ' + fx(bHi)) + ')') + '; the chart of A and B is in this step.</p>';
   }
+  // the power map in words, for screen readers: where the changes are strongest in this run, and where the camera noise takes over
+  function describeMap(pts) {
+    const c = $("map"); if (!c) return;
+    if (!c.dataset.label) c.dataset.label = c.getAttribute("aria-label");
+    const ok = pts.filter(function (p) { return p.A > 0 && isFinite(p.A); }).sort(function (a, b) { return a.q - b.q; });
+    if (ok.length < 3) { c.setAttribute("aria-label", c.dataset.label); return; }
+    let k = 0; ok.forEach(function (p, i) { if (p.A > ok[k].A) k = i; });
+    const inv = MU + "m\u207b\u00b9";
+    let txt = ". In this run the changes are strongest " + (k === 0 ? "for the widest stripes shown, " : "for stripes about ") + fmtSig(2 * Math.PI / ok[k].q, 2) + " " + MU + "m apart (q = " + fmtSig(ok[k].q, 2) + " " + inv + ")";
+    const over = ok.find(function (p, i) { return i > k && p.B > 0 && p.A < p.B; });
+    txt += over ? "; from q = " + fmtSig(over.q, 2) + " " + inv + " on, the camera noise is stronger than the signal." : "; the signal stays above the camera noise at every q analysed.";
+    c.setAttribute("aria-label", c.dataset.label + txt);
+  }
   function drawAmp() {
     if (!cache.res) return;
     const res = cache.res, pts = ampPoints().filter(function (p) { return p.q > 0 && (p.A > 0 || p.B > 0); });
+    describeMap(pts);
     const vals = []; pts.forEach(function (p) { if (p.A > 0) vals.push(p.A); if (p.B > 0) vals.push(p.B); });
     if (vals.length < 2) return;
     vals.sort(function (p, q) { return p - q; });
@@ -1413,7 +1448,7 @@
       t += row("main", mainName, res.detected ? res.v_um_s : "none", res.detected ? (res.velocity_from === "structure" ? { line: res.v_dir_deg } : res.v_dir_deg) : null, res.D_um2_s, "the headline");
       const sf = res.from_structure_function;
       if (LEVEL_RANK[level] >= 3 && res.velocity_from !== "structure") t += row("", "Structure function alone", sf.detected ? sf.v_um_s : "none", sf.detected ? { line: sf.v_dir_deg } : null, sf.D_um2_s, "v and D together; cos(q\u00b7v \u0394t) has no sign, needs patterns that swing, and can trade the drift against diffusion" + (sf.detected ? "" : "; its best fit, " + fmtV(sf.v_um_s) + ", is not significant"));
-      if (level === "addict" && res.published) t += row("pub", "Published method only", res.published.detected ? res.published.v_um_s : "none", res.published.detected ? res.published.v_dir_deg : null, res.published.D_um2_s, "the same movie: phiDM for v (Colin, Zhang and Wilson 2014), D with B fitted at each q and no depth of field");
+      if (level === "addict" && res.published) t += row("pub", "Baseline (published steps, as implemented here)", res.published.detected ? res.published.v_um_s : "none", res.published.detected ? res.published.v_dir_deg : null, res.published.D_um2_s, "the same movie: phiDM for v (Colin, Zhang and Wilson 2014), D with B fitted at each q and no depth of field");
       t += row("truth", "True (simulation)", ev.plane ? ev.speed : 0, ev.plane && ev.speed > 0 ? ev.deg : null, trD, ev.plane ? (ev.lo !== undefined ? "at the focus; " + fmtV(state.flow_v) + " on average over the chamber, the microscope sees a mix of heights" : "") : "drift along the optical axis: " + fmtV(ev.speed));
       t += '</tbody></table></div>';
       h += t;

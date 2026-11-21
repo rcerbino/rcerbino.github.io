@@ -9,6 +9,7 @@
 {% for name, code in (profile.site_verification or {}).items() %}<meta name="{{ name }}" content="{{ code }}">
 {% endfor %}
 <meta name="author" content="{{ profile.name }}">
+<meta name="revision" content="{{ revision }} {{ built }}">
 <link rel="canonical" href="{{ site_url }}/{{ path }}">
 <meta property="og:title" content="{{ profile.name }}{% if page != 'Home' %} | {{ page }}{% endif %}">
 <meta property="og:description" content="{{ desc }}">
@@ -45,7 +46,7 @@
     <p>{{ profile.name }}, {{ profile.affiliation }}.
        Group website: <a href="{{ profile.lab.url }}">{{ profile.lab.name }}</a>.{% if profile.social %}
        Also on {% for x in profile.social %}<a href="{{ x.url }}" rel="me">{{ x.label }}</a>{% if loop.revindex == 2 %} and {% elif not loop.last %}, {% endif %}{% endfor %}.{% endif %}</p>
-    <p class="quiet">Updated {{ built_human }}. Publications refresh automatically from
+    <p class="quiet">Updated {{ built_human }} (revision {{ revision }}). Publications refresh automatically from
        <a href="https://orcid.org/{{ profile.ids[0].value }}">ORCID</a>.
        <a href="{{ root }}{{ link('legal/') }}">Legal notice and privacy</a>.{% if ga %}
        <button type="button" class="linklike" data-consent-open>Cookie settings</button>{% endif %}</p>

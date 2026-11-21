@@ -25,7 +25,7 @@
   const MATERIALS = {
     carbopol: { label: "A microgel, yield-stress fluid (Carbopol 0.5 %)", note: "A soft solid made of swollen polymer particles packed together, as in hair gel. It holds its shape below a yield strain of about 60 % and flows above it." },
     rubber: { label: "An elastic solid (crosslinked silicone rubber)", note: "A rubber such as Sylgard 184: it deforms with the plates and springs back exactly; nothing rearranges. Edera et al. used it to check that their shear cell adds no motion of its own." },
-    liquid: { label: "A viscous liquid (glycerol and water)", note: "A simple liquid: slow flows of it are reversible, so the shear brings every bead back; only the beads' own Brownian motion is not undone." }
+    liquid: { label: "A viscous liquid (glycerol and water)", note: "A simple liquid: a slow flow of it undoes itself, but a bead that diffuses up or down while the layers slide is carried along the flow by the strain of that moment and not brought exactly back. Along the vorticity its echoes fade at its Brownian pace; along the flow faster, by 1 + strain squared / 2 (shear-induced dispersion)." }
   };
   function step(g) { return 1 / (1 + Math.exp(-(g - 0.6) / 0.05)); }
   // diffusion coefficients of the rearrangements (flow x, vorticity y, gradient h) in um^2/s, and whether the beads also
@@ -36,7 +36,9 @@
     return { D: [0, 0, 0], brownian: true };
   }
   function thermalD() { return KB * (state.T_C + 273.15) / (6 * Math.PI * viscosity_mPa_s() * 1e-3 * state.diameter_um / 2 * 1e-6) * 1e12; }
-  function trueD(g) { const r = rearrangements(state.material, g === undefined ? state.strain : g, state.freq_hz), th = r.brownian ? thermalD() : 0; return [r.D[0] + th, r.D[1] + th]; }
+  // what the echoes should show: the rearrangements, plus, in a liquid, Brownian motion, which along the flow the shear disperses
+  // by 1 + gamma0^2 / 2 (the strain averaged over the cycle; frames compared at zero strain over whole cycles)
+  function trueD(g) { const gg = g === undefined ? state.strain : g, r = rearrangements(state.material, gg, state.freq_hz), th = r.brownian ? thermalD() : 0; return [r.D[0] + th * (1 + gg * gg / 2), r.D[1] + th]; }
   function viscosity_mPa_s() { return OPTICS.viscosityWaterGlycerol_mPa_s(state.material === "liquid" ? state.glycerol_w : 0, state.T_C); }
   const SWEEP = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0, 1.5];
 
@@ -639,6 +641,25 @@
     return { ctx: ctx, fx: fx, fy: fy, m: m, pw: pw, ph: ph, done: function () { ctx.restore(); } };
   }
   function dot(ctx, x, y, r, fill, stroke) { ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * Math.PI); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.2; ctx.stroke(); } }
+  // a different marker for each curve of the chart of curves, so that they can be told apart by shape as well as by colour
+  const MARKS = ["circle", "square", "triangle", "diamond", "down", "pentagon", "star"];
+  function shapePts(x, y, r, j) {
+    const s = MARKS[j % MARKS.length], n = { triangle: 3, down: 3, diamond: 4, pentagon: 5, star: 10 }[s], R = 1.3 * r, rot = s === "down" ? Math.PI / 2 : -Math.PI / 2, p = [];
+    for (let i = 0; i < n; i++) { const t = rot + 2 * Math.PI * i / n, rr = s === "star" && i % 2 ? 0.5 * R : R; p.push([x + rr * Math.cos(t), y + rr * Math.sin(t)]); }
+    return p;
+  }
+  function mark(ctx, x, y, r, fill, stroke, j) {
+    const s = MARKS[j % MARKS.length]; ctx.beginPath();
+    if (s === "circle") ctx.arc(x, y, r, 0, 2 * Math.PI);
+    else if (s === "square") ctx.rect(x - 0.9 * r, y - 0.9 * r, 1.8 * r, 1.8 * r);
+    else { shapePts(x, y, r, j).forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); ctx.closePath(); }
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.2; ctx.stroke(); }
+  }
+  function markIcon(col, j) {
+    const s = MARKS[j % MARKS.length], body = s === "circle" ? '<circle cx="6" cy="6" r="4.5"/>' : s === "square" ? '<rect x="2" y="2" width="8" height="8"/>' :
+      '<polygon points="' + shapePts(6, 6, 4, j).map(function (p) { return p[0].toFixed(2) + "," + p[1].toFixed(2); }).join(" ") + '"/>';
+    return '<svg class="mk" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style="fill:' + col + '">' + body + "</svg>";
+  }
   function poly(ctx, pts, col, wd, dash, alpha) { ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.setLineDash(dash || []); ctx.globalAlpha = alpha || 1; ctx.beginPath(); let on = false; pts.forEach(function (p) { if (!p) { on = false; return; } if (!on) { ctx.moveTo(p[0], p[1]); on = true; } else ctx.lineTo(p[0], p[1]); }); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
   let qSpan = null;
   function setQSpan() { const w = cache.res.window; qSpan = [w.q_min_used || w.q_lo_per_um, w.q_max_used || w.q_hi_per_um]; }
@@ -676,14 +697,14 @@
       const cv = $(ids[0]); if (!cv) return;
       const a = axes(cv, { xlog: true, ylog: false, x0: x0, x1: x1, y0: -0.15, y1: 1.15, xlabel: "Delay (s), whole cycles", ylabel: level === "curious" ? "How much of the pattern is left" : "f(q, kT\u2080)" }), ctx = a.ctx;
       ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.m.l, a.fy(0)); ctx.lineTo(a.m.l + a.pw, a.fy(0)); ctx.stroke();
-      picks[sec].forEach(function (r) {
+      picks[sec].forEach(function (r, j) {
         const e = r.sec[sec], col = qColor(qPos(r.q_per_um));
         if (e.used && level !== "curious") { const pts = []; for (let i = 0; i <= 60; i++) { const t = x0 * Math.pow(x1 / x0, i / 60); pts.push([a.fx(t), a.fy(Math.exp(-e.gamma_hz * t))]); } poly(ctx, pts, col, 1.4); }
-        (e.f || []).forEach(function (f, i) { if (isFinite(f)) dot(ctx, a.fx(ts[i]), a.fy(Math.max(-0.15, Math.min(1.15, f))), 2.4, col, null); });
+        (e.f || []).forEach(function (f, i) { if (isFinite(f)) mark(ctx, a.fx(ts[i]), a.fy(Math.max(-0.15, Math.min(1.15, f))), 2.4, col, null, j); });
       });
       a.done();
       const leg = $(ids[1]); leg.innerHTML = "";
-      picks[sec].forEach(function (r) { const s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(r.q_per_um)) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / r.q_per_um, 2) + " " + MU + "m" : "q = " + r.q_per_um.toFixed(2) + " " + MU + "m" + MINUS1); leg.appendChild(s); });
+      picks[sec].forEach(function (r, j) { const s = document.createElement("span"); s.innerHTML = markIcon(qColor(qPos(r.q_per_um)), j) + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / r.q_per_um, 2) + " " + MU + "m" : "q = " + r.q_per_um.toFixed(2) + " " + MU + "m" + MINUS1); leg.appendChild(s); });
     });
     const NAME = ["flow", "vorticity"];
     fillNumbers("curves-numbers", ["Delay (s)"].concat(picks[0].map(function (r) { return NAME[0] + ", q = " + fmtSig(r.q_per_um, 3); }), picks[1].map(function (r) { return NAME[1] + ", q = " + fmtSig(r.q_per_um, 3); })),
@@ -720,8 +741,22 @@
     const fx = function (v) { return v >= 1e5 ? v.toExponential(1).replace("e+", "e") : fmtSig(v, 2); };
     return '<p class="small amp-line" style="margin:0.5rem 0 0"><b>Signal and camera noise:</b> over the ' + set.length + (use.length >= 2 ? ' patterns used' : ' patterns') + ', the signal A is ' + fmtSig(r[0], 2) + ' to ' + fmtSig(r[r.length - 1], 2) + ' times the camera noise B' + (level === "curious" ? '' : ' (B = ' + fx(set[0].B) + ')') + '; the chart of A and B is in this step.</p>';
   }
+  // the power map in words, for screen readers: where the changes are strongest in this run, and where the camera noise takes over
+  function describeMap(pts) {
+    const c = $("map"); if (!c) return;
+    if (!c.dataset.label) c.dataset.label = c.getAttribute("aria-label");
+    const ok = pts.filter(function (p) { return p.A > 0 && isFinite(p.A); }).sort(function (a, b) { return a.q - b.q; });
+    if (ok.length < 3) { c.setAttribute("aria-label", c.dataset.label); return; }
+    let k = 0; ok.forEach(function (p, i) { if (p.A > ok[k].A) k = i; });
+    const inv = MU + "m\u207b\u00b9";
+    let txt = ". In this run the changes are strongest " + (k === 0 ? "for the widest stripes shown, " : "for stripes about ") + fmtSig(2 * Math.PI / ok[k].q, 2) + " " + MU + "m apart (q = " + fmtSig(ok[k].q, 2) + " " + inv + ")";
+    const over = ok.find(function (p, i) { return i > k && p.B > 0 && p.A < p.B; });
+    txt += over ? "; from q = " + fmtSig(over.q, 2) + " " + inv + " on, the camera noise is stronger than the signal." : "; the signal stays above the camera noise at every q analysed.";
+    c.setAttribute("aria-label", c.dataset.label + txt);
+  }
   function drawAmp() {
     const res = cache.res, pts = ampPoints().filter(function (p) { return p.q > 0 && (p.A > 0 || p.B > 0); });
+    describeMap(pts);
     const vals = []; pts.forEach(function (p) { if (p.A > 0) vals.push(p.A); if (p.B > 0) vals.push(p.B); });
     if (vals.length < 2) return; vals.sort(function (p, q) { return p - q; });
     const y0 = vals[0] / 2.5, y1 = vals[vals.length - 1] * 2.5, qs = pts.map(function (p) { return p.q; });
@@ -778,7 +813,7 @@
       const an = function (p) { return p && p.flow.D_um2_s > 0 && p.vort.D_um2_s > 0 ? p.flow.D_um2_s / p.vort.D_um2_s : null; }, rl = an(lo), rh = an(hi);
       if (rl !== null && rh !== null) add("Flow over vorticity: " + fmtSig(rl, 2) + " at 20 % (simulated " + fmtSig(trueD(0.2)[0] / trueD(0.2)[1], 2) + "), " + fmtSig(rh, 2) + " at 80 % (simulated " + fmtSig(trueD(0.8)[0] / trueD(0.8)[1], 2) + "). In the simulation, set on the microgel of Edera et al. (2021), the beads wander about as much in both directions below the yield point, and more along the flow above it.");
     }
-    if (pts.length && state.material === "liquid") add("The liquid gives the same D at every strain: its flow is reversible, and only the Brownian motion of the beads, " + fmtD(thermalD()) + " " + MU + "m" + SQ + "/s, is left.");
+    if (pts.length && state.material === "liquid") add("Along the vorticity the liquid gives the same D at every strain, the Brownian motion of the beads, " + fmtD(thermalD()) + " " + MU + "m" + SQ + "/s. Along the flow D grows as 1 + strain squared / 2, twice the Brownian value at 140 %: a bead that diffuses up or down while the layers slide is not carried exactly back (shear-induced dispersion).");
     if (pts.length && state.material === "rubber") add("The rubber never rearranges: every point is only a limit, set by how long the movie lasts and the finest pattern used.");
   }
 
@@ -802,10 +837,13 @@
     const Dm = f.D_um2_s > 0 ? f.D_um2_s : w.D_um2_s;
     const both = f.D_um2_s > 0 && w.D_um2_s > 0, nm = function (e) { return fmtSig(1000 * perCycle(e.D_um2_s), 2) + " nm"; };
     h += '<div class="big">' + (Dm > 0 ? (level === "curious" ? (both ? "The beads wander " + nm(f) + " per cycle along the flow, " + nm(w) + " along the vorticity" : "The beads wander " + fmtSig(1000 * perCycle(Dm), 2) + " nm per cycle") : "D<sub>flow</sub> = " + describe(f) + ", D<sub>vorticity</sub> = " + describe(w) + " " + MU + "m" + SQ + "/s") : (f.bound && f.bound.above ? "Faster than one cycle" : "No rearrangement seen")) + '</div>';
+    if (Dm > 0 && level !== "curious") h += '<p class="small" style="margin:0 0 0.4rem">The +- values are the statistical uncertainty within this movie (a jackknife). ' + (state.material === "liquid" ? "They may not cover the scatter between independent movies: read them as a lower limit on the uncertainty." : "Between independent movies the results scattered about twice as much below the yield point in our tests: read them as a lower limit on the uncertainty.") + ' The comparison is with what this simulation does, not with a real material.</p>';
     let s;
     if (Dm > 0) {
       s = "At " + fmtPct(g) + " strain and " + fmtSig(state.freq_hz, 2) + " Hz, the shear leaves each bead, per cycle, " + (both ? "about " + nm(f) + " from where it started along the flow (the shear direction) and " + nm(w) + " along the vorticity" : "about " + fmtSig(1000 * perCycle(Dm), 2) + " nm from where it started") + " (" + fmtSig(Math.sqrt(2 * Dm * res.T / (state.freq_hz * res.frames_per_period)), 2) + " " + MU + "m over the whole movie). Along the flow D = " + describe(f) + ", along the vorticity " + describe(w) + " " + MU + "m" + SQ + "/s.";
-      if (both) { const r = f.D_um2_s / w.D_um2_s, err = Math.hypot(f.rel_err || 0, w.rel_err || 0); s += Math.abs(Math.log(r)) < Math.max(0.1, 2 * err) ? " The two directions agree within the uncertainty: the rearrangements show no preferred direction." : " The rearrangements along the flow are " + fmtSig(r, 2) + " times those along the vorticity" + (r > 1 ? ": the shear stirs the beads more in its own direction." : "."); }
+      if (state.material === "liquid") s += " The beads' own Brownian D is " + fmtD(thermalD()) + "; along the flow the shear adds strain squared / 2 times it, " + fmtD(thermalD() * g * g / 2) + ", because a bead that diffuses up or down while the layers slide is not carried exactly back (shear-induced dispersion).";
+      if (both && state.material === "liquid") { const r = f.D_um2_s / w.D_um2_s, err = Math.hypot(f.rel_err || 0, w.rel_err || 0); s += Math.abs(Math.log(r)) < Math.max(0.1, 2 * err) ? " At this strain the added dispersion, " + fmtPct(g * g / 2) + ", is within the uncertainty: the two directions agree." : " Along the flow D is " + fmtSig(r, 2) + " times that along the vorticity; 1 + strain squared / 2 gives " + fmtSig(1 + g * g / 2, 2) + "."; }
+      else if (both) { const r = f.D_um2_s / w.D_um2_s, err = Math.hypot(f.rel_err || 0, w.rel_err || 0); s += Math.abs(Math.log(r)) < Math.max(0.1, 2 * err) ? " The two directions agree within the uncertainty: the rearrangements show no preferred direction." : " The rearrangements along the flow are " + fmtSig(r, 2) + " times those along the vorticity" + (r > 1 ? ": the shear stirs the beads more in its own direction." : "."); }
     }
     else if (f.bound && f.bound.above) s = "Even the widest patterns used lost their echo within one cycle: the material rearranges by more than a stripe spacing per cycle. Wider patterns (a lower magnification) or a gentler strain would show it.";
     else s = "The echoes hardly fade over the " + fmtSig(res.T / res.frames_per_period, 3) + " cycles of the movie: any rearrangement is slower than D = " + fmtD(res.D_limit.below) + " " + MU + "m" + SQ + "/s, about " + fmtSig(1000 * perCycle(res.D_limit.below), 2) + " nm per cycle. A longer movie or finer patterns would lower this limit.";
@@ -818,7 +856,7 @@
       tb += row("main", "This page", describe(f), describe(w), ratio(f, w), "echoes at zero strain, B from the camera");
       if (level === "addict" && res.published) {
         const pb = res.published;
-        tb += pb.failed ? row("pub", "Published method only", "-", "-", "-", "could not run: " + pb.failed) : row("pub", "Published method only", describe(pb.flow), describe(pb.vort), ratio(pb.flow, pb.vort), "every phase averaged, B from the first three echoes");
+        tb += pb.failed ? row("pub", "Baseline (published steps, as implemented here)", "-", "-", "-", "could not run: " + pb.failed) : row("pub", "Baseline (published steps, as implemented here)", describe(pb.flow), describe(pb.vort), ratio(pb.flow, pb.vort), "every phase averaged, B from the first three echoes");
       }
       tb += row("truth", "Simulation", fmtD(t[0]), fmtD(t[1]), t[0] > 0 && t[1] > 0 ? fmtSig(t[0] / t[1], 2) : "-", "");
       h += tb + '</tbody></table></div>';
@@ -861,7 +899,7 @@
   const CARDS = [
     { lvl: 1, title: "Below and above the yield point", text: "At 20 % strain the microgel holds: the beads move about 20 nm per cycle along each direction, and the echoes fade only over a hundred cycles, for the finest patterns. At 80 % it flows: the beads move about 0.8 " + MU + "m per cycle, and only the widest patterns keep an echo for a few cycles. The two values are those Edera et al. (2021) measured on Carbopol; in our tests on 128 cycles the page found D along the flow within about 15 % of them, and the jump of more than a thousand times between the two strains.",
       shows: [{ label: "20 %", set: {}, go: "step-rates" }, { label: "80 %", set: { strain: 0.8 }, go: "step-rates" }, { label: "The sweep", set: {}, go: "step-series", series: true }] },
-    { lvl: 1, title: "A liquid echoes too", text: "Shear a viscous liquid slowly, and its flow undoes itself exactly: every bead comes back. The echoes still fade, because each bead diffuses on its own, but at a pace set by the temperature and the viscosity, not by the strain. The sweep of step 7 gives a flat line. Edera et al. found that in their cell real liquids also slip and flow sideways, which echo-DDM shows as extra fading; this simulation has no such flows.",
+    { lvl: 1, title: "A liquid echoes too", text: "Shear a viscous liquid slowly and its flow undoes itself, but not for a bead that diffuses meanwhile: a step up or down while the layers slide carries it along the flow by the strain of that moment, and the reverse half of the cycle does not bring it back. Along the vorticity the echoes fade only at the bead's Brownian pace, whatever the strain; along the flow they fade faster, by 1 + strain squared / 2, twice as fast at 140 %. This is shear-induced (Taylor) dispersion, real motion of the beads. Edera et al. found that in their cell real liquids also slip and flow sideways, which echo-DDM shows as extra fading; this simulation has no such flows.",
       shows: [{ label: "Liquid at 20 %", set: { material: "liquid" }, go: "step-rates" }, { label: "Liquid at 100 %", set: { material: "liquid", strain: 1 }, go: "step-rates" }, { label: "The sweep", set: { material: "liquid" }, go: "step-series", series: true }] },
     { lvl: 1, title: "A rubber: the floor of the method", text: "An elastic solid never rearranges: within a cycle its patterns scramble and come back, and the echoes stay at 1. The page then gives only the slowest rearrangement this movie could have shown, about 2e-5 " + MU + "m" + SQ + "/s on the standard bench: a movie twice as long halves it. Real experiments use such a sample to find the motion the cell itself adds (Edera et al. found less than 1 nm per cycle).",
       shows: [{ label: "Rubber", set: { material: "rubber" }, go: "step-cycle" }] },
@@ -869,7 +907,7 @@
       shows: [{ label: "1 per cycle", set: { per_cycle: 1 }, go: "step-cycle" }, { label: "8 per cycle", set: { per_cycle: 8 }, go: "step-cycle" }] },
     { lvl: 2, title: "Wider patterns for fast rearrangements", text: "Above the yield point the finest patterns lose their echo within one cycle: no echo is left to follow. Only patterns wider than the distance a bead wanders in a few cycles keep one. A lower magnification brings wider patterns into the image; a higher frequency does not help, if the material rearranges by the same amount in every cycle, as assumed here.",
       shows: [{ label: "80 %, 20x", set: { strain: 0.8 }, go: "step-rates" }, { label: "80 %, 10x", set: { strain: 0.8, objective: objIndexByName("CFI Plan Fluor 10X") }, go: "step-rates" }] },
-    { lvl: 3, title: "Echoes at zero strain", text: "A bead that moves up or down between two echoes sits where the shear carries it further or less far, but only while the plates are displaced. Comparing frames that start at zero strain leaves this out; averaging over every phase, as in the paper, adds half the strain squared times the vertical diffusion to the diffusion along the flow: at 80 % about a fifth more, at 150 % about three quarters more. In our tests (three samples each at 80, 100 and 150 %) the page read D along the flow within about 20 %, the published method up to 40 % too high. Switch it off at the Addict level to see the difference in the result table.",
+    { lvl: 3, title: "Echoes at zero strain", text: "A bead that moves up or down between two echoes sits where the shear carries it further or less far, but only while the plates are displaced. In the simulated microgel the rearrangements move a bead within the material, and the material's own coordinates are back in place whenever the strain is zero: comparing frames that start at zero strain leaves the shear out, while averaging over every phase, as in the paper, adds half the strain squared times the vertical rearrangements to those along the flow, about a fifth more at 80 % and three quarters more at 150 %. In our tests (three samples each at 80, 100 and 150 %) the page read D along the flow within about 20 %, the baseline up to 40 % too high. This is an assumption of the model: a bead diffusing in a liquid is carried by the flow, and there the shear adds dispersion even between frames at zero strain, as real motion. Switch it off at the Addict level to see the difference in the result table.",
       shows: [{ label: "Liquid at 50 %", set: { material: "liquid", strain: 0.5 }, go: "step-rates" }, { label: "Microgel at 150 %", set: { strain: 1.5 }, go: "step-rates" }] }
   ];
   function buildCards() {

@@ -96,6 +96,10 @@ p { margin: 0 0 1rem; }
 .app canvas { display: block; width: 100%; height: 100%; }
 .app .tag { position: absolute; left: 0.75rem; bottom: 0.6rem; font-family: var(--sans); font-size: 0.72rem; color: #fff; background: rgba(0, 0, 0, 0.55); padding: 0.1rem 0.45rem; border-radius: 4px; }
 .start-here { font-family: var(--sans); font-size: 0.95rem; margin: 0.9rem 0 0; }
+.anim-toggle { font-family: var(--sans); font-size: 0.85rem; margin: 0.9rem 0 0; padding: 0.3rem 0.8rem; border: 1px solid var(--rule); border-radius: 999px; background: transparent; color: var(--ink); cursor: pointer; }
+.anim-toggle:hover { border-color: var(--accent); }
+.anim-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pipe .anim-toggle { margin: 0 0 0.8rem; }
 .app .head { padding: 1.1rem 1.25rem 0.8rem; }
 .app .head .eyebrow { margin-bottom: 0.2rem; }
 .app .head h3 { margin: 0; }
@@ -153,6 +157,11 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
 @media (prefers-reduced-motion: reduce) { .app, .app:hover { transition: none; transform: none; } }
 </style>
 
+<style>
+.skip { position: absolute; left: -999px; top: 0.5rem; z-index: 20; background: var(--paper); color: var(--ink); padding: 0.5rem 1rem; border: 2px solid var(--accent); border-radius: 4px; font-family: var(--sans); }
+.skip:focus { left: 1rem; }
+</style>
+<a class="skip" href="#main">Zum Inhalt springen</a>
 <header class="site-header">
   <div class="wrap header-inner">
     <a class="site-name" href="../../">Roberto Cerbino</a>
@@ -164,13 +173,14 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
   </div>
 </header>
 
-<main>
+<main id="main" tabindex="-1">
   <section class="wrap intro">
     <nav class="langs" aria-label="Sprache"><a href="../" hreflang="en" lang="en">English</a><a href="../it/" hreflang="it" lang="it">Italiano</a><span aria-current="true" lang="de">Deutsch</span></nav>
     <p class="eyebrow">Differentielle dynamische Mikroskopie</p>
     <h1>DDM zum Ausprobieren</h1>
     <p class="lede"><a href="https://en.wikipedia.org/wiki/Differential_dynamic_microscopy" hreflang="en">Differentielle dynamische Mikroskopie</a> (DDM), 2008 eingef&uuml;hrt (R. Cerbino und V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Phys. Rev. Lett. 100, 188102</a>), macht aus einem gew&ouml;hnlichen Mikroskopfilm ein Lichtstreuexperiment: Sie misst, wie schnell die Muster jeder Gr&ouml;&szlig;e im Bild verblassen, ohne einem einzelnen Teilchen oder einer einzelnen Zelle zu folgen. Daraus ergeben sich Gr&ouml;&szlig;en, Geschwindigkeiten und vieles mehr. Jede Seite unten simuliert ein Experiment in Ihrem Browser und f&uuml;hrt Sie durch die ganze Auswertung, vom Rohfilm bis zum Ergebnis. Die Seiten der Anwendungen sind auf Englisch.</p>
     <p class="start-here">Neu hier? <a href="../sizing/#try-double">Verdoppeln Sie die Gr&ouml;&szlig;e der Kugeln</a>: Sagen Sie voraus, wie sich die Kurven verschieben, und sehen Sie zu, wie die Seite es pr&uuml;ft. Sie unterrichten DDM? <a href="../exercises/">&Uuml;bungen mit Musterl&ouml;sungen</a> f&uuml;r jede Seite, zum Ausdrucken.</p>
+    <button type="button" class="anim-toggle" aria-pressed="false"><span class="l-pause">Animationen anhalten</span><span class="l-play" hidden>Animationen abspielen</span></button>
   </section>
 
   <section class="wrap apps" aria-label="Anwendungen">
@@ -296,6 +306,7 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
     <p class="eyebrow">Eine Methode, viele Fragen</p>
     <h2 id="h-pipe">Was jede Seite macht</h2>
     <p class="prose">Die Fragen unterscheiden sich, die Schritte nicht. Die ersten drei Felder laufen live auf einem kleinen simulierten Film zitternder Teilchen.</p>
+    <button type="button" class="anim-toggle" aria-pressed="false"><span class="l-pause">Animationen anhalten</span><span class="l-play" hidden>Animationen abspielen</span></button>
     <div class="pipe-row">
       <figure><div class="pane"><canvas id="pp-frame" class="px" width="64" height="64" aria-label="Simuliertes Filmbild"></canvas></div>
         <figcaption><b>Film</b>Ein gew&ouml;hnlicher Mikroskopfilm, viele Bilder hintereinander.</figcaption></figure>
@@ -604,16 +615,36 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
     const io = new IntersectionObserver(function (es) { es.forEach(function (en) { scenes.forEach(function (s) { if (s.el === en.target) s.on = en.isIntersecting; }); }); });
     scenes.forEach(function (s) { io.observe(s.el); });
   }
-  if (still) {   // reduced motion: one settled picture of each, no animation
+  // the animations can be paused (buttons at the top and above the steps); the choice is kept for the next visit.
+  // With reduced motion and no choice made, they start still, on one settled picture of each.
+  let saved = null;
+  try { saved = window.localStorage.getItem("ddm-animations"); } catch (e) { saved = null; }
+  let paused = saved ? saved === "paused" : still;
+  const toggles = Array.prototype.slice.call(document.querySelectorAll(".anim-toggle"));
+  function showState() {
+    toggles.forEach(function (b) {
+      b.setAttribute("aria-pressed", paused ? "true" : "false");
+      b.querySelector(".l-pause").hidden = paused; b.querySelector(".l-play").hidden = !paused;
+    });
+  }
+  if (paused) {
     for (let i = 0; i < 90; i++) scenes.forEach(function (s) { s.step(); });
     scenes.forEach(function (s) { s.draw(); });
-    return;
   }
-  let last = 0;
+  let last = 0, running = false;
   function tick(t) {
+    if (paused) { running = false; return; }
     if (t - last > 40) { last = t; scenes.forEach(function (s) { if (s.on) { s.step(); s.draw(); } }); }
     requestAnimationFrame(tick);
   }
-  requestAnimationFrame(tick);
+  function run() { if (!paused && !running) { running = true; requestAnimationFrame(tick); } }
+  toggles.forEach(function (b) {
+    b.addEventListener("click", function () {
+      paused = !paused;
+      try { window.localStorage.setItem("ddm-animations", paused ? "paused" : "running"); } catch (e) { /* not kept */ }
+      showState(); run();
+    });
+  });
+  showState(); run();
 })();
 </script>

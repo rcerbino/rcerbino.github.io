@@ -82,6 +82,7 @@ p { margin: 0 0 1rem; }
 /* reader levels: what each reader sees */
 html[data-level="curious"] .lvl-2, html[data-level="curious"] .lvl-3, html[data-level="student"] .lvl-3 { display: none !important; }
 /* extra steps: folded for the Curious level, one click away */
+.bridge { border-left: 3px solid var(--accent); padding-left: 0.75rem; }
 .opt-note { display: none; font-family: var(--sans); font-size: 0.95rem; color: var(--muted); margin: 0.4rem 0 0; }
 .opt-note button { margin-left: 0.4rem; }
 html[data-level="curious"] .step[data-optional]:not(.unfolded) > .opt-note { display: block; }
@@ -226,7 +227,7 @@ figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(
 .chart.short { height: 220px; }
 .toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-family: var(--sans); font-size: 0.88rem; }
 .toolbar input[type="range"] { flex: 1 1 10rem; accent-color: var(--accent); }
-.toolbar select { font: inherit; padding: 0.25rem 0.4rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink); }
+.toolbar select { max-width: 100%; min-width: 0; font: inherit; padding: 0.25rem 0.4rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink); }
 .toolbar.pickbar { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 0.8rem; margin-top: 0.5rem; }
 .toolbar.pickbar input[type="range"] { width: 100%; min-width: 0; }
 @media (pointer: coarse) { input[type="range"] { min-height: 2.5rem; } }   /* a larger touch area; the track stays thin */
@@ -236,6 +237,7 @@ figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(
 .legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-family: var(--sans); font-size: 0.8rem; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
 .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.legend svg.mk { flex: none; }
 .reasons { font-family: var(--sans); font-size: 0.82rem; color: var(--muted); margin: 0; padding-left: 1.1rem; }
 
 details.math { min-width: 0; font-family: var(--sans); font-size: 0.92rem; border-left: 2px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; padding: 0.55rem 0.9rem; max-width: var(--measure); }
@@ -306,7 +308,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
     </nav>
   </div>
 </header>
-<div class="proto-note"><div class="wrap"><span>This web page is a divertissement.</span><span class="pn-rest" id="pn-rest"> For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the cells are soft discs that push each other and steer towards where they are carried, and they never divide) and rely on many approximations. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>. If you like it, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice.</span> <button type="button" class="pn-more" aria-expanded="false" aria-controls="pn-rest">More</button></div></div>
+<aside class="proto-note" aria-label="About this page"><div class="wrap"><span>This web page is a divertissement.</span><span class="pn-rest" id="pn-rest"> For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the cells are soft discs that push each other and steer towards where they are carried, and they never divide) and rely on many approximations. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>. If you like it, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice.</span> <button type="button" class="pn-more" aria-expanded="false" aria-controls="pn-rest">More</button></div></aside>
 
 
 <main>
@@ -446,7 +448,7 @@ img_seq = fd.read_images(file_names)      # one frame every few minutes</pre>
         <details class="math" data-open-at="researcher">
           <summary>The math: structure function of a moving sheet</summary>
           <div class="eq"><i>d</i>(<i>q</i>, &Delta;<i>t</i>) = <i>A</i>(<i>q</i>) [1 &minus; <i>f</i>(<i>q</i>, &Delta;<i>t</i>)] + <i>B</i>, &nbsp;&nbsp; <i>f</i><sub>lab</sub>(<b>q</b>, &Delta;<i>t</i>) &asymp; <i>f</i>(<b>q</b>, &Delta;<i>t</i>) cos(<b>q</b>&middot;<b>V</b>&Delta;<i>t</i>)</div>
-          <p>For a sheet that drifts as a whole with velocity <b>V</b>, the patterns travel with it and swing; <i>f</i> is what is left in the frame of the sheet. <i>A</i>(<i>q</i>) = <i>N</i> |<i>K</i>(<i>q</i>)|<sup>2</sup> <i>S</i>(<i>q</i>), with <i>K</i> the image of one nucleus and <i>S</i>(<i>q</i>) the structure factor of the nuclei, peaked at the spacing of neighbours. Map axes: <i>q<sub>x</sub></i> to the right, <i>q<sub>y</sub></i> up.</p>
+          <p>For a sheet that drifts as a whole with velocity <b>V</b>, the patterns travel with it and swing; <i>f</i> is what is left in the frame of the sheet. The mean power of pattern <b>q</b> in one frame, without the camera noise, is <i>P</i>(<i>q</i>) = &lang;|<i>F</i>|<sup>2</sup>&rang; &minus; <i>B</i>/2 = <i>N</i> |<i>K</i>(<i>q</i>)|<sup>2</sup> <i>S</i>(<i>q</i>), with <i>K</i> the Fourier transform of the image of one nucleus, <i>S</i>(<i>q</i>) the structure factor of the nuclei, peaked at the spacing of neighbours, and the same normalisation of the transform throughout. Two frames that share nothing give twice that power in their difference, so <i>A</i>(<i>q</i>) = 2<i>P</i>(<i>q</i>) = 2<i>N</i> |<i>K</i>(<i>q</i>)|<sup>2</sup> <i>S</i>(<i>q</i>), which is how step 5 computes it. Map axes: <i>q<sub>x</sub></i> to the right, <i>q<sub>y</sub></i> up.</p>
         </details>
       </section>
 
@@ -455,10 +457,12 @@ img_seq = fd.read_images(file_names)      # one frame every few minutes</pre>
         <div class="step-title"><span class="num">5</span><h2 id="h-curves">Watch each pattern change</h2></div>
         <div class="step-body">
           <div class="text">
-            <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. In a jammed sheet the curves sink a little and stall: each cell rattles in the cage of its neighbours. In a fluid one they fall to zero within an hour. In a flock the patterns also travel with the sheet.</p>
+            <p class="bridge"><b>One thing first.</b> The whole sheet may travel. The page measures that motion from how the widest patterns shift between frames, moves every frame back by it, and analyses what is left: the curves here are <span class="frame-label">in the frame of the sheet</span>. Step 7 shows how, and what changes without it.</p>
+            <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. In a jammed sheet the curves sink a little and stall: each cell rattles in the cage of its neighbours. In a fluid one they fall to zero within an hour.</p>
             <p class="lvl-2">Dots: <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i> in the frame of the sheet (step 7); hollow circles: as recorded, in the frame of the microscope. <i>A</i> = 2&lang;|<i>F</i>|<sup>2</sup>&rang; &minus; <i>B</i>, from the mean power of each mode, so that patterns that never change keep their whole amplitude.</p>
           </div>
           <figure class="viz">
+            <figcaption>How much of each pattern is left, <span class="frame-label">in the frame of the sheet</span></figcaption>
             <div class="chart"><canvas id="chart-curves" aria-label="How much of each pattern is left against the delay"></canvas></div>
             <div class="legend" id="curves-legend"></div>
           </figure>
@@ -478,12 +482,12 @@ img_seq = fd.read_images(file_names)      # one frame every few minutes</pre>
         <p class="opt-note">An extra step: the rate of each pattern against its size, the classical result of DDM, with a choice of model for the fit. <button type="button" class="opt-show">Show this step</button></p>
         <div class="step-body">
           <div class="text">
-            <p>Fit each curve of step 5 with a model and read its rate: how many times per hour the pattern fades by a factor e. Finer patterns fade faster, because a smaller move is enough to blur them. How fast the rate grows with q says how the cells move. If halving the width of the pattern doubles the rate (rate proportional to q), the cells go straight over that distance; if it multiplies it by four (q<sup>2</sup>), they wander at random, as in diffusion; more than that, and they are held in a cage.</p>
+            <p>Fit each curve of step 5 with a model and read its rate: how many times per hour the pattern fades by a factor e. Finer patterns fade faster, because a smaller move is enough to blur them. How fast the rate grows with q hints at how the cells move: if halving the width of the pattern doubles the rate (rate proportional to q), the cells go straight over that distance; if it multiplies it by four (q<sup>2</sup>), they wander at random, or rattle in cages. The slope alone cannot tell those two apart: read it with the shape of the curves (do they stop at a plateau?) and with how long the movie lasts. Whether the sheet is solid or fluid is decided in step 7, from how far the cells get over the whole movie.</p>
             <p class="lvl-2">The models, fitted to f(q, &Delta;t) at each q with A and B as in step 5: <b>exponential</b>, f = e<sup>&minus;&Gamma;&Delta;t</sup> (diffusion, &Gamma; = Dq<sup>2</sup>); <b>stretched or compressed exponential</b>, f = e<sup>&minus;(&Gamma;&Delta;t)<sup>&beta;</sup></sup> (&beta; &lt; 1: a spread of rates; &beta; &gt; 1: persistent, directed motion); <b>persistent random walk</b>, f = e<sup>&minus;q<sup>2</sup>&lang;&Delta;r<sup>2</sup>&rang;/4</sup> with &lang;&Delta;r<sup>2</sup>&rang; = 4D(&Delta;t &minus; t<sub>p</sub>(1 &minus; e<sup>&minus;&Delta;t/t<sub>p</sub></sup>)) (straight for a time t<sub>p</sub>, then at random); <b>exponential to a plateau</b>, f = c + (1 &minus; c) e<sup>&minus;&Gamma;&Delta;t</sup> (each cell rattles in a cage and the curve stops at c). &Gamma; is the rate at which the model falls to 1/e (for the plateau model, the rate of the decaying part).</p>
           </div>
           <div class="toolbar"><label for="fit-model">Model</label><select id="fit-model"></select><span class="readout" id="fit-best"></span></div>
           <figure class="viz">
-            <figcaption>Rate of each pattern against q</figcaption>
+            <figcaption>Rate of each pattern against q, <span class="frame-label">in the frame of the sheet</span></figcaption>
             <div class="chart"><canvas id="chart-gamma" aria-label="Rate of each pattern against the wave vector q"></canvas></div>
             <div class="legend" id="gamma-legend"></div>
           </figure>
@@ -496,7 +500,7 @@ img_seq = fd.read_images(file_names)      # one frame every few minutes</pre>
           <div class="result" id="gamma-result" aria-live="polite"></div>
         </div>
         <details class="inputs"><summary>What the analysis is told, and what it finds</summary><p><b>Told (inputs):</b> the model, and nothing else: the curves are those of step 5.</p><p><b>Found from the movie:</b> at each q with signal well above the noise, the rate and the shape of the fitted curve; how the rate grows with q; and, for this movie, which of the four models describes the curves best.</p><p>The page also fits, with the same model, how single simulated cells move relative to the sheet (the self part of the intermediate scattering function, from their true positions). Above the peak of A, where each nucleus counts on its own, the two should agree; near and below it the patterns follow the crowd, not single cells.</p></details>
-        <p class="takeaway"><b>What this step gives:</b> the classical result of DDM, the rate against q, and from its slope whether the cells go straight, wander at random or stay caged over the distances the patterns probe.</p>
+        <p class="takeaway"><b>What this step gives:</b> the classical result of DDM, the rate against q; with the shape of the curves, whether the cells go straight, wander at random or stay caged over the distances the patterns probe and the times the movie covers.</p>
         <details class="transfer"><summary><b>A question to think about:</b> In the fluid sheet the rate grows about as q, with a compressed exponential (&beta; near 1.75). The cells crawl at 30 &micro;m/h and keep their direction for about 2 hours. Why do the patterns not show diffusion?</summary><p>The patterns used are 5 to 10 &micro;m wide. A cell crosses them in well under an hour, long before it turns: over those distances it goes straight, so the rate is set by its speed (rate proportional to q) and the curves fall faster than an exponential (&beta; &gt; 1). Diffusion, with the rate proportional to q<sup>2</sup>, would show only for patterns much wider than the distance a cell travels before turning, here tens of micrometres, where the arrangement of the cells and the size of the field get in the way.</p></details>
         <details class="math" data-open-at="researcher">
           <summary>The math: fitting, the truth, and what was tried</summary>
@@ -655,7 +659,7 @@ pairs = {tuple(sorted(p)) for p in vor.ridge_points}   # neighbours</pre>
 
   <section class="wrap further lvl-2" aria-labelledby="h-adds">
     <h2 id="h-adds">What this page adds to the published methods</h2>
-    <p class="prose">Giavazzi et al. (2018) measured the mean squared displacement of cells in confluent monolayers with DDM, from the intermediate scattering function as a Gaussian at the wave vectors where the structure factor of the nuclei is close to 1, in the frame of the microscope. The step below is not in the papers we cite: we added it while testing the page against its own simulations, and it may exist elsewhere. At the "Addict" level it can be switched off, and the result table shows the published method alone on the same movie.</p>
+    <p class="prose">Giavazzi et al. (2018) measured the mean squared displacement of cells in confluent monolayers with DDM, from the intermediate scattering function as a Gaussian at the wave vectors where the structure factor of the nuclei is close to 1, in the frame of the microscope. The step below is not in the papers we cite: we added it while testing the page against its own simulations, and it may exist elsewhere. At the "Addict" level it can be switched off, and the result table shows a baseline: the published steps alone, as implemented here, on the same movie. This baseline is one implementation of the published steps, run on movies from this page's own simulation: it shows what each added step changes here, not how the published method performs in general.</p>
     <ul class="adds">
       <li><b>Motion relative to the sheet.</b> The path of the whole sheet from the phase of the widest patterns (as in phase differential microscopy), and every frame moved back by it before the structure function, so that the displacement is that of each cell relative to its neighbours. <span class="where">Step 7. Without it, the flocking solid of the bench, moving at 7 &micro;m/h, read as a flocking liquid in our tests: in an hour its cells seemed to move 6 &micro;m<sup>2</sup>, where relative to the sheet they moved 1.3.</span></li>
     </ul>

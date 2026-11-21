@@ -473,6 +473,12 @@ def main(check=False, preview=False):
             continue
         i = next(k for k, (_, l) in enumerate(nav) if l == after)
         nav.insert(i + 1, (link(path), label))
+    # the commit this build comes from, shown in every footer: a reader who sees an older page can tell
+    import subprocess
+    try:
+        revision = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        revision = "local"
     ctx = dict(profile=profile, about=about, research=research, teaching=teaching,
                news=news, pubs=pubs, pub_groups=pub_groups, selected=selected,
                years=years, stats=stats, current_roles=current_roles, people_groups=people_groups, visiting_scientists=visiting_scientists,
@@ -481,7 +487,7 @@ def main(check=False, preview=False):
                talk_strip=talk_strip, talk_strip_max=talk_strip_max,
                service=service, service_lists=service_lists, service_counts=service_counts, service_total=len(acts),
                service_strip=service_strip, service_strip_max=service_strip_max, service_groups=SERVICE_GROUPS,
-               built=today.isoformat(), built_human=fmt_date(today.isoformat()),
+               built=today.isoformat(), built_human=fmt_date(today.isoformat()), revision=revision,
                current_year=current_year, site_url=SITE_URL, preview=preview)
 
     for path, template, label in PAGES:
@@ -505,7 +511,15 @@ def main(check=False, preview=False):
         root = "../" * path.count("/")
         items = "\n".join(f'        <li><a href="{root}{href}"' + (' aria-current="page"' if lab == label else "") + f">{lab}</a></li>"
                           for href, lab in nav if lab != "Home")
-        f.write_text(html.replace("<!--SITE-NAV-->", items), encoding="utf-8")
+        html = html.replace("<!--SITE-NAV-->", items)
+        # the same versioned style sheet as the template pages, and the revision in the head and the footer
+        html = html.replace('css/fonts.css"', asset("css/fonts.css") + '"')
+        html = html.replace('<meta name="viewport"', f'<meta name="revision" content="{revision} {today.isoformat()}">\n<meta name="viewport"', 1)
+        if html.count("</div></footer>") == 1:
+            html = html.replace("</div></footer>", f' <span class="rev">Revision {revision}, built {fmt_date(today.isoformat())}.</span></div></footer>')
+        else:
+            problems.append(f"{path}: footer not found for the revision")
+        f.write_text(html, encoding="utf-8")
 
     (OUT / "404.html").write_text(env.get_template("404.html").render(
         **ctx, page="Not found", root="/", path="404"), encoding="utf-8")

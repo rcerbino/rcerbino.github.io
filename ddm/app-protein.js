@@ -658,6 +658,8 @@
     document.querySelector(".steps").classList.remove("stale");
     const fresh = movie !== cache.movie;
     cache.movie = movie; cache.res = res; cache.cfg = cfg; cache.opts = opts;
+    document.querySelectorAll(".cal-px").forEach(function (e) { e.textContent = String(+(movie.pixel_um || movie.L_um / movie.n).toPrecision(4)); });   // the calibration in the code examples
+    document.querySelectorAll(".cal-fps").forEach(function (e) { e.textContent = String(+movie.frame_rate_hz.toPrecision(4)); });
     // a new movie: the delay slider where the patterns in the middle of those used are half renewed, and the lower map
     // zoomed on the patterns used
     if (fresh) {
@@ -986,6 +988,25 @@
     return { ctx: ctx, fx: fx, fy: fy, m: m, pw: pw, ph: ph, done: function () { ctx.restore(); } };
   }
   function dot(ctx, x, y, r, fill, stroke) { ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * Math.PI); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.2; ctx.stroke(); } }
+  // a different marker for each curve of the chart of curves, so that they can be told apart by shape as well as by colour
+  const MARKS = ["circle", "square", "triangle", "diamond", "down", "pentagon", "star"];
+  function shapePts(x, y, r, j) {
+    const s = MARKS[j % MARKS.length], n = { triangle: 3, down: 3, diamond: 4, pentagon: 5, star: 10 }[s], R = 1.3 * r, rot = s === "down" ? Math.PI / 2 : -Math.PI / 2, p = [];
+    for (let i = 0; i < n; i++) { const t = rot + 2 * Math.PI * i / n, rr = s === "star" && i % 2 ? 0.5 * R : R; p.push([x + rr * Math.cos(t), y + rr * Math.sin(t)]); }
+    return p;
+  }
+  function mark(ctx, x, y, r, fill, stroke, j) {
+    const s = MARKS[j % MARKS.length]; ctx.beginPath();
+    if (s === "circle") ctx.arc(x, y, r, 0, 2 * Math.PI);
+    else if (s === "square") ctx.rect(x - 0.9 * r, y - 0.9 * r, 1.8 * r, 1.8 * r);
+    else { shapePts(x, y, r, j).forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); ctx.closePath(); }
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.2; ctx.stroke(); }
+  }
+  function markIcon(col, j) {
+    const s = MARKS[j % MARKS.length], body = s === "circle" ? '<circle cx="6" cy="6" r="4.5"/>' : s === "square" ? '<rect x="2" y="2" width="8" height="8"/>' :
+      '<polygon points="' + shapePts(6, 6, 4, j).map(function (p) { return p[0].toFixed(2) + "," + p[1].toFixed(2); }).join(" ") + '"/>';
+    return '<svg class="mk" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style="fill:' + col + '">' + body + "</svg>";
+  }
   let qSpan = null;
   function setQSpan() { const w = cache.res.window; qSpan = [w.q_min_used || w.q_lo_per_um, w.q_max_used || w.q_hi_per_um]; }
   function qPos(q) { const lo = Math.log(qSpan[0]), hi = Math.log(qSpan[1]); return hi > lo ? (Math.log(q) - lo) / (hi - lo) : 0.5; }
@@ -1008,19 +1029,19 @@
     const a = axes($("chart-curves"), { xlog: true, ylog: false, x0: x0, x1: x1, y0: -0.25, y1: 1.25, xlabel: "Delay (s)", ylabel: level === "curious" ? "How much of the pattern is left" : "f(q, \u0394t)" }), ctx = a.ctx;
     ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.m.l, a.fy(0)); ctx.lineTo(a.m.l + a.pw, a.fy(0)); ctx.stroke();
     const pick = pickRows();
-    pick.forEach(function (r) {
+    pick.forEach(function (r, j) {
       const col = qColor(qPos(r.q_per_um));
       if (r.model_f && level !== "curious") {
         ctx.strokeStyle = col; ctx.lineWidth = 1.4; ctx.beginPath(); let on = false;
         r.model_f.forEach(function (v, li) { if (!isFinite(v)) return; const X = a.fx(taus[li]), Y = a.fy(v); if (!on) { ctx.moveTo(X, Y); on = true; } else ctx.lineTo(X, Y); });
         ctx.stroke();
       }
-      r.f.forEach(function (f, li) { if (isFinite(f)) dot(ctx, a.fx(taus[li]), a.fy(Math.max(-0.25, Math.min(1.25, f))), 2.4, col, null); });
+      r.f.forEach(function (f, li) { if (isFinite(f)) mark(ctx, a.fx(taus[li]), a.fy(Math.max(-0.25, Math.min(1.25, f))), 2.4, col, null, j); });
     });
     a.done();
     fillNumbers("curves-numbers", ["Delay (s)"].concat(pick.map(function (r) { return "q = " + fmtSig(r.q_per_um, 3); })), taus.map(function (t, li) { return [t].concat(pick.map(function (r) { return r.f[li]; })); }));
     const leg = $("curves-legend"); leg.innerHTML = "";
-    pick.forEach(function (r) { const q = r.q_per_um, s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(q)) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / q, 2) + " " + MU + "m" : "q = " + q.toFixed(2) + " " + MU + "m\u207b\u00b9"); leg.appendChild(s); });
+    pick.forEach(function (r, j) { const q = r.q_per_um, s = document.createElement("span"); s.innerHTML = markIcon(qColor(qPos(q)), j) + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / q, 2) + " " + MU + "m" : "q = " + q.toFixed(2) + " " + MU + "m\u207b\u00b9"); leg.appendChild(s); });
   }
   // the diffusion coefficient found at each q, against one protein alone (D0) and the crowd as simulated (D_c)
   function drawDq() {
@@ -1134,9 +1155,23 @@
     return '<p class="small amp-line" style="margin:0.5rem 0 0"><b>Signal and camera noise:</b> over the ' + pts.length + ' patterns used, the signal A is ' + fmtSig(r[0], 2) + ' to ' + fmtSig(r[r.length - 1], 2) + ' times the camera noise B' +
       (level === "curious" ? '' : ' (A from ' + fx(Math.min.apply(null, As)) + ' to ' + fx(Math.max.apply(null, As)) + ', B ' + (bHi / bLo < 1.05 ? '= ' + fx(bLo) : 'from ' + fx(bLo) + ' to ' + fx(bHi)) + ')') + '; the chart of A and B is in this step.</p>';
   }
+  // the power map in words, for screen readers: where the changes are strongest in this run, and where the camera noise takes over
+  function describeMap(pts) {
+    const c = $("map"); if (!c) return;
+    if (!c.dataset.label) c.dataset.label = c.getAttribute("aria-label");
+    const ok = pts.filter(function (p) { return p.A > 0 && isFinite(p.A); }).sort(function (a, b) { return a.q - b.q; });
+    if (ok.length < 3) { c.setAttribute("aria-label", c.dataset.label); return; }
+    let k = 0; ok.forEach(function (p, i) { if (p.A > ok[k].A) k = i; });
+    const inv = MU + "m\u207b\u00b9";
+    let txt = ". In this run the changes are strongest " + (k === 0 ? "for the widest stripes shown, " : "for stripes about ") + fmtSig(2 * Math.PI / ok[k].q, 2) + " " + MU + "m apart (q = " + fmtSig(ok[k].q, 2) + " " + inv + ")";
+    const over = ok.find(function (p, i) { return i > k && p.B > 0 && p.A < p.B; });
+    txt += over ? "; from q = " + fmtSig(over.q, 2) + " " + inv + " on, the camera noise is stronger than the signal." : "; the signal stays above the camera noise at every q analysed.";
+    c.setAttribute("aria-label", c.dataset.label + txt);
+  }
   function drawAmp() {
     if (!cache.res) return;
     const res = cache.res, pts = ampPoints().filter(function (p) { return p.q > 0 && (p.A > 0 || p.B > 0); });
+    describeMap(pts);
     const vals = []; pts.forEach(function (p) { if (p.A > 0) vals.push(p.A); if (p.B > 0) vals.push(p.B); });
     if (vals.length < 2) return;
     vals.sort(function (p, q) { return p - q; });
@@ -1190,7 +1225,7 @@
       t += row("main", "This page", pm(D, D * res.D_rel_err), f3(Ra), f ? pm(f.kD_mL_g, f.kD_err) : "-", f && f.A2 !== undefined ? pm(f.A2 * 1e4, f.A2_err * 1e4) : "-", f && f.Rh_nm ? f3(f.Rh_nm) : "-", "the headline; series values once step 7 has run");
       if (level === "addict" && res.published) {
         const pb = res.published, fp = s ? s.published : null;
-        t += pb.failed ? row("pub", "Published method only", "-", "-", "-", "-", "-", "could not run: " + pb.failed) : row("pub", "Published method only", pm(pb.D_um2_s, pb.D_um2_s * pb.D_rel_err), f3(rApp(pb.D_um2_s)), fp && fp.lineD ? pm(fp.kD_mL_g, fp.kD_err) : "-", fp && fp.A2 !== undefined ? pm(fp.A2 * 1e4, fp.A2_err * 1e4) : "-", fp && fp.Rh_nm ? f3(fp.Rh_nm) : "-", "the same movies: one exponential per q, frames taken as instants, amplitudes from their own fits");
+        t += pb.failed ? row("pub", "Baseline (published steps, as implemented here)", "-", "-", "-", "-", "-", "could not run: " + pb.failed) : row("pub", "Baseline (published steps, as implemented here)", pm(pb.D_um2_s, pb.D_um2_s * pb.D_rel_err), f3(rApp(pb.D_um2_s)), fp && fp.lineD ? pm(fp.kD_mL_g, fp.kD_err) : "-", fp && fp.A2 !== undefined ? pm(fp.A2 * 1e4, fp.A2_err * 1e4) : "-", fp && fp.Rh_nm ? f3(fp.Rh_nm) : "-", "the same movies: one exponential per q, frames taken as instants, amplitudes from their own fits");
       }
       t += row("truth", "Simulation", f3(mv.truth.Dc_um2_s), f3(rApp(mv.truth.Dc_um2_s)), f3(r.kD_mL_g), f3(r.A2_mol_mL_g2 * 1e4), f3(r.Rh_nm), "");
       t += '</tbody></table></div>';

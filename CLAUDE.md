@@ -218,6 +218,8 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
 - Landing page /ddm/ (`static/ddm/index.html`, from `landing.src.html`): one card per application and the
   shared steps drawn live from a small sketch movie; no reader levels (each application page has its own).
   Old links with a hash (/ddm/#student) are sent on to /ddm/sizing/.
+  The sketches can be paused (two "Pause the animations" buttons, the choice kept in localStorage `ddm-animations`); with
+  reduced motion and no choice made they start still.
   The cards are in three groups: Start here (sizing, and a card for the exercises), Classic applications (swimmers,
   drift, rheology) and Advanced applications (crowded, proteins, shear, tissues); the switch under each application
   title shows the same groups (Start, Classic, Advanced). Group headings and notes are translated in `landing_i18n.py`.
@@ -273,7 +275,9 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
   the flow and the vorticity; at the echoes only pairs starting at zero strain, and A from those frames (x_phase); B from the camera
   (x_noise; published: quadratic through the first three echoes); rate from a line through the origin of -ln f; jackknife over eight
   parts of the movie) and `worker-shear.js` (bench and strain sweep). The shear is in `movie.js` option `shear` (affine displacement
-  relative to the focal plane, non-affine diffusion; bright field with the scattered-intensity term, `homodyne: true`, which beads of a
+  relative to the focal plane; rearrangements are kicks in material coordinates; in the liquid the beads are Brownian and
+  advected: X gets the coupling -gamma(t) dW_h, sampled exactly with the height step over each frame, so along the flow the
+  zero-strain echoes read D0 (1 + strain^2/2), shear-induced dispersion, Jansons arXiv math/0605561; bright field with the scattered-intensity term, `homodyne: true`, which beads of a
   micrometre or more need, or the image goes below zero and clips). Materials in `MATERIALS`/`rearrangements` in `app-shear.js`: the microgel set to
   Edera et al., Soft Matter 17, 8553 (2021), at 20 % and 80 %. Check: `node test-shear.js` (about a minute).
 - "Moving tissues" /ddm/tissues/ (`static/ddm/tissues/index.html`): confluent monolayers, jammed, fluid or flocking. `tissue.src.html`,
@@ -303,9 +307,18 @@ visitor's browser (nothing is uploaded, no outside service is contacted). Source
 
 All application pages have a fourth reader level, "Addict" (`#addict`): one switch for each step the
 analysis adds to the published method (`x_*` settings in `app.js`, `app-swim.js`, `app-drift.js`, `app-rheo.js`, `app-crowd.js`, `app-protein.js`, `app-shear.js` and `app-tissue.js`, mapped to engine options;
-`opts.published_only` switches them all off), and a "published method only" row computed on the same movie.
+`opts.published_only` switches them all off), and a baseline row computed on the same movie, labelled "Baseline (published
+steps, as implemented here)": it is one implementation of the published steps, run on the page's own simulation, and the
+methods text says so; never present it as how the published method performs in general.
 Each such step is described in the methods text and listed under "What this page adds to the published
 methods" (no tags in the text). A new step that is not in the cited papers gets both a list entry and a switch.
+
+Shared by the build (`ddm/build.py`): skip links to the content and to the bench, a scroll offset from the height of the
+sticky step strip, and "The numbers behind this chart: <the chart's aria-label>" on every data disclosure. In each app the
+curves of the chart of curves have a marker shape as well as a colour (`mark`, `markIcon`), and `describeMap` adds to the
+power map's label where the signal is strongest and where the camera noise takes over. The code examples show the standard
+pixel size and frame rate in `cal-px` and `cal-fps` spans, filled in from the run. `build.py` writes the revision (git commit)
+into a meta tag and the footer of every page and versions the style sheet of the DDM pages.
 
 Shared links: the address of an application page holds the level and every setting that differs from `BASE`
 (`#student/diameter_um=0.5&mode=fluorescence`, objectives by name); a new setting must live in `BASE` to be

@@ -239,7 +239,7 @@
       need(shape === "sphere" && !cfg.swim && cfg.gravity !== true && cfg.walls !== true && !(cfg.drift_um_s > 0) && !cfg.drift_z_um_s, "tracers in a viscoelastic material: spheres only, without swimming, gravity, walls or drift");
     }
     const SHC = cfg.shear || null;
-    let SHR = null;
+    let SHR = null, shT = null;
     if (SHC) {
       need(shape === "sphere" && !visco && !INTC && !cfg.swim && cfg.gravity !== true && cfg.walls !== true && !(cfg.drift_um_s > 0) && !cfg.drift_z_um_s, "sheared samples: spheres only, without swimming, interactions, a material, gravity, walls or drift");
       const Dn = SHC.D_na_um2_s; need(Array.isArray(Dn) && Dn.length === 3 && Dn.every(function (v) { return v >= 0 && v < 1e4; }), "shear.D_na_um2_s must be three diffusion coefficients");
@@ -826,10 +826,21 @@
       if (VE) { viscoAdvance(i, dt); return; }
       const c = classes[cls[i]], hy = c.hyd;
       if (SHR) {
-        // sheared sample: rearrangements of the material move the beads by diffusion, anisotropic; thermal motion only in a liquid
-        const th = SHR.brownian ? 2 * hy.D_t * dt : 0;
-        X[i] += Math.sqrt(th + 2 * SHR.D[0] * dt) * rng.g(); Y[i] += Math.sqrt(th + 2 * SHR.D[1] * dt) * rng.g();
-        H[i] += Math.sqrt(th + 2 * SHR.D[2] * dt) * rng.g(); reflect(i); return;
+        // sheared sample. X, Y, H are the bead's coordinates with the affine shear taken out (drawn at X + gamma(t) (H - hf)).
+        // Rearrangements of the material: diffusion in these coordinates (the material's own reference frame), anisotropic.
+        // Thermal motion (a liquid only): the bead is carried by the local flow while it diffuses, dx = gammadot (h - hf) dt +
+        // dW_x, so in these coordinates dX = dW_x - gamma(t) dW_h: a step along the height also moves it along the flow by
+        // the strain at that moment (shear-induced dispersion: over whole cycles it adds gamma0^2 D / 2 along the flow, even
+        // between frames at zero strain). The step's thermal increment of H and its coupling are drawn together, exactly for
+        // the sinusoidal strain over [t1, t2]; the walls' reflection of H is left out of the coupling.
+        X[i] += Math.sqrt(2 * SHR.D[0] * dt) * rng.g(); Y[i] += Math.sqrt(2 * SHR.D[1] * dt) * rng.g(); H[i] += Math.sqrt(2 * SHR.D[2] * dt) * rng.g();
+        if (SHR.brownian) {
+          const Dt = hy.D_t, w = SHR.w, g0 = SHR.g0, t1 = shT ? shT[0] : 0, t2 = shT ? shT[1] : dt;
+          const Ig = g0 * (Math.cos(w * t1) - Math.cos(w * t2)) / w, Ig2 = g0 * g0 * (0.5 * (t2 - t1) - (Math.sin(2 * w * t2) - Math.sin(2 * w * t1)) / (4 * w));
+          const sh = Math.sqrt(2 * Dt * dt), g1 = rng.g(), a = dt > 0 ? -2 * Dt * Ig / sh : 0, b = Math.sqrt(Math.max(0, 2 * Dt * Ig2 - a * a));
+          H[i] += sh * g1; X[i] += Math.sqrt(2 * Dt * dt) * rng.g() + a * g1 + b * rng.g(); Y[i] += Math.sqrt(2 * Dt * dt) * rng.g();
+        }
+        reflect(i); return;
       }
       if (!oriented) {
         const nst = wallSteps(c, H[i], dt), hh = dt / nst, st = Math.sqrt(2 * hy.D_t * hh);
@@ -968,6 +979,7 @@
         const del = delay(Y[i]), ci = cls[i], c = classes[ci], ch = chans[ci];
         for (let sub = 0; sub < nsub; sub++) {
           const when = t0 + del + (nsub > 1 ? (sub + 0.5) * subDt : 0);
+          if (SHR) shT = [tp[i], when];   // the step's start and end, for the shear coupling of thermal motion
           if (SW[i]) swimAdvance(i, when - tp[i]); else advance(i, when - tp[i]);
           if (when > tp[i]) tp[i] = when;
           let wHet = 0, wHom = 0;

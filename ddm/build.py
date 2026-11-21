@@ -117,7 +117,8 @@ STEP_INDEX_STYLE = """<style>
 .step-index a[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: var(--paper); }
 .step-index a.gl { min-width: 0; height: auto; border: 0; padding: 0 0.25rem; color: var(--accent); text-decoration: underline; }
 .step-index .now { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 12rem; }
-.step { scroll-margin-top: 3.5rem; }
+html { scroll-padding-top: 3.5rem; }   /* set from the height of the strip by the script below, which wraps on phones */
+.step { scroll-margin-top: 0.5rem; }
 .glossary { display: grid; grid-template-columns: minmax(10rem, 16rem) 1fr; gap: 0.4rem 1.25rem; margin: 0; max-width: 60rem; }
 .glossary dt { font-weight: 600; }
 .glossary dd { margin: 0; }
@@ -136,7 +137,9 @@ STEP_INDEX_SCRIPT = """<script>
     links.forEach(function (a, i) { if (i === k) a.setAttribute("aria-current", "step"); else a.removeAttribute("aria-current"); });
     now.textContent = "Step " + (k + 1) + " of " + links.length + ": " + links[k].getAttribute("data-title");
   }
-  window.addEventListener("scroll", mark, { passive: true }); window.addEventListener("resize", mark); mark();
+  // links to a step land below the strip, whatever its height (it wraps to two or three lines on phones)
+  function pad() { document.documentElement.style.scrollPaddingTop = (nav.offsetHeight + 8) + "px"; }
+  window.addEventListener("scroll", mark, { passive: true }); window.addEventListener("resize", function () { pad(); mark(); }); pad(); mark();
 })();
 </script>
 """
@@ -181,6 +184,38 @@ def add_step_index(out):
     return out
 
 
+# links that appear when the keyboard reaches them first, to jump past the site menu and the list of DDM pages
+SKIP_STYLE = """<style>
+.skip { position: absolute; left: -999px; top: 0.5rem; z-index: 20; background: var(--paper); color: var(--ink); padding: 0.5rem 1rem; border: 2px solid var(--accent); border-radius: 4px; font-family: var(--sans); }
+.skip:focus { left: 1rem; }
+</style>
+"""
+
+
+def add_number_labels(out):
+    """'The numbers behind this chart' says which chart, from the label of the chart just above it, so that the
+    disclosures can be told apart in a screen reader's list."""
+    key = "<summary>The numbers behind this chart</summary>"
+    parts = out.split(key)
+    for i in range(len(parts) - 1):
+        labels = re.findall(r'<(?:canvas|svg)[^>]*aria-label="([^"]+)"', parts[i])
+        assert labels, "no chart before a numbers disclosure"
+        lab = labels[-1]
+        lab = lab[0].lower() + lab[1:] if not lab[:2].isupper() else lab
+        parts[i] += "<summary>The numbers behind this chart: " + lab + "</summary>"
+    return "".join(parts)
+
+
+def add_skip_links(out):
+    assert out.count("<main>") == 1, "one <main> expected"
+    out = out.replace("<main>", '<main id="main" tabindex="-1">', 1)
+    links = '<a class="skip" href="#main">Skip to the content</a>'
+    if 'id="bench-title"' in out:
+        links += '<a class="skip" href="#bench-title">Skip to the experiment</a>'
+    i = out.index("<header class=\"site-header\"")
+    return out[:i] + SKIP_STYLE + links + "\n" + out[i:]
+
+
 def assemble(page="sizing"):
     cfg = PAGES[page]
     src = (HERE / cfg["src"]).read_text()
@@ -194,6 +229,7 @@ def assemble(page="sizing"):
     # the source is a fragment: give it a document type (standards mode), a character set and a viewport
     # for phones, which the site pages get from templates/base.html
     out = add_glossary(add_step_index(out))
+    out = add_skip_links(add_number_labels(out))
     out = DOC_START + out
     if cfg.get("lang"):
         import landing_i18n
