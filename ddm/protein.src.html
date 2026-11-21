@@ -230,6 +230,7 @@ figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(
 .legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-family: var(--sans); font-size: 0.8rem; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
 .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.legend svg.mk { flex: none; }
 .reasons { font-family: var(--sans); font-size: 0.82rem; color: var(--muted); margin: 0; padding-left: 1.1rem; }
 
 details.math { min-width: 0; font-family: var(--sans); font-size: 0.92rem; border-left: 2px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; padding: 0.55rem 0.9rem; max-width: var(--measure); }
@@ -300,7 +301,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
     </nav>
   </div>
 </header>
-<div class="proto-note"><div class="wrap"><span>This web page is a divertissement.</span><span class="pn-rest" id="pn-rest"> For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the particles push each other only by touching or by their charge, not through the liquid around them) and rely on many approximations. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>. If you like it, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice.</span> <button type="button" class="pn-more" aria-expanded="false" aria-controls="pn-rest">More</button></div></div>
+<aside class="proto-note" aria-label="About this page"><div class="wrap"><span>This web page is a divertissement.</span><span class="pn-rest" id="pn-rest"> For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the particles push each other only by touching or by their charge, not through the liquid around them) and rely on many approximations. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>. If you like it, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice.</span> <button type="button" class="pn-more" aria-expanded="false" aria-controls="pn-rest">More</button></div></aside>
 
 
 <main>
@@ -451,7 +452,8 @@ img_seq = fd.read_images(file_names)</pre>
           <p>with <i>A</i>(<i>q</i>) &prop; <i>N S</i>(0) &Sigma;<sub><i>n</i></sub> |<i>K&#770;<sub>n</sub></i>(<i>q</i>)|<sup>2</sup> and weights <i>w<sub>n</sub></i> &prop; |<i>K&#770;<sub>n</sub></i>(<i>q</i>)|<sup>2</sup> that add up to 1: the modes of the density along the axis of the microscope, seen through the depth of field of step 1. <i>B</i> is the camera noise. The amplitude is proportional to the concentration and to <i>S</i>(0), the structure factor at wave vectors far below one over the size of a protein (<i>q R<sub>h</sub></i> is about 0.01 here): this is what step 7 uses. Map axes: <i>q<sub>x</sub></i> to the right, <i>q<sub>y</sub></i> up.</p>
           <p class="lvl-3">With evenly spaced frames, as here, fastDDM gives the same structure function:</p>
           <div class="lvl-3"><pre class="code">dqt = fd.ddm(img_seq, range(1, len(img_seq) // 2))   # lags in frames
-dqt.pixel_size = pixel_size      # um
+dqt.pixel_size = <span class="cal-px">0.65</span>        # um, the pixel of this setup (step 2)
+dqt.set_frame_rate(<span class="cal-fps">500</span>)     # frames per second of this setup: sets the delays in seconds
 aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
         </details>
       </section>
@@ -580,7 +582,7 @@ Rh = 1.380649e-23 * T / (6 * np.pi * eta * a * 1e-12)   # m</pre>
 
   <section class="wrap further lvl-2" aria-labelledby="h-adds">
     <h2 id="h-adds">What this page adds to the published methods</h2>
-    <p class="prose">Guidolin et al. (2023) measured the size of proteins and their k<sub>D</sub> with bright-field DDM, from the diffusion coefficient at several concentrations. The steps below are not in the papers we cite: we added them while testing the page against its own simulations, and some may exist elsewhere. At the "Addict" level each can be switched off, and the result table shows the published method alone on the same movies (one exponential per q, frames taken as instants, the amplitudes from their own fits).</p>
+    <p class="prose">Guidolin et al. (2023) measured the size of proteins and their k<sub>D</sub> with bright-field DDM, from the diffusion coefficient at several concentrations. The steps below are not in the papers we cite: we added them while testing the page against its own simulations, and some may exist elsewhere. At the "Addict" level each can be switched off, and the result table shows a baseline: the published steps alone, as implemented here, on the same movies (one exponential per q, frames taken as instants, the amplitudes from their own fits). This baseline is one implementation of the published steps, run on movies from this page's own simulation: it shows what each added step changes here, not how the published method performs in general.</p>
     <ul class="adds">
       <li><b>Motion along the axis of the microscope.</b> Each pattern collects proteins over the depth in focus, and they also move up and down, so f(q, &Delta;t) is a weighted sum of exponentials with rates D (q&sup2; + k&sup2;), the weights from the optics. <span class="where">Step 6. With the condenser closed down, as here, the effect on the mean is small: it moved D by less than 1 % in our tests (antibody, 115 mM salt), more at the widest patterns.</span></li>
       <li><b>Averaging over the exposure.</b> The camera averages each frame over its exposure, which softens the fastest patterns; the model does the same. <span class="where">Step 6. With an exposure as long as the time between frames, as here, leaving it out made D about 15 % too small and R<sub>h</sub> 6.2 nm instead of 5.3 in our tests; k<sub>D</sub>, a ratio, hardly changed.</span></li>

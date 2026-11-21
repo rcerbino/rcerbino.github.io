@@ -93,6 +93,7 @@ TEXT = {
         "Crawling cells that push each other and steer together: jammed sheets, fluid ones, flocking solids and flocking liquids, as in our studies of reawakened epithelia; the rate of each pattern, and the network of nuclei followed cell by cell.":
             "Cellule che strisciano, si spingono e si orientano insieme: strati bloccati, strati fluidi, solidi e liquidi in stormo, come nei nostri studi sugli epiteli risvegliati; la velocità di ogni motivo e la rete dei nuclei seguita cellula per cellula.",
         "Start here": "Da dove cominciare",
+        "Pause the animations": "Ferma le animazioni", "Skip to the content": "Vai al contenuto", "Play the animations": "Riavvia le animazioni",
         "How DDM works, step by step, from the raw movie to the size of a particle. The other pages build on it.": "Come funziona la DDM, passo dopo passo, dal filmato grezzo alla dimensione di una particella. Le altre pagine partono da qui.",
         "Classic applications": "Applicazioni classiche",
         "Established uses of DDM, each about one kind of motion: swimming, drifting, and beads jiggling in a soft material.": "Usi consolidati della DDM, ognuno su un tipo di moto: nuotare, derivare, e sfere che si agitano in un materiale soffice.",
@@ -227,6 +228,7 @@ TEXT = {
         "Crawling cells that push each other and steer together: jammed sheets, fluid ones, flocking solids and flocking liquids, as in our studies of reawakened epithelia; the rate of each pattern, and the network of nuclei followed cell by cell.":
             "Kriechende Zellen, die einander schieben und sich gemeinsam ausrichten: blockierte und fließende Schichten, schwärmende Festkörper und schwärmende Flüssigkeiten, wie in unseren Studien über wiedererweckte Epithelien; die Rate jedes Musters und das Netz der Zellkerne, Zelle für Zelle verfolgt.",
         "Start here": "Hier beginnen",
+        "Pause the animations": "Animationen anhalten", "Skip to the content": "Zum Inhalt springen", "Play the animations": "Animationen abspielen",
         "How DDM works, step by step, from the raw movie to the size of a particle. The other pages build on it.": "Wie DDM funktioniert, Schritt für Schritt, vom Rohfilm bis zur Größe eines Teilchens. Die anderen Seiten bauen darauf auf.",
         "Classic applications": "Klassische Anwendungen",
         "Established uses of DDM, each about one kind of motion: swimming, drifting, and beads jiggling in a soft material.": "Bewährte Anwendungen der DDM, jede zu einer Art von Bewegung: Schwimmen, Driften und Kugeln, die in einem weichen Material zittern.",

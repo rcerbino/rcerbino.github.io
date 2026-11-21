@@ -1,6 +1,7 @@
 /* Checks of the sheared-materials page (echo-DDM): run with node test-shear.js (about a minute)
-   rubber: no fading, only a limit; viscous liquid: D of the Brownian motion along both directions; microgel above yield:
-   D along the flow and the vorticity; every phase averaged reads D along the flow too high by about gamma0^2 D_h / 2. */
+   rubber: no fading, only a limit; viscous liquid: the Brownian D along the vorticity, and along the flow the shear-induced
+   dispersion D0 (1 + gamma0^2 / 2); microgel above yield: D along the flow and the vorticity; every phase averaged reads D
+   along the flow higher still. */
 "use strict";
 const MOVIE = require("./movie.js"), DDM = require("./ddm-engine.js"), SH = require("./shear-engine.js");
 let fails = 0;
@@ -18,12 +19,14 @@ check("rubber: no rearrangement, only a limit", !rub.r.flow.D_um2_s && rub.r.flo
 const lastF = rub.r.rows.filter(function (x) { return x.A > 10 * x.B && x.sec[0].reason !== "too few modes in this sector"; }).map(function (x) { return x.sec[0].f[x.sec[0].f.length - 1]; });
 check("rubber: echoes stay at 1 (above 0.97)", lastF.length > 10 && Math.min.apply(null, lastF) > 0.97, "lowest " + Math.min.apply(null, lastF).toFixed(3));
 const liq = run({ strain: 0.5, freq_hz: 1, D_na_um2_s: [0, 0, 0], brownian: true }, 0.9), Dt = liq.mv.truth.shear.D_thermal_um2_s;
-check("liquid: D along the flow within 25 %", Math.abs(liq.r.flow.D_um2_s / Dt - 1) < 0.25, (liq.r.flow.D_um2_s / Dt).toFixed(3));
+check("liquid at 50 %: D along the flow within 25 % of D0 (1 + gamma0^2 / 2)", Math.abs(liq.r.flow.D_um2_s / (Dt * 1.125) - 1) < 0.25, (liq.r.flow.D_um2_s / Dt).toFixed(3) + " D0, expected 1.125");
 check("liquid: D along the vorticity within 25 %", Math.abs(liq.r.vort.D_um2_s / Dt - 1) < 0.25, (liq.r.vort.D_um2_s / Dt).toFixed(3));
 const above = run({ strain: 0.8, freq_hz: 1, D_na_um2_s: [0.29, 0.19, 0.19] }, 0, 2);
 check("microgel at 80 %: D along the flow within 25 %", Math.abs(above.r.flow.D_um2_s / 0.29 - 1) < 0.25, (above.r.flow.D_um2_s / 0.29).toFixed(3));
 check("microgel at 80 %: D along the vorticity within 25 %", Math.abs(above.r.vort.D_um2_s / 0.19 - 1) < 0.25, (above.r.vort.D_um2_s / 0.19).toFixed(3));
-const big = run({ strain: 1.5, freq_hz: 1, D_na_um2_s: [0, 0, 0], brownian: true }, 0.9, 3), ratio = big.all.flow.D_um2_s / big.r.flow.D_um2_s;
-check("liquid at 150 %: every phase reads D along the flow higher, as 1 + gamma0^2 / 2", ratio > 1.3 && ratio < 2.6, ratio.toFixed(2) + " (the formula gives 2.1; patterns that fade within a few cycles read less)");
+const big = run({ strain: 1.5, freq_hz: 1, D_na_um2_s: [0, 0, 0], brownian: true }, 0.9, 3), Db = big.mv.truth.shear.D_thermal_um2_s, ratio = big.all.flow.D_um2_s / big.r.flow.D_um2_s;
+check("liquid at 150 %: shear-induced dispersion along the flow, D0 (1 + 1.125) within 25 %", Math.abs(big.r.flow.D_um2_s / (Db * 2.125) - 1) < 0.25, (big.r.flow.D_um2_s / Db).toFixed(3) + " D0");
+check("liquid at 150 %: D along the vorticity stays D0 (within 25 %)", Math.abs(big.r.vort.D_um2_s / Db - 1) < 0.25, (big.r.vort.D_um2_s / Db).toFixed(3) + " D0");
+check("liquid at 150 %: every phase averaged reads D along the flow higher still", ratio > 1.15 && ratio < 2.0, ratio.toFixed(2));
 console.log(fails ? fails + " check(s) failed" : "all checks passed");
 process.exit(fails ? 1 : 0);

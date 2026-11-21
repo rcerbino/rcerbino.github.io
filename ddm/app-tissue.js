@@ -544,6 +544,25 @@
     return { ctx: ctx, fx: fx, fy: fy, m: m, pw: pw, ph: ph, done: function () { ctx.restore(); } };
   }
   function dot(ctx, x, y, r, fill, stroke) { ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * Math.PI); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.2; ctx.stroke(); } }
+  // a different marker for each curve of the chart of curves, so that they can be told apart by shape as well as by colour
+  const MARKS = ["circle", "square", "triangle", "diamond", "down", "pentagon", "star"];
+  function shapePts(x, y, r, j) {
+    const s = MARKS[j % MARKS.length], n = { triangle: 3, down: 3, diamond: 4, pentagon: 5, star: 10 }[s], R = 1.3 * r, rot = s === "down" ? Math.PI / 2 : -Math.PI / 2, p = [];
+    for (let i = 0; i < n; i++) { const t = rot + 2 * Math.PI * i / n, rr = s === "star" && i % 2 ? 0.5 * R : R; p.push([x + rr * Math.cos(t), y + rr * Math.sin(t)]); }
+    return p;
+  }
+  function mark(ctx, x, y, r, fill, stroke, j) {
+    const s = MARKS[j % MARKS.length]; ctx.beginPath();
+    if (s === "circle") ctx.arc(x, y, r, 0, 2 * Math.PI);
+    else if (s === "square") ctx.rect(x - 0.9 * r, y - 0.9 * r, 1.8 * r, 1.8 * r);
+    else { shapePts(x, y, r, j).forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); ctx.closePath(); }
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.2; ctx.stroke(); }
+  }
+  function markIcon(col, j) {
+    const s = MARKS[j % MARKS.length], body = s === "circle" ? '<circle cx="6" cy="6" r="4.5"/>' : s === "square" ? '<rect x="2" y="2" width="8" height="8"/>' :
+      '<polygon points="' + shapePts(6, 6, 4, j).map(function (p) { return p[0].toFixed(2) + "," + p[1].toFixed(2); }).join(" ") + '"/>';
+    return '<svg class="mk" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style="fill:' + col + '">' + body + "</svg>";
+  }
   function poly(ctx, pts, col, wd, dash, alpha) { ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.setLineDash(dash || []); ctx.globalAlpha = alpha || 1; ctx.beginPath(); let on = false; pts.forEach(function (p) { if (!p) { on = false; return; } if (!on) { ctx.moveTo(p[0], p[1]); on = true; } else ctx.lineTo(p[0], p[1]); }); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
   let qSpan = null;
   function setQSpan() { const w = cache.res.window; qSpan = [w.q_min_used || w.q_lo_per_um, w.q_max_used || w.q_hi_per_um]; }
@@ -564,18 +583,18 @@
     ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.m.l, a.fy(0)); ctx.lineTo(a.m.l + a.pw, a.fy(0)); ctx.stroke();
     if (compare && compare.curves) compare.curves.forEach(function (c) { poly(ctx, c.f.map(function (v, i) { return isFinite(v) ? [a.fx(c.t[i]), a.fy(Math.max(-0.4, Math.min(1.15, v)))] : null; }), C.ink, 1.6, [2, 4], 0.5); });
     const pick = pickRows();
-    pick.forEach(function (r) {
+    pick.forEach(function (r, j) {
       const col = qColor(qPos(Math.max(qSpan[0], r.q_per_um)));
       const fit = fitOfRow(r);
       if (fit) { const ts = []; for (let k = 0; k <= 80; k++) ts.push(x0 * Math.pow(x1 / x0, k / 80)); poly(ctx, ts.map(function (t) { return [a.fx(t), a.fy(Math.max(-0.4, Math.min(1.15, fit.curve(t))))]; }), col, 1.4); }
       else poly(ctx, r.f.map(function (v, i) { return isFinite(v) ? [a.fx(taus[i]), a.fy(Math.max(-0.4, Math.min(1.15, v)))] : null; }), col, 1.2);
-      r.f.forEach(function (f, i) { if (isFinite(f)) dot(ctx, a.fx(taus[i]), a.fy(Math.max(-0.4, Math.min(1.15, f))), 2.4, col, null); });
-      if (res.comoving && level !== "curious") r.f_lab.forEach(function (f, i) { if (isFinite(f)) dot(ctx, a.fx(taus[i]), a.fy(Math.max(-0.4, Math.min(1.15, f))), 2.6, null, col); });
+      r.f.forEach(function (f, i) { if (isFinite(f)) mark(ctx, a.fx(taus[i]), a.fy(Math.max(-0.4, Math.min(1.15, f))), 2.4, col, null, j); });
+      if (res.comoving && level !== "curious") r.f_lab.forEach(function (f, i) { if (isFinite(f)) mark(ctx, a.fx(taus[i]), a.fy(Math.max(-0.4, Math.min(1.15, f))), 2.6, null, col, j); });
     });
     a.done();
     fillNumbers("curves-numbers", ["Delay (h)"].concat(pick.map(function (r) { return "q = " + fmtSig(r.q_per_um, 3) + (res.comoving ? ", sheet frame" : ""); })), taus.map(function (t, li) { return [t].concat(pick.map(function (r) { return r.f[li]; })); }));
     const leg = $("curves-legend"); leg.innerHTML = "";
-    pick.forEach(function (r) { const s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(Math.max(qSpan[0], r.q_per_um))) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / r.q_per_um, 2) + " " + MU + "m" : "q = " + r.q_per_um.toFixed(2) + " " + MU + "m" + MINUS1) + (r.used ? "" : " (wider than the band)"); leg.appendChild(s); });
+    pick.forEach(function (r, j) { const s = document.createElement("span"); s.innerHTML = markIcon(qColor(qPos(Math.max(qSpan[0], r.q_per_um))), j) + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / r.q_per_um, 2) + " " + MU + "m" : "q = " + r.q_per_um.toFixed(2) + " " + MU + "m" + MINUS1) + (r.used ? "" : " (wider than the band)"); leg.appendChild(s); });
     { const s = document.createElement("span"); s.textContent = (res.comoving && level !== "curious" ? "Dots: in the frame of the sheet; circles: as recorded; " : "Dots: measured; ") + "lines: the fit of step 6 (" + FIT_WORDS[state.fit_model] + ")" + (compare && compare.curves ? "; dotted: " + compare.label : ""); leg.appendChild(s); }
   }
   // ---- step 6: the rate of each pattern against q ---------------------------------------------------------------
@@ -630,7 +649,7 @@
     poly(ctx, F.truth.map(function (o, i) { return o && o.rate > 0 ? [a.fx(qs[i]), a.fy(o.rate)] : null; }), C["accent-2"], 1.8);
     F.meas.forEach(function (o, i) { if (o && o.rate > 0) dot(ctx, a.fx(qs[i]), a.fy(o.rate), 3, o.measured ? C.accent : null, C.accent); });
     a.done();
-    $("gamma-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>Measured (hollow: the curve barely moved within the movie, or had already gone)</span><span><i style="background:' + C["accent-2"] + '"></i>Single simulated cells, same model</span><span>Shaded: the band of step 7; dotted: the spacing of neighbours; grey: slopes 1 (long dashes, going straight) and 2 (short dashes, wandering at random)</span>';
+    $("gamma-legend").innerHTML = '<span><i style="background:' + C.accent + '"></i>Measured (hollow: the curve barely moved within the movie, or had already gone)</span><span><i style="background:' + C["accent-2"] + '"></i>Single simulated cells, same model: an independent check from their true positions, not a fit to these data</span><span>Shaded: the band of step 7; dotted: the spacing of neighbours; grey: slopes 1 (long dashes, going straight) and 2 (short dashes, wandering at random)</span>';
     const pname = { kww: "\u03b2", prw: "t_p (h)", cage: "plateau c", exp: null }[state.fit_model];
     fillNumbers("gamma-numbers", ["q (" + MU + "m" + MINUS1 + ")", "Rate, measured (1/h)", "single cells, simulated", "Measured?", pname ? pname + ", measured" : "", "rms of the fit"].filter(Boolean),
       rows.map(function (r, i) { const o = F.meas[i], t = F.truth[i], p = o ? (state.fit_model === "kww" ? o.params.beta : state.fit_model === "prw" ? o.params.tp : state.fit_model === "cage" ? o.params.c : null) : null; const row = [r.q_per_um, o ? o.rate : null, t ? t.rate : null, o ? (o.measured ? "yes" : o.why === "slow" ? "too slow" : "too fast") : "-"]; if (pname) row.push(p); row.push(o ? o.rms : null); return row; }));
@@ -671,6 +690,7 @@
       // a rate growing as q^s goes with displacements growing as t^(2/s) (Gaussian displacements)
       s += "Over the band of step 7 the rate grows as q<sup>" + fmtSig(sl.slope, 2) + "</sup>, as for displacements growing as t<sup>" + fmtSig(2 / sl.slope, 2) + "</sup> (t<sup>1</sup>: wandering at random, t<sup>2</sup>: going straight): ";
       s += sl.slope < 1.4 ? "over the distances these patterns probe, the cells go nearly straight. " : sl.slope < 2.4 ? "close to random wandering over these distances. " : "the cells are held back, more than random wandering would allow: a cage. ";
+      if (ranks[0].m === "cage") s += "But the curves are best described with a plateau: over this movie the cells rattle in cages, so here the slope does not mean a fluid; step 7 decides from how far they get. ";
     }
     if (m === "kww") {
       const b = bandParams(F, function (o) { return o.params.beta; }); if (b !== null) s += "The curves are " + (b > 1.1 ? "compressed" : b < 0.9 ? "stretched" : "close to simple exponentials") + " (\u03b2 = " + fmtSig(b, 2) + " in the band). ";
@@ -728,8 +748,22 @@
     const fx = function (v) { return v >= 1e5 ? v.toExponential(1).replace("e+", "e") : fmtSig(v, 2); };
     return '<p class="small amp-line" style="margin:0.5rem 0 0"><b>Signal and camera noise:</b> over the ' + set.length + (use.length >= 2 ? ' patterns used' : ' patterns') + ', the signal A is ' + fmtSig(r[0], 2) + ' to ' + fmtSig(r[r.length - 1], 2) + ' times the camera noise B' + (level === "curious" ? '' : ' (B = ' + fx(set[0].B) + ')') + '; the chart of A and B is in this step.</p>';
   }
+  // the power map in words, for screen readers: where the changes are strongest in this run, and where the camera noise takes over
+  function describeMap(pts) {
+    const c = $("map"); if (!c) return;
+    if (!c.dataset.label) c.dataset.label = c.getAttribute("aria-label");
+    const ok = pts.filter(function (p) { return p.A > 0 && isFinite(p.A); }).sort(function (a, b) { return a.q - b.q; });
+    if (ok.length < 3) { c.setAttribute("aria-label", c.dataset.label); return; }
+    let k = 0; ok.forEach(function (p, i) { if (p.A > ok[k].A) k = i; });
+    const inv = MU + "m\u207b\u00b9";
+    let txt = ". In this run the changes are strongest " + (k === 0 ? "for the widest stripes shown, " : "for stripes about ") + fmtSig(2 * Math.PI / ok[k].q, 2) + " " + MU + "m apart (q = " + fmtSig(ok[k].q, 2) + " " + inv + ")";
+    const over = ok.find(function (p, i) { return i > k && p.B > 0 && p.A < p.B; });
+    txt += over ? "; from q = " + fmtSig(over.q, 2) + " " + inv + " on, the camera noise is stronger than the signal." : "; the signal stays above the camera noise at every q analysed.";
+    c.setAttribute("aria-label", c.dataset.label + txt);
+  }
   function drawAmp() {
     const res = cache.res, pts = ampPoints().filter(function (p) { return p.q > 0 && (p.A > 0 || p.B > 0); });
+    describeMap(pts);
     const vals = []; pts.forEach(function (p) { if (p.A > 0) vals.push(p.A); if (p.B > 0) vals.push(p.B); });
     if (vals.length < 2) return; vals.sort(function (p, q) { return p - q; });
     const y0 = vals[0] / 2.5, y1 = vals[vals.length - 1] * 2.5, qs = pts.map(function (p) { return p.q; });
@@ -929,6 +963,10 @@
     const res = cache.res, t = cache.movie.truth, v = verdict(), V = Math.hypot(res.V_um_h[0], res.V_um_h[1]), Vt = Math.hypot(t.drift_um_h[0], t.drift_um_h[1]), cell2 = state.cell_um * state.cell_um;
     let h = '<div class="eyebrow">Result</div>';
     h += '<div class="big">' + STATE_WORDS[res.state] + '</div>';
+    const solidState = res.state === "jammed" || res.state === "flocking solid", reachHi = 9.2 / (res.band.q_lo * res.band.q_lo);
+    // close to the line between solid and fluid (a tenth of a cell area), or the last reading near the top of the reach: the movie cannot decide
+    const borderline = !res.msd_tiny && !res.msd_beyond && res.msd_last_um2 !== null && (Math.abs(Math.log(res.msd_last_um2 / (0.1 * cell2))) < Math.log(2) || res.msd_last_um2 > 0.7 * reachHi);
+    h += '<p class="small" style="margin:0 0 0.4rem">' + (solidState ? "Solid-like over the " + fmtH(cache.movie.T * cache.movie.frame_h) + " of the movie and the distances its patterns probe: a longer movie could still see the cells move on." : "Fluid-like over the times and distances of this movie.") + ' A classification for this model and this movie, not a diagnosis of a real tissue.</p>';
     let s = "";
     if (res.msd_tiny) s += "Relative to their neighbours the cells move less than the patterns can show (" + fmtSig(Math.sqrt(res.msd_min_um2), 2) + " " + MU + "m) over the whole movie. ";
     else if (!res.msd_beyond) s += "Relative to the sheet a cell moves about " + fmtSig(Math.sqrt(res.msd_last_um2), 2) + " " + MU + "m in " + fmtH(res.msd_last_h) + ", " + fmtSig(Math.sqrt(res.msd_last_um2) / state.cell_um, 2) + " of its size" + (res.msd_last_um2 < 0.1 * cell2 ? ": it stays in the cage of its neighbours. " : ". ");
@@ -936,12 +974,14 @@
     s += V > 3 * res.V_err_um_h ? "The whole sheet travels at " + fmtSig(V, 2) + " " + MU + "m/h" + (res.psi !== null ? ", order " + fmtSig(res.psi, 2) + "." : ".") : "The sheet as a whole does not travel (" + fmtSig(V, 2) + " +- " + fmtSig(res.V_err_um_h, 1) + " " + MU + "m/h).";
     h += '<p class="small" style="margin:0">' + s + ' As simulated: ' + trueState() + ', sheet at ' + fmtSig(Vt, 2) + ' ' + MU + 'm/h, order ' + fmtSig(t.order, 2) + '.</p>';
     h += '<span class="chip ' + v.cls + '">' + v.text + '</span>';
+    if (borderline) h += ' <span class="chip warn">Close to the line between solid and fluid: this movie cannot decide</span>';
+    h += '<p class="small" style="margin:0.4rem 0 0">Displacements are read from the patterns as if they were Gaussian: reliable from about ' + fmtSig(res.msd_min_um2, 2) + ' to ' + fmtSig(reachHi, 2) + ' ' + MU + 'm' + SQ + '; near the top of that range they read low in a flowing sheet, and beyond it the page gives only a lower bound.</p>';
     if (level !== "curious") {
       const at1 = function (taus, msd) { let b = null; taus.forEach(function (x, i) { if (msd[i] > 0 && (b === null || Math.abs(Math.log(x)) < Math.abs(Math.log(taus[b])))) b = i; }); return b !== null && Math.abs(Math.log(taus[b])) < 0.3 ? fmtSig(msd[b], 2) : "-"; };
       const row = function (cls, name, st, m1, vv, ps, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + st + '</td><td>' + m1 + '</td><td>' + vv + '</td><td>' + ps + '</td></tr>'; };
       let tb = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">State</th><th scope="col">&lt;&Delta;r&sup2;&gt; in 1 h (' + MU + 'm&sup2;)</th><th scope="col">Sheet velocity (' + MU + 'm/h)</th><th scope="col">Order</th></tr></thead><tbody>';
       tb += row("main", "This page", res.state, at1(res.taus_s, res.msd), fmtSig(V, 2) + " +- " + fmtSig(res.V_err_um_h, 1), res.psi !== null ? fmtSig(res.psi, 2) : "-", (res.comoving ? "relative to the sheet" : "as recorded") + (res.channel && res.channel !== "nuclei" ? ", on " + CHAN_WORDS[res.channel] : ""));
-      if (level === "addict" && res.published) { const p = res.published; tb += p.failed ? row("pub", "Published method only", "-", "-", "-", "-", "could not run") : row("pub", "Published method only", p.state, at1(p.taus_s, p.msd), "-", "-", "in the frame of the microscope"); }
+      if (level === "addict" && res.published) { const p = res.published; tb += p.failed ? row("pub", "Baseline (published steps, as implemented here)", "-", "-", "-", "-", "could not run") : row("pub", "Baseline (published steps, as implemented here)", p.state, at1(p.taus_s, p.msd), "-", "-", "in the frame of the microscope"); }
       tb += row("truth", "Simulation", trueState(), fmtSig(trueMsdAt(1), 2), fmtSig(Vt, 2), fmtSig(t.order, 2), "");
       h += tb + '</tbody></table></div>';
       h += '<details class="more"><summary>Details</summary><dl>';
@@ -978,6 +1018,7 @@
   function renderAll() {
     if (!cache.res) return;
     readColors(); grey = greyRange(cache.shown); greyNuc = greyRange(cache.movie); diffScale = null;
+    document.querySelectorAll(".frame-label").forEach(function (e) { e.textContent = cache.res.comoving ? "in the frame of the sheet" : "in the frame of the microscope (the motion of the sheet not taken out)"; });
     setQSpan(); renderLag(); renderText(); drawCell(); drawMovieFrames(); drawMap(); drawStripes(); renderGamma(); drawCurves(); drawMsd(); drawPath(); drawAmp(); renderResult(); renderNetwork(); drawSeries(); renderSettings();
   }
 

@@ -230,6 +230,7 @@ figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(
 .legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-family: var(--sans); font-size: 0.8rem; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
 .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.legend svg.mk { flex: none; }
 .reasons { font-family: var(--sans); font-size: 0.82rem; color: var(--muted); margin: 0; padding-left: 1.1rem; }
 
 details.math { min-width: 0; font-family: var(--sans); font-size: 0.92rem; border-left: 2px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; padding: 0.55rem 0.9rem; max-width: var(--measure); }
@@ -301,7 +302,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
     </nav>
   </div>
 </header>
-<div class="proto-note"><div class="wrap"><span>This web page is a divertissement.</span><span class="pn-rest" id="pn-rest"> For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the particles do not interact) and rely on many approximations. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>. If you like it, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice.</span> <button type="button" class="pn-more" aria-expanded="false" aria-controls="pn-rest">More</button></div></div>
+<aside class="proto-note" aria-label="About this page"><div class="wrap"><span>This web page is a divertissement.</span><span class="pn-rest" id="pn-rest"> For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the particles do not interact) and rely on many approximations. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>. If you like it, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice.</span> <button type="button" class="pn-more" aria-expanded="false" aria-controls="pn-rest">More</button></div></aside>
 
 
 <main>
@@ -457,7 +458,7 @@ img_seq = fd.read_images(file_names)</pre>
 
 frames = tifffile.imread("movie.tif").astype(np.float64)       # T x n x n, from "Download the movie"
 t = np.loadtxt("movie-times.csv", delimiter=",", skiprows=1)[:, 1]   # time of each frame (s), from "Frame times"
-pixel_um = 0.1625                                              # pixel size in the sample (um): see the movie, step 2
+pixel_um = <span class="cal-px">0.1625</span>                                             # pixel size in the sample (um) of this setup (step 2): change it with the objective or the binning
 
 T, n, _ = frames.shape
 F = np.fft.fft2(frames)                                        # one transform per frame
@@ -494,7 +495,8 @@ dq = np.array([np.bincount(ring.ravel(), m.ravel(), n // 2 + 1) / np.maximum(cou
 q = 2 * np.pi * np.arange(1, n // 2 + 1) / (n * pixel_um)     # um^-1</pre></div>
           <p class="lvl-3">With evenly spaced frames (log-spaced frames switched off), fastDDM does the same:</p>
           <div class="lvl-3"><pre class="code">dqt = fd.ddm(img_seq, range(1, len(img_seq) // 2))   # lags in frames
-dqt.pixel_size = pixel_size      # um
+dqt.pixel_size = <span class="cal-px">0.1625</span>        # um, the pixel of this setup (step 2)
+dqt.set_frame_rate(<span class="cal-fps">500</span>)     # frames per second of this setup: sets the delays in seconds
 aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
         </details>
       </section>
@@ -587,7 +589,7 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
 
   <section class="wrap further lvl-2" aria-labelledby="h-adds">
     <h2 id="h-adds">What this page adds to the published methods</h2>
-    <p class="prose">DDM microrheology was introduced by Edera et al. (2017), and Bayles, Squires and Helgeson (2017) did the same independently: f(q, &Delta;t) turned into a mean squared displacement at each q, then into the moduli through the generalised Stokes-Einstein relation. Edera et al. chose A and B by making the displacements from all q agree; in a simulation the camera is known, so this page gets B from the photon count and A from the mean power instead. The steps below are not in the papers we cite: we added them while testing the page against its own simulations, and some may exist elsewhere. At the "Addict" level each can be switched off, and the result table shows a plain method on the same movie (A from the variance, B from the first delays, no depth of field, q where the displacement is below 1/q&sup2;, Mason's formulas).</p>
+    <p class="prose">DDM microrheology was introduced by Edera et al. (2017), and Bayles, Squires and Helgeson (2017) did the same independently: f(q, &Delta;t) turned into a mean squared displacement at each q, then into the moduli through the generalised Stokes-Einstein relation. Edera et al. chose A and B by making the displacements from all q agree; in a simulation the camera is known, so this page gets B from the photon count and A from the mean power instead. The steps below are not in the papers we cite: we added them while testing the page against its own simulations, and some may exist elsewhere. At the "Addict" level each can be switched off, and the result table shows a plain method on the same movie (A from the variance, B from the first delays, no depth of field, q where the displacement is below 1/q&sup2;, Mason's formulas). This baseline is one implementation of the published steps, run on movies from this page's own simulation: it shows what each added step changes here, not how the published method performs in general.</p>
     <ul class="adds">
       <li><b>Amplitude from the mean power.</b> A = 2&lang;|F(q)|&sup2;&rang; &minus; B instead of 2 var &minus; B. <span class="where">Step 6. When the widest patterns are not renewed within the movie the variance misses part of A: on the standard micelles this alone reads the viscosity three times too low (85 instead of 250 mPa s).</span></li>
       <li><b>Camera noise known from the detector.</b> B = 2 (excess-noise factor &times; mean count + read noise&sup2;), the same at every q. <span class="where">Step 6.</span></li>

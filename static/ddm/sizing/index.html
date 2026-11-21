@@ -236,6 +236,7 @@ figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(
 .legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-family: var(--sans); font-size: 0.8rem; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
 .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.legend svg.mk { flex: none; }
 .reasons { font-family: var(--sans); font-size: 0.82rem; color: var(--muted); margin: 0; padding-left: 1.1rem; }
 
 details.math { min-width: 0; font-family: var(--sans); font-size: 0.92rem; border-left: 2px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; padding: 0.55rem 0.9rem; max-width: var(--measure); }
@@ -283,6 +284,11 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
 @media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
 </style>
 
+<style>
+.skip { position: absolute; left: -999px; top: 0.5rem; z-index: 20; background: var(--paper); color: var(--ink); padding: 0.5rem 1rem; border: 2px solid var(--accent); border-radius: 4px; font-family: var(--sans); }
+.skip:focus { left: 1rem; }
+</style>
+<a class="skip" href="#main">Skip to the content</a><a class="skip" href="#bench-title">Skip to the experiment</a>
 <header class="site-header">
   <div class="wrap header-inner">
     <a class="site-name" href="../../">Roberto Cerbino</a>
@@ -293,9 +299,9 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
     </nav>
   </div>
 </header>
-<div class="proto-note"><div class="wrap"><span>This web page is a divertissement.</span><span class="pn-rest" id="pn-rest"> For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the particles do not interact) and rely on many approximations. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>. If you like it, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice.</span> <button type="button" class="pn-more" aria-expanded="false" aria-controls="pn-rest">More</button></div></div>
+<aside class="proto-note" aria-label="About this page"><div class="wrap"><span>This web page is a divertissement.</span><span class="pn-rest" id="pn-rest"> For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the particles do not interact) and rely on many approximations. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>. If you like it, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice.</span> <button type="button" class="pn-more" aria-expanded="false" aria-controls="pn-rest">More</button></div></aside>
 
-<main>
+<main id="main" tabindex="-1">
   <section class="wrap intro">
     <div>
       <p class="eyebrow">Differential dynamic microscopy</p>
@@ -444,8 +450,8 @@ img_seq = fd.read_images(file_names)</pre>
           <div class="eq"><i>d</i>(<b>q</b>, &Delta;<i>t</i>) = &lang; |<i>F</i>[&Delta;<i>I</i>](<b>q</b>; <i>t</i>, &Delta;<i>t</i>)|<sup>2</sup> &rang;<sub><i>t</i></sub></div>
           <p>Here <i>F</i> is the two-dimensional Fourier transform and the average runs over all start times <i>t</i>. For motion with no preferred direction, <i>d</i> depends only on <i>q</i> = |<b>q</b>|, and the azimuthal average gives <i>d</i>(<i>q</i>, &Delta;<i>t</i>). The cross <i>q<sub>x</sub></i> = 0 or <i>q<sub>y</sub></i> = 0 is left out because image edges add artefacts there. <b>Windowing</b> (switch under Analysis, off by default; Giavazzi, Edera, Lu and Cerbino, <a href="https://doi.org/10.1140/epje/i2017-11587-3">Image windowing mitigates edge effects in differential dynamic microscopy</a>, Eur. Phys. J. E 40, 97 (2017)): the transform treats each image as one tile of a repeating pattern, so anything that crosses an edge makes a jump at the tile border. The jump spreads over all <i>q</i> along the axes of the map and adds a fast decay, nearly the same at every <i>q</i>, that swamps the finest patterns. With the switch on, each frame is first multiplied by a Blackman-Harris window <i>W</i>(<i>x</i>)<i>W</i>(<i>y</i>), <i>W</i> = 0.3636 &minus; 0.4892 cos(2&pi;<i>x</i>/<i>L</i>) + 0.1366 cos(4&pi;<i>x</i>/<i>L</i>) &minus; 0.0106 cos(6&pi;<i>x</i>/<i>L</i>), which falls smoothly to zero at the edges. The window has its own price: less of the field counts (the results scatter about three times more in our simulations of 200 nm beads), and its transform mixes each pattern with its neighbours up to 3 steps away in <i>q</i>, so the widest patterns (below 5 steps) are left out and, for diffusion, &Gamma; is compared with <i>D</i>(<i>q</i><sup>2</sup> + &lang;&delta;<i>q</i><sup>2</sup>&rang;), &lang;&delta;<i>q</i><sup>2</sup>&rang; = 1.21 (2&pi;/<i>L</i>)<sup>2</sup>. The camera noise <i>B</i> becomes 2 &lang;<i>W</i><sup>2</sup> &times; noise variance&rang;. The paper keeps the peak of the window at 1, which lowers <i>A</i>(<i>q</i>) and <i>B</i> by more than 90 %; here the window is scaled so that the mean of <i>W</i><sup>2</sup> over the image is 1, so <i>A</i>(<i>q</i>) and <i>B</i> keep the height they have without it and the two analyses can be compared on the same axes. Rates, sizes and speeds do not depend on this choice.</p>
           <div class="lvl-3"><pre class="code">dqt = fd.ddm(img_seq, range(1, len(img_seq) // 2))
-dqt.pixel_size = pixel_size        # um
-dqt.set_frame_rate(frame_rate)     # frames per second
+dqt.pixel_size = <span class="cal-px">0.325</span>        # um, the pixel of this setup (step 2)
+dqt.set_frame_rate(<span class="cal-fps">100</span>)     # frames per second of this setup: sets the delays in seconds
 ccm = fd.mask.central_cross_mask(dqt.shape[1:])
 aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
                           range=(0, dqt.ky[-1]), mask=ccm)</pre></div>
@@ -466,7 +472,7 @@ aa = fd.azimuthal_average(dqt, bins=len(dqt.ky) // 2,
             <div class="chart"><canvas id="chart-curves" aria-label="Curves for several wave vectors"></canvas></div>
             <div class="legend" id="curves-legend"></div>
           </figure>
-          <details class="numbers" id="curves-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <details class="numbers" id="curves-numbers"><summary>The numbers behind this chart: curves for several wave vectors</summary><div></div></details>
           <div class="predict" data-predict="size" data-right="right">
             <div class="q">Predict first: the particles become twice as large. Do the curves move to the left or to the right?</div>
             <div class="btns"><button type="button" data-guess="left">Left, faster</button><button type="button" data-guess="right">Right, slower</button></div>
@@ -511,7 +517,7 @@ fit_res, model_res = fit_multik(aa, model, k_ref, use_err=True,
             <div class="chart"><canvas id="chart-rates" aria-label="Relaxation rate against wave vector"></canvas></div>
             <ul class="reasons" id="reasons"></ul>
           </figure>
-          <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart: relaxation rate against wave vector</summary><div></div></details>
           <div class="step-body">
             <div class="result" id="result" aria-live="polite"></div>
             <div class="predict" data-predict="wrongeta" data-right="no">
@@ -529,7 +535,7 @@ fit_res, model_res = fit_multik(aa, model, k_ref, use_err=True,
             <figcaption>Apparent size at each <i>q</i>: what Stokes-Einstein gives from that pattern alone (dots, with their uncertainty; squares: cumulant fits). For identical particles the dots scatter around a flat line. With a spread of sizes they change with <i>q</i>, because each size shows with a different weight at each <i>q</i> (dashed red line: what the simulated particles give); at small <i>q</i> particles leaving the focal plane can pull them down. The black line is the measured size. This is the microscope's counterpart of measuring DLS at several angles.</figcaption>
             <div class="chart short"><canvas id="chart-size" aria-label="Apparent size against wave vector"></canvas></div>
           </figure>
-          <details class="numbers lvl-2" id="size-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <details class="numbers lvl-2" id="size-numbers"><summary>The numbers behind this chart: apparent size against wave vector</summary><div></div></details>
           <figure class="viz">
             <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>(<i>q</i>). <i>A</i> falls at high <i>q</i> because the optics blur fine patterns. As the signal becomes small next to the camera noise, more averaging is needed: a pattern is usable as long as its amplitude and its changes can be estimated reliably, and the checks of this step decide which are kept. A signal below the noise is not unusable as such: on the <a href="../proteins/#step-rates">proteins page</a> it is far below it and still gives the diffusion coefficient.</figcaption>
             <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
@@ -602,7 +608,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
 
   <section class="wrap further lvl-2" aria-labelledby="h-adds">
     <h2 id="h-adds">What this page adds to the published methods</h2>
-    <p class="prose">The analysis follows the papers listed under "Go further". The steps below are not in those papers: we added them while testing the page against its own simulations, each to remove a bias or a failure we saw there. Some may exist elsewhere in the literature. At the "Addict" level each can be switched off (in their own group among the settings), and the result table shows the published method alone on the same movie, next to the headline. The simulation itself (steps 1 and 2) is ours throughout and is not part of this list.</p>
+    <p class="prose">The analysis follows the papers listed under "Go further". The steps below are not in those papers: we added them while testing the page against its own simulations, each to remove a bias or a failure we saw there. Some may exist elsewhere in the literature. At the "Addict" level each can be switched off (in their own group among the settings), and the result table shows a baseline: the published steps alone, as implemented here, on the same movie, next to the headline. This baseline is one implementation of the published steps, run on movies from this page's own simulation: it shows what each added step changes here, not how the published method performs in general. The simulation itself (steps 1 and 2) is ours throughout and is not part of this list.</p>
     <ul class="adds">
       <li><b>Camera noise known from the detector.</b> B = 2 (excess-noise factor &times; mean count + read noise<sup>2</sup>), the same at every <i>q</i>, instead of a free B at each <i>q</i>, which trades against the amplitude and the rate. Two checks come with it: a <i>q</i> whose signal is below a tenth of the noise is kept only if a free B gives nearly the same rate, and a <i>q</i> whose pattern renews within one frame is left out. <span class="where">Step 5. With the point scanner it took the size of 500 nm beads from 800 nm to 440-560 nm.</span></li>
       <li><b>Depth of field.</b> Particles that diffuse up or down also fade from each pattern; the fit allows for it through the optics of step 1, and a <i>q</i> where the particles leave the focus within one frame is left out. <span class="where">Step 5. Without it, 200 nm beads read 13-14 % small at 60x (spinning disk, DIC).</span></li>
@@ -659,7 +665,8 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
 .step-index a[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: var(--paper); }
 .step-index a.gl { min-width: 0; height: auto; border: 0; padding: 0 0.25rem; color: var(--accent); text-decoration: underline; }
 .step-index .now { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 12rem; }
-.step { scroll-margin-top: 3.5rem; }
+html { scroll-padding-top: 3.5rem; }   /* set from the height of the strip by the script below, which wraps on phones */
+.step { scroll-margin-top: 0.5rem; }
 .glossary { display: grid; grid-template-columns: minmax(10rem, 16rem) 1fr; gap: 0.4rem 1.25rem; margin: 0; max-width: 60rem; }
 .glossary dt { font-weight: 600; }
 .glossary dd { margin: 0; }
@@ -677,7 +684,9 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     links.forEach(function (a, i) { if (i === k) a.setAttribute("aria-current", "step"); else a.removeAttribute("aria-current"); });
     now.textContent = "Step " + (k + 1) + " of " + links.length + ": " + links[k].getAttribute("data-title");
   }
-  window.addEventListener("scroll", mark, { passive: true }); window.addEventListener("resize", mark); mark();
+  // links to a step land below the strip, whatever its height (it wraps to two or three lines on phones)
+  function pad() { document.documentElement.style.scrollPaddingTop = (nav.offsetHeight + 8) + "px"; }
+  window.addEventListener("scroll", mark, { passive: true }); window.addEventListener("resize", function () { pad(); mark(); }); pad(); mark();
 })();
 </script>
 
@@ -1960,7 +1969,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       need(shape === "sphere" && !cfg.swim && cfg.gravity !== true && cfg.walls !== true && !(cfg.drift_um_s > 0) && !cfg.drift_z_um_s, "tracers in a viscoelastic material: spheres only, without swimming, gravity, walls or drift");
     }
     const SHC = cfg.shear || null;
-    let SHR = null;
+    let SHR = null, shT = null;
     if (SHC) {
       need(shape === "sphere" && !visco && !INTC && !cfg.swim && cfg.gravity !== true && cfg.walls !== true && !(cfg.drift_um_s > 0) && !cfg.drift_z_um_s, "sheared samples: spheres only, without swimming, interactions, a material, gravity, walls or drift");
       const Dn = SHC.D_na_um2_s; need(Array.isArray(Dn) && Dn.length === 3 && Dn.every(function (v) { return v >= 0 && v < 1e4; }), "shear.D_na_um2_s must be three diffusion coefficients");
@@ -2547,10 +2556,21 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       if (VE) { viscoAdvance(i, dt); return; }
       const c = classes[cls[i]], hy = c.hyd;
       if (SHR) {
-        // sheared sample: rearrangements of the material move the beads by diffusion, anisotropic; thermal motion only in a liquid
-        const th = SHR.brownian ? 2 * hy.D_t * dt : 0;
-        X[i] += Math.sqrt(th + 2 * SHR.D[0] * dt) * rng.g(); Y[i] += Math.sqrt(th + 2 * SHR.D[1] * dt) * rng.g();
-        H[i] += Math.sqrt(th + 2 * SHR.D[2] * dt) * rng.g(); reflect(i); return;
+        // sheared sample. X, Y, H are the bead's coordinates with the affine shear taken out (drawn at X + gamma(t) (H - hf)).
+        // Rearrangements of the material: diffusion in these coordinates (the material's own reference frame), anisotropic.
+        // Thermal motion (a liquid only): the bead is carried by the local flow while it diffuses, dx = gammadot (h - hf) dt +
+        // dW_x, so in these coordinates dX = dW_x - gamma(t) dW_h: a step along the height also moves it along the flow by
+        // the strain at that moment (shear-induced dispersion: over whole cycles it adds gamma0^2 D / 2 along the flow, even
+        // between frames at zero strain). The step's thermal increment of H and its coupling are drawn together, exactly for
+        // the sinusoidal strain over [t1, t2]; the walls' reflection of H is left out of the coupling.
+        X[i] += Math.sqrt(2 * SHR.D[0] * dt) * rng.g(); Y[i] += Math.sqrt(2 * SHR.D[1] * dt) * rng.g(); H[i] += Math.sqrt(2 * SHR.D[2] * dt) * rng.g();
+        if (SHR.brownian) {
+          const Dt = hy.D_t, w = SHR.w, g0 = SHR.g0, t1 = shT ? shT[0] : 0, t2 = shT ? shT[1] : dt;
+          const Ig = g0 * (Math.cos(w * t1) - Math.cos(w * t2)) / w, Ig2 = g0 * g0 * (0.5 * (t2 - t1) - (Math.sin(2 * w * t2) - Math.sin(2 * w * t1)) / (4 * w));
+          const sh = Math.sqrt(2 * Dt * dt), g1 = rng.g(), a = dt > 0 ? -2 * Dt * Ig / sh : 0, b = Math.sqrt(Math.max(0, 2 * Dt * Ig2 - a * a));
+          H[i] += sh * g1; X[i] += Math.sqrt(2 * Dt * dt) * rng.g() + a * g1 + b * rng.g(); Y[i] += Math.sqrt(2 * Dt * dt) * rng.g();
+        }
+        reflect(i); return;
       }
       if (!oriented) {
         const nst = wallSteps(c, H[i], dt), hh = dt / nst, st = Math.sqrt(2 * hy.D_t * hh);
@@ -2689,6 +2709,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
         const del = delay(Y[i]), ci = cls[i], c = classes[ci], ch = chans[ci];
         for (let sub = 0; sub < nsub; sub++) {
           const when = t0 + del + (nsub > 1 ? (sub + 0.5) * subDt : 0);
+          if (SHR) shT = [tp[i], when];   // the step's start and end, for the shear coupling of thermal motion
           if (SW[i]) swimAdvance(i, when - tp[i]); else advance(i, when - tp[i]);
           if (when > tp[i]) tp[i] = when;
           let wHet = 0, wHom = 0;
@@ -5053,6 +5074,8 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     if (runStart) { const s = (performance.now() - runStart) / 1000; if (movie !== cache.movie) lastRunS = s; }
     repeat = null;
     cache.movie = movie; cache.res = res; cache.cfg = cfg; cache.opts = opts;
+    document.querySelectorAll(".cal-px").forEach(function (e) { e.textContent = String(+(movie.pixel_um || movie.L_um / movie.n).toPrecision(4)); });   // the calibration in the code examples
+    document.querySelectorAll(".cal-fps").forEach(function (e) { e.textContent = String(+movie.frame_rate_hz.toPrecision(4)); });
     $("btn-times").hidden = !frameTimes();
     res.used = res.fits.filter(function (f) { return f.reason === null; });
     pickDefaultSelection();
@@ -5411,6 +5434,25 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     return { ctx: ctx, fx: fx, fy: fy, m: m, pw: pw, ph: ph, done: function () { ctx.restore(); } };
   }
   function dot(ctx, x, y, r, fill, stroke) { ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * Math.PI); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.2; ctx.stroke(); } }
+  // a different marker for each curve of the chart of curves, so that they can be told apart by shape as well as by colour
+  const MARKS = ["circle", "square", "triangle", "diamond", "down", "pentagon", "star"];
+  function shapePts(x, y, r, j) {
+    const s = MARKS[j % MARKS.length], n = { triangle: 3, down: 3, diamond: 4, pentagon: 5, star: 10 }[s], R = 1.3 * r, rot = s === "down" ? Math.PI / 2 : -Math.PI / 2, p = [];
+    for (let i = 0; i < n; i++) { const t = rot + 2 * Math.PI * i / n, rr = s === "star" && i % 2 ? 0.5 * R : R; p.push([x + rr * Math.cos(t), y + rr * Math.sin(t)]); }
+    return p;
+  }
+  function mark(ctx, x, y, r, fill, stroke, j) {
+    const s = MARKS[j % MARKS.length]; ctx.beginPath();
+    if (s === "circle") ctx.arc(x, y, r, 0, 2 * Math.PI);
+    else if (s === "square") ctx.rect(x - 0.9 * r, y - 0.9 * r, 1.8 * r, 1.8 * r);
+    else { shapePts(x, y, r, j).forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); ctx.closePath(); }
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.2; ctx.stroke(); }
+  }
+  function markIcon(col, j) {
+    const s = MARKS[j % MARKS.length], body = s === "circle" ? '<circle cx="6" cy="6" r="4.5"/>' : s === "square" ? '<rect x="2" y="2" width="8" height="8"/>' :
+      '<polygon points="' + shapePts(6, 6, 4, j).map(function (p) { return p[0].toFixed(2) + "," + p[1].toFixed(2); }).join(" ") + '"/>';
+    return '<svg class="mk" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style="fill:' + col + '">' + body + "</svg>";
+  }
 
   let curveView = "change", qSpan = null;
   // before and after a prediction: the curves of the earlier run stay, dashed, at the same stripe spacing
@@ -5467,14 +5509,14 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       o = { xlog: true, ylog: true, x0: x0, x1: x1, y0: lo / 1.6, y1: hi * 1.6, xlabel: "Delay \u0394t (s)", ylabel: "d(q, \u0394t)" };
     }
     const a = axes($("chart-curves"), o), ctx = a.ctx;
-    pick.forEach(function (f) {
+    pick.forEach(function (f, j) {
       const isSel = f === selF || (pair && f === pair.now), col = qColor(qPos(f.q_per_um));
       ctx.globalAlpha = pair && !pair.pending && f !== pair.now ? 0.3 : 1;   // during a comparison the other curves step back
       const tr = function (v) { return curveView === "change" ? (v - f.B) / f.A : v; };
       ctx.strokeStyle = col; ctx.lineWidth = isSel ? 3 : 1.5; ctx.beginPath();
       for (let i = 0; i <= 120; i++) { const t = x0 * Math.pow(x1 / x0, i / 120), v = tr(modelAt(f, t)); if (curveView === "d" && !(v > 0)) continue; const X = a.fx(t), Y = a.fy(v); if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }
       ctx.stroke();
-      res.dq.forEach(function (row, li) { const v = tr(row[f.bin]); if (curveView === "d" && !(v > 0)) return; dot(ctx, a.fx(taus[li]), a.fy(v), isSel ? 3.2 : 2.4, col, null); });
+      res.dq.forEach(function (row, li) { const v = tr(row[f.bin]); if (curveView === "d" && !(v > 0)) return; mark(ctx, a.fx(taus[li]), a.fy(v), isSel ? 3.2 : 2.4, col, null, j); });
     });
     ctx.globalAlpha = 1;
     if (pair) {
@@ -5498,7 +5540,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       s.textContent = "Dashed: the earlier run (" + compare.label + "); solid: now (" + COMPARE_LABEL[compare.kind]() + "). At a stripe spacing of " + sp + " the pattern changes halfway after " + fmtDur(pair.ho) + " (open dot) and now after " + fmtDur(pair.hn) + " (filled dot): " + (r >= 1 ? fmtSig(r, 2) + " times longer." : fmtSig(1 / r, 2) + " times sooner.");
       leg.appendChild(s);
     }
-    pick.forEach(function (f) { const s = document.createElement("span"); s.innerHTML = '<i style="background:' + qColor(qPos(f.q_per_um)) + '"></i>' + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / f.q_per_um, 2) + " " + MU + "m" : "q = " + f.q_per_um.toFixed(2)) + (f === selF ? " (picked)" : ""); leg.appendChild(s); });
+    pick.forEach(function (f, j) { const s = document.createElement("span"); s.innerHTML = markIcon(qColor(qPos(f.q_per_um)), j) + (level === "curious" ? "spacing " + fmtSig(2 * Math.PI / f.q_per_um, 2) + " " + MU + "m" : "q = " + f.q_per_um.toFixed(2)) + (f === selF ? " (picked)" : ""); leg.appendChild(s); });
     if (level !== "curious") { const s = document.createElement("span"); s.textContent = "q in " + MU + "m\u207b\u00b9"; leg.appendChild(s); }
     fillNumbers("curves-numbers", ["Delay (s)"].concat(pick.map(function (f) { return "q = " + fmtSig(f.q_per_um, 3); })), taus.map(function (t, li) { return [t].concat(pick.map(function (f) { return (res.dq[li][f.bin] - f.B) / f.A; })); }));
   }
@@ -5596,9 +5638,23 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     return '<p class="small amp-line" style="margin:0.5rem 0 0"><b>Signal and camera noise:</b> over the ' + pts.length + ' patterns used, the signal A is ' + fmtSig(r[0], 2) + ' to ' + fmtSig(r[r.length - 1], 2) + ' times the camera noise B' +
       (level === "curious" ? '' : ' (A from ' + fx(Math.min.apply(null, As)) + ' to ' + fx(Math.max.apply(null, As)) + ', B ' + (bHi / bLo < 1.05 ? '= ' + fx(bLo) : 'from ' + fx(bLo) + ' to ' + fx(bHi)) + ')') + '; the chart of A and B is in this step.</p>';
   }
+  // the power map in words, for screen readers: where the changes are strongest in this run, and where the camera noise takes over
+  function describeMap(pts) {
+    const c = $("map"); if (!c) return;
+    if (!c.dataset.label) c.dataset.label = c.getAttribute("aria-label");
+    const ok = pts.filter(function (p) { return p.A > 0 && isFinite(p.A); }).sort(function (a, b) { return a.q - b.q; });
+    if (ok.length < 3) { c.setAttribute("aria-label", c.dataset.label); return; }
+    let k = 0; ok.forEach(function (p, i) { if (p.A > ok[k].A) k = i; });
+    const inv = MU + "m\u207b\u00b9";
+    let txt = ". In this run the changes are strongest " + (k === 0 ? "for the widest stripes shown, " : "for stripes about ") + fmtSig(2 * Math.PI / ok[k].q, 2) + " " + MU + "m apart (q = " + fmtSig(ok[k].q, 2) + " " + inv + ")";
+    const over = ok.find(function (p, i) { return i > k && p.B > 0 && p.A < p.B; });
+    txt += over ? "; from q = " + fmtSig(over.q, 2) + " " + inv + " on, the camera noise is stronger than the signal." : "; the signal stays above the camera noise at every q analysed.";
+    c.setAttribute("aria-label", c.dataset.label + txt);
+  }
   function drawAmp() {
     if (!cache.res) return;
     const res = cache.res, w = res.window;
+    describeMap(res.fits.filter(function (f) { return f.reason === null; }).map(function (f) { return { q: f.q_per_um, A: f.A, B: f.B }; }));
     const inWin = function (q) { return q >= 2 * w.q_lo_per_um && q <= w.q_hi_per_um; };
     const vals = [];
     res.fits.forEach(function (f) { if (!inWin(f.q_per_um)) return; const b = f.bin; [res.A_est[b], res.B_est[b]].forEach(function (v) { if (v > 0 && Number.isFinite(v)) vals.push(v); }); if (f.reason === null) { if (f.A > 0) vals.push(f.A); if (f.B > 0) vals.push(f.B); } });
@@ -5791,7 +5847,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       const row = function (cls, name, d, pi, pe, err, note) { return '<tr class="' + cls + '"><th scope="row">' + name + (note ? '<span class="note">' + note + '</span>' : '') + '</th><td>' + (d ? fmtSize(d) : "-") + '</td><td>' + piCell(pi, pe) + '</td><td>' + (err === null || err === undefined ? "-" : "\u00b1 " + pctTxt(err)) + '</td></tr>'; };
       let t = '<div class="tscroll"><table class="sizing"><thead><tr><th scope="col">Method</th><th scope="col">Size</th><th scope="col">PI</th><th scope="col">Uncertainty</th></tr></thead><tbody>';
       t += row("main", "Fit at each q: " + MODEL_NAME[res.fit_model], res.diameter_um, null, null, res.diameter_rel_err, "the headline");
-      if (level === "addict" && res.published) t += row("pub", "Published method only", res.published.diameter_um, null, null, res.published.rel_err, "the same fit on the same movie, without what this page adds" + (res.published.n_used ? ", " + res.published.n_used + " q" : ""));
+      if (level === "addict" && res.published) t += row("pub", "Baseline (published steps, as implemented here)", res.published.diameter_um, null, null, res.published.rel_err, "the same fit on the same movie, without what this page adds" + (res.published.n_used ? ", " + res.published.n_used + " q" : ""));
       if (cu && cu.D_um2_s) t += row("", "Cumulants, 2nd order", sizeFromD(cu.D_um2_s), cu.pi, cu.pi_err, cu.rel_err, "as in ISO 22412, " + cu.n_points + " q");
       if (sch) t += row("", "Schulz, one PI for all q", sizeFromD(sch.D_um2_s), sch.pi, sch.pi_err, sch.rel_err, sch.n_points + " q");
       const qs = cu && cu.per_q.length ? cu.per_q.map(function (e) { return e.q_per_um; }) : res.used.map(function (f) { return f.q_per_um; }), tt = seenOver(tr, qs);

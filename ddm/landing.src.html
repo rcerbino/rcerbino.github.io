@@ -88,6 +88,10 @@ p { margin: 0 0 1rem; }
 .app canvas { display: block; width: 100%; height: 100%; }
 .app .tag { position: absolute; left: 0.75rem; bottom: 0.6rem; font-family: var(--sans); font-size: 0.72rem; color: #fff; background: rgba(0, 0, 0, 0.55); padding: 0.1rem 0.45rem; border-radius: 4px; }
 .start-here { font-family: var(--sans); font-size: 0.95rem; margin: 0.9rem 0 0; }
+.anim-toggle { font-family: var(--sans); font-size: 0.85rem; margin: 0.9rem 0 0; padding: 0.3rem 0.8rem; border: 1px solid var(--rule); border-radius: 999px; background: transparent; color: var(--ink); cursor: pointer; }
+.anim-toggle:hover { border-color: var(--accent); }
+.anim-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pipe .anim-toggle { margin: 0 0 0.8rem; }
 .app .head { padding: 1.1rem 1.25rem 0.8rem; }
 .app .head .eyebrow { margin-bottom: 0.2rem; }
 .app .head h3 { margin: 0; }
@@ -170,6 +174,7 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
     <h1>DDM, hands on</h1>
     <p class="lede"><a href="https://en.wikipedia.org/wiki/Differential_dynamic_microscopy">Differential dynamic microscopy</a> (DDM), introduced in 2008 (R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Phys. Rev. Lett. 100, 188102</a>), turns an ordinary microscope movie into a light scattering experiment: it measures how fast the patterns of each size in the image fade, without following any single particle or cell. From those rates follow sizes, speeds and much more. Each page below simulates an experiment in your browser and takes you through the whole analysis, from the raw movie to the result.</p>
     <p class="start-here">New here? <a href="sizing/#try-double">Try doubling the bead size</a>: predict how the curves move, then watch the page check it. Teaching DDM? <a href="exercises/">Exercises with model answers</a> for every page, printable.</p>
+    <button type="button" class="anim-toggle" aria-pressed="false"><span class="l-pause">Pause the animations</span><span class="l-play" hidden>Play the animations</span></button>
   </section>
 
   <section class="wrap apps" aria-label="Applications">
@@ -295,6 +300,7 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
     <p class="eyebrow">One method, many questions</p>
     <h2 id="h-pipe">What every page does</h2>
     <p class="prose">The questions differ, the steps do not. The first three panels run live on a small simulated movie of jiggling particles.</p>
+    <button type="button" class="anim-toggle" aria-pressed="false"><span class="l-pause">Pause the animations</span><span class="l-play" hidden>Play the animations</span></button>
     <div class="pipe-row">
       <figure><div class="pane"><canvas id="pp-frame" class="px" width="64" height="64" aria-label="Simulated movie frame"></canvas></div>
         <figcaption><b>Movie</b>An ordinary microscope movie, many frames in a row.</figcaption></figure>
@@ -603,16 +609,36 @@ footer.site { border-top: 1px solid var(--rule); padding-block: 1.25rem 2rem; fo
     const io = new IntersectionObserver(function (es) { es.forEach(function (en) { scenes.forEach(function (s) { if (s.el === en.target) s.on = en.isIntersecting; }); }); });
     scenes.forEach(function (s) { io.observe(s.el); });
   }
-  if (still) {   // reduced motion: one settled picture of each, no animation
+  // the animations can be paused (buttons at the top and above the steps); the choice is kept for the next visit.
+  // With reduced motion and no choice made, they start still, on one settled picture of each.
+  let saved = null;
+  try { saved = window.localStorage.getItem("ddm-animations"); } catch (e) { saved = null; }
+  let paused = saved ? saved === "paused" : still;
+  const toggles = Array.prototype.slice.call(document.querySelectorAll(".anim-toggle"));
+  function showState() {
+    toggles.forEach(function (b) {
+      b.setAttribute("aria-pressed", paused ? "true" : "false");
+      b.querySelector(".l-pause").hidden = paused; b.querySelector(".l-play").hidden = !paused;
+    });
+  }
+  if (paused) {
     for (let i = 0; i < 90; i++) scenes.forEach(function (s) { s.step(); });
     scenes.forEach(function (s) { s.draw(); });
-    return;
   }
-  let last = 0;
+  let last = 0, running = false;
   function tick(t) {
+    if (paused) { running = false; return; }
     if (t - last > 40) { last = t; scenes.forEach(function (s) { if (s.on) { s.step(); s.draw(); } }); }
     requestAnimationFrame(tick);
   }
-  requestAnimationFrame(tick);
+  function run() { if (!paused && !running) { running = true; requestAnimationFrame(tick); } }
+  toggles.forEach(function (b) {
+    b.addEventListener("click", function () {
+      paused = !paused;
+      try { window.localStorage.setItem("ddm-animations", paused ? "paused" : "running"); } catch (e) { /* not kept */ }
+      showState(); run();
+    });
+  });
+  showState(); run();
 })();
 </script>
