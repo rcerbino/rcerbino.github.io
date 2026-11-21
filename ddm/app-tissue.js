@@ -991,7 +991,8 @@
       h += '</dl></details>';
     }
     $("result").innerHTML = h + ampLine();
-    $("hero-result").innerHTML = '<span>' + (level === "curious" ? "The sheet, as simulated" : "State, simulated") + '</span><span class="n">' + trueState() + '</span><span>Found by DDM</span><span class="n">' + res.state + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>';
+    const heroNote = '<span class="hero-note">' + (borderline ? "Close to the line between solid and fluid: this movie cannot decide. " : "") + (solidState ? "Solid-like over the " + fmtH(cache.movie.T * cache.movie.frame_h) + " of the movie and the distances its patterns probe" : "Fluid-like over the times and distances of this movie") + ": a classification for this model, not a diagnosis of a real tissue.</span>";
+    $("hero-result").innerHTML = '<span>' + (level === "curious" ? "The sheet, as simulated" : "State, simulated") + '</span><span class="n">' + trueState() + '</span><span>Found by DDM</span><span class="n">' + res.state + '</span><span class="chip ' + v.cls + '">' + v.text + '</span>' + heroNote;
     $("hero-cap").textContent = "Simulated fluorescence time-lapse of " + (cache.shown.channel === "edges" ? "the cell edges (drawn from the nuclei)" : cache.shown.channel === "both" ? "the nuclei and the cell edges" : "the nuclei") + " of a monolayer, " + fmtH(cache.movie.T * cache.movie.frame_h) + " played in about " + fmtSig(cache.movie.T / 12, 2) + " s, field " + fmtSig(cache.movie.L_um, 3) + " " + MU + "m.";
   }
   function renderText() {
