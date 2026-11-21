@@ -126,12 +126,15 @@ sections:
         goes against what I believe: if we want others to read our work
         carefully, we should be ready to do the same for them.
     links:
+      - label: My refereeing record, year by year
+        href: service/#refereeing
       - label: My reviewer record on Web of Science
         href: https://www.webofscience.com/wos/author/record/A-2286-2008
 
 # Verified peer reviews per year, read from the Web of Science researcher
 # profile (formerly Publons). Reviews done before records were kept, or not
 # registered there, are missing, so these are lower bounds.
+# Shown on the Service page (templates/review_record.html); the Approach page links there.
 reviewing:
   as_of: Oct 2026
   # Start of each editorial role, drawn as vertical lines on the charts.

@@ -33,6 +33,7 @@ PAGES = [
     ("publications/index.html", "publications.html", "Publications"),
     ("talks/index.html", "talks.html", "Talks"),
     ("teaching/index.html", "teaching.html", "Teaching"),
+    ("service/index.html", "service.html", "Service"),
     ("approach/index.html", "approach.html", "Approach"),
     ("news/index.html", "news.html", "News"),
     ("contact/index.html", "contact.html", "Contact"),
@@ -82,6 +83,28 @@ TALK_GROUPS = [
 TALK_GROUP_OF = {k: key for key, _, kinds in TALK_GROUPS for k in kinds}
 # Kinds that get a badge next to the talk
 TALK_BADGES = {"plenary": "Plenary", "keynote": "Keynote", "invited": "Invited"}
+
+
+# Service (content/service.yaml): single evaluations fall into four groups,
+# shown as coloured dots and in the per-year chart; each kind is one list.
+SERVICE_GROUPS = [
+    # (key, label)
+    ("thesis", "Doctoral theses and habilitations"),
+    ("people", "Promotions, appointments and hiring"),
+    ("jury", "Juries and committees"),
+    ("institution", "Evaluation of institutions"),
+]
+SERVICE_KINDS = [
+    # (key, heading, group, note)
+    ("institution", "Evaluation of institutions", "institution", None),
+    ("jury", "Prize juries and selection panels", "jury", None),
+    ("conference", "Conference committees", "jury", None),
+    ("habilitation", "Habilitations", "thesis", None),
+    ("phd", "Doctoral theses", "thesis", "As external referee or member of the examination board. Theses I supervised are on the Teaching page."),
+    ("career", "Promotions and appointments", "people",
+     "Evaluations of colleagues for promotion or appointment are confidential: only the institution and the year are given."),
+    ("hiring", "Hiring and selection boards", "people", None),
+]
 
 
 def load_yaml(name):
@@ -215,6 +238,7 @@ def main(check=False, preview=False):
     teaching = load_yaml("teaching.yaml")
     news = load_yaml("news.yaml")
     talks_doc = load_yaml("talks.yaml")
+    service = load_yaml("service.yaml")
     approach = load_yaml("approach.yaml")
     visuals = load_yaml("visuals.yaml")
     pubs = load_json("publications.json", [])
@@ -357,6 +381,27 @@ def main(check=False, preview=False):
                                "parts": [(key, c[key]) for key, _, _ in TALK_GROUPS if c.get(key)]})
     talk_strip_max = max([r["total"] for r in talk_strip] or [1])
 
+    # Service: single evaluations by kind (newest first) and a per-year chart by group
+    kind_group = {k: g for k, _, g, _ in SERVICE_KINDS}
+    acts = sorted(service.get("activities") or [], key=lambda a: -int(a.get("date") or 0))
+    for a in acts:
+        if a.get("kind") not in kind_group or a.get("group") != kind_group.get(a.get("kind")):
+            problems.append(f"Unknown or mismatched service kind/group in service.yaml: {a.get('what')!r}")
+    service_lists = [{"key": k, "label": label, "group": g, "note": note,
+                      "items": [a for a in acts if a.get("kind") == k]} for k, label, g, note in SERVICE_KINDS]
+    service_counts = {key: sum(1 for a in acts if a.get("group") == key) for key, _ in SERVICE_GROUPS}
+    service_strip = []
+    if acts:
+        sy = defaultdict(Counter)
+        for a in acts:
+            if a.get("date"):
+                sy[int(a["date"])][a["group"]] += 1
+        for y in range(min(sy), current_year + 1):
+            c = sy.get(y, Counter())
+            service_strip.append({"year": y, "total": sum(c.values()),
+                                  "parts": [(key, c[key]) for key, _ in SERVICE_GROUPS if c.get(key)]})
+    service_strip_max = max([r["total"] for r in service_strip] or [1])
+
     stats = {
         "metrics_updated": fmt_date(metrics["updated"]) if metrics.get("updated") else None,
         "scholar_as_of": fmt_date(scholar["updated"]) if scholar.get("updated") else None,
@@ -434,6 +479,8 @@ def main(check=False, preview=False):
                approach=approach, review_chart=review_chart, review_max=review_max, papers_in_span=papers_in_span, review_ratio=review_ratio, ratio_max=ratio_max, group_news=group_news, nav=nav, visuals=visuals, pub_strip=pub_strip, pub_strip_max=pub_strip_max,
                talks=talks, talks_intro=talks_doc.get("intro"), talk_years=talk_years, talk_stats=talk_stats, talk_highlights=talk_highlights,
                talk_strip=talk_strip, talk_strip_max=talk_strip_max,
+               service=service, service_lists=service_lists, service_counts=service_counts, service_total=len(acts),
+               service_strip=service_strip, service_strip_max=service_strip_max, service_groups=SERVICE_GROUPS,
                built=today.isoformat(), built_human=fmt_date(today.isoformat()),
                current_year=current_year, site_url=SITE_URL, preview=preview)
 
