@@ -107,6 +107,19 @@ PREVIEW_LINKS = {
 }
 
 
+# the readable pages of the notebooks (/ddm/notebooks/<name>/), written by notebook_pages.py from the notebooks run on the
+# standard movies
+import notebook_pages as _nbp
+for _name, (_page, _ptitle, _desc) in _nbp.NOTEBOOKS.items():
+    _src = HERE / "notebooks" / (_name + ".src.html")
+    if _src.exists():
+        _title = re.search(r"<title>(.*?)</title>", _src.read_text()).group(1)
+        PAGES["nb_" + _name] = {"src": "notebooks/" + _name + ".src.html", "out": "static/ddm/notebooks/" + _name + "/index.html",
+                                "preview": "ddm-notebook-" + _name + ".html", "title": _title, "canonical": "https://rcerbino.github.io/ddm/notebooks/" + _name + "/",
+                                "up": "../../../", "description": _desc, "parts": {}}
+        PREVIEW_LINKS["nb_" + _name] = {}
+
+
 # a compact index of the steps at the top of each application page: numbered links that stay in view while the
 # reader scrolls, with the title of the step in view (built from the step titles, so it follows the sources)
 STEP_INDEX_STYLE = """<style>
@@ -264,6 +277,13 @@ if __name__ == "__main__":
             for a, b in PREVIEW_LINKS[page].items():
                 assert a in html, (page, a)
                 html = html.replace(a, b)
+            # links to and from the notebook pages, which are flat files in the previews
+            PREVIEW_FILE = {"sizing": "ddm-hands-on.html", "swimmers": "ddm-swimmers.html", "drift": "ddm-drift.html", "rheology": "ddm-rheology.html",
+                            "crowded": "ddm-crowded.html", "proteins": "ddm-proteins.html", "shear": "ddm-shear.html", "tissues": "ddm-tissues.html"}
+            for _n in _nbp.NOTEBOOKS:
+                html = html.replace('href="../notebooks/' + _n + '/"', 'href="ddm-notebook-' + _n + '.html"')
+                html = html.replace('href="../../' + _n + '/"', 'href="' + PREVIEW_FILE[_n] + '"')
+                html = html.replace('href="../ddm-' + _n + '.ipynb"', 'href="../static/ddm/notebooks/ddm-' + _n + '.ipynb"')
             (HERE / cfg["preview"]).write_text(html)
             print("written ddm/" + cfg["preview"])
         else:
