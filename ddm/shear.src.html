@@ -1,0 +1,652 @@
+<title>DDM of sheared materials</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  [hidden] { display: none !important; }
+/* Layout: the site's own page frame (header, measure, fluorescence palette); a two-column
+   "bench" where the controls stay in view and the analysis runs down as numbered steps. */
+:root {
+  --paper: #fafbfc;
+  --ink: #18202b;
+  --muted: #5a6472;
+  --rule: #dde2e8;
+  --accent: #2f45c5;      /* nuclei (DAPI) blue */
+  --accent-2: #b8233f;    /* actin red */
+  --tint: #eef1fb;
+  --panel: #ffffff;
+  --good: #1f7a4d; --good-bg: #dff3e8;
+  --warn: #8a5a00; --warn-bg: #fcefd6;
+  --bad: #a8322d;  --bad-bg: #f9e3e1;
+  --serif: "Spectral", Georgia, "Times New Roman", serif;
+  --sans: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --measure: 40rem;
+  --wide: 76rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0d1119; --ink: #e4e8ee; --muted: #98a2b3; --rule: #283040;
+    --accent: #93a1ff; --accent-2: #ff7a90; --tint: #161c2a; --panel: #121826;
+    --good: #6fd39a; --good-bg: #12301f; --warn: #f2b75c; --warn-bg: #3a2a10; --bad: #ff8f86; --bad-bg: #3a1714;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0d1119; --ink: #e4e8ee; --muted: #98a2b3; --rule: #283040;
+  --accent: #93a1ff; --accent-2: #ff7a90; --tint: #161c2a; --panel: #121826;
+  --good: #6fd39a; --good-bg: #12301f; --warn: #f2b75c; --warn-bg: #3a2a10; --bad: #ff8f86; --bad-bg: #3a1714;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--serif); font-size: 1.125rem; line-height: 1.65;
+}
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+.wrap { max-width: var(--wide); margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+@media (min-width: 40rem) { .wrap { padding-left: max(2rem, env(safe-area-inset-left, 0px)); padding-right: max(2rem, env(safe-area-inset-right, 0px)); } }
+
+/* site header (as on rcerbino.github.io) */
+.site-header { border-bottom: 1px solid var(--rule); }
+.header-inner { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 2rem; padding-block: 1.1rem 1rem; }
+.site-name { font-size: 1.35rem; font-weight: 500; color: var(--ink); text-decoration: none; }
+.site-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.2rem 1.25rem; }
+.site-nav a { font-family: var(--sans); font-size: 0.95rem; color: var(--muted); text-decoration: none; padding: 0.2rem 0; border-bottom: 2px solid transparent; }
+.site-nav a:hover { color: var(--ink); }
+.site-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+.ddm-switch { font-family: var(--sans); font-size: 0.9rem; margin: 0 0 0.6rem; color: var(--muted); }
+.ddm-switch a, .ddm-switch span { margin-right: 0.9rem; }
+.ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
+.ddm-switch .sw-group { display: inline-block; margin-right: 1.1rem; }
+.ddm-switch .sw-label { font-weight: 600; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; margin-right: 0.45rem; }
+.proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
+.pn-more { display: none; font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+/* one line, the rest on request */
+.proto-note:not(.open) .pn-rest { display: none; }
+.proto-note:not(.open) .pn-more { display: inline; }
+
+h1, h2, h3 { font-weight: 500; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem); margin: 0 0 1rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; margin: 0 0 0.75rem; }
+h3 { font-size: 1.2rem; margin: 0 0 0.5rem; }
+p { margin: 0 0 1rem; }
+.lede { font-size: 1.25rem; line-height: 1.6; max-width: var(--measure); }
+.prose { max-width: var(--measure); }
+.small { font-family: var(--sans); font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
+.eyebrow { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 0.35rem; }
+
+/* reader levels: what each reader sees */
+html[data-level="curious"] .lvl-2, html[data-level="curious"] .lvl-3, html[data-level="student"] .lvl-3 { display: none !important; }
+html[data-level="student"] .only-1, html[data-level="researcher"] .only-1, html[data-level="addict"] .only-1 { display: none !important; }
+html[data-level="curious"] details.math { display: none; }
+html:not([data-level="addict"]) .lvl-4 { display: none !important; }
+/* what this page adds to the published methods */
+.adds { max-width: var(--measure); padding-left: 1.1rem; }
+.adds li { margin-bottom: 0.6rem; }
+.adds .where { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); }
+table.sizing tr.pub th, table.sizing tr.pub td { font-style: italic; }
+
+/* opening */
+.intro { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; padding-block: 2.5rem 1.5rem; align-items: center; }
+.intro > * { min-width: 0; }
+@media (min-width: 56rem) { .intro { grid-template-columns: minmax(0, 1fr) 19rem; gap: 3.5rem; } }
+.porthole { margin: 0; justify-self: center; display: grid; gap: 0.75rem; justify-items: center; }
+.porthole .lens { width: min(19rem, 78vw); aspect-ratio: 1; border-radius: 50%; overflow: hidden; border: 1px solid var(--rule); box-shadow: 0 0 0 10px var(--tint); background: #000; max-width: 100%; }
+.porthole canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+.porthole figcaption { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); text-align: center; max-width: 18rem; }
+
+.levels { margin: 1.5rem 0 0; border: 0; padding: 0; min-width: 0; }
+.levels legend { font-family: var(--sans); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; padding: 0; }
+.level-opts { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); max-width: 44rem; }
+.level-opts label { display: grid; gap: 0.1rem; padding: 0.6rem 0.8rem; border: 1px solid var(--rule); border-radius: 6px; cursor: pointer; font-family: var(--sans); background: var(--panel); }
+.level-opts input { position: absolute; opacity: 0; pointer-events: none; }
+.level-opts .t { font-weight: 600; font-size: 0.98rem; }
+.level-opts .d { font-size: 0.82rem; color: var(--muted); line-height: 1.35; }
+.level-opts label:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--tint); }
+.level-opts label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* result card */
+.result { font-family: var(--sans); border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); padding: 1rem 1.1rem; display: grid; gap: 0.5rem; }
+.result .big { font-family: var(--serif); font-size: 2.1rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.result .big small { font-size: 1rem; color: var(--muted); }
+.result dl { display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 1rem; margin: 0; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.result dt { color: var(--muted); }
+.result dd { margin: 0; }
+.chip { display: inline-block; font-family: var(--sans); font-size: 0.8rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 999px; justify-self: start; }
+.chip.good { color: var(--good); background: var(--good-bg); }
+.chip.warn { color: var(--warn); background: var(--warn-bg); }
+.chip.bad { color: var(--bad); background: var(--bad-bg); }
+.chip.info { color: var(--muted); background: var(--tint); }
+.tscroll { overflow-x: auto; min-width: 0; }
+.result, .result > *, .predict, .step-body > *, .steps > * { min-width: 0; }
+table.sizing { width: 100%; border-collapse: collapse; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+table.sizing td { white-space: nowrap; }
+table.sizing th, table.sizing td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--rule); text-align: right; vertical-align: top; }
+table.sizing th[scope="row"], table.sizing thead th:first-child { text-align: left; font-weight: 500; }
+table.sizing thead th { color: var(--muted); font-weight: 500; font-size: 0.8rem; }
+table.sizing tr.main th, table.sizing tr.main td { font-weight: 700; }
+table.sizing tr.truth th, table.sizing tr.truth td { color: var(--accent-2); }
+table.sizing .note { white-space: normal; display: block; font-size: 0.76rem; font-weight: 400; color: var(--muted); }
+.checks ul { list-style: none; margin: 0.3rem 0 0; padding: 0; display: grid; gap: 0.45rem; }
+.checks li { display: grid; grid-template-columns: 4.2rem 1fr; gap: 0.6rem; align-items: start; font-size: 0.86rem; line-height: 1.45; }
+.checks li .chip { justify-self: stretch; text-align: center; }
+details.more summary { cursor: pointer; font-size: 0.85rem; color: var(--muted); }
+details.more dl { margin-top: 0.4rem; }
+.hero-result { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1rem; font-family: var(--sans); margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--rule); max-width: 44rem; }
+.echo-pair { display: grid; gap: 0 1.5rem; }
+@media (min-width: 60rem) { .echo-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.hero-result .n { font-family: var(--serif); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+
+/* bench */
+.bench-head { padding-block: 2rem 1rem; border-top: 1px solid var(--rule); }
+.bench { display: grid; gap: 2rem; padding-bottom: 3rem; }
+@media (min-width: 64rem) { .bench { grid-template-columns: 17.5rem minmax(0, 1fr); gap: 2.5rem; align-items: start; } .controls { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); max-height: calc(100vh - 5rem); overflow: auto; } }
+.controls { font-family: var(--sans); font-size: 0.9rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 1rem; display: grid; gap: 1rem; }
+.controls h3 { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.cgroup { display: grid; gap: 0.7rem; }
+/* blocks of settings: sample, microscope, camera, analysis; each folds to a one-line summary */
+/* each block has its own colour: green, cyan, yellow, purple (Paul Tol and Okabe-Ito palettes), chosen to stay
+   apart in normal vision and with the three common kinds of colour blindness; the titles still say what each block is */
+:root { --blk-sample: #228833; --blk-microscope: #33bbee; --blk-camera: #e0c200; --blk-analysis: #aa3377; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --blk-sample: #4cae5c; --blk-microscope: #66ccee; --blk-camera: #f0e442; --blk-analysis: #cc5599; } }
+:root[data-theme="dark"] { --blk-sample: #4cae5c; --blk-microscope: #66ccee; --blk-camera: #f0e442; --blk-analysis: #cc5599; }
+.cblock { --c: var(--rule); border-left: 4px solid var(--c); border-radius: 6px; padding: 0.6rem 0.65rem 0.7rem; background: var(--panel); background: color-mix(in srgb, var(--c) 8%, var(--panel)); }
+.cblock[data-block="sample"] { --c: var(--blk-sample); }
+.cblock[data-block="microscope"] { --c: var(--blk-microscope); }
+.cblock[data-block="camera"] { --c: var(--blk-camera); }
+.cblock[data-block="camera"] > summary h3, .cblock[data-block="camera"] .csub h4 { color: color-mix(in srgb, var(--c) 40%, var(--ink)); }   /* the yellow needs more ink to be readable */
+.cblock[data-block="analysis"] { --c: var(--blk-analysis); }
+.cblock > summary { cursor: pointer; list-style: none; display: grid; gap: 0.15rem; }
+.cblock > summary::-webkit-details-marker { display: none; }
+.cblock > summary h3 { color: var(--ink); color: color-mix(in srgb, var(--c) 55%, var(--ink)); }
+.cblock > summary h3::before { content: ""; display: inline-block; width: 0.42em; height: 0.42em; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); margin: 0 0.55em 0.18em 0.1em; transition: transform 0.15s; }
+.cblock:not([open]) > summary h3::before { transform: rotate(-45deg); margin-bottom: 0.05em; }
+.cblock .bsum { font-size: 0.8rem; color: var(--muted); line-height: 1.35; padding-left: 1.15em; }
+.cbody { display: grid; gap: 0.9rem; margin-top: 0.7rem; }
+.csub { display: grid; gap: 0.7rem; }
+.csub h4 { font-family: var(--sans); font-size: 0.8rem; font-weight: 600; color: var(--ink); color: color-mix(in srgb, var(--c) 55%, var(--ink)); margin: 0.2rem 0 -0.15rem; padding-bottom: 0.2rem; border-bottom: 1px solid var(--rule); border-bottom-color: color-mix(in srgb, var(--c) 30%, transparent); }
+@media (prefers-reduced-motion: reduce) { .cblock > summary h3::before { transition: none; } }
+.ctl { display: grid; gap: 0.2rem; }
+.ctl .row { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
+.ctl label { font-weight: 500; }
+.ctl output { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; white-space: nowrap; }
+.ctl input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
+.ctl select, .ctl input[type="number"] { font: inherit; padding: 0.3rem 0.4rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink); width: 100%; }
+.ctl .numentry { display: inline-flex; align-items: baseline; gap: 0.3rem; white-space: nowrap; color: var(--accent); font-weight: 600; }
+.ctl .numentry input[type="number"] { width: 5.5rem; padding: 0.15rem 0.3rem; text-align: right; font-variant-numeric: tabular-nums; }
+.ctl .hint { font-size: 0.78rem; color: var(--muted); line-height: 1.35; }
+.qrange { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+.btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+button { font: 500 0.88rem var(--sans); padding: 0.45rem 0.8rem; border-radius: 5px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.status { font-size: 0.82rem; color: var(--muted); min-height: 1.3em; }
+.runbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--panel); border-top: 1px solid var(--rule); box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06); font-family: var(--sans); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.runbar-inner { display: flex; align-items: center; gap: 0.9rem; padding-block: 0.5rem; }
+.runbar .bar { flex: 0 0 min(16rem, 38%); height: 6px; border-radius: 3px; }
+.runbar .status { flex: 1 1 auto; min-width: 0; min-height: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.runbar.busy .status { color: var(--ink); font-weight: 500; }
+.runbar.busy .bar span { background: var(--accent); }
+.runbar:not(.busy) .bar span { background: var(--good); }
+body { padding-bottom: 3.2rem; }
+.bar { height: 4px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.1s linear; }
+.error { color: var(--bad); background: var(--bad-bg); border-radius: 6px; padding: 0.6rem 0.8rem; font-family: var(--sans); font-size: 0.9rem; }
+
+.steps { display: grid; gap: 3rem; min-width: 0; }
+.steps.stale { opacity: 0.35; }
+.step { display: grid; gap: 1rem; min-width: 0; scroll-margin-top: 1rem; }
+.step-title { display: flex; gap: 0.75rem; align-items: baseline; }
+.step-title .num { font-family: var(--sans); font-size: 0.85rem; font-weight: 600; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; min-width: 1.7rem; height: 1.7rem; display: inline-grid; place-items: center; flex: none; }
+.step-title h2 { margin: 0; }
+.step-body { display: grid; gap: 1.25rem; min-width: 0; }
+@media (min-width: 48rem) { .step-body.split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+.text { min-width: 0; max-width: var(--measure); }
+.text p:last-child { margin-bottom: 0; }
+
+figure.viz { margin: 0; display: grid; gap: 0.5rem; min-width: 0; }
+.imgbox { position: relative; background: #000; border-radius: 4px; overflow: hidden; aspect-ratio: 1; max-width: 100%; }
+.imgbox canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.imgbox canvas.overlay { image-rendering: auto; }
+.imgbox .scale { position: absolute; left: 8px; bottom: 8px; font: 600 0.75rem var(--sans); color: #fff; text-shadow: 0 0 3px #000; }
+.imgbox .scale i { display: block; height: 3px; background: #fff; margin-bottom: 3px; box-shadow: 0 0 2px #000; }
+.pair { display: grid; gap: 0.75rem; grid-template-columns: 1fr 1fr; }
+.pair .cap { font-family: var(--sans); font-size: 0.8rem; color: var(--muted); }
+figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); line-height: 1.45; font-variant-numeric: tabular-nums; }
+.readout b { color: var(--ink); font-weight: 600; }
+.chart { position: relative; width: 100%; height: 300px; }
+.chart canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.chart.short { height: 220px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-family: var(--sans); font-size: 0.88rem; }
+.toolbar input[type="range"] { flex: 1 1 10rem; accent-color: var(--accent); }
+.toolbar.pickbar { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 0.8rem; margin-top: 0.5rem; }
+.toolbar.pickbar input[type="range"] { width: 100%; min-width: 0; }
+@media (pointer: coarse) { input[type="range"] { min-height: 2.5rem; } }   /* a larger touch area; the track stays thin */
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 0.3rem 0.7rem; background: var(--panel); }
+.seg button[aria-pressed="true"] { background: var(--tint); color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-family: var(--sans); font-size: 0.8rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.reasons { font-family: var(--sans); font-size: 0.82rem; color: var(--muted); margin: 0; padding-left: 1.1rem; }
+
+details.math { min-width: 0; font-family: var(--sans); font-size: 0.92rem; border-left: 2px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; padding: 0.55rem 0.9rem; max-width: var(--measure); }
+details.math summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+details.math .eq { font-family: var(--serif); font-size: 1.05rem; margin: 0.6rem 0; overflow-x: auto; white-space: nowrap; }
+details.math p { margin: 0.5rem 0; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--paper); border: 1px solid var(--rule); border-radius: 3px; padding: 0.05em 0.3em; }
+pre.code { font-family: var(--mono); font-size: 0.8rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 0.6rem; overflow-x: auto; margin: 0.5rem 0; line-height: 1.45; }
+
+.start-here { font-family: var(--sans); font-size: 0.92rem; margin: 0.6rem 0 0; max-width: 44rem; }
+#try-dyed { scroll-margin-top: 1rem; }   /* the shortcut lands on the chart, with the question right below it */
+.predict { font-family: var(--sans); font-size: 0.92rem; border: 1px dashed var(--accent); border-radius: 6px; padding: 0.7rem 0.9rem; display: grid; gap: 0.5rem; max-width: var(--measure); }
+.predict .q { font-weight: 600; }
+.predict .a { color: var(--ink); }
+.predict .verdict { font-weight: 600; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.numbers { font-family: var(--sans); font-size: 0.88rem; }
+.numbers summary { cursor: pointer; color: var(--muted); }
+.takeaway { font-family: var(--sans); font-size: 0.92rem; border-left: 3px solid var(--accent); padding: 0.1rem 0 0.1rem 0.8rem; max-width: var(--measure); margin: 0; }
+.transfer { font-family: var(--sans); font-size: 0.92rem; border: 1px solid var(--rule); border-radius: 6px; padding: 0.6rem 0.9rem; max-width: var(--measure); }
+.transfer summary, .inputs summary { cursor: pointer; }
+.inputs { font-family: var(--sans); font-size: 0.92rem; max-width: var(--measure); }
+.inputs p { margin: 0.5rem 0 0; }
+.transfer p { margin: 0.5rem 0 0; }
+.predict .base { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; color: var(--muted); }
+.predict button:disabled { cursor: default; opacity: 0.55; }
+.predict button[aria-pressed="true"] { opacity: 1; border-color: var(--accent); font-weight: 600; }
+
+/* what matters */
+.matters { border-top: 1px solid var(--rule); padding-block: 2.5rem 1rem; }
+.cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); margin-top: 1.25rem; }
+.card { border: 1px solid var(--rule); border-radius: 8px; padding: 1rem; display: grid; gap: 0.5rem; align-content: start; background: var(--panel); }
+.card h3 { margin: 0; font-size: 1.1rem; }
+.card p { font-size: 0.98rem; margin: 0; }
+.card .btns { margin-top: 0.25rem; }
+.further { border-top: 1px solid var(--rule); padding-block: 2.5rem 3rem; }
+.further ul { padding-left: 1.2rem; max-width: var(--measure); }
+.further li { margin-bottom: 0.5rem; }
+footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-size: 0.85rem; color: var(--muted); padding-block: 1.2rem 2rem; }
+
+.fovbox { height: 300px; }
+.pstrip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.5rem; max-width: 34rem; }
+.pstrip figure { margin: 0; display: grid; gap: 0.25rem; }
+.pstrip canvas { width: 100%; aspect-ratio: 1; image-rendering: pixelated; border-radius: 3px; background: #000; max-width: 100%; }
+.pstrip figcaption { font-family: var(--sans); font-size: 0.75rem; color: var(--muted); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.scalebar { height: 10px; border-radius: 3px; margin-top: 0.3rem; }
+.scalebar.div { background: linear-gradient(90deg, var(--accent), var(--panel), var(--accent-2)); border: 1px solid var(--rule); }
+.scalebar.wheel { background: linear-gradient(90deg, hsl(0 85% 50%), hsl(60 85% 50%), hsl(120 85% 50%), hsl(180 85% 50%), hsl(240 85% 50%), hsl(300 85% 50%), hsl(360 85% 50%)); }
+@media (max-width: 40rem) { .pair.stack { grid-template-columns: 1fr; } }
+.scalelab { display: flex; justify-content: space-between; font-family: var(--sans); font-size: 0.72rem; color: var(--muted); }
+</style>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="site-name" href="https://rcerbino.github.io/">Roberto Cerbino</a>
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="https://rcerbino.github.io/">Home</a></li>
+        <li><a href="https://rcerbino.github.io/about/">About</a></li>
+        <li><a href="https://rcerbino.github.io/research/">Research</a></li>
+        <li><a href="#" aria-current="page">DDM</a></li>
+        <li><a href="https://rcerbino.github.io/publications/">Publications</a></li>
+        <li><a href="https://rcerbino.github.io/talks/">Talks</a></li>
+        <li><a href="https://rcerbino.github.io/teaching/">Teaching</a></li>
+        <li><a href="https://rcerbino.github.io/contact/">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<div class="proto-note"><div class="wrap"><span>This web page is a divertissement.</span><span class="pn-rest" id="pn-rest"> For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the material is not simulated: the beads move as a model of its rearrangements says) and rely on many approximations. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>. If you like it, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice.</span> <button type="button" class="pn-more" aria-expanded="false" aria-controls="pn-rest">More</button></div></div>
+
+
+<main>
+  <section class="wrap intro">
+    <div>
+      <p class="eyebrow">Differential dynamic microscopy</p>
+      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><span class="sw-group"><b class="sw-label">Start:</b><a href="../sizing/">Sizing particles</a></span><span class="sw-group"><b class="sw-label">Classic:</b><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a></span><span class="sw-group"><b class="sw-label">Advanced:</b><a href="../crowded/">Crowded particles</a><a href="../proteins/">Proteins</a><span aria-current="page">Sheared materials</span><a href="../tissues/">Moving tissues</a></span></nav>
+      <h1>When does a soft solid start to flow?</h1>
+      <p class="lede">Hair gel, mayonnaise and toothpaste hold their shape at rest but flow when pushed hard enough: they yield. Shear such a material back and forth between two plates, film tracer beads in it, and compare frames taken exactly one cycle apart. Whatever the shear undoes every cycle cancels in that comparison, and only the rearrangements it leaves behind remain: an echo of the material's memory. Here you can check what this echo differential dynamic microscopy (echo-DDM) finds on simulated soft materials (Edera et al. 2021).</p>
+      <p class="start-here"><a href="#try-sweep">Try this first</a>: shear a viscous liquid harder. Does it rearrange more? Predict, then watch the page check it.</p>
+      <fieldset class="levels">
+        <legend>How deep do you want to go?</legend>
+        <div class="level-opts" role="radiogroup">
+          <label><input type="radio" name="level" id="lv-curious" value="curious"><span class="t">Curious</span><span class="d">The idea in words and pictures, no equations.</span></label>
+          <label><input type="radio" name="level" id="lv-student" value="student"><span class="t">Student</span><span class="d">The method step by step, equations folded away.</span></label>
+          <label><input type="radio" name="level" id="lv-researcher" value="researcher"><span class="t">Researcher</span><span class="d">All controls, equations open, and the matching code.</span></label>
+          <label><input type="radio" name="level" id="lv-addict" value="addict"><span class="t">Addict</span><span class="d">As Researcher, and you can switch off our tricks to see what each one does.</span></label>
+        </div>
+      </fieldset>
+      <div class="hero-result" id="hero-result" aria-live="polite">
+        <span>Simulating the movie...</span>
+      </div>
+    </div>
+    <figure class="porthole">
+      <div class="lens"><canvas id="hero-canvas" width="128" height="128" aria-label="Simulated microscope movie"></canvas></div>
+      <figcaption id="hero-cap">Live simulated bright-field movie</figcaption>
+    </figure>
+  </section>
+
+  <section class="wrap bench-head" aria-labelledby="bench-title">
+    <p class="eyebrow">Hands on</p>
+    <h2 id="bench-title">The bench</h2>
+    <p class="prose">Choose the material and how hard and how fast it is sheared, then the microscope and the camera (controls on the left, or just below on a phone). The bench records one movie of a few hundred frames and takes about ten seconds; the strain sweep of step 7 takes about two minutes. "Copy a link to this setup" gives an address that opens the bench with the same settings.</p>
+  </section>
+
+  <div class="wrap bench">
+    <aside class="controls" id="controls" aria-label="Experiment settings">
+      <div id="ctl-groups" class="cgroup" style="gap:1.1rem"></div>
+      <div class="btns">
+        <button type="button" id="btn-reset">Back to the standard sample</button>
+        <button type="button" id="btn-seed" class="lvl-3">New random sample</button>
+        <button type="button" id="btn-share">Copy a link to this setup</button>
+        <span class="small" id="share-msg" aria-live="polite"></span>
+      </div>
+      <div class="error" id="error" hidden></div>
+    </aside>
+
+    <div class="steps">
+      <!-- 1 -->
+      <section class="step" id="step-setup" aria-labelledby="h-setup">
+        <div class="step-title"><span class="num">1</span><h2 id="h-setup">Set up the shear cell and the microscope</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="chart fovbox"><canvas id="cell" aria-label="The shear cell seen from the side: the bottom plate fixed, the top plate moving back and forth, the layer in focus in between"></canvas></div>
+            <div class="legend" id="cell-legend"></div>
+          </figure>
+          <div class="text">
+            <p>The sample sits between two glass plates 500 &micro;m apart. The bottom plate stays still, the top one slides back and forth along x: each layer of the sample follows, the more the higher it is. The microscope looks up through the bottom plate at a thin layer in the middle, where tracer beads mixed into the material show its motion. The strain is how far the top plate moves divided by the gap: at 50 % it travels 250 &micro;m each way.</p>
+            <p class="lvl-2">The whole layer in focus is carried back and forth too, by far more than the field of view. Real experiments follow it with the stage or shift each frame back in place (registration); the movie here is filmed in the frame that moves with the focal plane, so what is left is the shear across the depth in focus and anything the material does on its own.</p>
+            <p class="readout" id="fov-specs"></p>
+          </div>
+        </div>
+        <div class="text lvl-2"><h3>How one bead looks</h3></div>
+        <figure class="viz lvl-2">
+          <div class="pstrip" id="particle-strip"></div>
+          <figcaption id="particle-text"></figcaption>
+        </figure>
+        <p class="takeaway"><b>What this step gives:</b> the finest stripes the movie can hold, and how deep a layer each pattern collects beads from: the deeper, the more the shear moves its beads by different amounts within one cycle.</p>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: what the shear does to each bead</summary>
+          <p>The flow is along <i>x</i>, the velocity changes along the height <i>h</i> (the axis of the microscope) and <i>y</i> is the vorticity direction. A bead at height <i>h</i> is drawn at</p>
+          <div class="eq"><i>x</i>(<i>t</i>) = <i>x</i><sub>0</sub>(<i>t</i>) + <i>&gamma;</i><sub>0</sub> (<i>h</i> &minus; <i>h</i><sub>focus</sub>) sin(2&pi;<i>t</i>/<i>T</i><sub>0</sub>)</div>
+          <p>the affine displacement relative to the focal plane, with <i>&gamma;</i><sub>0</sub> the strain amplitude and <i>T</i><sub>0</sub> the period. The position <i>x</i><sub>0</sub>, <i>y</i><sub>0</sub>, <i>h</i> moves only by what the shear does not undo: rearrangements of the material, modelled as diffusion with coefficients <i>D<sub>x</sub></i>, <i>D<sub>y</sub></i>, <i>D<sub>h</sub></i> that depend on the strain (step 7), plus, in a liquid, the beads' own Brownian motion. The beads are 2 &micro;m polystyrene spheres; their images are computed as on the <a href="../sizing/">sizing page</a> (Mie scattering and the partially coherent light of the condenser). The simulation keeps a layer 40 &micro;m deep around the focus: beads further away add only a smooth background.</p>
+        </details>
+      </section>
+
+      <!-- 2 -->
+      <section class="step" id="step-movie" aria-labelledby="h-movie">
+        <div class="step-title"><span class="num">2</span><h2 id="h-movie">Record a movie, a few frames per cycle</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="imgbox"><canvas id="movie" width="128" height="128" aria-label="Microscope movie"></canvas><div class="scale" id="movie-scale"><i></i><span></span></div></div>
+            <div class="toolbar"><button type="button" id="btn-play">Pause</button><span class="readout" id="movie-time"></span></div>
+            <div class="toolbar lvl-2"><button type="button" id="btn-tiff">Download the movie (TIFF)</button><button type="button" id="btn-times" hidden>Frame times (CSV)</button><span class="readout">32-bit, photoelectrons per pixel; opens in ImageJ, Fiji and fastDDM.</span></div>
+          </figure>
+          <div class="text">
+            <p id="movie-text"></p>
+            <p>The camera takes a few frames in every cycle, the first when the top plate passes its rest position, and keeps going for many cycles: the rearrangements a material does in one cycle are often tiny, and only add up to something visible over tens or hundreds of cycles.</p>
+            <p class="readout lvl-2" id="movie-specs"></p>
+          </div>
+        </div>
+        <p class="takeaway"><b>What this step gives:</b> a stack of frames, each at a known point of the cycle. The period sets which frames show the sample in the same state.</p>
+        <details class="math" data-open-at="researcher">
+          <summary>In fastDDM</summary>
+          <p>With your own movies you would start from the image files, registered so that the layer in focus stays in place:</p>
+          <pre class="code">import fastddm as fd
+img_seq = fd.read_images(file_names)
+m = 4                                  # frames per period</pre>
+        </details>
+      </section>
+
+      <!-- 3 -->
+      <section class="step" id="step-diff" aria-labelledby="h-diff">
+        <div class="step-title"><span class="num">3</span><h2 id="h-diff">Subtract two frames</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="imgbox"><canvas id="diff" width="128" height="128" aria-label="Difference between two frames"></canvas></div>
+            <div class="toolbar"><label for="lag">Delay</label><input type="range" id="lag" min="0" max="10" value="5"><output id="lag-out" class="readout"></output></div>
+          </figure>
+          <div class="text">
+            <p>Subtract a frame from one taken a little later. Everything that is in the same place in both cancels out; what is left is what moved, plus the camera noise.</p>
+            <p id="diff-note"></p>
+          </div>
+        </div>
+        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what changed. A quarter of a cycle apart the shear has moved the beads; a whole cycle apart it has put them back, apart from what the material did on its own.</p>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: the difference image</summary>
+          <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
+        </details>
+      </section>
+
+      <!-- 4 -->
+      <section class="step" id="step-map" aria-labelledby="h-map">
+        <div class="step-title"><span class="num">4</span><h2 id="h-map">Split it into stripe patterns</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="pair">
+              <div><div class="imgbox"><canvas id="map" width="128" height="128" aria-label="Power spectrum of the differences; click to choose a pattern, or use the two sliders below the maps"></canvas><canvas id="map-ov" class="overlay" width="512" height="512" style="cursor:crosshair"></canvas></div><div class="cap">Strength of each pattern in the difference (click it, or use the sliders)</div></div>
+              <div><div class="imgbox"><canvas id="stripes" width="128" height="128" aria-label="The stripe pattern you selected"></canvas></div><div class="cap">The pattern you picked</div></div>
+            </div>
+            <div class="toolbar pickbar"><label for="pick-k">Stripes, wide to fine</label><input type="range" id="pick-k" min="1" max="63" step="1" value="10"><label for="pick-a">Direction</label><input type="range" id="pick-a" min="0" max="179" step="1" value="30"></div>
+            <div class="readout" id="pick-out"></div>
+            <div class="pair" style="margin-top:0.75rem">
+              <div><div class="imgbox"><canvas id="fmap" width="128" height="128" aria-label="How much of each pattern is left after the delay"></canvas></div><div class="cap">How much of each pattern is left</div><div class="scalebar div"></div><div class="scalelab"><span>-1</span><span>0, gone</span><span>1, all there</span></div></div>
+            </div>
+            <div class="readout" id="zoom-note"></div>
+          </figure>
+          <div class="text">
+            <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie. The centre of the map holds wide stripes, the edge fine ones.</p>
+            <p class="only-1">The charts further down label each pattern by <i>q</i>, a number that grows as the stripes get finer: <i>q</i> = 2&pi; divided by the stripe spacing, in inverse micrometres. Stripes 1 &micro;m apart have <i>q</i> of about 6.</p>
+            <p>The shear moves the beads along x only, so it mostly affects stripes that cross the flow: those whose spacing is measured along x, to the left and right of the centre of the map. Stripes lying along the flow, above and below the centre, hardly notice it. Move the delay slider to a quarter of a period and then to a whole one, and watch the map.</p>
+            <p class="lvl-2" id="kopt-note">The dashed circle on the strength map marks the finest pattern the microscope can resolve.</p>
+          </div>
+        </div>
+        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing and direction, and each delay, how much the movie has changed. The analysis keeps two directions apart: patterns along the flow (q along x) and along the vorticity (q along y).</p>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: structure function and echoes</summary>
+          <div class="eq"><i>d</i>(<b>q</b>, &Delta;<i>t</i>) = &lang; |<i>F</i>[&Delta;<i>I</i>](<b>q</b>; <i>t</i>, &Delta;<i>t</i>)|<sup>2</sup> &rang;<sub><i>t</i></sub> = <i>A</i>(<b>q</b>) [1 &minus; <i>f</i>(<b>q</b>, &Delta;<i>t</i>)] + <i>B</i></div>
+          <p>Within a cycle, beads at different heights in the depth of field move by different amounts, &gamma;<sub>0</sub>(<i>h</i> &minus; <i>h</i><sub>focus</sub>) [sin 2&pi;(<i>t</i> + &Delta;<i>t</i>)/<i>T</i><sub>0</sub> &minus; sin 2&pi;<i>t</i>/<i>T</i><sub>0</sub>], so <i>f</i> drops for <i>q<sub>x</sub></i> &ne; 0. At &Delta;<i>t</i> = <i>kT</i><sub>0</sub> that term vanishes, and</p>
+          <div class="eq"><i>f</i>(<b>q</b>, <i>kT</i><sub>0</sub>) = exp[&minus;(<i>D<sub>x</sub>q<sub>x</sub></i><sup>2</sup> + <i>D<sub>y</sub>q<sub>y</sub></i><sup>2</sup>) <i>kT</i><sub>0</sub>]</div>
+          <p>for rearrangements that add up like diffusion. Map axes: <i>q<sub>x</sub></i> to the right, <i>q<sub>y</sub></i> up. The page averages over two sectors of &plusmn;20&deg;: along the flow and along the vorticity.</p>
+        </details>
+      </section>
+
+      <!-- 5 -->
+      <section class="step" id="step-cycle" aria-labelledby="h-cycle">
+        <div class="step-title"><span class="num">5</span><h2 id="h-cycle">Watch a pattern through a few cycles</h2></div>
+        <div class="step-body">
+          <div class="text">
+            <p>Follow one stripe spacing over the first three cycles, in the two directions. Across the flow, the pattern fades within each cycle, as the shear carries beads at different depths by different amounts, and comes back at the end of it, when the plates are where they started: an echo. Half way through it comes back only in part: pairs of frames that start at rest find the plates back in place, those that start at the largest strain find them on the opposite side. Along the flow, the shear hardly touches the pattern.</p>
+            <p class="lvl-2">The points are <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i> in the two sectors, at the <i>q</i> picked on the map of step 4. The echoes, at whole periods, are drawn larger: how high they reach is what step 6 follows over the whole movie.</p>
+          </div>
+          <figure class="viz">
+            <div class="chart"><canvas id="chart-cycle" aria-label="How much of a pattern is left within the first three cycles, across and along the flow"></canvas></div>
+            <div class="legend" id="cycle-legend"></div>
+          </figure>
+          <details class="numbers" id="cycle-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <div class="predict" data-predict="solid" data-right="all">
+            <div class="q">Predict first: the sample is now an elastic solid, a rubber that never rearranges. One full cycle later, how much of a pattern across the flow is left?</div>
+            <div class="btns"><button type="button" data-guess="all">All of it</button><button type="button" data-guess="half">About half</button><button type="button" data-guess="none">None</button></div>
+            <div class="a" hidden><span class="verdict"></span> All of it. Within the cycle the pattern fades and comes back, but at each full period every bead is exactly where it was, so the echoes reach 1, cycle after cycle. The page now runs a rubber (step 6 finds no rearrangements at all, only the slowest the movie could have shown); this chart keeps the earlier run as a dotted line.</div>
+          </div>
+        </div>
+        <p class="takeaway"><b>What this step gives:</b> which frames to compare. Within a cycle the shear scrambles the patterns; at whole periods it gives them back, and what is missing is what the material did on its own.</p>
+      </section>
+
+      <!-- 6 -->
+      <section class="step" id="step-rates" aria-labelledby="h-rates">
+        <div class="step-title"><span class="num">6</span><h2 id="h-rates">Follow the echoes</h2></div>
+        <div class="step-body">
+          <div class="text">
+            <p class="only-1">Now compare only frames a whole number of cycles apart. Each echo is a little lower than the one before if the material rearranges a little every cycle: fine stripes lose their echo first, wide ones last. From how fast the echoes fade the page reads how fast the beads wander away from where the shear would have brought them back, along the flow and across it.</p>
+            <p class="lvl-2">At each <i>q</i> and in each sector, <i>f</i> at the echoes is fitted with a weighted line through the origin of &minus;ln <i>f</i> against the delay, while <i>f</i> &gt; 0.15 (weights <i>f</i><sup>2</sup>): the rate &Gamma;, and <i>D</i> = &Gamma; / <i>q</i><sup>2</sup>. The <i>q</i> that pass the checks are averaged (mean of ln <i>D</i>; uncertainty from a jackknife over eight parts of the movie). Only pairs that start at zero strain are used (Addict: "Echoes at zero strain").</p>
+          </div>
+          <div class="echo-pair">
+            <figure class="viz">
+              <figcaption>Along the flow, the shear direction (patterns with q along x): how much of each is left at the echoes</figcaption>
+              <div class="chart"><canvas id="chart-curves" aria-label="How much of each pattern across the flow is left at the echoes, against the delay"></canvas></div>
+              <div class="legend" id="curves-legend"></div>
+            </figure>
+            <figure class="viz">
+              <figcaption>Along the vorticity (patterns with q along y): how much of each is left at the echoes</figcaption>
+              <div class="chart"><canvas id="chart-curves-v" aria-label="How much of each pattern along the flow is left at the echoes, against the delay"></canvas></div>
+              <div class="legend" id="curves-legend-v"></div>
+            </figure>
+          </div>
+          <details class="numbers" id="curves-numbers"><summary>The numbers behind these charts</summary><div></div></details>
+          <figure class="viz">
+            <figcaption>How fast the beads wander, read from each pattern, along the flow and along the vorticity</figcaption>
+            <div class="chart"><canvas id="chart-dq" aria-label="Diffusion coefficient of the rearrangements found at each q"></canvas></div>
+            <ul class="reasons" id="dq-notes"></ul>
+          </figure>
+          <details class="numbers" id="chart-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <figure class="viz">
+            <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>. Large beads make a strong signal: it stands far above the noise until the finest patterns the microscope resolves. The dips are the patterns at which the light scattered across a bead cancels, at spacings set by its size (for 2 &micro;m beads, near 2.7 and 5.7 &micro;m<sup>-1</sup>): there the signal is weak and those patterns count little.</figcaption>
+            <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
+            <div class="legend" id="amp-legend"></div>
+          </figure>
+          <details class="numbers" id="amp-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <div class="step-body">
+            <div class="result" id="result" aria-live="polite"></div>
+          </div>
+        </div>
+        <details class="inputs"><summary>What the analysis is told, and what it finds</summary><p><b>Told (inputs):</b> the pixel size, the frame rate, the number of frames per period and the camera noise (from the mean count and the read noise).</p><p><b>Found from the movie:</b> f at the echoes at each q, along the flow and along the vorticity, and the diffusion coefficients of the rearrangements.</p><p>In this simulation the rearrangements are diffusion by construction, so the model fits by design; in a real material they can be intermittent or ballistic, and the shape of f tells.</p></details>
+        <p class="takeaway"><b>What this step gives:</b> how much the material rearranges per cycle at this strain, in two directions: the irreversible part of its motion.</p>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: the fit of the echoes</summary>
+          <div class="eq">&minus;ln <i>f</i>(<i>q</i>, <i>kT</i><sub>0</sub>) = &Gamma;(<i>q</i>) <i>kT</i><sub>0</sub>, &nbsp;&nbsp; &Gamma; = &Sigma;<sub><i>k</i></sub> <i>w<sub>k</sub> t<sub>k</sub></i> (&minus;ln <i>f<sub>k</sub></i>) / &Sigma;<sub><i>k</i></sub> <i>w<sub>k</sub> t<sub>k</sub></i><sup>2</sup>, &nbsp;&nbsp; <i>w<sub>k</sub></i> = <i>f<sub>k</sub></i><sup>2</sup></div>
+          <p><b>Noise and amplitude.</b> <i>B</i> = 2 (mean count + read noise<sup>2</sup>), from the camera; <i>A</i> = 2&lang;|<i>F</i>|<sup>2</sup>&rang; &minus; <i>B</i>, from the mean power of each mode, so that a sample that never rearranges keeps its whole amplitude (its temporal variance would be zero). <b>Echoes at zero strain.</b> A bead that moved along the height between two echoes sits where the affine displacement is different: at strain <i>&gamma;</i> it is displaced by <i>&gamma;</i> &Delta;<i>h</i> along the flow, which adds <i>&gamma;</i><sub>0</sub><sup>2</sup> sin<sup>2</sup>(phase) &lang;&Delta;<i>h</i><sup>2</sup>&rang; to &lang;&Delta;<i>x</i><sup>2</sup>&rang;. Averaged over every phase, as in the paper, <i>D<sub>x</sub></i> gains <i>&gamma;</i><sub>0</sub><sup>2</sup> <i>D<sub>h</sub></i> / 2; pairs that start at zero strain (every half period here) leave it out. <b>Checks.</b> A <i>q</i> is left out when its signal is below the noise, when it is finer than the microscope resolves, when it fades within one period (fewer than three echoes above 0.15), or when it hardly fades within the movie (the last echo above 0.9). When no pattern fades enough, the page gives the slowest <i>D</i> this movie could have shown: &minus;ln 0.9 / (<i>q</i><sub>max</sub><sup>2</sup> <i>t</i><sub>max</sub>). <b>What the page does not fix.</b> Below the yield point, where the echoes fade only over most of the movie, the jackknife underestimates the uncertainty: on six independent samples at 20 % strain, <i>D</i> along the flow scattered by 12 % from sample to sample, about twice the jackknife, around the right value (on average 1 % high). The simulated layer holds about 160 beads, and each wanders by less than a pixel over the movie; a real field of view holds many more. Above it (80 %) the jackknife came close to the scatter: 12 % against 15 %.</p>
+          <p>In Python, with <code>F</code> the Fourier transform of each frame and <code>m</code> frames per period:</p>
+          <pre class="code">import numpy as np
+F = np.fft.fft2(img_seq)                       # frames x rows x columns
+def echo_d(k):                                 # d(q) at k periods, pairs starting at zero strain
+    t0 = np.arange(0, len(F) - k * m, m // 2)
+    return (np.abs(F[t0 + k * m] - F[t0]) ** 2).mean(axis=0) / F[0].size</pre>
+        </details>
+      </section>
+
+      <!-- 7 -->
+      <section class="step" id="step-series" aria-labelledby="h-series">
+        <div class="step-title"><span class="num">7</span><h2 id="h-series">Yielding: a strain sweep</h2></div>
+        <div class="step-body">
+          <div class="text">
+            <p class="only-1">Repeat the measurement from a gentle to a strong strain. A soft solid below its yield point holds: its beads hardly move from one cycle to the next. Past the yield point it flows, and the rearrangements jump up by orders of magnitude. A simple liquid behaves differently: its slow, smooth flow undoes itself exactly, so the echoes fade only by the beads' own Brownian motion, however hard it is sheared.</p>
+            <p class="lvl-2">The sweep runs the bench at 11 strain amplitudes from 5 % to 150 %, each a new movie, and plots <i>D<sub>x</sub></i> and <i>D<sub>y</sub></i> on log scales against the strain, with the model used by the simulation. For the microgel, the model is set to the two strains measured by Edera et al. (2021) on Carbopol, 20 % and 80 %: <i>D</i> = (2.2-2.6) &times; 10<sup>-4</sup> &micro;m<sup>2</sup>/s below the yield strain of about 60 % and (1.9-2.9) &times; 10<sup>-1</sup> &micro;m<sup>2</sup>/s above it; how <i>D</i> changes in between, and beyond, is our assumption (see "The math").</p>
+          </div>
+          <div class="toolbar" id="try-sweep"><button type="button" id="btn-series">Run the strain sweep</button><span class="readout" id="series-msg" aria-live="polite"></span></div>
+          <p class="readout" id="series-state"></p>
+          <div id="series-figs" hidden>
+            <figure class="viz">
+              <figcaption>How fast the beads wander from cycle to cycle, against the strain amplitude</figcaption>
+              <div class="chart"><canvas id="chart-sweep" aria-label="Diffusion coefficient of the rearrangements against the strain amplitude"></canvas></div>
+              <div class="legend" id="sweep-legend"></div>
+              <ul class="reasons" id="sweep-notes"></ul>
+            </figure>
+            <details class="numbers" id="series-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          </div>
+          <div class="predict" data-predict="liquid" data-right="same">
+            <div class="q">Predict first: the sample is now a viscous liquid, a mix of glycerol and water. You shear it three times harder, from 20 % to 60 %. Do the echoes fade faster, more slowly, or at the same pace?</div>
+            <div class="btns"><button type="button" data-guess="faster">Faster</button><button type="button" data-guess="slower">More slowly</button><button type="button" data-guess="same">At the same pace</button></div>
+            <div class="a" hidden><span class="verdict"></span> At the same pace. A slow flow of a simple liquid is reversible: shear it back and every bead returns where it was, whatever the strain. The echoes fade only because each bead also diffuses on its own, at a rate set by the temperature and the viscosity. The page now runs the liquid and then the sweep: a flat line, where the microgel jumps by a factor of a thousand. The dotted line keeps the earlier sweep.</div>
+          </div>
+        </div>
+        <p class="takeaway"><b>What this step gives:</b> the yield strain, where the rearrangements jump, and how anisotropic they are once the material flows.</p>
+        <details class="transfer"><summary><b>A question to think about:</b> Above the yield strain the page finds the beads wandering faster along the flow than along the vorticity. If you averaged the echoes over every phase of the cycle, instead of starting at zero strain, which of the two would change, and why?</summary><p>Only the one along the flow. A bead that has moved up or down between two echoes sits where the shear carries it by a different amount, but only along the flow and only while the strain is not zero: at strain &gamma; its echo is off by &gamma; &Delta;h along x. Averaged over the cycle this adds &gamma;<sub>0</sub><sup>2</sup> D<sub>h</sub> / 2 to D<sub>x</sub>: at 150 % strain about three quarters of the rearrangements themselves. Try it at the Addict level ("Echoes at zero strain" off).</p></details>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: the model of the materials</summary>
+          <p><b>Microgel (Carbopol 0.5 %).</b> At 1 Hz, with <i>&gamma;</i> the strain amplitude and <i>s</i>(<i>&gamma;</i>) = 1 / (1 + e<sup>&minus;(<i>&gamma;</i> &minus; 0.6) / 0.05</sup>) a smooth step at the yield strain of 60 %:</p>
+          <div class="eq"><i>D<sub>x</sub></i> = 2.2 &times; 10<sup>-4</sup> (<i>&gamma;</i>/0.2)<sup>2</sup> + 0.29 (<i>&gamma;</i>/0.8)<sup>2</sup> <i>s</i>(<i>&gamma;</i>) &micro;m<sup>2</sup>/s, &nbsp;&nbsp; <i>D<sub>y</sub></i> = <i>D<sub>h</sub></i> = 2.6 &times; 10<sup>-4</sup> (<i>&gamma;</i>/0.2)<sup>2</sup> + 0.19 (<i>&gamma;</i>/0.8)<sup>2</sup> <i>s</i>(<i>&gamma;</i>) &micro;m<sup>2</sup>/s</div>
+          <p>so that it passes through the values of Edera et al. (2021) at 20 % and 80 %. At other frequencies the same rearrangement per cycle is assumed: <i>D</i> scales with the frequency. The beads have no thermal motion of their own in the gel. <b>Rubber.</b> <i>D</i> = 0. <b>Viscous liquid.</b> No rearrangements; the beads diffuse with the Stokes-Einstein coefficient of the liquid, <i>k</i><sub>B</sub><i>T</i> / 6&pi;<i>&eta;a</i>, whatever the strain. The real materials do more: intermittent, localised rearrangements below the yield point, shear bands in some materials past it (Edera et al. 2024), slip at the plates. None of these is simulated.</p>
+        </details>
+        <details class="lvl-3 math" open>
+          <summary>Settings used for this run</summary>
+          <pre class="code" id="settings-json"></pre>
+          <div class="btns"><button type="button" id="btn-copy">Copy settings</button></div>
+        </details>
+      </section>
+    </div>
+  </div>
+
+  <section class="wrap matters" aria-labelledby="h-matters">
+    <p class="eyebrow">In a real experiment</p>
+    <h2 id="h-matters">What matters</h2>
+    <p class="prose">Each card sets the bench to a typical case and shows where to look; some also run the sweep of step 7. Use "Back to the standard sample" to start again.</p>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="wrap further lvl-2" aria-labelledby="h-adds">
+    <h2 id="h-adds">What this page adds to the published methods</h2>
+    <p class="prose">Edera et al. (2021) introduced echo-DDM: images taken a whole number of periods apart under oscillatory shear, their structure functions averaged over the phases of the cycle, with the noise from the first delays. The steps below are not in the papers we cite: we added them while testing the page against its own simulations, and some may exist elsewhere. At the "Addict" level each can be switched off, and the result table shows the published method alone on the same movie (every phase averaged, B from a quadratic through the first three echoes).</p>
+    <ul class="adds">
+      <li><b>Echoes at zero strain.</b> Only pairs of frames that start when the strain is zero, every half period, are used at the echoes: a bead that moved along the height between two echoes is carried by a different amount by the shear, which adds &gamma;<sub>0</sub><sup>2</sup> sin<sup>2</sup>(phase) &lang;&Delta;h<sup>2</sup>&rang; along the flow; at zero strain it adds nothing. It needs the camera to start at a known phase. <span class="where">Step 6. In a liquid sheared at 50 %, averaging over every phase read D along the flow about 10 % larger than the pairs at rest in our tests (four samples), as the formula says; the error grows as the square of the strain. The amplitude A is then taken from the same frames, at zero strain, where the exposure blurs the beads most: from all frames it read D along the flow about 2 % too small.</span></li>
+      <li><b>Noise from the camera.</b> B = 2 (mean count + read noise&sup2;), the same at every q, instead of a quadratic through the first three echoes. <span class="where">Step 6. At 80 % strain, where the first echoes have already faded a lot, the quadratic made D along the flow about 4 % too small in our tests (six samples); at 20 % it made no difference.</span></li>
+    </ul>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-about">
+    <h2 id="h-about">About this tool</h2>
+    <p class="prose">This page is a simple tool, generated with Claude Opus 5.5, that simulates a realistic rheo-microscopy experiment in which echo-DDM is used to see how a soft material rearranges under oscillatory shear. The microscope, light source and camera are modelled mostly on the instruments of our SoMeX lab; the shear cell is a parallel-plate cell like the one of Edera et al. (2021). The material itself is not simulated: the beads follow the affine shear exactly and wander by a diffusion whose strength depends on the strain, set from published measurements. The aim is not to produce research-quality data, but to give anyone thinking of using DDM under shear an idea of what it can measure, and of what limits it.</p>
+    <p class="prose">If you find something that looks wrong or does not work, please let us know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
+    <p class="prose">To cite this page: R. Cerbino, <i>DDM, hands on: sheared materials</i>, <a href="https://rcerbino.github.io/ddm/shear/">rcerbino.github.io/ddm/shear/</a> (2026), with the date you used it.</p>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-further">
+    <h2 id="h-further">Go further</h2>
+    <ul class="only-1">
+      <li><a href="../rheology/">Liquid or solid</a>: how elastic and how viscous a material is at rest, from the thermal motion of beads.</li>
+      <li><a href="../drift/">Drifting particles</a>: a flow that does not come back.</li>
+      <li><a href="https://rcerbino.github.io/research/">Research</a>: what the SoMeX group measures with DDM.</li>
+      <li>Switch to <a href="#student" data-level-link="student">Student</a> above for the equations behind each step.</li>
+    </ul>
+    <ul>
+      <li>P. Edera, M. Brizioli, G. Zanchetta, G. Petekidis, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1039/d1sm01068a">Deformation profiles and microscopic dynamics of complex fluids during oscillatory shear experiments</a>, Soft Matter 17, 8553 (2021). Echo-DDM in a parallel-plate shear cell on a microscope: an elastomer, a viscous oil, wormlike micelles and Carbopol below and above yielding.</li>
+      <li>P. Edera, M. Brizioli, M. Madani, E. Ngouamba, P. Coussot, V. Trappe, G. Petekidis, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.48550/arXiv.2402.00221">Multiscale dynamics in yield stress fluids during homogeneous and shear-banded yielding</a>, arXiv:2402.00221 (2024). Diffusion and flow of tracers in a microgel that yields homogeneously and an emulsion that forms shear bands.</li>
+      <li>M. Aime and L. Cipelletti, <a href="https://doi.org/10.1039/c8sm01564c">Probing shear-induced rearrangements in Fourier space. II. Differential dynamic microscopy</a>, Soft Matter 15, 213 (2019). DDM coupled to rheology, separating affine displacements from rearrangements.</li>
+      <li>N. Kalafatakis and R. Cerbino, <a href="https://doi.org/10.1122/8.0001101">ShearView: a compact stress- and strain-controlled linear rheometer for integrated rheomicroscopy</a>, J. Rheol. 70, 165 (2026). A shear cell built for microscopy.</li>
+      <li>R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope</a>, Phys. Rev. Lett. 100, 188102 (2008); E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a>, J. Chem. Phys. 163, 161501 (2025).</li>
+    </ul>
+    <ul class="lvl-3">
+      <li><a href="../exercises/#shear">Exercises with model answers for this page</a>: questions to predict, compute and discuss, printable, for a class or on your own.</li>
+      <li><a href="https://github.com/somexlab/fastddm">fastDDM</a> (Python, CPU and GPU, GPL 3.0): <code>pip install fastddm</code>. <a href="https://fastddm.readthedocs.io/">Documentation</a>.</li>
+      <li>For collaborations or questions about applying DDM to your samples, see <a href="https://rcerbino.github.io/contact/">Contact</a>.</li>
+    </ul>
+  </section>
+</main>
+
+<!-- progress of the simulation, pinned to the bottom of the window so it is always in view -->
+<div class="runbar" id="runbar">
+  <div class="wrap runbar-inner">
+    <div class="bar" aria-hidden="true"><span id="bar"></span></div>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+  </div>
+</div>
+<footer class="site"><div class="wrap">Roberto Cerbino, University of Vienna. The simulation and the analysis run entirely in your browser; nothing is uploaded.</div></footer>
+
+<script type="application/json" id="objectives-data">/*OBJECTIVES*/</script>
+<script id="optics-src">
+/*OPTICS*/
+</script>
+<script id="movie-src">
+/*MOVIE*/
+</script>
+<script id="engine-src">
+/*ENGINE*/
+</script>
+<script id="shear-src">
+/*SHEAR*/
+</script>
+<script type="text/plain" id="worker-src">
+/*WORKER*/
+</script>
+<script>
+/*TIFF*/
+</script>
+<script>
+/*APP*/
+</script>

@@ -151,6 +151,14 @@
    *  visco (optional): the particles are tracer spheres in a linear viscoelastic material { modes: [[G_Pa, tau_s], ...],
    *    G_inf_Pa (optional) }, the liquid being its solvent (see visco.js): each bead moves as an exact Ornstein-Uhlenbeck
    *    process about its resting place, in x, y and z alike. Not with swimmers, gravity, walls, drift or non-spheres.
+   *  shear (optional): oscillatory shear of the sample between two plates, the flow along x and the velocity gradient
+   *    along the optical axis { strain (amplitude gamma0, 0..10), freq_hz, D_na_um2_s: [Dx, Dy, Dz] (non-affine
+   *    motion: diffusion along the flow, the vorticity direction and the gradient, from rearrangements of the material),
+   *    brownian (optional, default false: the beads sit in a solid-like material and have no thermal motion of their
+   *    own; true: they also diffuse in the liquid, as in a simple liquid) }. Each bead is drawn at its place plus the
+   *    affine displacement gamma0 (h - h_focus) sin(2 pi f t) along x, in the frame that moves with the focal plane (as
+   *    after the registration of real images, Edera et al., Soft Matter 17, 8553, 2021). Spheres only, without
+   *    swimming, interactions, a material, gravity, walls or drift.
    */
   const SHAPES = ["sphere", "bisphere", "prolate", "oblate", "rod"];
   const TINY_UM = 0.03, TINY_M = 1.1;          // reference dipole for non-spherical bodies
@@ -229,6 +237,13 @@
     if (visco) {
       need(VIS, "the viscoelastic model (visco.js) is not loaded");
       need(shape === "sphere" && !cfg.swim && cfg.gravity !== true && cfg.walls !== true && !(cfg.drift_um_s > 0) && !cfg.drift_z_um_s, "tracers in a viscoelastic material: spheres only, without swimming, gravity, walls or drift");
+    }
+    const SHC = cfg.shear || null;
+    let SHR = null;
+    if (SHC) {
+      need(shape === "sphere" && !visco && !INTC && !cfg.swim && cfg.gravity !== true && cfg.walls !== true && !(cfg.drift_um_s > 0) && !cfg.drift_z_um_s, "sheared samples: spheres only, without swimming, interactions, a material, gravity, walls or drift");
+      const Dn = SHC.D_na_um2_s; need(Array.isArray(Dn) && Dn.length === 3 && Dn.every(function (v) { return v >= 0 && v < 1e4; }), "shear.D_na_um2_s must be three diffusion coefficients");
+      SHR = { g0: num(SHC, "strain", 0, 10), w: 2 * Math.PI * num(SHC, "freq_hz", 0.001, 1000), D: Dn.slice(), brownian: SHC.brownian === true };
     }
     const dn = shape === "sphere" || cfg.birefringence === undefined ? 0 : num(cfg, "birefringence", -0.5, 0.5);
     const pol = cfg.polarization || null;
@@ -607,6 +622,7 @@
     const PH = new Float64Array(nTot), PSI = new Float64Array(nTot);
     if (oscA > 0) { const r2 = makeRng((cfg.seed >>> 0) + 7919); for (let i = 0; i < nTot; i++) { PH[i] = TWO_PI * r2.u(); PSI[i] = TWO_PI * r2.u(); } vMax += TWO_PI * oscF * oscA; }
     const oscW = TWO_PI * oscF;
+    if (SHR) vMax += SHR.g0 * SHR.w * Math.max(Math.abs(hf), Math.abs(Lz - hf));   // fastest affine motion in the cell
     // exposure blur: sub-steps when particles move or turn noticeably during the exposure
     // (D q^2 t_exp at the finest pattern imaged, 6 D_r t_exp); otherwise the exposure is treated as instantaneous
     let Dmax = 0, Drmax = 0; classes.forEach(function (c) { Dmax = Math.max(Dmax, c.hyd.D_par, c.hyd.D_perp); Drmax = Math.max(Drmax, c.hyd.D_r); });
@@ -809,6 +825,12 @@
       if (dt <= 0 || INT) return;   // particles that interact move together, frame by frame (stepInteract)
       if (VE) { viscoAdvance(i, dt); return; }
       const c = classes[cls[i]], hy = c.hyd;
+      if (SHR) {
+        // sheared sample: rearrangements of the material move the beads by diffusion, anisotropic; thermal motion only in a liquid
+        const th = SHR.brownian ? 2 * hy.D_t * dt : 0;
+        X[i] += Math.sqrt(th + 2 * SHR.D[0] * dt) * rng.g(); Y[i] += Math.sqrt(th + 2 * SHR.D[1] * dt) * rng.g();
+        H[i] += Math.sqrt(th + 2 * SHR.D[2] * dt) * rng.g(); reflect(i); return;
+      }
       if (!oriented) {
         const nst = wallSteps(c, H[i], dt), hh = dt / nst, st = Math.sqrt(2 * hy.D_t * hh);
         for (let k = 0; k < nst; k++) { moveBy(i, c, st * rng.g(), st * rng.g(), st * rng.g(), hh); if (nst > 1) reflect(i); }
@@ -952,6 +974,7 @@
           if (split) { channelWeights(c, UX[i], UY[i], UZ[i]); wHet = cw.het; wHom = cfg.test_no_hom === true ? 0 : cw.hom; }   // test_no_hom: test-only switch
           // where the cell is drawn: its mean path plus the stroke (swimmers only)
           let xr = X[i], yr = Y[i], hr = H[i];
+          if (SHR) xr += SHR.g0 * (H[i] - hf) * Math.sin(SHR.w * when);   // affine displacement, relative to the focal plane
           if (oscA > 0 && SP[i] > 0) {
             const sv = oscA * Math.sin(oscW * when + PH[i]);
             let dx = UX[i], dy = UY[i], dz = UZ[i];
@@ -1085,6 +1108,7 @@
                           alpha_perp: cm.aPerp, dalpha: cm.dA, alpha_ref: cm.aRef, Wtab: cm.Wtab || null, polarization: pol, background_share: bgf } },
       truth: { diameter_um: d0, mean_diameter_um: dnum, D_um2_s: hd0.D_t, D_seen_um2_s: Dseen, seen_table: seenTable, diameter_seen_um: kT / (3 * Math.PI * eta * Dseen * 1e-12) * 1e6, drift_um_s: drift, drift_deg: driftDeg, drift_profile: driftProfile, drift_z_um_s: driftZ,
                interact: INT ? interactTruth() : null,
+               shear: SHR ? { strain: SHR.g0, freq_hz: SHR.w / (2 * Math.PI), D_na_um2_s: SHR.D.slice(), brownian: SHR.brownian, D_thermal_um2_s: SHR.brownian ? hd0.D_t : 0 } : null,
                visco: VE ? { lam: Array.from(VE[Math.floor(VE.length / 2)].lam), c: Array.from(VE[Math.floor(VE.length / 2)].c), a_um: VE[Math.floor(VE.length / 2)].a_um, eta_s_Pa_s: eta } : null,
                D_plane_um2_s: hd0.D_t * fParFocus, D_plane_all_um2_s: hd0.D_t * fParMean, walls: walls, gravity: gravity, gravitational_length_um: isFinite(classes[0].lg) ? classes[0].lg : null,
                swim: sw ? (function () {

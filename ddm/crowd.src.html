@@ -61,6 +61,8 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .ddm-switch { font-family: var(--sans); font-size: 0.9rem; margin: 0 0 0.6rem; color: var(--muted); }
 .ddm-switch a, .ddm-switch span { margin-right: 0.9rem; }
 .ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
+.ddm-switch .sw-group { display: inline-block; margin-right: 1.1rem; }
+.ddm-switch .sw-label { font-weight: 600; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; margin-right: 0.45rem; }
 .proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
 .pn-more { display: none; font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
 /* one line, the rest on request */
@@ -305,7 +307,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap intro">
     <div>
       <p class="eyebrow">Differential dynamic microscopy</p>
-      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a><span aria-current="page">Crowded particles</span><a href="../proteins/">Proteins</a></nav>
+      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><span class="sw-group"><b class="sw-label">Start:</b><a href="../sizing/">Sizing particles</a></span><span class="sw-group"><b class="sw-label">Classic:</b><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a></span><span class="sw-group"><b class="sw-label">Advanced:</b><span aria-current="page">Crowded particles</span><a href="../proteins/">Proteins</a><a href="../shear/">Sheared materials</a><a href="../tissues/">Moving tissues</a></span></nav>
       <h1>How does a crowd of particles move?</h1>
       <p class="lede">Fill a liquid with particles and each one ends up in a cage of neighbours: the crowd takes on a typical spacing, and it moves differently from particles on their own. Differential dynamic microscopy (DDM) reads both the order and the motion from one microscope movie (Lu et al. 2012); here you can check what it finds on a simulated crowd.</p>
       <p class="start-here"><a href="#try-dyed">Try this first</a>: what changes when only a few particles are dyed? Predict, then watch the page check it.</p>
@@ -382,7 +384,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
           <figure class="viz">
             <div class="imgbox"><canvas id="movie" width="128" height="128" aria-label="Microscope movie"></canvas><div class="scale" id="movie-scale"><i></i><span></span></div></div>
             <div class="toolbar"><button type="button" id="btn-play">Pause</button><span class="readout" id="movie-time"></span></div>
-            <div class="toolbar lvl-2"><button type="button" id="btn-tiff">Download the movie (TIFF)</button><button type="button" id="btn-times" hidden>Frame times (CSV)</button><span class="readout">32-bit, photoelectrons per pixel; opens in ImageJ, Fiji and fastDDM.</span></div>
+            <div class="toolbar lvl-2"><button type="button" id="btn-tiff">Download the movie (TIFF)</button><button type="button" id="btn-times" hidden>Frame times (CSV)</button><button type="button" id="btn-ref">Download the reference movie (TIFF)</button><button type="button" id="btn-facts">Numbers for the notebook (JSON)</button><span class="readout">32-bit, photoelectrons per pixel; opens in ImageJ, Fiji and fastDDM.</span></div>
           </figure>
           <div class="text">
             <p id="movie-text"></p>
@@ -621,6 +623,8 @@ aa = fd.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]))</pre></div>
       <li>R. Cerbino and V. Trappe, <a href="https://doi.org/10.1103/PhysRevLett.100.188102">Differential dynamic microscopy: probing wave vector dependent dynamics with a microscope</a>, Phys. Rev. Lett. 100, 188102 (2008); E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi and R. Cerbino, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a>, J. Chem. Phys. 163, 161501 (2025).</li>
     </ul>
     <ul class="lvl-3">
+      <li><a href="../notebooks/ddm-crowded.ipynb">A complete notebook for this page</a>: from the two downloaded movies and the numbers file (step 2) to S(q) and D(q), with numpy, every input and step written out. On the standard movie it finds the peak of S(q), 1.46 at q = 6.3 1/&micro;m, as the page does, and D(q)/D0 within about 10 % of the page; it leaves out the jackknife.</li>
+      <li><a href="../exercises/#crowded">Exercises with model answers for this page</a>: questions to predict, compute and discuss, printable, for a class or on your own.</li>
       <li>fastDDM tutorial notebook on real movies: <a href="https://github.com/somexlab/fastddm-tutorials/tree/main/Tutorial_7-Intermolecular_interactions">interactions between proteins from how their diffusion changes with concentration (tutorial 7)</a>; <a href="https://github.com/somexlab/fastddm-tutorials">all tutorials</a>.</li>
       <li><a href="https://github.com/somexlab/fastddm">fastDDM</a> (Python, CPU and GPU, GPL 3.0): <code>pip install fastddm</code>. <a href="https://fastddm.readthedocs.io/">Documentation</a>.</li>
       <li>For collaborations or questions about applying DDM to your samples, see <a href="https://rcerbino.github.io/contact/">Contact</a>.</li>

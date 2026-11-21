@@ -66,6 +66,8 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .ddm-switch { font-family: var(--sans); font-size: 0.9rem; margin: 0 0 0.6rem; color: var(--muted); }
 .ddm-switch a, .ddm-switch span { margin-right: 0.9rem; }
 .ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
+.ddm-switch .sw-group { display: inline-block; margin-right: 1.1rem; }
+.ddm-switch .sw-label { font-weight: 600; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; margin-right: 0.45rem; }
 .proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
 .pn-more { display: none; font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
 /* one line, the rest on request */
@@ -297,7 +299,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap intro">
     <div>
       <p class="eyebrow">Differential dynamic microscopy</p>
-      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><span aria-current="page">Sizing particles</span><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a><a href="../crowded/">Crowded particles</a><a href="../proteins/">Proteins</a></nav>
+      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><span class="sw-group"><b class="sw-label">Start:</b><span aria-current="page">Sizing particles</span></span><span class="sw-group"><b class="sw-label">Classic:</b><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a></span><span class="sw-group"><b class="sw-label">Advanced:</b><a href="../crowded/">Crowded particles</a><a href="../proteins/">Proteins</a><a href="../shear/">Sheared materials</a><a href="../tissues/">Moving tissues</a></span></nav>
       <h1>Sizing particles from how they move</h1>
       <p class="lede">Particles in a liquid jiggle because the molecules around them keep kicking them, and small particles jiggle faster than large ones. Differential dynamic microscopy (DDM) measures this motion from an ordinary microscope movie without following any single particle, so it works even when the particles are too small, too faint or too crowded to be followed one by one. From how fast they wander follows their size: the same principle as dynamic light scattering (DLS), but with a microscope, many scattering angles at once, and in samples where DLS struggles (turbid or fluorescent ones, or a drop too small for a cuvette). Particle sizing is one use of DDM among many (see "Beyond sizing" below). Here a simulated microscope lets you run the whole analysis yourself, from the raw movie to a particle size.</p>
       <fieldset class="levels">
@@ -638,6 +640,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       <li>F. Giavazzi, P. Edera, P. J. Lu and R. Cerbino, <a href="https://doi.org/10.1140/epje/i2017-11587-3">Image windowing mitigates edge effects in differential dynamic microscopy</a>, Eur. Phys. J. E 40, 97 (2017). The windowing switch under Analysis.</li>
       <li>DDM, DLS and X-ray photon correlation spectroscopy compared on the same anisotropic colloids: M. A. Kamal, M. Brizioli, T. Zinn, T. Narayanan, R. Cerbino, F. Giavazzi and A. Pal, <a href="https://doi.org/10.1016/j.jcis.2023.12.163">Dynamics of anisotropic colloidal systems: what to choose, DLS, DDM or XPCS?</a>, J. Colloid Interface Sci. 660, 314 (2024). For DLS sizing practice, the standard ISO 22412:2025 (Particle size analysis: dynamic light scattering).</li>
       <li><a href="../notebooks/ddm-sizing.ipynb">A complete notebook for this page</a>: from the downloaded movie (step 2) to the size, with fastDDM, every input and step written out. On the standard movie it gives 198 nm for the 200 nm beads; it leaves out the corrections listed under "What this page adds".</li>
+      <li><a href="../exercises/#sizing">Exercises with model answers for this page</a>: questions to predict, compute and discuss, printable, for a class or on your own.</li>
       <li>fastDDM tutorial notebooks on real movies: <a href="https://github.com/somexlab/fastddm-tutorials/tree/main/Tutorial_1-Particle_sizing">particle sizing</a>, <a href="https://github.com/somexlab/fastddm-tutorials/tree/main/Tutorial_3-Image_windowing">image windowing</a>, <a href="https://github.com/somexlab/fastddm-tutorials/tree/main/Tutorial_5-Objective_na">objective NA</a>; <a href="https://github.com/somexlab/fastddm-tutorials">all tutorials</a>.</li>
       <li>Particles that turn: F. Giavazzi, C. Haro-Perez and R. Cerbino, <a href="https://doi.org/10.1088/0953-8984/28/19/195201">Simultaneous characterization of rotational and translational diffusion of optically anisotropic particles by optical microscopy</a>, J. Phys.: Condens. Matter 28, 195201 (2016); R. Cerbino, D. Piotti, M. Buscaglia and F. Giavazzi, <a href="https://doi.org/10.1088/1361-648X/aa9bc5">Dark field differential dynamic microscopy enables accurate characterization of the roto-translational dynamics of bacteria and colloidal clusters</a>, J. Phys.: Condens. Matter 30, 025901 (2018); F. Giavazzi, A. Pal and R. Cerbino, <a href="https://doi.org/10.1140/epje/s10189-021-00063-4">Probing roto-translational diffusion of small anisotropic colloidal particles with a bright-field microscope</a>, Eur. Phys. J. E 44, 61 (2021).</li>
     </ul>
@@ -1869,6 +1872,14 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
    *  visco (optional): the particles are tracer spheres in a linear viscoelastic material { modes: [[G_Pa, tau_s], ...],
    *    G_inf_Pa (optional) }, the liquid being its solvent (see visco.js): each bead moves as an exact Ornstein-Uhlenbeck
    *    process about its resting place, in x, y and z alike. Not with swimmers, gravity, walls, drift or non-spheres.
+   *  shear (optional): oscillatory shear of the sample between two plates, the flow along x and the velocity gradient
+   *    along the optical axis { strain (amplitude gamma0, 0..10), freq_hz, D_na_um2_s: [Dx, Dy, Dz] (non-affine
+   *    motion: diffusion along the flow, the vorticity direction and the gradient, from rearrangements of the material),
+   *    brownian (optional, default false: the beads sit in a solid-like material and have no thermal motion of their
+   *    own; true: they also diffuse in the liquid, as in a simple liquid) }. Each bead is drawn at its place plus the
+   *    affine displacement gamma0 (h - h_focus) sin(2 pi f t) along x, in the frame that moves with the focal plane (as
+   *    after the registration of real images, Edera et al., Soft Matter 17, 8553, 2021). Spheres only, without
+   *    swimming, interactions, a material, gravity, walls or drift.
    */
   const SHAPES = ["sphere", "bisphere", "prolate", "oblate", "rod"];
   const TINY_UM = 0.03, TINY_M = 1.1;          // reference dipole for non-spherical bodies
@@ -1947,6 +1958,13 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     if (visco) {
       need(VIS, "the viscoelastic model (visco.js) is not loaded");
       need(shape === "sphere" && !cfg.swim && cfg.gravity !== true && cfg.walls !== true && !(cfg.drift_um_s > 0) && !cfg.drift_z_um_s, "tracers in a viscoelastic material: spheres only, without swimming, gravity, walls or drift");
+    }
+    const SHC = cfg.shear || null;
+    let SHR = null;
+    if (SHC) {
+      need(shape === "sphere" && !visco && !INTC && !cfg.swim && cfg.gravity !== true && cfg.walls !== true && !(cfg.drift_um_s > 0) && !cfg.drift_z_um_s, "sheared samples: spheres only, without swimming, interactions, a material, gravity, walls or drift");
+      const Dn = SHC.D_na_um2_s; need(Array.isArray(Dn) && Dn.length === 3 && Dn.every(function (v) { return v >= 0 && v < 1e4; }), "shear.D_na_um2_s must be three diffusion coefficients");
+      SHR = { g0: num(SHC, "strain", 0, 10), w: 2 * Math.PI * num(SHC, "freq_hz", 0.001, 1000), D: Dn.slice(), brownian: SHC.brownian === true };
     }
     const dn = shape === "sphere" || cfg.birefringence === undefined ? 0 : num(cfg, "birefringence", -0.5, 0.5);
     const pol = cfg.polarization || null;
@@ -2325,6 +2343,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
     const PH = new Float64Array(nTot), PSI = new Float64Array(nTot);
     if (oscA > 0) { const r2 = makeRng((cfg.seed >>> 0) + 7919); for (let i = 0; i < nTot; i++) { PH[i] = TWO_PI * r2.u(); PSI[i] = TWO_PI * r2.u(); } vMax += TWO_PI * oscF * oscA; }
     const oscW = TWO_PI * oscF;
+    if (SHR) vMax += SHR.g0 * SHR.w * Math.max(Math.abs(hf), Math.abs(Lz - hf));   // fastest affine motion in the cell
     // exposure blur: sub-steps when particles move or turn noticeably during the exposure
     // (D q^2 t_exp at the finest pattern imaged, 6 D_r t_exp); otherwise the exposure is treated as instantaneous
     let Dmax = 0, Drmax = 0; classes.forEach(function (c) { Dmax = Math.max(Dmax, c.hyd.D_par, c.hyd.D_perp); Drmax = Math.max(Drmax, c.hyd.D_r); });
@@ -2527,6 +2546,12 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
       if (dt <= 0 || INT) return;   // particles that interact move together, frame by frame (stepInteract)
       if (VE) { viscoAdvance(i, dt); return; }
       const c = classes[cls[i]], hy = c.hyd;
+      if (SHR) {
+        // sheared sample: rearrangements of the material move the beads by diffusion, anisotropic; thermal motion only in a liquid
+        const th = SHR.brownian ? 2 * hy.D_t * dt : 0;
+        X[i] += Math.sqrt(th + 2 * SHR.D[0] * dt) * rng.g(); Y[i] += Math.sqrt(th + 2 * SHR.D[1] * dt) * rng.g();
+        H[i] += Math.sqrt(th + 2 * SHR.D[2] * dt) * rng.g(); reflect(i); return;
+      }
       if (!oriented) {
         const nst = wallSteps(c, H[i], dt), hh = dt / nst, st = Math.sqrt(2 * hy.D_t * hh);
         for (let k = 0; k < nst; k++) { moveBy(i, c, st * rng.g(), st * rng.g(), st * rng.g(), hh); if (nst > 1) reflect(i); }
@@ -2670,6 +2695,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
           if (split) { channelWeights(c, UX[i], UY[i], UZ[i]); wHet = cw.het; wHom = cfg.test_no_hom === true ? 0 : cw.hom; }   // test_no_hom: test-only switch
           // where the cell is drawn: its mean path plus the stroke (swimmers only)
           let xr = X[i], yr = Y[i], hr = H[i];
+          if (SHR) xr += SHR.g0 * (H[i] - hf) * Math.sin(SHR.w * when);   // affine displacement, relative to the focal plane
           if (oscA > 0 && SP[i] > 0) {
             const sv = oscA * Math.sin(oscW * when + PH[i]);
             let dx = UX[i], dy = UY[i], dz = UZ[i];
@@ -2803,6 +2829,7 @@ res = fit(model_Gamma, xdata=fr['k'], ydata=np.log(fr['Gamma']),
                           alpha_perp: cm.aPerp, dalpha: cm.dA, alpha_ref: cm.aRef, Wtab: cm.Wtab || null, polarization: pol, background_share: bgf } },
       truth: { diameter_um: d0, mean_diameter_um: dnum, D_um2_s: hd0.D_t, D_seen_um2_s: Dseen, seen_table: seenTable, diameter_seen_um: kT / (3 * Math.PI * eta * Dseen * 1e-12) * 1e6, drift_um_s: drift, drift_deg: driftDeg, drift_profile: driftProfile, drift_z_um_s: driftZ,
                interact: INT ? interactTruth() : null,
+               shear: SHR ? { strain: SHR.g0, freq_hz: SHR.w / (2 * Math.PI), D_na_um2_s: SHR.D.slice(), brownian: SHR.brownian, D_thermal_um2_s: SHR.brownian ? hd0.D_t : 0 } : null,
                visco: VE ? { lam: Array.from(VE[Math.floor(VE.length / 2)].lam), c: Array.from(VE[Math.floor(VE.length / 2)].c), a_um: VE[Math.floor(VE.length / 2)].a_um, eta_s_Pa_s: eta } : null,
                D_plane_um2_s: hd0.D_t * fParFocus, D_plane_all_um2_s: hd0.D_t * fParMean, walls: walls, gravity: gravity, gravitational_length_um: isFinite(classes[0].lg) ? classes[0].lg : null,
                swim: sw ? (function () {

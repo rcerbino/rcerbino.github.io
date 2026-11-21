@@ -14,6 +14,13 @@
   self.onmessage = function (ev) {
     const m = ev.data;
     try {
+      // the dilute reference movie, for "Download the reference movie" (a notebook analyses both)
+      if (m.type === "reference") {
+        if (!refMovie) throw new Error("no reference movie yet");
+        const fr = refMovie.frames.slice(0);
+        self.postMessage({ type: "reference", token: m.token, ref: { frames: fr, n: refMovie.n, T: refMovie.T, pixel_um: refMovie.pixel_um, frame_rate_hz: refMovie.frame_rate_hz, times_s: refMovie.times_s || null, n_particles: refMovie.info.n_particles } }, [fr.buffer]);
+        return;
+      }
       let out = null;
       if (m.type === "simulate" || !movie) {
         movie = null;     // the worker now lives on between runs: let the old movie go before the new one is made
