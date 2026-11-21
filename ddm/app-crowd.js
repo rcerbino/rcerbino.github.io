@@ -694,6 +694,7 @@
         if (m.type === "progress") progress(m.frac, m.stage);
         else if (m.type === "error") { inflight = null; showError(m.message); }
         else if (m.type === "done") { inflight = null; finish(m.movie || cache.movie, m.res, m.movie ? cfg : cache.cfg, opts); }
+        else if (m.type === "reference") saveReference(m.ref);
       };
       worker.onerror = function (e) { if (token !== runToken) return; e.preventDefault(); workerOK = false; worker = null; start(kind === "analyse" && !cache.movie ? "simulate" : kind); };
       worker.postMessage({ type: kind, token: token, cfg: cfg, opts: opts });
@@ -1584,6 +1585,26 @@
     const mv = cache.movie; if (!mv || !mv.frames) return;
     const note = "info=Simulated on rcerbino.github.io/ddm, photoelectrons per pixel" + (frameTimes() ? "; log-spaced frames, times in the CSV file" : "");
     DDM_TIFF.save(movieName() + ".tif", DDM_TIFF.tiff(mv.frames, mv.n, mv.T, mv.pixel_um, 1 / mv.frame_rate_hz, note), "image/tiff");
+  });
+  // the dilute reference movie, and the numbers the notebook needs (particles in each movie, D0, frame times)
+  function saveReference(r) {
+    const note = "info=Simulated on rcerbino.github.io/ddm, dilute reference movie, photoelectrons per pixel" + (r.times_s ? "; log-spaced frames, times in the JSON file" : "");
+    DDM_TIFF.save(movieName() + "-reference.tif", DDM_TIFF.tiff(r.frames, r.n, r.T, r.pixel_um, 1 / r.frame_rate_hz, note), "image/tiff");
+  }
+  $("btn-ref").addEventListener("click", function () {
+    if (worker && cache.movie) worker.postMessage({ type: "reference", token: runToken });
+    else if (refMovieHere) saveReference({ frames: refMovieHere.frames, n: refMovieHere.n, T: refMovieHere.T, pixel_um: refMovieHere.pixel_um, frame_rate_hz: refMovieHere.frame_rate_hz, times_s: refMovieHere.times_s, n_particles: refMovieHere.info.n_particles });
+  });
+  $("btn-facts").addEventListener("click", function () {
+    const mv = cache.movie, r = cache.res; if (!mv || !r) return;
+    const t = frameTimes();
+    const o = { page: "rcerbino.github.io/ddm/crowded", movie: movieName() + ".tif", reference: movieName() + "-reference.tif", pixel_um: mv.pixel_um, T_C: mv.T_C, viscosity_Pa_s: mv.viscosity_Pa_s,
+      n_labelled: mv.truth.interact.n_labelled, n_reference: r.n_reference, D0_um2_s: mv.truth.interact.D0_um2_s, read_noise_e: mv.info.read_noise_e, excess_noise: mv.info.excess_noise || 1, volume_fraction: mv.truth.interact.phi,
+      movie_times_s: t ? Array.from(t, function (x) { return +x.toPrecision(9); }) : null, movie_frame_rate_hz: mv.frame_rate_hz };
+    const rc = CROWD.referenceConfig(cache.cfg, mv.truth.interact.tau_B_s);
+    o.reference_frame_rate_hz = rc.frame_rate_hz;
+    o.reference_times_s = rc.log_timing ? Array.from(MOVIE.logTimes(rc.n_frames, 1 / rc.frame_rate_hz, rc.log_timing.factor), function (x) { return +x.toPrecision(9); }) : null;
+    DDM_TIFF.save(movieName() + "-numbers.json", JSON.stringify(o, null, 1), "application/json");
   });
   $("btn-times").addEventListener("click", function () {
     const t = frameTimes(); if (!t) return;

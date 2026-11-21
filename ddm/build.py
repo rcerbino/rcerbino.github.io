@@ -38,6 +38,14 @@ PAGES = {
                 "canonical": "https://rcerbino.github.io/ddm/", "up": "../",
                 "description": "Differential dynamic microscopy (DDM) hands on: simulated microscopy experiments in your browser, analysed step by step from the raw movie to the result. Size particles from how they move, measure how fast cells swim, or follow particles carried by a flow, gravity or heat.",
                 "parts": {}},
+    "landing_it": {"src": "landing.src.html", "lang": "it", "out": "static/ddm/it/index.html", "preview": "ddm-landing-it.html", "title": "DDM, in pratica",
+                   "canonical": "https://rcerbino.github.io/ddm/it/", "up": "../../",
+                   "description": "Microscopia dinamica differenziale (DDM) in pratica: esperimenti di microscopia simulati nel browser e analizzati passo per passo, dal filmato grezzo al risultato.",
+                   "parts": {}},
+    "landing_de": {"src": "landing.src.html", "lang": "de", "out": "static/ddm/de/index.html", "preview": "ddm-landing-de.html", "title": "DDM zum Ausprobieren",
+                   "canonical": "https://rcerbino.github.io/ddm/de/", "up": "../../",
+                   "description": "Differentielle dynamische Mikroskopie (DDM) zum Ausprobieren: simulierte Mikroskopie-Experimente im Browser, Schritt f&uuml;r Schritt ausgewertet, vom Rohfilm bis zum Ergebnis.",
+                   "parts": {}},
     "sizing": {"src": "page.src.html", "out": "static/ddm/sizing/index.html", "preview": "ddm-hands-on.html", "title": "Sizing particles with DDM",
                "canonical": "https://rcerbino.github.io/ddm/sizing/", "up": "../../",
                "description": "Differential dynamic microscopy (DDM) hands on: simulate a microscopy experiment in your browser and size colloidal particles from how they move, step by step, from the raw movie to the result.",
@@ -68,16 +76,34 @@ PAGES = {
                  "description": "Differential dynamic microscopy (DDM) of proteins: simulate a protein solution in bright field in your browser and measure the size of the proteins and how they interact (k_D and B2), step by step, from the raw movie to a concentration series.",
                  "parts": {"/*OBJECTIVES*/": "data/objectives.min.json", "/*OPTICS*/": "optics.js", "/*FIELD*/": "field-movie.js",
                            "/*ENGINE*/": "ddm-engine.js", "/*PROTEIN*/": "protein.js", "/*PENGINE*/": "protein-engine.js", "/*WORKER*/": "worker-protein.js", "/*TIFF*/": "tiff.js", "/*APP*/": "app-protein.js"}},
+    "shear": {"src": "shear.src.html", "out": "static/ddm/shear/index.html", "preview": "ddm-shear.html", "title": "DDM of sheared materials",
+              "canonical": "https://rcerbino.github.io/ddm/shear/", "up": "../../",
+              "description": "Echo differential dynamic microscopy (echo-DDM) of soft materials under oscillatory shear: simulate tracer beads in a yield-stress gel, a rubber or a viscous liquid in your browser, compare frames a whole cycle apart and see when the material yields.",
+              "parts": {"/*OBJECTIVES*/": "data/objectives.min.json", "/*OPTICS*/": "optics.js", "/*MOVIE*/": "movie.js",
+                        "/*ENGINE*/": "ddm-engine.js", "/*SHEAR*/": "shear-engine.js", "/*WORKER*/": "worker-shear.js", "/*TIFF*/": "tiff.js", "/*APP*/": "app-shear.js"}},
+    "tissues": {"src": "tissue.src.html", "out": "static/ddm/tissues/index.html", "preview": "ddm-tissues.html", "title": "DDM of moving tissues",
+                "canonical": "https://rcerbino.github.io/ddm/tissues/", "up": "../../",
+                "description": "Differential dynamic microscopy (DDM) of confluent cell monolayers: simulate a time-lapse of stained nuclei in your browser and find out whether the tissue is jammed, fluid or flocking, step by step, from the raw movie to the motion of the cells.",
+                "parts": {"/*TMOVIE*/": "tissue-movie.js", "/*ENGINE*/": "ddm-engine.js", "/*TENGINE*/": "tissue-engine.js", "/*TVORONOI*/": "tissue-voronoi.js", "/*TRATES*/": "tissue-rates.js", "/*WORKER*/": "worker-tissue.js", "/*TIFF*/": "tiff.js", "/*APP*/": "app-tissue.js"}},
+    "exercises": {"src": "exercises.src.html", "out": "static/ddm/exercises/index.html", "preview": "ddm-exercises.html", "title": "DDM exercises",
+                  "canonical": "https://rcerbino.github.io/ddm/exercises/", "up": "../../",
+                  "description": "Exercises with model answers on differential dynamic microscopy (DDM): predict, compute and discuss, for each of the DDM, hands on pages, from sizing particles to protein interactions. Printable.",
+                  "parts": {}},
 }
 # links between the pages, as written in the sources (site addresses), and the file each points to in the previews
 PREVIEW_LINKS = {
-    "landing": {'href="sizing/': 'href="ddm-hands-on.html', 'href="swimmers/': 'href="ddm-swimmers.html', 'href="drift/': 'href="ddm-drift.html', 'href="rheology/': 'href="ddm-rheology.html', 'href="crowded/': 'href="ddm-crowded.html', 'href="proteins/': 'href="ddm-proteins.html', '"sizing/" + location.hash': '"ddm-hands-on.html" + location.hash'},
-    "sizing": {'href="../proteins/"': 'href="ddm-proteins.html"', 'href="../crowded/"': 'href="ddm-crowded.html"', 'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../rheology/"': 'href="ddm-rheology.html"', 'href="../"': 'href="ddm-landing.html"'},
-    "swimmers": {'href="../proteins/"': 'href="ddm-proteins.html"', 'href="../crowded/"': 'href="ddm-crowded.html"', 'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../rheology/"': 'href="ddm-rheology.html"', 'href="../"': 'href="ddm-landing.html"'},
-    "drift": {'href="../proteins/"': 'href="ddm-proteins.html"', 'href="../crowded/"': 'href="ddm-crowded.html"', 'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../rheology/"': 'href="ddm-rheology.html"', 'href="../"': 'href="ddm-landing.html"'},
-    "rheology": {'href="../proteins/"': 'href="ddm-proteins.html"', 'href="../crowded/"': 'href="ddm-crowded.html"', 'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../"': 'href="ddm-landing.html"'},
-    "crowded": {'href="../proteins/"': 'href="ddm-proteins.html"', 'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../rheology/"': 'href="ddm-rheology.html"', 'href="../"': 'href="ddm-landing.html"'},
-    "proteins": {'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../rheology/"': 'href="ddm-rheology.html"', 'href="../crowded/"': 'href="ddm-crowded.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "landing_it": {'href="../sizing/': 'href="ddm-hands-on.html', 'href="../swimmers/': 'href="ddm-swimmers.html', 'href="../drift/': 'href="ddm-drift.html', 'href="../rheology/': 'href="ddm-rheology.html', 'href="../crowded/': 'href="ddm-crowded.html', 'href="../proteins/': 'href="ddm-proteins.html', 'href="../shear/': 'href="ddm-shear.html', 'href="../tissues/': 'href="ddm-tissues.html', 'href="../exercises/': 'href="ddm-exercises.html', 'href="../de/"': 'href="ddm-landing-de.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "landing_de": {'href="../sizing/': 'href="ddm-hands-on.html', 'href="../swimmers/': 'href="ddm-swimmers.html', 'href="../drift/': 'href="ddm-drift.html', 'href="../rheology/': 'href="ddm-rheology.html', 'href="../crowded/': 'href="ddm-crowded.html', 'href="../proteins/': 'href="ddm-proteins.html', 'href="../shear/': 'href="ddm-shear.html', 'href="../tissues/': 'href="ddm-tissues.html', 'href="../exercises/': 'href="ddm-exercises.html', 'href="../it/"': 'href="ddm-landing-it.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "tissues": {'href="../exercises/': 'href="ddm-exercises.html', 'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../rheology/"': 'href="ddm-rheology.html"', 'href="../crowded/"': 'href="ddm-crowded.html"', 'href="../proteins/"': 'href="ddm-proteins.html"', 'href="../shear/"': 'href="ddm-shear.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "shear": {'href="../exercises/': 'href="ddm-exercises.html', 'href="../tissues/"': 'href="ddm-tissues.html"', 'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../rheology/"': 'href="ddm-rheology.html"', 'href="../crowded/"': 'href="ddm-crowded.html"', 'href="../proteins/"': 'href="ddm-proteins.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "exercises": {'href="../sizing/': 'href="ddm-hands-on.html', 'href="../swimmers/': 'href="ddm-swimmers.html', 'href="../drift/': 'href="ddm-drift.html', 'href="../rheology/': 'href="ddm-rheology.html', 'href="../crowded/': 'href="ddm-crowded.html', 'href="../proteins/': 'href="ddm-proteins.html', 'href="../shear/': 'href="ddm-shear.html', 'href="../tissues/': 'href="ddm-tissues.html', 'href="../"': 'href="ddm-landing.html"'},
+    "landing": {'href="it/"': 'href="ddm-landing-it.html"', 'href="de/"': 'href="ddm-landing-de.html"', 'href="tissues/': 'href="ddm-tissues.html', 'href="shear/': 'href="ddm-shear.html', 'href="exercises/': 'href="ddm-exercises.html', 'href="sizing/': 'href="ddm-hands-on.html', 'href="swimmers/': 'href="ddm-swimmers.html', 'href="drift/': 'href="ddm-drift.html', 'href="rheology/': 'href="ddm-rheology.html', 'href="crowded/': 'href="ddm-crowded.html', 'href="proteins/': 'href="ddm-proteins.html', '"sizing/" + location.hash': '"ddm-hands-on.html" + location.hash'},
+    "sizing": {'href="../exercises/': 'href="ddm-exercises.html', 'href="../tissues/"': 'href="ddm-tissues.html"', 'href="../shear/"': 'href="ddm-shear.html"', 'href="../proteins/"': 'href="ddm-proteins.html"', 'href="../crowded/"': 'href="ddm-crowded.html"', 'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../rheology/"': 'href="ddm-rheology.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "swimmers": {'href="../exercises/': 'href="ddm-exercises.html', 'href="../tissues/"': 'href="ddm-tissues.html"', 'href="../shear/"': 'href="ddm-shear.html"', 'href="../proteins/"': 'href="ddm-proteins.html"', 'href="../crowded/"': 'href="ddm-crowded.html"', 'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../rheology/"': 'href="ddm-rheology.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "drift": {'href="../exercises/': 'href="ddm-exercises.html', 'href="../tissues/"': 'href="ddm-tissues.html"', 'href="../shear/"': 'href="ddm-shear.html"', 'href="../proteins/"': 'href="ddm-proteins.html"', 'href="../crowded/"': 'href="ddm-crowded.html"', 'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../rheology/"': 'href="ddm-rheology.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "rheology": {'href="../exercises/': 'href="ddm-exercises.html', 'href="../tissues/"': 'href="ddm-tissues.html"', 'href="../shear/"': 'href="ddm-shear.html"', 'href="../proteins/"': 'href="ddm-proteins.html"', 'href="../crowded/"': 'href="ddm-crowded.html"', 'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "crowded": {'href="../exercises/': 'href="ddm-exercises.html', 'href="../tissues/"': 'href="ddm-tissues.html"', 'href="../shear/"': 'href="ddm-shear.html"', 'href="../proteins/"': 'href="ddm-proteins.html"', 'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../rheology/"': 'href="ddm-rheology.html"', 'href="../"': 'href="ddm-landing.html"'},
+    "proteins": {'href="../exercises/': 'href="ddm-exercises.html', 'href="../tissues/"': 'href="ddm-tissues.html"', 'href="../shear/"': 'href="ddm-shear.html"', 'href="../sizing/"': 'href="ddm-hands-on.html"', 'href="../swimmers/"': 'href="ddm-swimmers.html"', 'href="../drift/"': 'href="ddm-drift.html"', 'href="../rheology/"': 'href="ddm-rheology.html"', 'href="../crowded/"': 'href="ddm-crowded.html"', 'href="../"': 'href="ddm-landing.html"'},
 }
 
 
@@ -169,6 +195,9 @@ def assemble(page="sizing"):
     # for phones, which the site pages get from templates/base.html
     out = add_glossary(add_step_index(out))
     out = DOC_START + out
+    if cfg.get("lang"):
+        import landing_i18n
+        out = landing_i18n.translate(out, cfg["lang"])
     bad = [c for c in out if ord(c) > 127]
     assert not bad, "non-ASCII characters: %r" % sorted(set(bad))
     return out
@@ -179,6 +208,9 @@ def site_version(html, page="sizing"):
     assert GOOGLE_FONTS in html, "font block not found"
     head = (SITE_HEAD.replace("https://rcerbino.github.io/ddm/", cfg["canonical"]).replace('href="../', 'href="' + cfg["up"])
             .replace(SIZING_DESCRIPTION, cfg["description"]))
+    if page.startswith("landing"):
+        alt = "".join('\n<link rel="alternate" hreflang="%s" href="https://rcerbino.github.io/ddm/%s">' % (l, p) for l, p in (("en", ""), ("it", "it/"), ("de", "de/")))
+        head = head.replace('<link rel="canonical" href="' + cfg["canonical"] + '">', '<link rel="canonical" href="' + cfg["canonical"] + '">' + alt)
     html = html.replace(GOOGLE_FONTS, head)
     html = html.replace('<meta name="claude:viewport-fit-sides" content="cover">\n', "")
     html = html.replace("<title>" + cfg["title"] + "</title>", "<title>" + cfg["title"] + " | Roberto Cerbino</title>")

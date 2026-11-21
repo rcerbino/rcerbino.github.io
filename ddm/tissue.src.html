@@ -1,0 +1,729 @@
+<title>DDM of moving tissues</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  [hidden] { display: none !important; }
+/* Layout: the site's own page frame (header, measure, fluorescence palette); a two-column
+   "bench" where the controls stay in view and the analysis runs down as numbered steps. */
+:root {
+  --paper: #fafbfc;
+  --ink: #18202b;
+  --muted: #5a6472;
+  --rule: #dde2e8;
+  --accent: #2f45c5;      /* nuclei (DAPI) blue */
+  --accent-2: #b8233f;    /* actin red */
+  --tint: #eef1fb;
+  --panel: #ffffff;
+  --good: #1f7a4d; --good-bg: #dff3e8;
+  --warn: #8a5a00; --warn-bg: #fcefd6;
+  --bad: #a8322d;  --bad-bg: #f9e3e1;
+  --serif: "Spectral", Georgia, "Times New Roman", serif;
+  --sans: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --measure: 40rem;
+  --wide: 76rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0d1119; --ink: #e4e8ee; --muted: #98a2b3; --rule: #283040;
+    --accent: #93a1ff; --accent-2: #ff7a90; --tint: #161c2a; --panel: #121826;
+    --good: #6fd39a; --good-bg: #12301f; --warn: #f2b75c; --warn-bg: #3a2a10; --bad: #ff8f86; --bad-bg: #3a1714;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0d1119; --ink: #e4e8ee; --muted: #98a2b3; --rule: #283040;
+  --accent: #93a1ff; --accent-2: #ff7a90; --tint: #161c2a; --panel: #121826;
+  --good: #6fd39a; --good-bg: #12301f; --warn: #f2b75c; --warn-bg: #3a2a10; --bad: #ff8f86; --bad-bg: #3a1714;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--serif); font-size: 1.125rem; line-height: 1.65;
+}
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+.wrap { max-width: var(--wide); margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+@media (min-width: 40rem) { .wrap { padding-left: max(2rem, env(safe-area-inset-left, 0px)); padding-right: max(2rem, env(safe-area-inset-right, 0px)); } }
+
+/* site header (as on rcerbino.github.io) */
+.site-header { border-bottom: 1px solid var(--rule); }
+.header-inner { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 2rem; padding-block: 1.1rem 1rem; }
+.site-name { font-size: 1.35rem; font-weight: 500; color: var(--ink); text-decoration: none; }
+.site-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.2rem 1.25rem; }
+.site-nav a { font-family: var(--sans); font-size: 0.95rem; color: var(--muted); text-decoration: none; padding: 0.2rem 0; border-bottom: 2px solid transparent; }
+.site-nav a:hover { color: var(--ink); }
+.site-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+.ddm-switch { font-family: var(--sans); font-size: 0.9rem; margin: 0 0 0.6rem; color: var(--muted); }
+.ddm-switch a, .ddm-switch span { margin-right: 0.9rem; }
+.ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
+.ddm-switch .sw-group { display: inline-block; margin-right: 1.1rem; }
+.ddm-switch .sw-label { font-weight: 600; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; margin-right: 0.45rem; }
+.proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
+.pn-more { display: none; font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+/* one line, the rest on request */
+.proto-note:not(.open) .pn-rest { display: none; }
+.proto-note:not(.open) .pn-more { display: inline; }
+
+h1, h2, h3 { font-weight: 500; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem); margin: 0 0 1rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; margin: 0 0 0.75rem; }
+h3 { font-size: 1.2rem; margin: 0 0 0.5rem; }
+p { margin: 0 0 1rem; }
+.lede { font-size: 1.25rem; line-height: 1.6; max-width: var(--measure); }
+.prose { max-width: var(--measure); }
+.small { font-family: var(--sans); font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
+.eyebrow { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 0.35rem; }
+
+/* reader levels: what each reader sees */
+html[data-level="curious"] .lvl-2, html[data-level="curious"] .lvl-3, html[data-level="student"] .lvl-3 { display: none !important; }
+/* extra steps: folded for the Curious level, one click away */
+.opt-note { display: none; font-family: var(--sans); font-size: 0.95rem; color: var(--muted); margin: 0.4rem 0 0; }
+.opt-note button { margin-left: 0.4rem; }
+html[data-level="curious"] .step[data-optional]:not(.unfolded) > .opt-note { display: block; }
+html[data-level="curious"] .step[data-optional]:not(.unfolded) > :not(.step-title):not(.opt-note) { display: none !important; }
+html[data-level="student"] .only-1, html[data-level="researcher"] .only-1, html[data-level="addict"] .only-1 { display: none !important; }
+html[data-level="curious"] details.math { display: none; }
+html:not([data-level="addict"]) .lvl-4 { display: none !important; }
+/* what this page adds to the published methods */
+.adds { max-width: var(--measure); padding-left: 1.1rem; }
+.adds li { margin-bottom: 0.6rem; }
+.adds .where { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); }
+table.sizing tr.pub th, table.sizing tr.pub td { font-style: italic; }
+
+/* opening */
+.intro { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; padding-block: 2.5rem 1.5rem; align-items: center; }
+.intro > * { min-width: 0; }
+@media (min-width: 56rem) { .intro { grid-template-columns: minmax(0, 1fr) 19rem; gap: 3.5rem; } }
+.porthole { margin: 0; justify-self: center; display: grid; gap: 0.75rem; justify-items: center; }
+.porthole .lens { width: min(19rem, 78vw); aspect-ratio: 1; border-radius: 50%; overflow: hidden; border: 1px solid var(--rule); box-shadow: 0 0 0 10px var(--tint); background: #000; max-width: 100%; }
+.porthole canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+.porthole figcaption { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); text-align: center; max-width: 18rem; }
+
+.levels { margin: 1.5rem 0 0; border: 0; padding: 0; min-width: 0; }
+.levels legend { font-family: var(--sans); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; padding: 0; }
+.level-opts { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); max-width: 44rem; }
+.level-opts label { display: grid; gap: 0.1rem; padding: 0.6rem 0.8rem; border: 1px solid var(--rule); border-radius: 6px; cursor: pointer; font-family: var(--sans); background: var(--panel); }
+.level-opts input { position: absolute; opacity: 0; pointer-events: none; }
+.level-opts .t { font-weight: 600; font-size: 0.98rem; }
+.level-opts .d { font-size: 0.82rem; color: var(--muted); line-height: 1.35; }
+.level-opts label:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--tint); }
+.level-opts label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* result card */
+.result { font-family: var(--sans); border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); padding: 1rem 1.1rem; display: grid; gap: 0.5rem; }
+.result .big { font-family: var(--serif); font-size: 2.1rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.result .big small { font-size: 1rem; color: var(--muted); }
+.result dl { display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 1rem; margin: 0; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.result dt { color: var(--muted); }
+.result dd { margin: 0; }
+.chip { display: inline-block; font-family: var(--sans); font-size: 0.8rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 999px; justify-self: start; }
+.chip.good { color: var(--good); background: var(--good-bg); }
+.chip.warn { color: var(--warn); background: var(--warn-bg); }
+.chip.bad { color: var(--bad); background: var(--bad-bg); }
+.chip.info { color: var(--muted); background: var(--tint); }
+.tscroll { overflow-x: auto; min-width: 0; }
+.result, .result > *, .predict, .step-body > *, .steps > * { min-width: 0; }
+table.sizing { width: 100%; border-collapse: collapse; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+table.sizing td { white-space: nowrap; }
+table.sizing th, table.sizing td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--rule); text-align: right; vertical-align: top; }
+table.sizing th[scope="row"], table.sizing thead th:first-child { text-align: left; font-weight: 500; }
+table.sizing thead th { color: var(--muted); font-weight: 500; font-size: 0.8rem; }
+table.sizing tr.main th, table.sizing tr.main td { font-weight: 700; }
+table.sizing tr.truth th, table.sizing tr.truth td { color: var(--accent-2); }
+table.sizing .note { white-space: normal; display: block; font-size: 0.76rem; font-weight: 400; color: var(--muted); }
+.checks ul { list-style: none; margin: 0.3rem 0 0; padding: 0; display: grid; gap: 0.45rem; }
+.checks li { display: grid; grid-template-columns: 4.2rem 1fr; gap: 0.6rem; align-items: start; font-size: 0.86rem; line-height: 1.45; }
+.checks li .chip { justify-self: stretch; text-align: center; }
+details.more summary { cursor: pointer; font-size: 0.85rem; color: var(--muted); }
+details.more dl { margin-top: 0.4rem; }
+.hero-result { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1rem; font-family: var(--sans); margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--rule); max-width: 44rem; }
+.hero-result .n { font-family: var(--serif); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+
+/* bench */
+.bench-head { padding-block: 2rem 1rem; border-top: 1px solid var(--rule); }
+.bench { display: grid; gap: 2rem; padding-bottom: 3rem; }
+@media (min-width: 64rem) { .bench { grid-template-columns: 17.5rem minmax(0, 1fr); gap: 2.5rem; align-items: start; } .controls { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); max-height: calc(100vh - 5rem); overflow: auto; } }
+.controls { font-family: var(--sans); font-size: 0.9rem; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 1rem; display: grid; gap: 1rem; }
+.controls h3 { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.cgroup { display: grid; gap: 0.7rem; }
+/* blocks of settings: sample, microscope, camera, analysis; each folds to a one-line summary */
+/* each block has its own colour: green, cyan, yellow, purple (Paul Tol and Okabe-Ito palettes), chosen to stay
+   apart in normal vision and with the three common kinds of colour blindness; the titles still say what each block is */
+:root { --blk-sample: #228833; --blk-microscope: #33bbee; --blk-camera: #e0c200; --blk-analysis: #aa3377; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --blk-sample: #4cae5c; --blk-microscope: #66ccee; --blk-camera: #f0e442; --blk-analysis: #cc5599; } }
+:root[data-theme="dark"] { --blk-sample: #4cae5c; --blk-microscope: #66ccee; --blk-camera: #f0e442; --blk-analysis: #cc5599; }
+.cblock { --c: var(--rule); border-left: 4px solid var(--c); border-radius: 6px; padding: 0.6rem 0.65rem 0.7rem; background: var(--panel); background: color-mix(in srgb, var(--c) 8%, var(--panel)); }
+.cblock[data-block="sample"] { --c: var(--blk-sample); }
+.cblock[data-block="microscope"] { --c: var(--blk-microscope); }
+.cblock[data-block="camera"] { --c: var(--blk-camera); }
+.cblock[data-block="camera"] > summary h3, .cblock[data-block="camera"] .csub h4 { color: color-mix(in srgb, var(--c) 40%, var(--ink)); }   /* the yellow needs more ink to be readable */
+.cblock[data-block="analysis"] { --c: var(--blk-analysis); }
+.cblock > summary { cursor: pointer; list-style: none; display: grid; gap: 0.15rem; }
+.cblock > summary::-webkit-details-marker { display: none; }
+.cblock > summary h3 { color: var(--ink); color: color-mix(in srgb, var(--c) 55%, var(--ink)); }
+.cblock > summary h3::before { content: ""; display: inline-block; width: 0.42em; height: 0.42em; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); margin: 0 0.55em 0.18em 0.1em; transition: transform 0.15s; }
+.cblock:not([open]) > summary h3::before { transform: rotate(-45deg); margin-bottom: 0.05em; }
+.cblock .bsum { font-size: 0.8rem; color: var(--muted); line-height: 1.35; padding-left: 1.15em; }
+.cbody { display: grid; gap: 0.9rem; margin-top: 0.7rem; }
+.csub { display: grid; gap: 0.7rem; }
+.csub h4 { font-family: var(--sans); font-size: 0.8rem; font-weight: 600; color: var(--ink); color: color-mix(in srgb, var(--c) 55%, var(--ink)); margin: 0.2rem 0 -0.15rem; padding-bottom: 0.2rem; border-bottom: 1px solid var(--rule); border-bottom-color: color-mix(in srgb, var(--c) 30%, transparent); }
+@media (prefers-reduced-motion: reduce) { .cblock > summary h3::before { transition: none; } }
+.ctl { display: grid; gap: 0.2rem; }
+.ctl .row { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
+.ctl label { font-weight: 500; }
+.ctl output { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; white-space: nowrap; }
+.ctl input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
+.ctl select, .ctl input[type="number"] { font: inherit; padding: 0.3rem 0.4rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink); width: 100%; }
+.ctl .numentry { display: inline-flex; align-items: baseline; gap: 0.3rem; white-space: nowrap; color: var(--accent); font-weight: 600; }
+.ctl .numentry input[type="number"] { width: 5.5rem; padding: 0.15rem 0.3rem; text-align: right; font-variant-numeric: tabular-nums; }
+.ctl .hint { font-size: 0.78rem; color: var(--muted); line-height: 1.35; }
+.qrange { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+.btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+button { font: 500 0.88rem var(--sans); padding: 0.45rem 0.8rem; border-radius: 5px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.status { font-size: 0.82rem; color: var(--muted); min-height: 1.3em; }
+.runbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--panel); border-top: 1px solid var(--rule); box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06); font-family: var(--sans); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.runbar-inner { display: flex; align-items: center; gap: 0.9rem; padding-block: 0.5rem; }
+.runbar .bar { flex: 0 0 min(16rem, 38%); height: 6px; border-radius: 3px; }
+.runbar .status { flex: 1 1 auto; min-width: 0; min-height: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.runbar.busy .status { color: var(--ink); font-weight: 500; }
+.runbar.busy .bar span { background: var(--accent); }
+.runbar:not(.busy) .bar span { background: var(--good); }
+body { padding-bottom: 3.2rem; }
+.bar { height: 4px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.1s linear; }
+.error { color: var(--bad); background: var(--bad-bg); border-radius: 6px; padding: 0.6rem 0.8rem; font-family: var(--sans); font-size: 0.9rem; }
+
+.steps { display: grid; gap: 3rem; min-width: 0; }
+.steps.stale { opacity: 0.35; }
+.step { display: grid; gap: 1rem; min-width: 0; scroll-margin-top: 1rem; }
+.step-title { display: flex; gap: 0.75rem; align-items: baseline; }
+.step-title .num { font-family: var(--sans); font-size: 0.85rem; font-weight: 600; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; min-width: 1.7rem; height: 1.7rem; display: inline-grid; place-items: center; flex: none; }
+.step-title h2 { margin: 0; }
+.step-body { display: grid; gap: 1.25rem; min-width: 0; }
+@media (min-width: 48rem) { .step-body.split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+.text { min-width: 0; max-width: var(--measure); }
+.text p:last-child { margin-bottom: 0; }
+
+figure.viz { margin: 0; display: grid; gap: 0.5rem; min-width: 0; }
+.imgbox { position: relative; background: #000; border-radius: 4px; overflow: hidden; aspect-ratio: 1; max-width: 100%; }
+.imgbox canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.imgbox canvas.overlay { image-rendering: auto; }
+.imgbox .scale { position: absolute; left: 8px; bottom: 8px; font: 600 0.75rem var(--sans); color: #fff; text-shadow: 0 0 3px #000; }
+.imgbox .scale i { display: block; height: 3px; background: #fff; margin-bottom: 3px; box-shadow: 0 0 2px #000; }
+.pair { display: grid; gap: 0.75rem; grid-template-columns: 1fr 1fr; }
+.pair .cap { font-family: var(--sans); font-size: 0.8rem; color: var(--muted); }
+figcaption, .readout { font-family: var(--sans); font-size: 0.85rem; color: var(--muted); line-height: 1.45; font-variant-numeric: tabular-nums; }
+.readout b { color: var(--ink); font-weight: 600; }
+.chart { position: relative; width: 100%; height: 300px; }
+.chart canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.chart.short { height: 220px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-family: var(--sans); font-size: 0.88rem; }
+.toolbar input[type="range"] { flex: 1 1 10rem; accent-color: var(--accent); }
+.toolbar select { font: inherit; padding: 0.25rem 0.4rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); color: var(--ink); }
+.toolbar.pickbar { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 0.8rem; margin-top: 0.5rem; }
+.toolbar.pickbar input[type="range"] { width: 100%; min-width: 0; }
+@media (pointer: coarse) { input[type="range"] { min-height: 2.5rem; } }   /* a larger touch area; the track stays thin */
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 0.3rem 0.7rem; background: var(--panel); }
+.seg button[aria-pressed="true"] { background: var(--tint); color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-family: var(--sans); font-size: 0.8rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.reasons { font-family: var(--sans); font-size: 0.82rem; color: var(--muted); margin: 0; padding-left: 1.1rem; }
+
+details.math { min-width: 0; font-family: var(--sans); font-size: 0.92rem; border-left: 2px solid var(--accent); background: var(--tint); border-radius: 0 6px 6px 0; padding: 0.55rem 0.9rem; max-width: var(--measure); }
+details.math summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+details.math .eq { font-family: var(--serif); font-size: 1.05rem; margin: 0.6rem 0; overflow-x: auto; white-space: nowrap; }
+details.math p { margin: 0.5rem 0; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--paper); border: 1px solid var(--rule); border-radius: 3px; padding: 0.05em 0.3em; }
+pre.code { font-family: var(--mono); font-size: 0.8rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 0.6rem; overflow-x: auto; margin: 0.5rem 0; line-height: 1.45; }
+
+.start-here { font-family: var(--sans); font-size: 0.92rem; margin: 0.6rem 0 0; max-width: 44rem; }
+#try-dyed { scroll-margin-top: 1rem; }   /* the shortcut lands on the chart, with the question right below it */
+.predict { font-family: var(--sans); font-size: 0.92rem; border: 1px dashed var(--accent); border-radius: 6px; padding: 0.7rem 0.9rem; display: grid; gap: 0.5rem; max-width: var(--measure); }
+.predict .q { font-weight: 600; }
+.predict .a { color: var(--ink); }
+.predict .verdict { font-weight: 600; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.numbers { font-family: var(--sans); font-size: 0.88rem; }
+.numbers summary { cursor: pointer; color: var(--muted); }
+.takeaway { font-family: var(--sans); font-size: 0.92rem; border-left: 3px solid var(--accent); padding: 0.1rem 0 0.1rem 0.8rem; max-width: var(--measure); margin: 0; }
+.transfer { font-family: var(--sans); font-size: 0.92rem; border: 1px solid var(--rule); border-radius: 6px; padding: 0.6rem 0.9rem; max-width: var(--measure); }
+.transfer summary, .inputs summary { cursor: pointer; }
+.inputs { font-family: var(--sans); font-size: 0.92rem; max-width: var(--measure); }
+.inputs p { margin: 0.5rem 0 0; }
+.transfer p { margin: 0.5rem 0 0; }
+.predict .base { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; color: var(--muted); }
+.predict button:disabled { cursor: default; opacity: 0.55; }
+.predict button[aria-pressed="true"] { opacity: 1; border-color: var(--accent); font-weight: 600; }
+
+/* what matters */
+.matters { border-top: 1px solid var(--rule); padding-block: 2.5rem 1rem; }
+.cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); margin-top: 1.25rem; }
+.card { border: 1px solid var(--rule); border-radius: 8px; padding: 1rem; display: grid; gap: 0.5rem; align-content: start; background: var(--panel); }
+.card h3 { margin: 0; font-size: 1.1rem; }
+.card p { font-size: 0.98rem; margin: 0; }
+.card .btns { margin-top: 0.25rem; }
+.further { border-top: 1px solid var(--rule); padding-block: 2.5rem 3rem; }
+.further ul { padding-left: 1.2rem; max-width: var(--measure); }
+.further li { margin-bottom: 0.5rem; }
+footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-size: 0.85rem; color: var(--muted); padding-block: 1.2rem 2rem; }
+
+.fovbox { height: 300px; }
+.pstrip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.5rem; max-width: 34rem; }
+.pstrip figure { margin: 0; display: grid; gap: 0.25rem; }
+.pstrip canvas { width: 100%; aspect-ratio: 1; image-rendering: pixelated; border-radius: 3px; background: #000; max-width: 100%; }
+.pstrip figcaption { font-family: var(--sans); font-size: 0.75rem; color: var(--muted); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.scalebar { height: 10px; border-radius: 3px; margin-top: 0.3rem; }
+.scalebar.div { background: linear-gradient(90deg, var(--accent), var(--panel), var(--accent-2)); border: 1px solid var(--rule); }
+.scalebar.wheel { background: linear-gradient(90deg, hsl(0 85% 50%), hsl(60 85% 50%), hsl(120 85% 50%), hsl(180 85% 50%), hsl(240 85% 50%), hsl(300 85% 50%), hsl(360 85% 50%)); }
+@media (max-width: 40rem) { .pair.stack { grid-template-columns: 1fr; } }
+.scalelab { display: flex; justify-content: space-between; font-family: var(--sans); font-size: 0.72rem; color: var(--muted); }
+</style>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="site-name" href="https://rcerbino.github.io/">Roberto Cerbino</a>
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="https://rcerbino.github.io/">Home</a></li>
+        <li><a href="https://rcerbino.github.io/about/">About</a></li>
+        <li><a href="https://rcerbino.github.io/research/">Research</a></li>
+        <li><a href="#" aria-current="page">DDM</a></li>
+        <li><a href="https://rcerbino.github.io/publications/">Publications</a></li>
+        <li><a href="https://rcerbino.github.io/talks/">Talks</a></li>
+        <li><a href="https://rcerbino.github.io/teaching/">Teaching</a></li>
+        <li><a href="https://rcerbino.github.io/contact/">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<div class="proto-note"><div class="wrap"><span>This web page is a divertissement.</span><span class="pn-rest" id="pn-rest"> For fun, we took configurations close to those of our lab and used them to simulate some typical DDM experiments in your browser. The simulations are simple (for example, the cells are soft discs that push each other and steer towards where they are carried, and they never divide) and rely on many approximations. Found something wrong or not working? Please let us (me and Anthropic Claude) know through the <a href="https://rcerbino.github.io/contact/">contact page</a>. If you like it, <a href="https://doi.org/10.1063/5.0289471">The hitchhiker's guide to differential dynamic microscopy</a> (Lattuada et al., J. Chem. Phys. 163, 161501, 2025) explains how DDM works in practice.</span> <button type="button" class="pn-more" aria-expanded="false" aria-controls="pn-rest">More</button></div></div>
+
+
+<main>
+  <section class="wrap intro">
+    <div>
+      <p class="eyebrow">Differential dynamic microscopy</p>
+      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><span class="sw-group"><b class="sw-label">Start:</b><a href="../sizing/">Sizing particles</a></span><span class="sw-group"><b class="sw-label">Classic:</b><a href="../swimmers/">Swimming cells</a><a href="../drift/">Drifting particles</a><a href="../rheology/">Liquid or solid</a></span><span class="sw-group"><b class="sw-label">Advanced:</b><a href="../crowded/">Crowded particles</a><a href="../proteins/">Proteins</a><a href="../shear/">Sheared materials</a><span aria-current="page">Moving tissues</span></span></nav>
+      <h1>Is this tissue jammed, flowing or flocking?</h1>
+      <p class="lede">Epithelial cells packed into a sheet can be stuck, each caged by its neighbours, like a solid; they can flow past each other, like a liquid; or they can all set off in the same direction, as a flock. A time-lapse movie of their stained nuclei tells which, without following any cell. Here you can check what differential dynamic microscopy (DDM) finds on simulated monolayers (Giavazzi et al. 2017, 2018).</p>
+      <p class="start-here"><a href="#try-sweep">Try this first</a>: let the cells steer towards where they are pushed. Does the sheet become more fluid or more solid? Predict, then watch the page check it.</p>
+      <fieldset class="levels">
+        <legend>How deep do you want to go?</legend>
+        <div class="level-opts" role="radiogroup">
+          <label><input type="radio" name="level" id="lv-curious" value="curious"><span class="t">Curious</span><span class="d">The idea in words and pictures, no equations.</span></label>
+          <label><input type="radio" name="level" id="lv-student" value="student"><span class="t">Student</span><span class="d">The method step by step, equations folded away.</span></label>
+          <label><input type="radio" name="level" id="lv-researcher" value="researcher"><span class="t">Researcher</span><span class="d">All controls, equations open, and the matching code.</span></label>
+          <label><input type="radio" name="level" id="lv-addict" value="addict"><span class="t">Addict</span><span class="d">As Researcher, and you can switch off our tricks to see what each one does.</span></label>
+        </div>
+      </fieldset>
+      <div class="hero-result" id="hero-result" aria-live="polite">
+        <span>Simulating the movie...</span>
+      </div>
+    </div>
+    <figure class="porthole">
+      <div class="lens"><canvas id="hero-canvas" width="128" height="128" aria-label="Simulated microscope movie"></canvas></div>
+      <figcaption id="hero-cap">Live simulated fluorescence time-lapse</figcaption>
+    </figure>
+  </section>
+
+  <section class="wrap bench-head" aria-labelledby="bench-title">
+    <p class="eyebrow">Hands on</p>
+    <h2 id="bench-title">The bench</h2>
+    <p class="prose">Choose how the cells move, then how they are filmed (controls on the left, or just below on a phone). The bench simulates a day of a monolayer and takes about ten seconds; the motility sweep of step 9 takes about two minutes. "Copy a link to this setup" gives an address that opens the bench with the same settings.</p>
+  </section>
+
+  <div class="wrap bench">
+    <aside class="controls" id="controls" aria-label="Experiment settings">
+      <div id="ctl-groups" class="cgroup" style="gap:1.1rem"></div>
+      <div class="btns">
+        <button type="button" id="btn-reset">Back to the standard sample</button>
+        <button type="button" id="btn-seed" class="lvl-3">New random sample</button>
+        <button type="button" id="btn-share">Copy a link to this setup</button>
+        <span class="small" id="share-msg" aria-live="polite"></span>
+      </div>
+      <div class="error" id="error" hidden></div>
+    </aside>
+
+    <div class="steps">
+      <!-- 1 -->
+      <section class="step" id="step-setup" aria-labelledby="h-setup">
+        <div class="step-title"><span class="num">1</span><h2 id="h-setup">The monolayer and the microscope</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="chart fovbox"><canvas id="cell" aria-label="The cells of the monolayer as simulated, each coloured by the direction it moves in"></canvas></div>
+            <div class="legend" id="cell-legend"></div>
+          </figure>
+          <div class="text">
+            <p>The cells cover the dish without gaps, a single layer. Each crawls in the direction it faces, and pushes on its neighbours, which push back. The movie does not show the cells but their nuclei, stained with a fluorescent protein: one bright spot per cell, filmed through a 10x objective every few minutes for many hours.</p>
+            <p>The picture shows the cells as the simulation has them at the end of the movie, each coloured by the direction it moves in, with an arrow for its speed. The movie itself holds only the nuclei.</p>
+            <p class="readout" id="fov-specs"></p>
+          </div>
+        </div>
+        <p class="takeaway"><b>What this step gives:</b> the size of the field and how many cells it holds, and the spacing of their nuclei, which sets the patterns the movie is richest in.</p>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: self-propelled soft discs</summary>
+          <p>Each cell <i>i</i> is a disc of diameter <i>&sigma;<sub>i</sub></i> (15 % spread, so that the sheet does not crystallise) at position <b>r</b><sub><i>i</i></sub>, with a polarity <b>n</b><sub><i>i</i></sub> = (cos <i>&theta;<sub>i</sub></i>, sin <i>&theta;<sub>i</sub></i>), the direction it crawls in:</p>
+          <div class="eq">d<b>r</b><sub><i>i</i></sub>/d<i>t</i> = <i>v</i><sub>0</sub> <b>n</b><sub><i>i</i></sub> + <i>&mu;k</i> &Sigma;<sub><i>j</i></sub> (<i>&sigma;<sub>ij</sub></i> &minus; <i>r<sub>ij</sub></i>) <b>r&#770;</b><sub><i>ji</i></sub>, &nbsp;&nbsp; d<i>&theta;<sub>i</sub></i>/d<i>t</i> = &minus;<i>J</i> sin(<i>&theta;<sub>i</sub></i> &minus; <i>&phi;<sub>i</sub></i>) + &radic;(2<i>D<sub>r</sub></i>) <i>&xi;<sub>i</sub></i></div>
+          <p>with the sum over overlapping neighbours, <i>&phi;<sub>i</sub></i> the direction of the cell's actual velocity and <i>&xi;</i> white noise. <i>J</i> turns each cell towards where it is being carried: the alignment of polarity to velocity that Giavazzi et al. (2018) added to a model of confluent tissues to explain flocking (here soft discs, as in Szab&oacute; et al. 2006 and Henkes et al. 2011, instead of their Voronoi cells). <i>&mu;k</i> = 20 per hour sets how fast an overlap relaxes, <i>D<sub>r</sub></i> how fast a cell forgets its direction on its own. The nuclei are Gaussian spots of rms radius 2.5 &micro;m, with shot noise and camera read noise; cells never divide.</p>
+        </details>
+      </section>
+
+      <!-- 2 -->
+      <section class="step" id="step-movie" aria-labelledby="h-movie">
+        <div class="step-title"><span class="num">2</span><h2 id="h-movie">Record a time-lapse</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="imgbox"><canvas id="movie" width="128" height="128" aria-label="Microscope movie"></canvas><div class="scale" id="movie-scale"><i></i><span></span></div></div>
+            <div class="toolbar"><button type="button" id="btn-play">Pause</button><span class="readout" id="movie-time"></span></div>
+            <div class="toolbar lvl-2"><button type="button" id="btn-tiff">Download the movie (TIFF)</button><span class="readout">32-bit, photoelectrons per pixel; opens in ImageJ, Fiji and fastDDM.</span></div>
+          </figure>
+          <div class="text">
+            <p id="movie-text"></p>
+            <p class="readout lvl-2" id="movie-specs"></p>
+          </div>
+        </div>
+        <p class="takeaway"><b>What this step gives:</b> a stack of frames a few minutes apart over many hours: cells move micrometres per hour, so the movie has to be long.</p>
+        <details class="math" data-open-at="researcher">
+          <summary>In fastDDM</summary>
+          <pre class="code">import fastddm as fd
+img_seq = fd.read_images(file_names)      # one frame every few minutes</pre>
+        </details>
+      </section>
+
+      <!-- 3 -->
+      <section class="step" id="step-diff" aria-labelledby="h-diff">
+        <div class="step-title"><span class="num">3</span><h2 id="h-diff">Subtract two frames</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="imgbox"><canvas id="diff" width="128" height="128" aria-label="Difference between two frames"></canvas></div>
+            <div class="toolbar"><label for="lag">Delay</label><input type="range" id="lag" min="0" max="10" value="5"><output id="lag-out" class="readout"></output></div>
+          </figure>
+          <div class="text">
+            <p>Subtract a frame from one taken a little later. Nuclei that stayed put cancel out; one that moved leaves a dark spot where it was and a bright one where it went.</p>
+            <p id="diff-note"></p>
+          </div>
+        </div>
+        <p class="takeaway"><b>What this step gives:</b> for every pair of frames a delay apart, an image of what changed.</p>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: the difference image</summary>
+          <div class="eq">&Delta;<i>I</i>(<b>x</b>; <i>t</i>, &Delta;<i>t</i>) = <i>I</i>(<b>x</b>, <i>t</i> + &Delta;<i>t</i>) &minus; <i>I</i>(<b>x</b>, <i>t</i>)</div>
+        </details>
+      </section>
+
+      <!-- 4 -->
+      <section class="step" id="step-map" aria-labelledby="h-map">
+        <div class="step-title"><span class="num">4</span><h2 id="h-map">Split it into stripe patterns</h2></div>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="pair">
+              <div><div class="imgbox"><canvas id="map" width="128" height="128" aria-label="Power spectrum of the differences; click to choose a pattern, or use the two sliders below the maps"></canvas><canvas id="map-ov" class="overlay" width="512" height="512" style="cursor:crosshair"></canvas></div><div class="cap">Strength of each pattern in the difference (click it, or use the sliders)</div></div>
+              <div><div class="imgbox"><canvas id="stripes" width="128" height="128" aria-label="The stripe pattern you selected"></canvas></div><div class="cap">The pattern you picked</div></div>
+            </div>
+            <div class="toolbar pickbar"><label for="pick-k">Stripes, wide to fine</label><input type="range" id="pick-k" min="1" max="63" step="1" value="10"><label for="pick-a">Direction</label><input type="range" id="pick-a" min="0" max="179" step="1" value="30"></div>
+            <div class="readout" id="pick-out"></div>
+            <div class="pair" style="margin-top:0.75rem">
+              <div><div class="imgbox"><canvas id="fmap" width="128" height="128" aria-label="How much of each pattern is left after the delay"></canvas></div><div class="cap">How much of each pattern is left</div><div class="scalebar div"></div><div class="scalelab"><span>-1</span><span>0, gone</span><span>1, all there</span></div></div>
+            </div>
+            <div class="readout" id="zoom-note"></div>
+          </figure>
+          <div class="text">
+            <p>Any image can be built by adding up stripe patterns of different spacing and direction. The Fourier transform tells how much of each pattern the difference image contains, averaged over the whole movie. The centre of the map holds wide stripes, the edge fine ones.</p>
+            <p class="only-1">The charts further down label each pattern by <i>q</i>, a number that grows as the stripes get finer: <i>q</i> = 2&pi; divided by the stripe spacing, in inverse micrometres. Stripes 15 &micro;m apart, the size of a cell, have <i>q</i> of about 0.4.</p>
+            <p>The bright ring is the spacing of neighbouring nuclei: the sheet is crowded, so that pattern is the strongest. When the whole sheet drifts, the second map turns blue in places: a pattern that has moved by half a stripe comes back with the opposite sign.</p>
+          </div>
+        </div>
+        <p class="takeaway"><b>What this step gives:</b> for each stripe spacing and direction, and each delay, how much the movie has changed.</p>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: structure function of a moving sheet</summary>
+          <div class="eq"><i>d</i>(<i>q</i>, &Delta;<i>t</i>) = <i>A</i>(<i>q</i>) [1 &minus; <i>f</i>(<i>q</i>, &Delta;<i>t</i>)] + <i>B</i>, &nbsp;&nbsp; <i>f</i><sub>lab</sub>(<b>q</b>, &Delta;<i>t</i>) &asymp; <i>f</i>(<b>q</b>, &Delta;<i>t</i>) cos(<b>q</b>&middot;<b>V</b>&Delta;<i>t</i>)</div>
+          <p>For a sheet that drifts as a whole with velocity <b>V</b>, the patterns travel with it and swing; <i>f</i> is what is left in the frame of the sheet. <i>A</i>(<i>q</i>) = <i>N</i> |<i>K</i>(<i>q</i>)|<sup>2</sup> <i>S</i>(<i>q</i>), with <i>K</i> the image of one nucleus and <i>S</i>(<i>q</i>) the structure factor of the nuclei, peaked at the spacing of neighbours. Map axes: <i>q<sub>x</sub></i> to the right, <i>q<sub>y</sub></i> up.</p>
+        </details>
+      </section>
+
+      <!-- 5 -->
+      <section class="step" id="step-curves" aria-labelledby="h-curves">
+        <div class="step-title"><span class="num">5</span><h2 id="h-curves">Watch each pattern change</h2></div>
+        <div class="step-body">
+          <div class="text">
+            <p>For each stripe spacing, follow how much of the pattern is left as the delay grows. In a jammed sheet the curves sink a little and stall: each cell rattles in the cage of its neighbours. In a fluid one they fall to zero within an hour. In a flock the patterns also travel with the sheet.</p>
+            <p class="lvl-2">Dots: <i>f</i>(<i>q</i>, &Delta;<i>t</i>) = 1 &minus; (<i>d</i> &minus; <i>B</i>) / <i>A</i> in the frame of the sheet (step 7); hollow circles: as recorded, in the frame of the microscope. <i>A</i> = 2&lang;|<i>F</i>|<sup>2</sup>&rang; &minus; <i>B</i>, from the mean power of each mode, so that patterns that never change keep their whole amplitude.</p>
+          </div>
+          <figure class="viz">
+            <div class="chart"><canvas id="chart-curves" aria-label="How much of each pattern is left against the delay"></canvas></div>
+            <div class="legend" id="curves-legend"></div>
+          </figure>
+          <details class="numbers" id="curves-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <div class="predict" data-predict="flock" data-right="moves">
+            <div class="q">Predict first: the sheet on the bench is jammed. Now each cell also turns, little by little, towards the direction it is being pushed in. What happens?</div>
+            <div class="btns"><button type="button" data-guess="moves">The sheet sets off as one block</button><button type="button" data-guess="melts">The sheet melts and flows</button><button type="button" data-guess="nothing">Nothing changes</button></div>
+            <div class="a" hidden><span class="verdict"></span> It sets off as one block. Neighbours push each other, so they soon steer the same way, and the whole sheet starts to crawl in one direction: a flock. Within it the cells stay caged, even more firmly than before, because their neighbours now move with them: a flocking solid, as Giavazzi et al. (2018) found in their model, where alignment promotes solidification. The bench now runs with alignment; the dotted lines keep the earlier run.</div>
+          </div>
+        </div>
+        <p class="takeaway"><b>What this step gives:</b> how fast each pattern fades, and whether it stalls (a solid) or fades away (a liquid).</p>
+      </section>
+
+      <!-- 6 -->
+      <section class="step" id="step-gamma" data-optional="1" aria-labelledby="h-gamma">
+        <div class="step-title"><span class="num">6</span><h2 id="h-gamma">How fast each pattern fades: the rate against q</h2></div>
+        <p class="opt-note">An extra step: the rate of each pattern against its size, the classical result of DDM, with a choice of model for the fit. <button type="button" class="opt-show">Show this step</button></p>
+        <div class="step-body">
+          <div class="text">
+            <p>Fit each curve of step 5 with a model and read its rate: how many times per hour the pattern fades by a factor e. Finer patterns fade faster, because a smaller move is enough to blur them. How fast the rate grows with q says how the cells move. If halving the width of the pattern doubles the rate (rate proportional to q), the cells go straight over that distance; if it multiplies it by four (q<sup>2</sup>), they wander at random, as in diffusion; more than that, and they are held in a cage.</p>
+            <p class="lvl-2">The models, fitted to f(q, &Delta;t) at each q with A and B as in step 5: <b>exponential</b>, f = e<sup>&minus;&Gamma;&Delta;t</sup> (diffusion, &Gamma; = Dq<sup>2</sup>); <b>stretched or compressed exponential</b>, f = e<sup>&minus;(&Gamma;&Delta;t)<sup>&beta;</sup></sup> (&beta; &lt; 1: a spread of rates; &beta; &gt; 1: persistent, directed motion); <b>persistent random walk</b>, f = e<sup>&minus;q<sup>2</sup>&lang;&Delta;r<sup>2</sup>&rang;/4</sup> with &lang;&Delta;r<sup>2</sup>&rang; = 4D(&Delta;t &minus; t<sub>p</sub>(1 &minus; e<sup>&minus;&Delta;t/t<sub>p</sub></sup>)) (straight for a time t<sub>p</sub>, then at random); <b>exponential to a plateau</b>, f = c + (1 &minus; c) e<sup>&minus;&Gamma;&Delta;t</sup> (each cell rattles in a cage and the curve stops at c). &Gamma; is the rate at which the model falls to 1/e (for the plateau model, the rate of the decaying part).</p>
+          </div>
+          <div class="toolbar"><label for="fit-model">Model</label><select id="fit-model"></select><span class="readout" id="fit-best"></span></div>
+          <figure class="viz">
+            <figcaption>Rate of each pattern against q</figcaption>
+            <div class="chart"><canvas id="chart-gamma" aria-label="Rate of each pattern against the wave vector q"></canvas></div>
+            <div class="legend" id="gamma-legend"></div>
+          </figure>
+          <details class="numbers" id="gamma-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <figure class="viz lvl-2" id="fig-shape">
+            <figcaption id="shape-cap">Shape of the fitted curve against q</figcaption>
+            <div class="chart short"><canvas id="chart-fitshape" aria-label="Shape parameter of the fitted model against q"></canvas></div>
+            <div class="legend" id="fitshape-legend"></div>
+          </figure>
+          <div class="result" id="gamma-result" aria-live="polite"></div>
+        </div>
+        <details class="inputs"><summary>What the analysis is told, and what it finds</summary><p><b>Told (inputs):</b> the model, and nothing else: the curves are those of step 5.</p><p><b>Found from the movie:</b> at each q with signal well above the noise, the rate and the shape of the fitted curve; how the rate grows with q; and, for this movie, which of the four models describes the curves best.</p><p>The page also fits, with the same model, how single simulated cells move relative to the sheet (the self part of the intermediate scattering function, from their true positions). Above the peak of A, where each nucleus counts on its own, the two should agree; near and below it the patterns follow the crowd, not single cells.</p></details>
+        <p class="takeaway"><b>What this step gives:</b> the classical result of DDM, the rate against q, and from its slope whether the cells go straight, wander at random or stay caged over the distances the patterns probe.</p>
+        <details class="transfer"><summary><b>A question to think about:</b> In the fluid sheet the rate grows about as q, with a compressed exponential (&beta; near 1.75). The cells crawl at 30 &micro;m/h and keep their direction for about 2 hours. Why do the patterns not show diffusion?</summary><p>The patterns used are 5 to 10 &micro;m wide. A cell crosses them in well under an hour, long before it turns: over those distances it goes straight, so the rate is set by its speed (rate proportional to q) and the curves fall faster than an exponential (&beta; &gt; 1). Diffusion, with the rate proportional to q<sup>2</sup>, would show only for patterns much wider than the distance a cell travels before turning, here tens of micrometres, where the arrangement of the cells and the size of the field get in the way.</p></details>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: fitting, the truth, and what was tried</summary>
+          <p><b>Fitting.</b> Least squares on f at all delays of the movie, with A and B fixed as in step 5. Each model is reduced to a scan of its shape parameter (&beta; from 0.3 to 2, t<sub>p</sub> over the delays of the movie) and, for each shape, a one-dimensional search of the rate; the plateau c is solved for directly. Only patterns with A &gt; 3B are fitted. A rate counts as measured when the fitted curve has fallen below 0.8 by the longest delay and was still above 0.2 at the shortest; otherwise the curve barely moved, or had already gone, and the point is drawn hollow. <b>Slope.</b> A straight line through log &Gamma; against log q over the measured points from the start of the band of step 7. <b>Truth.</b> F<sub>s</sub>(q, &Delta;t) = &lang;J<sub>0</sub>(q|&Delta;<b>r</b>|)&rang; over the simulated cells, with &Delta;<b>r</b> relative to the centre of mass, fitted with the same model. <b>Which model.</b> For each movie the page ranks the four by the Bayesian information criterion, n ln(&sum;r<sup>2</sup>/n) + k ln n summed over q.</p>
+          <p><b>What we found trying them.</b> On the four standard states (nuclei, with the motion of the sheet taken out): in the fluid sheet and the flocking liquid the compressed exponential (&beta; 1.5 to 1.75) and the persistent random walk fit best, the rate grows as q<sup>1.0</sup>, and the rates agree with the simulated cells within about 10 % over the band; 2&Gamma;/q, the rms speed if each cell went straight, gives 14 &micro;m/h in the fluid sheet, as the simulated cells move relative to the sheet over one frame; in the jammed sheet and the flocking solid the plateau model fits best (the curves stop at c of about 0.2 to 0.4 within the movie), and the stretched exponential (&beta; 0.9) comes next, with the rate growing as q<sup>1.9</sup> to q<sup>2</sup>. The simple exponential is never the best, which is why the stretched or compressed one is the default. The parameters of the persistent random walk are effective ones: in the fluid sheet its persistence time came out near 0.2 h, where each simulated cell keeps its direction for about 2 h, because collisions with neighbours bend its path. A fifth model, two exponentials, fitted as well as the plateau model but its rates jumped from one q to the next, so we left it out.</p>
+          <p>In Python, with <code>t</code> the delays and <code>f</code> one curve:</p>
+          <pre class="code">import numpy as np
+from scipy.optimize import curve_fit
+kww = lambda t, G, b: np.exp(-(G * t) ** b)
+(G, b), _ = curve_fit(kww, t, f, p0=(1 / np.median(t), 1), bounds=([0, 0.3], [np.inf, 2]))</pre>
+        </details>
+      </section>
+
+      <!-- 7 -->
+      <section class="step" id="step-rates" aria-labelledby="h-rates">
+        <div class="step-title"><span class="num">7</span><h2 id="h-rates">How far the cells wander, and where the sheet goes</h2></div>
+        <div class="step-body">
+          <div class="text">
+            <p class="only-1">First the page finds out whether the whole sheet moves: the widest patterns shift together from one frame to the next, and how far gives the path of the sheet. Then it moves every frame back by that path, and reads from the patterns that remain how far each cell wanders relative to its neighbours. Cells that wander less than a fraction of their size over the whole movie are jammed; a sheet that moves together is a flock.</p>
+            <p class="lvl-2">The sheet: from the phase of the widest patterns (|<i>k</i>| &le; 4) between consecutive frames, &minus;<b>q</b>&middot;&Delta;<b>R</b>, fitted for &Delta;<b>R</b> (phase differential microscopy, Colin et al. 2014); <b>V</b> from a straight line through <b>R</b>(<i>t</i>). The cells: every frame moved back, <i>F</i>(<b>q</b>, <i>t</i>) e<sup><i>i</i><b>q</b>&middot;<b>R</b>(<i>t</i>)</sup>, the structure function again, and the mean squared displacement from <i>f</i> as a Gaussian, &lang;&Delta;<i>r</i><sup>2</sup>&rang; = &minus;4 ln <i>f</i> / <i>q</i><sup>2</sup> (Giavazzi et al. 2018), over a band of <i>q</i> above the peak of <i>A</i>(<i>q</i>) where 0.1 &lt; <i>f</i> &lt; 0.95, combined by the mean of ln.</p>
+          </div>
+          <figure class="viz">
+            <figcaption>Mean squared displacement of the cells, relative to the sheet</figcaption>
+            <div class="chart"><canvas id="chart-msd" aria-label="Mean squared displacement of the cells against the delay"></canvas></div>
+            <div class="legend" id="msd-legend"></div>
+          </figure>
+          <details class="numbers" id="msd-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <figure class="viz">
+            <figcaption>Where the sheet went over the movie</figcaption>
+            <div class="chart"><canvas id="chart-path" aria-label="Path of the whole sheet over the movie"></canvas></div>
+            <div class="legend" id="path-legend"></div>
+          </figure>
+          <figure class="viz">
+            <figcaption>Signal <i>A</i>(<i>q</i>) and camera noise <i>B</i>. The bright nuclei make a strong signal, peaked at the spacing of neighbours; it fades at fine patterns, smaller than a nucleus.</figcaption>
+            <div class="chart short"><canvas id="chart-amp" aria-label="Signal and noise amplitudes"></canvas></div>
+            <div class="legend" id="amp-legend"></div>
+          </figure>
+          <details class="numbers" id="amp-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <div class="step-body">
+            <div class="result" id="result" aria-live="polite"></div>
+          </div>
+        </div>
+        <details class="inputs"><summary>What the analysis is told, and what it finds</summary><p><b>Told (inputs):</b> the pixel size, the time between frames, the camera noise (from the mean count and the read noise), and the typical size of a cell, to judge whether a displacement is small.</p><p><b>Found from the movie:</b> the path and velocity of the sheet, the mean squared displacement of the cells relative to it, the order of the sheet and its state.</p><p>In this simulation every cell moves as the model says and the nuclei are simple spots, so agreement shows that the analysis recovers what was simulated; real monolayers also divide, change shape and form streams and swirls instead of one flock.</p></details>
+        <p class="takeaway"><b>What this step gives:</b> whether the sheet moves as a whole, how fast, and whether its cells rearrange: jammed, fluid, flocking solid or flocking liquid.</p>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: order and state</summary>
+          <p><b>Order.</b> &psi;<sup>2</sup> = |<b>V</b>|<sup>2</sup> &Delta;<i>t</i><sup>2</sup> / &lang;&Delta;<i>r</i><sup>2</sup>&rang;<sub>lab</sub> at the shortest delay where the lab-frame displacement is measured: the share of each cell's motion that the motion of the whole sheet explains, 1 for a sheet moving as one block and 0 without a common motion; it plays the part of the polar order parameter of the simulation (the mean of the unit vectors of the cells' velocities). <b>State.</b> A flock when &psi; &gt; 0.5 and |<b>V</b>| is above three times its uncertainty; solid when the displacement relative to the sheet stays below a tenth of a cell's area (about a third of its diameter) over the delays the movie holds, liquid otherwise. <b>Reach.</b> At the lowest <i>q</i> of the band, <i>f</i> = 0.1 means &lang;&Delta;<i>r</i><sup>2</sup>&rang; = 9.2 / <i>q</i><sup>2</sup>, about 25 &micro;m<sup>2</sup> here: beyond, the page only says that the cells move more. <b>What the page does not fix.</b> Near the end of its reach the Gaussian inversion reads low in a flowing sheet, whose displacements have long tails: in a flocking liquid our tests read 10 &micro;m<sup>2</sup> where the cells had moved 34. Below about 5 &micro;m<sup>2</sup> it was within 20 % in every state. <b>Nuclei, edges or both.</b> "Images analysed" runs the same analysis on the cell edges drawn from the nuclei (step 8), or on both. In our tests the states and the velocity of the sheet came out the same from all three; the edges read the displacement higher at the shortest delays (in the jammed sheet 0.35 &micro;m<sup>2</sup> in half an hour against 0.18 simulated, 2.4 against 2.2 in three hours), because a corner of the network, set by three nuclei, moves more than each of them. Seen together, nuclei and edges cancel at the spacing of neighbours, where the edges are half a period from the nuclei, so the peak of <i>A</i> is looked for among patterns 0.6 to 2 cells wide.</p>
+          <p>In Python, with the azimuthal average <code>aa</code> of fastDDM and <code>A</code>, <code>B</code> as above:</p>
+          <pre class="code">import numpy as np
+f = 1 - (aa.data - B[:, None]) / A[:, None]          # q x delays
+ok = (f > 0.1) & (f < 0.95)
+msd = np.where(ok, -4 * np.log(np.clip(f, 1e-9, 1)) / aa.k[:, None] ** 2, np.nan)
+msd_t = np.exp(np.nanmean(np.log(msd[band]), axis=0))   # one curve, over the q band</pre>
+        </details>
+      </section>
+
+      <!-- 8 -->
+      <section class="step" id="step-network" data-optional="1" aria-labelledby="h-network">
+        <div class="step-title"><span class="num">8</span><h2 id="h-network">The network of nuclei</h2></div>
+        <p class="opt-note">An extra step: the nuclei found one by one, the network they make, and how many neighbours each cell keeps over time. <button type="button" class="opt-show">Show this step</button></p>
+        <div class="step-body split">
+          <figure class="viz">
+            <div class="chart fovbox"><canvas id="net" aria-label="A frame of the movie with the nuclei found and the Voronoi network they make"></canvas></div>
+            <div class="toolbar"><label for="net-frame">Frame</label><input type="range" id="net-frame" min="0" max="255" value="0"><output id="net-frame-out" class="readout"></output></div>
+            <div class="toolbar"><label for="net-colour">Colour the cells by</label><select id="net-colour"><option value="sides">number of neighbours</option><option value="shape">shape index</option></select></div>
+            <div class="legend" id="net-legend"></div>
+          </figure>
+          <div class="text">
+            <p>DDM never looks for single cells. Here the nuclei are bright and well apart, so the page can also find them one by one, follow each from frame to frame, and give each the part of the dish that is closer to it than to any other nucleus. These parts make the Voronoi network, a rough stand-in for the outlines of the cells. Two cells whose parts share a side are neighbours.</p>
+            <p>In a jammed sheet a cell keeps the same neighbours for the whole movie. In a fluid sheet cells squeeze past each other and swap neighbours within hours. Move the frame slider to watch the network change, or not.</p>
+            <p class="lvl-2">Nuclei: local maxima of the frame, lightly smoothed, brighter than everything within a third of a cell spacing and than the background plus a quarter of the brightest pixels; the position to a fraction of a pixel from a parabola through the logarithm of three pixels, in x and in y. Tracks: a nucleus in one frame and one in the next are the same when each is the other's nearest, closer than half a spacing. Cells: each cut out by the perpendicular bisectors towards its neighbours, kept only when every nucleus that could cut it is inside the field. Neighbours share a side longer than a tenth of a spacing; one is kept after a delay while the two still share a side of any length.</p>
+          </div>
+        </div>
+        <div class="step-body">
+          <figure class="viz">
+            <figcaption>Share of its neighbours a cell still has after a delay</figcaption>
+            <div class="chart short"><canvas id="chart-kept" aria-label="Share of neighbours kept against the delay"></canvas></div>
+            <div class="legend" id="kept-legend"></div>
+          </figure>
+          <details class="numbers" id="kept-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <figure class="viz lvl-2">
+            <figcaption>Shape index of the Voronoi cells: 3.72 for a regular hexagon, higher for elongated or ragged cells</figcaption>
+            <div class="chart short"><canvas id="chart-shape" aria-label="Distribution of the shape index of the cells"></canvas></div>
+            <div class="legend" id="shape-legend"></div>
+          </figure>
+          <details class="numbers lvl-2" id="shape-numbers"><summary>The numbers behind this chart</summary><div></div></details>
+          <div class="result" id="net-result" aria-live="polite"></div>
+        </div>
+        <details class="inputs"><summary>What the analysis is told, and what it finds</summary><p><b>Told (inputs):</b> the pixel size, the time between frames, and the typical size of a cell, which sets how far apart two nuclei must be and how far a nucleus may move between frames.</p><p><b>Found from the movie:</b> the position of every nucleus in every frame, their tracks, the Voronoi cell of each, its number of sides and its shape, how many neighbours each cell keeps over time, and how far the nuclei move.</p><p>The page checks each of these against the true positions of the simulation. In a real monolayer nuclei divide, overlap and are not at the centre of their cell, and the true outlines need a stain of the membranes.</p></details>
+        <p class="takeaway"><b>What this step gives:</b> a second reading of the same movie, cell by cell: whether cells keep their neighbours, and how far each one moves, to set beside what DDM found without looking for any cell.</p>
+        <details class="transfer"><summary><b>A question to think about:</b> On this bench tracking the nuclei and DDM agree. When would you rather use DDM?</summary><p>When single cells are hard to find: in phase-contrast or bright-field movies without a stain, with dim or crowded nuclei, or out of focus. When cells move more than about half their spacing between frames, a nucleus can no longer be told apart from its neighbours from one frame to the next, and the tracks break. And when the movie is large: DDM gives the average motion of thousands of cells without deciding where each one is. Tracking gives what DDM cannot: who is next to whom, and how that changes.</p></details>
+        <details class="math" data-open-at="researcher">
+          <summary>The math: Voronoi cells, shape index and neighbours</summary>
+          <p><b>Voronoi cell.</b> The cell of nucleus <i>i</i> is the set of points closer to <b>r</b><sub><i>i</i></sub> than to any other nucleus: the polygon cut out by the perpendicular bisectors towards its neighbours. It is complete once the next nucleus is more than twice as far as its farthest corner; in the image it is kept only if that whole range lies inside the field. <b>Shape index.</b> <i>p</i> = <i>P</i> / &radic;<i>A</i>, with <i>P</i> the perimeter and <i>A</i> the area: 3.72 for a regular hexagon, 3.81 for a regular pentagon, 4 for a square. In the vertex model and in the self-propelled Voronoi model of tissues, a target shape index near 3.81 is where the model sheet goes from solid to fluid (Bi et al. 2015, 2016), and Park et al. (2015) saw the cells of airway epithelium grow more elongated as the sheet unjammed. <b>Neighbours kept.</b> <i>K</i>(&Delta;<i>t</i>) = &Sigma; <i>n</i><sub>kept</sub> / &Sigma; <i>n</i><sub>0</sub> over cells followed in both frames and over 8 starting frames, counting only neighbours still followed.</p>
+          <p><b>What the page does not fix.</b> In this model the cells are soft discs, with no shape of their own, so the shape index only follows how disordered the arrangement is: in our tests the mean <i>p</i> was 3.77 in the jammed sheet and the flocking solid, 3.80 in the flocking liquid and 3.83 in the fluid sheet. That it falls on either side of 3.81 is suggestive, not a test of the vertex model, and Voronoi cells of nuclei are only an approximation of real outlines.</p>
+          <p>In Python, with the nuclei of one frame in <code>x</code>, <code>y</code> (scipy):</p>
+          <pre class="code">import numpy as np
+from scipy.spatial import Voronoi
+vor = Voronoi(np.c_[x, y])
+def shape_index(i):              # drop cells near the edge of the field
+    reg = vor.regions[vor.point_region[i]]
+    if not reg or -1 in reg: return np.nan
+    P = vor.vertices[reg]
+    area = 0.5 * abs(np.dot(P[:, 0], np.roll(P[:, 1], 1)) - np.dot(P[:, 1], np.roll(P[:, 0], 1)))
+    perim = np.hypot(*(P - np.roll(P, 1, axis=0)).T).sum()
+    return perim / np.sqrt(area)
+pairs = {tuple(sorted(p)) for p in vor.ridge_points}   # neighbours</pre>
+        </details>
+      </section>
+
+      <!-- 9 -->
+      <section class="step" id="step-series" aria-labelledby="h-series">
+        <div class="step-title"><span class="num">9</span><h2 id="h-series">Waking up a jammed tissue: a motility sweep</h2></div>
+        <div class="step-body">
+          <div class="text">
+            <p class="only-1">Repeat the measurement as the cells crawl harder, with and without the alignment. Without it, slow cells stay jammed and fast ones flow, each in its own direction. With it, the sheet flocks: slow cells move as one rigid block, fast ones flow while they travel together. This is how Malinverno et al. (2017) found that a jammed epithelium can be woken up: the protein RAB5A made the cells crawl harder and the sheet flow and flock.</p>
+            <p class="lvl-2">The sweep runs six crawling speeds <i>v</i><sub>0</sub> from 3 to 30 &micro;m/h, without alignment and with <i>J</i> = 2 per hour, a new movie each, and plots the displacement relative to the sheet after 2 hours, the order &psi; and the share of neighbours a cell keeps over 4 hours (step 8), with the values of the simulation.</p>
+          </div>
+          <div class="toolbar" id="try-sweep"><button type="button" id="btn-series">Run the motility sweep</button><span class="readout" id="series-msg" aria-live="polite"></span></div>
+          <p class="readout" id="series-state"></p>
+          <div id="series-figs" hidden>
+            <figure class="viz">
+              <figcaption>How far the cells move relative to the sheet in 2 hours, against how hard they crawl</figcaption>
+              <div class="chart"><canvas id="chart-sweep" aria-label="Displacement of the cells in 2 hours against the crawling speed"></canvas></div>
+              <div class="legend" id="sweep-legend"></div>
+            </figure>
+            <figure class="viz">
+              <figcaption>Order of the sheet, against how hard the cells crawl</figcaption>
+              <div class="chart short"><canvas id="chart-order" aria-label="Order of the sheet against the crawling speed"></canvas></div>
+            </figure>
+            <figure class="viz">
+              <figcaption>Share of its neighbours a cell keeps over 4 hours, from the network of nuclei</figcaption>
+              <div class="chart short"><canvas id="chart-sweep-kept" aria-label="Share of neighbours kept in 4 hours against the crawling speed"></canvas></div>
+              <ul class="reasons" id="sweep-notes"></ul>
+            </figure>
+            <details class="numbers" id="series-numbers"><summary>The numbers behind these charts</summary><div></div></details>
+          </div>
+        </div>
+        <p class="takeaway"><b>What this step gives:</b> where the sheet unjams, and how alignment turns a jammed or fluid sheet into a flock.</p>
+        <details class="transfer"><summary><b>A question to think about:</b> In a flocking solid every cell moves at about 7 &micro;m/h, yet the page says the sheet is solid. In the frame of the microscope, would the cells look jammed?</summary><p>No: in the frame of the microscope every nucleus travels tens of micrometres in a few hours, and the recorded patterns fade quickly, as in a fluid. Jammed or fluid is about how cells move relative to their neighbours, which is why the page first finds the motion of the whole sheet and moves the frames back by it. At the Addict level, switch "Motion relative to the sheet" off and see the flocking solid read as a liquid.</p></details>
+        <details class="lvl-3 math" open>
+          <summary>Settings used for this run</summary>
+          <pre class="code" id="settings-json"></pre>
+          <div class="btns"><button type="button" id="btn-copy">Copy settings</button></div>
+        </details>
+      </section>
+    </div>
+  </div>
+
+  <section class="wrap matters" aria-labelledby="h-matters">
+    <p class="eyebrow">In a real experiment</p>
+    <h2 id="h-matters">What matters</h2>
+    <p class="prose">Each card sets the bench to a typical case and shows where to look; some also run the sweep of step 9. Use "Back to the standard sample" to start again.</p>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="wrap further lvl-2" aria-labelledby="h-adds">
+    <h2 id="h-adds">What this page adds to the published methods</h2>
+    <p class="prose">Giavazzi et al. (2018) measured the mean squared displacement of cells in confluent monolayers with DDM, from the intermediate scattering function as a Gaussian at the wave vectors where the structure factor of the nuclei is close to 1, in the frame of the microscope. The step below is not in the papers we cite: we added it while testing the page against its own simulations, and it may exist elsewhere. At the "Addict" level it can be switched off, and the result table shows the published method alone on the same movie.</p>
+    <ul class="adds">
+      <li><b>Motion relative to the sheet.</b> The path of the whole sheet from the phase of the widest patterns (as in phase differential microscopy), and every frame moved back by it before the structure function, so that the displacement is that of each cell relative to its neighbours. <span class="where">Step 7. Without it, the flocking solid of the bench, moving at 7 &micro;m/h, read as a flocking liquid in our tests: in an hour its cells seemed to move 6 &micro;m<sup>2</sup>, where relative to the sheet they moved 1.3.</span></li>
+    </ul>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-about">
+    <h2 id="h-about">About this tool</h2>
+    <p class="prose">This page is a simple tool, generated with Claude Opus 5.5, that simulates a time-lapse of a confluent epithelial monolayer with stained nuclei and analyses it with DDM. The cells are self-propelled soft discs that align their direction to how they move, a minimal model of the jamming and flocking of tissues; the nuclei are simple bright spots. The aim is not to produce research-quality data, but to give anyone thinking of using DDM on cell monolayers an idea of what it can measure, and of what limits it.</p>
+    <p class="prose">If you find something that looks wrong or does not work, please let us know through the <a href="https://rcerbino.github.io/contact/">contact page</a>.</p>
+    <p class="prose">To cite this page: R. Cerbino, <i>DDM, hands on: moving tissues</i>, <a href="https://rcerbino.github.io/ddm/tissues/">rcerbino.github.io/ddm/tissues/</a> (2026), with the date you used it.</p>
+  </section>
+
+  <section class="wrap further" aria-labelledby="h-further">
+    <h2 id="h-further">Go further</h2>
+    <ul class="only-1">
+      <li><a href="../swimmers/">Swimming cells</a>: cells far apart, each swimming on its own.</li>
+      <li><a href="../crowded/">Crowded particles</a>: a crowd that is not alive.</li>
+      <li><a href="https://rcerbino.github.io/research/">Research</a>: what the SoMeX group measures with DDM.</li>
+      <li>Switch to <a href="#student" data-level-link="student">Student</a> above for the equations behind each step.</li>
+    </ul>
+    <ul>
+      <li>F. Giavazzi, C. Malinverno, G. Scita and R. Cerbino, <a href="https://doi.org/10.3389/fphy.2018.00120">Tracking-free determination of single-cell displacements and division rates in confluent monolayers</a>, Front. Phys. 6, 120 (2018). DDM of MDCK monolayers with stained nuclei: the mean squared displacement of the cells and their divisions, checked against tracking.</li>
+      <li>F. Giavazzi, M. Paoluzzi, M. Macchi, D. Bi, G. Scita, M. L. Manning, R. Cerbino and M. C. Marchetti, <a href="https://doi.org/10.1039/c8sm00126j">Flocking transitions in confluent tissues</a>, Soft Matter 14, 3471 (2018). A model of confluent tissues with alignment: solid, liquid, flocking solid and flocking liquid.</li>
+      <li>F. Giavazzi, C. Malinverno, S. Corallino, F. Ginelli, G. Scita and R. Cerbino, <a href="https://doi.org/10.1088/1361-6463/aa7f8e">Giant fluctuations and structural effects in a flocking epithelium</a>, J. Phys. D 50, 384003 (2017). A reawakened monolayer, fluid at the scale of single cells and with large number fluctuations.</li>
+      <li>C. Malinverno, S. Corallino, F. Giavazzi, M. Bergert, Q. Li, M. Leoni, A. Disanza, E. Frittoli, A. Oldani, E. Martini, T. Lendenmann, G. Deflorian, G. V. Beznoussenko, D. Poulikakos, K. H. Ong, M. Uroz, X. Trepat, D. Parazzoli, P. Maiuri, W. Yu, A. Ferrari, R. Cerbino and G. Scita, <a href="https://doi.org/10.1038/nmat4848">Endocytic reawakening of motility in jammed epithelia</a>, Nat. Mater. 16, 587 (2017). RAB5A wakes up a jammed epithelial sheet into flowing, flocking streams.</li>
+      <li>V. A. Martinez, R. Besseling, O. A. Croze, J. Tailleur, M. Reufer, J. Schwarz-Linek, L. G. Wilson, M. A. Bees and W. C. K. Poon, <a href="https://doi.org/10.1016/j.bpj.2012.08.045">Differential dynamic microscopy: a high-throughput method for characterizing the motility of microorganisms</a>, Biophys. J. 103, 1637 (2012); R. Colin, R. Zhang and L. G. Wilson, <a href="https://doi.org/10.1098/rsif.2014.0486">Fast, high-throughput measurement of collective behaviour in a bacterial population</a>, J. R. Soc. Interface 11, 20140486 (2014). DDM of motile cells, and the phase of the widest patterns for a collective drift.</li>
+      <li>B. Szab&oacute;, G. J. Sz&ouml;ll&ouml;si, B. G&ouml;nci, Zs. Jur&aacute;nyi, D. Selmeczi and T. Vicsek, <a href="https://doi.org/10.1103/PhysRevE.74.061908">Phase transition in the collective migration of tissue cells: experiment and model</a>, Phys. Rev. E 74, 061908 (2006); S. Henkes, Y. Fily and M. C. Marchetti, <a href="https://doi.org/10.1103/PhysRevE.84.040301">Active jamming: self-propelled soft particles at high density</a>, Phys. Rev. E 84, 040301 (2011). Models of crowded crawling cells.</li>
+      <li>D. Bi, J. H. Lopez, J. M. Schwarz and M. L. Manning, <a href="https://doi.org/10.1038/nphys3471">A density-independent rigidity transition in biological tissues</a>, Nat. Phys. 11, 1074 (2015); D. Bi, X. Yang, M. C. Marchetti and M. L. Manning, <a href="https://doi.org/10.1103/PhysRevX.6.021011">Motility-driven glass and jamming transitions in biological tissues</a>, Phys. Rev. X 6, 021011 (2016). The shape index 3.81, in the vertex and the self-propelled Voronoi models.</li>
+      <li>J.-A. Park, J. H. Kim, D. Bi, J. A. Mitchel, N. T. Qazvini, K. Tantisira, C. Y. Park, M. McGill, S.-H. Kim, B. Gweon, J. Notbohm, R. Steward Jr, S. Burger, S. H. Randell, A. T. Kho, D. T. Tambe, C. Hardin, S. A. Shore, E. Israel, D. A. Weitz, D. J. Tschumperlin, E. P. Henske, S. T. Weiss, M. L. Manning, J. P. Butler, J. M. Drazen and J. J. Fredberg, <a href="https://doi.org/10.1038/nmat4357">Unjamming and cell shape in the asthmatic airway epithelium</a>, Nat. Mater. 14, 1040 (2015). Cell shape as a sign of unjamming in a real epithelium.</li>
+    </ul>
+    <ul class="lvl-3">
+      <li><a href="../exercises/#tissues">Exercises with model answers for this page</a>: questions to predict, compute and discuss, printable, for a class or on your own.</li>
+      <li><a href="https://github.com/somexlab/fastddm">fastDDM</a> (Python, CPU and GPU, GPL 3.0): <code>pip install fastddm</code>. <a href="https://fastddm.readthedocs.io/">Documentation</a>.</li>
+      <li>For collaborations or questions about applying DDM to your samples, see <a href="https://rcerbino.github.io/contact/">Contact</a>.</li>
+    </ul>
+  </section>
+</main>
+
+<!-- progress of the simulation, pinned to the bottom of the window so it is always in view -->
+<div class="runbar" id="runbar">
+  <div class="wrap runbar-inner">
+    <div class="bar" aria-hidden="true"><span id="bar"></span></div>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+  </div>
+</div>
+<footer class="site"><div class="wrap">Roberto Cerbino, University of Vienna. The simulation and the analysis run entirely in your browser; nothing is uploaded.</div></footer>
+
+<script id="tmovie-src">
+/*TMOVIE*/
+</script>
+<script id="engine-src">
+/*ENGINE*/
+</script>
+<script id="tengine-src">
+/*TENGINE*/
+</script>
+<script id="tvoronoi-src">
+/*TVORONOI*/
+</script>
+<script id="trates-src">
+/*TRATES*/
+</script>
+<script type="text/plain" id="worker-src">
+/*WORKER*/
+</script>
+<script>
+/*TIFF*/
+</script>
+<script>
+/*APP*/
+</script>

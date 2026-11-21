@@ -19,6 +19,7 @@
   </div>
   <figure class="portrait">
     <img src="{{ root }}{{ profile.portrait }}" alt="Portrait of {{ profile.name }}" width="280" height="280">
+    {% if profile.portrait_credit %}<figcaption>Photo: {{ profile.portrait_credit }}</figcaption>{% endif %}
   </figure>
 </section>
 <p class="speckle-caption">The pattern at the top is a simulated speckle field changing as the

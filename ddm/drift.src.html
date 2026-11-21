@@ -61,6 +61,8 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .ddm-switch { font-family: var(--sans); font-size: 0.9rem; margin: 0 0 0.6rem; color: var(--muted); }
 .ddm-switch a, .ddm-switch span { margin-right: 0.9rem; }
 .ddm-switch span[aria-current] { color: var(--ink); border-bottom: 2px solid var(--accent); }
+.ddm-switch .sw-group { display: inline-block; margin-right: 1.1rem; }
+.ddm-switch .sw-label { font-weight: 600; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; margin-right: 0.45rem; }
 .proto-note { font-family: var(--sans); font-size: 0.85rem; color: var(--warn); background: var(--warn-bg); padding-block: 0.45rem; }
 .pn-more { display: none; font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
 /* one line, the rest on request */
@@ -302,7 +304,7 @@ footer.site { border-top: 1px solid var(--rule); font-family: var(--sans); font-
   <section class="wrap intro">
     <div>
       <p class="eyebrow">Differential dynamic microscopy</p>
-      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><a href="../sizing/">Sizing particles</a><a href="../swimmers/">Swimming cells</a><span aria-current="page">Drifting particles</span><a href="../rheology/">Liquid or solid</a><a href="../crowded/">Crowded particles</a><a href="../proteins/">Proteins</a></nav>
+      <nav class="ddm-switch" aria-label="DDM pages"><a href="../">All DDM applications</a><span class="sw-group"><b class="sw-label">Start:</b><a href="../sizing/">Sizing particles</a></span><span class="sw-group"><b class="sw-label">Classic:</b><a href="../swimmers/">Swimming cells</a><span aria-current="page">Drifting particles</span><a href="../rheology/">Liquid or solid</a></span><span class="sw-group"><b class="sw-label">Advanced:</b><a href="../crowded/">Crowded particles</a><a href="../proteins/">Proteins</a><a href="../shear/">Sheared materials</a><a href="../tissues/">Moving tissues</a></span></nav>
       <h1>Particles carried by a flow, by gravity or by heat</h1>
       <p class="lede">Particles in a liquid jiggle at random, but they can also be carried in one direction: by a flow of the liquid, by gravity when they are denser than the liquid, or by a temperature gradient, which pushes most colloids towards the cold side (thermophoresis). Differential dynamic microscopy (DDM) sees both motions in the same movie. The random part makes each stripe pattern fade; the drift makes it travel, so patterns along the drift fade and oscillate at the same time. Here a simulated microscope lets you measure the speed and the direction of the drift, and find out how slow a drift a movie can still show.</p>
       <fieldset class="levels">
@@ -468,7 +470,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
 
       <!-- 5 -->
       <section class="step" id="step-curves" aria-labelledby="h-curves">
-        <div class="step-title"><span class="num">5</span><h2 id="h-curves">Watch each pattern change, along and across the drift</h2></div>
+        <div class="step-title"><span class="num">5</span><h2 id="h-curves">Watch each pattern change, in two directions</h2></div>
         <div class="step-body">
           <div class="text">
             <p>For each stripe spacing, follow how much of the pattern is left as the delay grows (curves drawn for four of the wider spacings). Patterns across the drift (stripes parallel to it) are not moved by it: they only fade, as without a drift. Patterns along the drift fade at the same rate but also travel, so the curves swing below zero and back before they die out. Fine stripes swing sooner, because the drift needs less time to carry them by one spacing; but they also fade sooner, and may be gone before they swing. Patterns almost across the drift are carried a little too, so with a fast drift even their curves dip below zero at long delays.</p>
@@ -590,6 +592,7 @@ dqt.set_frame_rate(frame_rate)     # frames per second
       <li>Thermophoresis of colloids: L. Helden, R. Eichhorn and C. Bechinger, <a href="https://doi.org/10.1039/C4SM02833C">Direct measurement of thermophoretic forces</a>, Soft Matter 11, 2379 (2015), the force on single micrometre beads held near a wall; S. Duhr and D. Braun, <a href="https://doi.org/10.1103/PhysRevLett.96.168301">Thermophoretic depletion follows Boltzmann distribution</a>, Phys. Rev. Lett. 96, 168301 (2006); S. Iacopini, R. Rusconi and R. Piazza, <a href="https://doi.org/10.1140/epje/e2006-00012-9">The "macromolecular tourist": universal temperature dependence of thermal diffusion in aqueous colloidal suspensions</a>, Eur. Phys. J. E 19, 59 (2006); M. Braibanti, D. Vigolo and R. Piazza, <a href="https://doi.org/10.1103/PhysRevLett.100.108303">Does thermophoretic mobility depend on particle size?</a>, Phys. Rev. Lett. 100, 108303 (2008). The values used on this page.</li>
     </ul>
     <ul class="lvl-3">
+      <li><a href="../exercises/#drift">Exercises with model answers for this page</a>: questions to predict, compute and discuss, printable, for a class or on your own.</li>
       <li>fastDDM tutorial notebook on real movies: <a href="https://github.com/somexlab/fastddm-tutorials/tree/main/Tutorial_1-Particle_sizing">particle sizing (tutorial 1), the starting point for any DDM analysis</a>; <a href="https://github.com/somexlab/fastddm-tutorials">all tutorials</a>.</li>
       <li><a href="https://github.com/somexlab/fastddm">fastDDM</a> (Python, CPU and GPU, GPL 3.0): <code>pip install fastddm</code>. <a href="https://fastddm.readthedocs.io/">Documentation</a>.</li>
       <li>For collaborations or questions about applying DDM to your samples, see <a href="https://rcerbino.github.io/contact/">Contact</a>.</li>
