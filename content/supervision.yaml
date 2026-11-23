@@ -1,0 +1,154 @@
+# Supervision page (/supervision/). Template: templates/supervision.html.
+#
+# Rules (set by Roberto):
+# - The figures at the top of the page are counted from these lists by the
+#   template. Never write a number by hand.
+# - "The group now" is not here: it is read from data/people.json (SoMeX people
+#   page, refreshed by scripts/sync_people.py).
+# - No notes on the page about where information came from, when it was
+#   collected or how it is kept up to date.
+# - An entry is: name, then "meta" (place, years, shared supervision), then the
+#   thesis title, linked when "url" is given. "co-supervised with X" is used when
+#   the official supervisor was X or the supervision was shared with X.
+# - The page for Stefano Mazzoni (templates/mazzoni.html) is never changed by
+#   any automatic update.
+
+intro:
+  - "The whole group meets once a week, and I see each member one-to-one every two weeks. I am always there when someone needs me, but I do not micromanage unless I really have to. I know this freedom can be confusing, especially at the start of a project. However, every project in my lab is a new avenue of exploration, and the people working on it are the ones driving the car. I see myself more as a co-pilot and a facilitator."
+  - "The people I have supervised, in Milan until 2021 and in Vienna since. Where nothing else is said I was the main supervisor; otherwise the entry names the colleague I shared the supervision with."
+
+doctoral:
+  in_progress:
+    - {name: "Nikolaos Kalafatakis", meta: "since 2022", title: "Connecting microstructural changes and microscopic dynamics to the rheological properties of mechanically deformed soft materials"}
+    - {name: "Jasmin Di Franco", meta: "since 2023", title: "Collective dynamics in dense biological systems"}
+    - {name: "Sakshi Khandelwal", meta: "since 2025", title: "Advancing rheology and mechanical training in colloidal gels and hydrogels: investigating structural and dynamic evolution"}
+  completed:
+    - {name: "Alessia De Cataldo", meta: "Polytechnic and University of Bari, 2026, co-supervised with Luigi Gentile", title: "Viscoelastic matrices for storage and transport of green fuels (Green Gel Fuels)"}
+    - {name: "Paolo Edera", meta: "University of Milan, 2020", title: "The microscopic signature of the rheology of amorphous soft materials", url: "https://air.unimi.it/handle/2434/777453"}
+    - {name: "Silvia Biffi", meta: "University of Milan, 2013, co-supervised with Tommaso Bellini", title: "Phase behavior of star-shaped DNA nano-structures", url: "https://air.unimi.it/handle/2434/215353"}
+    - {name: "Gea Donzelli", meta: "University of Milan, 2008, co-supervised with Alberto Vailati", title: "Dynamics of spoke patterns in the solutal convective instability of a nanofluid", url: "https://minerva.unimi.it/discovery/fulldisplay?docid=alma991015883049706031&context=L&vid=39UMI_INST:VU1"}
+    - {name: "Stefano Mazzoni", memorial: true, paren: "1978-2025", meta: "University of Milan, 2006, co-supervised with Alberto Vailati (tutor: Marzio Giglio)", title: "Pattern formation in convective instabilities in a colloidal suspension", url: "https://minerva.unimi.it/discovery/fulldisplay?docid=alma991007284799706031&context=L&vid=39UMI_INST:VU1"}
+  note: "Norma Palmero Cruz (University of Gothenburg) was co-supervised during her stay in Vienna, 2022-2023."
+
+postdocs:
+  vienna:
+    - {name: "Maxime Lavaud", current: true}
+    - {name: "Vincenzo Ruzzi", current: true}
+    - {name: "Zhibo Li", current: true}
+    - {name: "Sophie Hermann", current: true}
+    - {name: "Enrico Lattuada", meta: "2021-2023, Lise Meitner fellow of the Austrian Science Fund"}
+    - {name: "Oleksandr Chepizhko", meta: "2022-2023"}
+  milan:
+    - {name: "Fabio Giavazzi", meta: "2011-2021"}
+    - {name: "Paolo Edera", meta: "2020-2021"}
+    - {name: "Manuel de Jesus Sanchez Miranda", meta: "2018-2019"}
+    - {name: "Stefano Villa", meta: "2020-2021, with Fabio Giavazzi"}
+    - {name: "Giovanni Savorana", paren: "Assegnista di Ricerca di Tipo B"}
+    - {name: "Francesca Serra", meta: "2010-2013, with Tommaso Bellini"}
+    - {name: "Silvia Biffi", meta: "with Tommaso Bellini"}
+    - {name: "Matteo Salina", meta: "with Tommaso Bellini"}
+
+masters:
+  vienna:
+    - {name: "Eva Hudec", meta: "2026 (University of Zagreb)", title: "Connecting microscopic dynamics, structural rearrangements and rheological properties in soft materials", url: "https://urn.nsk.hr/urn:nbn:hr:217:803417"}
+    - {name: "Fabian Krautgasser", meta: "2025", title: "On the interplay of structure and dynamics in cellular monolayers", url: "https://utheses.univie.ac.at/detail/75933/"}
+    - {name: "Philip Blair", meta: "2024", title: "Thermophoresis of anisotropic colloidal particles", url: "https://utheses.univie.ac.at/detail/70349/"}
+  milan:
+    - {name: "Matteo Brizioli", meta: "2020, work done at ETH Zurich with Eleonora Secchi", title: "Study of bacterial surface colonization with differential dynamic microscopy", url: "https://minerva.unimi.it/discovery/fulldisplay?docid=alma991017852728306031&context=L&vid=39UMI_INST:VU1"}
+    - {name: "Marta Macchi", meta: "2018, co-supervised with Fabio Giavazzi", title: "Adhesion paradox and effective friction in a confluent cell monolayer", url: "https://minerva.unimi.it/discovery/fulldisplay?docid=alma991017854800306031&context=L&vid=39UMI_INST:VU1"}
+    - {name: "Alessandro Civeriati", meta: "2017", title: "Coexistence of fluid and glassy phases in a confluent biological tissue on a sphere", url: "https://minerva.unimi.it/discovery/fulldisplay?docid=alma991017853233606031&context=L&vid=39UMI_INST:VU1"}
+    - {name: "Tommaso Seresini", meta: "2017", title: "Elastic characterisation of polymer fiber by means of laser-Doppler vibrometry", url: "https://minerva.unimi.it/discovery/fulldisplay?docid=alma991017855418106031&context=L&vid=39UMI_INST:VU1"}
+    - {name: "Giovanni Savorana", meta: "2017", title: "Microchannel flow instabilities in miscible fluids", url: "https://minerva.unimi.it/discovery/fulldisplay?docid=alma991017855479906031&context=L&vid=39UMI_INST:VU1"}
+    - {name: "Davide Piotti", meta: "2016", title: "Quantitative microscopy of active and passive Brownian particles", url: "https://minerva.unimi.it/discovery/fulldisplay?docid=alma991017851724406031&context=L&vid=39UMI_INST:VU1"}
+    - {name: "Paolo Edera", meta: "2016", title: "Studio sperimentale della stabilità di gel di deplezione", url: "https://minerva.unimi.it/discovery/fulldisplay?docid=alma991017853879806031&context=L&vid=39UMI_INST:VU1"}
+    - {name: "Marco Mischiatti", meta: "2015, co-supervised with Alberto Vailati", title: "Studio del processo di gelazione e collasso di gel in miscele di vescicole e polimeri", url: "https://minerva.unimi.it/discovery/fulldisplay?docid=alma991017851395906031&context=L&vid=39UMI_INST:VU1"}
+    - {name: "Alessandro Fornasieri", meta: "2013, co-supervised with Alberto Vailati", title: "Digital Fourier microscopy of concentration fluctuations in a binary mixture", url: "https://minerva.unimi.it/discovery/fulldisplay?docid=alma991017875797006031&context=L&vid=39UMI_INST:VU1"}
+    - {name: "Stefano Crotti", meta: "2013, co-supervised with Alberto Vailati", title: "Rototranslational diffusion of optically anisotropic particles", url: "https://minerva.unimi.it/discovery/fulldisplay?docid=alma991017872892806031&context=L&vid=39UMI_INST:VU1"}
+    - {name: "Antonio Speciale", meta: "2012, co-supervised with Alberto Vailati", title: "Studio mediante microscopia ottica delle proprietà viscoelastiche di fasi liquido cristalline", url: "https://minerva.unimi.it/discovery/fulldisplay?docid=alma991017879254006031&context=L&vid=39UMI_INST:VU1"}
+    - {name: "Gea Donzelli", meta: "2005, co-supervised with Marzio Giglio", title: "Studio di instabilità convettive di tipo Rayleigh-Bénard in sospensioni colloidali: osservazione di una transizione per il regime di onde propaganti", url: "https://minerva.unimi.it/discovery/fulldisplay?docid=alma991017874490106031&context=L&vid=39UMI_INST:VU1"}
+    - {name: "Andrea Zelioli", meta: "2005, co-supervised with Marzio Giglio", title: "Studio con tecniche ottiche di instabilità convettive indotte per effetto Soret in sospensioni colloidali", url: "https://minerva.unimi.it/discovery/fulldisplay?docid=alma991017884180506031&context=L&vid=39UMI_INST:VU1"}
+    - {name: "Stefano Mazzoni", meta: "2002, co-supervised with Marzio Giglio", title: "Studio di transitori rapidi in instabilità convettive in fluidi complessi", url: "https://minerva.unimi.it/discovery/fulldisplay?docid=alma991017884801906031&context=L&vid=39UMI_INST:VU1"}
+
+# Bachelor's theses, newest first. An entry without a title is shown by name only.
+bachelors:
+  vienna:
+    - {name: "Franz Perko", paren: "2025-2026", title: "Improving imaging techniques for investigating motility induced phase separation in Myxococcus xanthus"}
+  milan:
+    - {name: "Elia Moretti", meta: "2020, co-supervised with Fabio Giavazzi", title: "Experimental study of the dynamics of colloidal particles in an active medium"}
+    - {name: "Chiara Giannattasio", meta: "2020, co-supervised with Fabio Giavazzi", title: "Studio del moto di particelle browniane in fluidi complessi"}
+    - {name: "Liber Dorizzi", meta: "2019", title: "Analisi quantitativa e simulazione di processi di riparazione in tessuti epiteliali"}
+    - {name: "Jacopo Scocco", meta: "2019, co-supervised with Fabio Giavazzi", title: "Determinazione delle proprietà fisiche di fluidi biologici complessi mediante microscopia quantitativa"}
+    - {name: "Marco Ciccarelli", meta: "2017", title: "Microreologia roto-traslazionale di materiali soffici mediante microscopia differenziale dinamica"}
+    - {name: "Matteo Brizioli", meta: "2017", title: "Studio delle fluttuazioni di non-equilibrio in sospensioni colloidali dense"}
+    - {name: "Valeria Cappuccio", meta: "2017", title: "Simulazione della dinamica collettiva in un modello di tessuto epiteliale eterogeneo"}
+    - {name: "Davide Bergamini", meta: "2017", title: "Studio sperimentale delle proprietà reologiche di fluidi complessi mediante microscopia differenziale dinamica"}
+    - {name: "Riccardo Panza", meta: "2016", title: "Studio sperimentale delle proprietà viscoelastiche di cristalli liquidi colesterici"}
+    - {name: "Marta Macchi", meta: "2016", title: "Migrazione collettiva e arresto dinamico in un modello di monostrato cellulare"}
+    - {name: "Tommaso Seresini", meta: "2015", title: "Caratterizzazione della cinetica di invecchiamento di schiume mediante microscopia ottica"}
+    - {name: "Giovanni Savorana", meta: "2014, co-supervised with Alberto Vailati", title: "Studio di fluttuazioni di non-equilibrio con tecniche di microscopia differenziale dinamica"}
+    - {name: "Alberto Dragoni", meta: "2012, co-supervised with Davide Galli and Alberto Vailati", title: "Inversione genetica via falsificazione di teorie applicata a misure di particle sizing"}
+    - {name: "Lidia Rossetto", meta: "2012, co-supervised with Alberto Vailati", title: "Fluttuazioni di non-equilibrio in miscele liquide"}
+    - {name: "Stefano Aime", meta: "2012, co-supervised with Alberto Vailati", title: "Studio della dinamica di colloidi termosensibili mediante microscopia ottica"}
+    - {name: "Marta Perego", meta: "2012, co-supervised with Alberto Vailati", title: "Diffusione della luce da nanoaggregati di DNA"}
+    - {name: "Davide Bugini", meta: "2011, co-supervised with Alberto Vailati", title: "Studio della dinamica di latte vaccino mediante tecniche di microscopia ottica"}
+    - {name: "Luca Zinnato", meta: "2011, co-supervised with Alberto Vailati", title: "Analisi cinematica del getto d'acqua emesso dal pesce arciere per la cattura delle prede"}
+    - {name: "Stefano Crotti", meta: "2011, co-supervised with Alberto Vailati", title: "Caratterizzazione delle proprietà viscoelastiche di cristalli liquidi mediante microscopia ottica"}
+    - {name: "Riccardo Bolis", meta: "2011", title: "Microscopia dinamica di sospensioni colloidali"}
+    - {name: "Alessandro Fornasieri", meta: "2011", title: "Caratterizzazione tramite tecniche di microscopia ottica delle proprietà dinamiche di un fluido in prossimità di una transizione di fase"}
+    - {name: "Fabrizio Finozzi", meta: "2011, co-supervised with Alberto Vailati", title: "Competizione tra trasporto di calore conduttivo e convettivo in colloidi termofilici"}
+    - {name: "Federico Comitani", meta: "2010, co-supervised with Alberto Vailati", title: "Determinazione della curva di bistabilità per il trasporto di calore di nanofluidi intelligenti"}
+    - {name: "Aurora Masuelli", meta: "2006, co-supervised with Marzio Giglio", title: "Near field scattering con sorgente parzialmente coerente"}
+    - {name: "Renato Coretti", meta: "2006, co-supervised with Marzio Giglio", title: "Applicazione del teorema ottico ad esperimenti di scattering di luce"}
+    - {name: "Elisa Tamborini"}
+
+# Visiting students and interns. People visiting now are counted from
+# data/people.json unless they are already named here.
+visitors:
+  - label: "Visiting doctoral students"
+    people:
+      - {name: "Andrea De Marco", paren: "Padua, 2025-2026"}
+      - {name: "Concetta Santangelo", paren: "Milan, 2025"}
+      - {name: "Vinay Kopnar", paren: "Durham, 2025"}
+  - label: "Interns of the Vienna Doctoral School in Physics"
+    people:
+      - {name: "Carlo Marietti", paren: "Milan, 2026"}
+      - {name: "Alejandro Cobo", paren: "Yachay Tech, 2026"}
+      - {name: "Numa Zorzi", paren: "2022"}
+  - label: "Visiting master's student"
+    people:
+      - {name: "Samuel Meriadec", paren: "ENS Lyon, 2026"}
+  - label: "Interns"
+    people:
+      - {name: "Jonas Wagner"}
+      - {name: "Nora Kohlmayer"}
+      - {name: "Mari Liewehr", paren: "2026"}
+      - {name: "David Steiner", paren: "2024"}
+      - {name: "Oliver Stöckl", paren: "2024-2025"}
+
+where:
+  academia:
+    - "Stefano Aime, assistant professor, ESPCI Paris"
+    - "Francesca Serra, associate professor, University of Southern Denmark"
+    - "Fabio Giavazzi, associate professor, University of Milan"
+    - "Stefano Villa, group leader, Max Planck Institute for Dynamics and Self-Organization, Goettingen"
+    - "Paolo Edera, research scientist and principal investigator, ESPCI Paris"
+    - "Giovanni Savorana, Princeton University"
+    - "Oleksandr Chepizhko, senior researcher, Lakeside Labs, Klagenfurt"
+    - "Matteo Brizioli, University of Milan"
+    - "Chiara Giannattasio, Istituto Italiano di Tecnologia, Rome"
+    - "Norma Palmero Cruz, doctoral student, University of Gothenburg"
+    - "Numa Zorzi, Université Paris-Saclay, with Giuseppe Foffi"
+    - "Vinay Kopnar, Durham University and University of Liverpool"
+    - "Concetta Santangelo, doctoral student, University of Milan"
+    - "Andrea De Marco, doctoral student, University of Padua"
+    - "Carlo Marietti, University of Milan"
+    - "Franz Perko, master's student, University of Vienna"
+    - "Liber Dorizzi, doctoral student, IMT School for Advanced Studies Lucca"
+    - "Eva Hudec, scientific trainee, Joint Research Centre of the European Commission, Karlsruhe"
+  beyond:
+    - {name: "Stefano Mazzoni", memorial: true, text: "CERN, beam instrumentation, 2012-2025"}
+    - {name: "Gea Donzelli", text: "STMicroelectronics"}
+    - {name: "Federico Comitani", text: "Valence Labs"}
+    - {name: "Enrico Lattuada", text: "Zuru Tech"}
+    - {name: "Alessandro Fornasieri", text: "priest"}
+  lost: "Davide Bergamini, Silvia Biffi, Philip Blair, Riccardo Bolis, Davide Bugini, Valeria Cappuccio, Marco Ciccarelli, Alessandro Civeriati, Renato Coretti, Stefano Crotti, Alessia De Cataldo, Alberto Dragoni, Fabrizio Finozzi, Fabian Krautgasser, Marta Macchi, Aurora Masuelli, Marco Mischiatti, Elia Moretti, Riccardo Panza, Marta Perego, Davide Piotti, Lidia Rossetto, Matteo Salina, Manuel de Jesus Sanchez Miranda, Jacopo Scocco, Tommaso Seresini, Antonio Speciale, Elisa Tamborini, Andrea Zelioli, Luca Zinnato."

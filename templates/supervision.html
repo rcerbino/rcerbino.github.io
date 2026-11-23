@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% from "macros.html" import page_head %}
+
+{% block content %}
+{% set s = supervision %}
+{# One entry: name, (paren), meta, then the thesis title, linked when there is a url. #}
+{% macro line(e) -%}
+{% if e.memorial %}<a href="{{ root }}{{ link('supervision/stefano-mazzoni/') }}">{{ e.name }}</a>{% else %}{{ e.name }}{% endif %}{% if e.paren %} ({{ e.paren }}){% endif %}{% if e.meta %}, {{ e.meta }}{% endif %}{% if e.title %}. {% if e.url %}<a href="{{ e.url }}">{{ e.title }}</a>{% else %}{{ e.title }}{% endif %}{% endif %}
+{%- endmacro %}
+
+{# Figures: all counted from the lists, never written by hand. #}
+{% set n_post = s.postdocs.vienna | length + s.postdocs.milan | length %}
+{% set n_msc = s.masters.vienna | length + s.masters.milan | length %}
+{% set n_bsc = s.bachelors.vienna | length + s.bachelors.milan | length %}
+{% set named = [] %}
+{% for c in s.visitors %}{% for p in c.people %}{% set _ = named.append(p.name) %}{% endfor %}{% endfor %}
+{% set visiting_now = [] %}
+{% for g in people_groups if g.key in ('visitors', 'interns') %}{% for p in g.current if p.name not in named %}{% set _ = visiting_now.append(p.name) %}{% endfor %}{% endfor %}
+{% set n_vis = named | length + visiting_now | length %}
+
+{% call page_head("Supervision", none, visuals.heads[page], root) %}
+  {% for p in s.intro %}<p>{{ p }}</p>
+  {% endfor %}
+  <p>If you worked with me and something here about you is missing, wrong or out of date, please <a href="mailto:{{ profile.email or 'roberto.cerbino@univie.ac.at' }}">let me know</a> and I will update it.</p>
+{% endcall %}
+
+<div class="supervision">
+<ul class="figures">
+  <li><span class="num">{{ n_post }}</span><span class="lbl">postdocs</span></li>
+  <li><span class="num">{{ s.doctoral.completed | length }} + {{ s.doctoral.in_progress | length }}</span><span class="lbl">doctorates completed and in progress</span></li>
+  <li><span class="num">{{ n_msc }}</span><span class="lbl">master's theses</span></li>
+  <li><span class="num">{{ n_bsc }}</span><span class="lbl">bachelor's theses</span></li>
+  <li><span class="num">{{ n_vis }}</span><span class="lbl">visiting students and interns</span></li>
+</ul>
+
+{% set now_labels = {'postdocs': 'Postdocs', 'phd': 'Doctoral students', 'msc': "Master's students", 'bsc': "Bachelor's students", 'visitors': 'Visiting', 'interns': 'Interns'} %}
+<section>
+  <h2 id="now">The group now</h2>
+  <ul>
+  {% for g in people_groups if g.current %}
+    <li>{{ now_labels[g.key] }}: {% for p in g.current %}{{ p.name }}{% if g.key in ('visitors', 'interns') and p.institution and 'University of Vienna' not in p.institution %}{% set inst = p.institution.split(' (')[0] %} ({{ inst[4:] if inst.startswith('The ') else inst }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}</li>
+  {% endfor %}
+  </ul>
+</section>
+
+<section>
+  <h2 id="doctoral">Doctoral theses</h2>
+  <h3>In progress, University of Vienna</h3>
+  <ul>{% for e in s.doctoral.in_progress %}<li>{{ line(e) }}</li>
+  {% endfor %}</ul>
+  <h3>Completed</h3>
+  <ul>{% for e in s.doctoral.completed %}<li>{{ line(e) }}</li>
+  {% endfor %}</ul>
+  {% if s.doctoral.note %}<p class="quiet">{{ s.doctoral.note }}</p>{% endif %}
+</section>
+
+<section>
+  <h2 id="postdocs">Postdoctoral researchers</h2>
+  <h3>Vienna</h3>
+  <ul>
+    {% set cur = s.postdocs.vienna | selectattr('current') | map(attribute='name') | list %}
+    {% if cur %}<li>{{ cur | join(', ') }} (current)</li>{% endif %}
+    {% for e in s.postdocs.vienna if not e.current %}<li>{{ line(e) }}</li>
+    {% endfor %}
+  </ul>
+  <h3>Milan</h3>
+  <ul>{% for e in s.postdocs.milan %}<li>{{ line(e) }}</li>
+  {% endfor %}</ul>
+</section>
+
+<section>
+  <h2 id="masters">Master's theses</h2>
+  <h3>Vienna</h3>
+  <ul>{% for e in s.masters.vienna %}<li>{{ line(e) }}</li>
+  {% endfor %}</ul>
+  <h3>Milan</h3>
+  <ul>{% for e in s.masters.milan %}<li>{{ line(e) }}</li>
+  {% endfor %}</ul>
+</section>
+
+<section>
+  <h2 id="bachelors">Bachelor's theses</h2>
+  <details>
+    <summary>{{ n_bsc }} theses</summary>
+    <p>Vienna: {% for e in s.bachelors.vienna %}{{ line(e) }}{% if not loop.last %}; {% endif %}{% endfor %}</p>
+    <p>Milan: {{ s.bachelors.milan | map(attribute='name') | join(', ') }}.</p>
+    <ul>{% for e in s.bachelors.milan if e.title %}<li>{{ line(e) }}</li>
+    {% endfor %}</ul>
+  </details>
+</section>
+
+<section>
+  <h2 id="visitors">Visiting students and interns</h2>
+  <ul>
+  {% for c in s.visitors %}
+    <li>{{ c.label }}: {% for p in c.people %}{{ p.name }}{% if p.paren %} ({{ p.paren }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}</li>
+  {% endfor %}
+  </ul>
+</section>
+
+<section>
+  <h2 id="where">Where they went</h2>
+  <h3>In universities and research institutes</h3>
+  <ul>{% for t in s.where.academia %}<li>{{ t }}</li>
+  {% endfor %}</ul>
+  <h3>Beyond academia</h3>
+  <ul>{% for e in s.where.beyond %}<li>{% if e.memorial %}<a href="{{ root }}{{ link('supervision/stefano-mazzoni/') }}">{{ e.name }}</a>{% else %}{{ e.name }}{% endif %}, {{ e.text }}</li>
+  {% endfor %}</ul>
+  <h3>Lost touch / don't know precisely</h3>
+  <p>{{ s.where.lost }} If you are on this list, write to me.</p>
+</section>
+
+<p class="quiet">My courses for doctoral students are on the <a href="{{ root }}{{ link('teaching/') }}">Teaching</a> page; examination boards and thesis committees are on the <a href="{{ root }}{{ link('service/') }}">Service</a> page.</p>
+</div>
+{% endblock %}

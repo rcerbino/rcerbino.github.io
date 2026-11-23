@@ -197,6 +197,8 @@ approves them.
 | Courses, teaching innovation, mentoring | `content/teaching.yaml` |
 | News | `content/news.yaml` |
 | Service page: boards, committees, juries, theses and habilitations evaluated, promotion and hiring cases; the rules for what may be named are at the top of the file | `content/service.yaml` |
+| Supervision page (/supervision/): postdocs, doctoral, master's and bachelor's theses, visiting students and interns, where they went. The figures at the top are counted by the template from these lists (never write a number by hand); "The group now" comes from `data/people.json`. No notes on the page about sources or about how it is kept up to date. Template `templates/supervision.html` | `content/supervision.yaml` |
+| Page for Stefano Mazzoni (/supervision/stefano-mazzoni/, linked from the Supervision page, not in the menu). Roberto's own text: never change it in any automatic update | `templates/mazzoni.html` |
 | Talks (all of them, newest first; the Talks page shows them all, the News page the six most recent). Each has `date`, `title`, `event`, `place` and a `kind`: plenary, keynote, invited, contributed, seminar, colloquium, lecture, public or teaching. Proper names keep their accents (Düsseldorf, Cargèse). Talks given by co-authors are not listed. | `content/talks.yaml` |
 | DDM page sources (built into `static/ddm/index.html` by `python3 ddm/build.py`) | `ddm/` |
 | Publication tags (selected, review, cover), hidden items, fixes, preprint pairings | `data/publications_overrides.yaml` |

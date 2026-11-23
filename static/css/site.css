@@ -404,3 +404,15 @@ address { font-style: normal; }
 .tdot-institution, .tseg-institution { background: var(--t-preprint); fill: var(--t-preprint); }
 .service-list + h2, .service .timeline + h2 { margin-top: 2.2rem; }
 .service .quiet { max-width: 46rem; }
+
+/* Supervision page and the page for Stefano Mazzoni */
+.supervision section { margin-top: 2.4rem; }
+.supervision h3 { margin: 1.4rem 0 0.4rem; }
+.supervision ul:not(.figures) { padding-left: 1.2rem; margin: 0 0 1rem; }
+.supervision ul:not(.figures) li { margin-bottom: 0.35rem; }
+.supervision details summary { cursor: pointer; font-family: var(--sans); font-size: 0.95rem; margin-bottom: 0.8rem; }
+.memorial { max-width: 42rem; }
+.memorial .years { color: var(--muted); font-family: var(--sans); margin-top: -0.4rem; }
+.memorial h2 { margin-top: 2.4rem; }
+.memorial .papers { padding-left: 1.2rem; }
+.memorial .papers li { margin-bottom: 0.5rem; }

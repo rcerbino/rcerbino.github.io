@@ -33,14 +33,17 @@ PAGES = [
     ("publications/index.html", "publications.html", "Publications"),
     ("talks/index.html", "talks.html", "Talks"),
     ("teaching/index.html", "teaching.html", "Teaching"),
+    ("supervision/index.html", "supervision.html", "Supervision"),
+    ("supervision/stefano-mazzoni/index.html", "mazzoni.html", "Stefano Mazzoni"),
     ("service/index.html", "service.html", "Service"),
     ("approach/index.html", "approach.html", "Approach"),
     ("news/index.html", "news.html", "News"),
     ("contact/index.html", "contact.html", "Contact"),
     ("legal/index.html", "legal.html", "Legal notice and privacy"),
 ]
-# Pages reached from the footer only, not from the main menu
-FOOTER_ONLY = {"Legal notice and privacy"}
+# Pages that are not in the main menu: the legal notice (reached from the footer) and the page for
+# Stefano Mazzoni (reached from the Supervision page)
+FOOTER_ONLY = {"Legal notice and privacy", "Stefano Mazzoni"}
 # Pages built outside the templates (copied from static/) that still get a place in the main menu:
 # (output path, menu label, put after this label). The DDM pages are assembled by ddm/build.py into
 # static/ddm/ (landing page index.html, sizing/ and swimmers/); this build writes the main menu into them.
@@ -239,6 +242,7 @@ def main(check=False, preview=False):
     news = load_yaml("news.yaml")
     talks_doc = load_yaml("talks.yaml")
     service = load_yaml("service.yaml")
+    supervision = load_yaml("supervision.yaml")
     approach = load_yaml("approach.yaml")
     visuals = load_yaml("visuals.yaml")
     pubs = load_json("publications.json", [])
@@ -485,6 +489,7 @@ def main(check=False, preview=False):
                approach=approach, review_chart=review_chart, review_max=review_max, papers_in_span=papers_in_span, review_ratio=review_ratio, ratio_max=ratio_max, group_news=group_news, nav=nav, visuals=visuals, pub_strip=pub_strip, pub_strip_max=pub_strip_max,
                talks=talks, talks_intro=talks_doc.get("intro"), talk_years=talk_years, talk_stats=talk_stats, talk_highlights=talk_highlights,
                talk_strip=talk_strip, talk_strip_max=talk_strip_max,
+               supervision=supervision,
                service=service, service_lists=service_lists, service_counts=service_counts, service_total=len(acts),
                service_strip=service_strip, service_strip_max=service_strip_max, service_groups=SERVICE_GROUPS,
                built=today.isoformat(), built_human=fmt_date(today.isoformat()), revision=revision,
